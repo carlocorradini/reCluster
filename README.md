@@ -1,6 +1,6 @@
 # reCluster
 
-[![CI](https://github.com/carlocorradini/reCluster/ci/badge.svg)](https://github.com/carlocorradini/reCluster/actions)
+[![ci](https://github.com/carlocorradini/reCluster/ci/badge.svg)](https://github.com/carlocorradini/reCluster/actions)
 
 ## Members
 
