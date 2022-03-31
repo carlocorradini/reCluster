@@ -9,11 +9,7 @@
     "ecmaVersion": 2020,
     "sourceType": "module"
   },
-  "plugins": [
-    "import",
-    "@typescript-eslint",
-    "eslint-plugin-tsdoc"
-  ],
+  "plugins": ["import", "@typescript-eslint", "eslint-plugin-tsdoc"],
   "extends": [
     "airbnb-base",
     "airbnb-typescript/base",
