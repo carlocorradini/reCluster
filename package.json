@@ -1,7 +1,7 @@
 {
   "name": "recluster",
   "version": "0.0.1",
-  "description": "The reCluster is an architecture for a data centre that actively reduces its impact and minimises its resource utilisation",
+  "description": "The reCluster is an architecture for a data centre that actively reduces its impact and minimizes its resource utilisation",
   "author": "Carlo Corradini",
   "license": "MIT",
   "private": true,
