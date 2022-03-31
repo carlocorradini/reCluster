@@ -1,0 +1,53 @@
+{
+  "name": "recluster",
+  "version": "0.0.1",
+  "description": "The reCluster is an architecture for a data centre that actively reduces its impact and minimises its resource utilisation",
+  "author": "Carlo Corradini",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=16",
+    "npm": ">=8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carlocorradini/reCluster.git"
+  },
+  "bugs": {
+    "url": "https://github.com/carlocorradini/reCluster/issues"
+  },
+  "homepage": "https://github.com/carlocorradini/reCluster#readme",
+  "keywords": [
+    "reCluster",
+    "cluster"
+  ],
+  "main": "build/app.js",
+  "scripts": {
+    "build": "npx tsc --build tsconfig.json",
+    "check:format": "npx prettier --check .",
+    "check:lint": "npx eslint .",
+    "check:markdown": "npx markdownlint \"**/*.md\"",
+    "check:spell": "npx cspell lint \"**\" --no-progress --show-context",
+    "clean": "npx rimraf build",
+    "prepare": "npx husky install"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^16.2.3",
+    "@commitlint/config-conventional": "^16.2.1",
+    "@typescript-eslint/eslint-plugin": "^5.17.0",
+    "@typescript-eslint/parser": "^5.17.0",
+    "cspell": "^5.19.3",
+    "eslint": "^8.12.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^16.1.4",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-tsdoc": "^0.2.14",
+    "husky": "^7.0.4",
+    "lint-staged": "^12.3.7",
+    "markdownlint-cli": "^0.31.1",
+    "prettier": "^2.6.1",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.6.3"
+  }
+}
