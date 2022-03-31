@@ -1,28 +1,28 @@
 {
-    "root": true,
-    "env": {
-        "node": true
-    },
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "project": "tsconfig.json",
-        "ecmaVersion": 2020,
-        "sourceType": "module"
-    },
-    "plugins": [
-        "import",
-        "@typescript-eslint",
-        "eslint-plugin-tsdoc"
-    ],
-    "extends": [
-        "airbnb-base",
-        "airbnb-typescript/base",
-        "plugin:@typescript-eslint/recommended",
-        "plugin:@typescript-eslint/recommended-requiring-type-checking",
-        "plugin:import/recommended",
-        "prettier"
-    ],
-    "rules": {
-        "tsdoc/syntax": "warn"
-    }
+  "root": true,
+  "env": {
+    "node": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "tsconfig.json",
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "plugins": [
+    "import",
+    "@typescript-eslint",
+    "eslint-plugin-tsdoc"
+  ],
+  "extends": [
+    "airbnb-base",
+    "airbnb-typescript/base",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:import/recommended",
+    "prettier"
+  ],
+  "rules": {
+    "tsdoc/syntax": "warn"
+  }
 }
