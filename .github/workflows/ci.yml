@@ -1,12 +1,6 @@
 name: ci
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   build:
@@ -14,13 +8,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Commitlint
+        uses: wagoid/commitlint-github-action@v4
+        with:
+          configFile: ".commitlintrc"
+          failOnWarnings: true
       - name: Install dependencies
         run: npm install
       - name: Checks
-        run: |
-          npm run check:format
-          npm run check:lint
-          npm run check:markdown
-          npm run check:spell
+        run: npm run checks
+      - name: ShellCheck
+        uses: ludeeus/action-shellcheck@master
       - name: Build
         run: npm run build
