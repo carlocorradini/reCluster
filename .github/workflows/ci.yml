@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Checks
-        run: npm run checks
+        run: npm run check
       - name: ShellCheck
         uses: ludeeus/action-shellcheck@master
       - name: Build
