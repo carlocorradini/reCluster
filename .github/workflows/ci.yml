@@ -22,3 +22,5 @@ jobs:
           npm run check:lint
           npm run check:markdown
           npm run check:spell
+      - name: Build
+        run: npm run build

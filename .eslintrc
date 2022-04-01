@@ -9,6 +9,16 @@
     "ecmaVersion": 2020,
     "sourceType": "module"
   },
+  "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts"]
+    },
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true
+      }
+    }
+  },
   "plugins": ["import", "@typescript-eslint", "eslint-plugin-tsdoc"],
   "extends": [
     "airbnb-base",
@@ -16,9 +26,12 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:import/recommended",
+    "plugin:import/typescript",
     "prettier"
   ],
   "rules": {
-    "tsdoc/syntax": "warn"
+    "tsdoc/syntax": "warn",
+    "import/no-default-export": "error",
+    "import/prefer-default-export": "off"
   }
 }
