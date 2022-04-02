@@ -4,5 +4,5 @@
   "language": "en",
   "useGitignore": true,
   "ignorePaths": ["build", "node_modules", "package.json", "tsconfig.json"],
-  "words": ["Corradini", "carlocorradini", "reCluster"]
+  "words": ["Corradini", "carlocorradini", "reCluster", "fastify", "GraphQLID"]
 }
