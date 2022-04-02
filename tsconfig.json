@@ -26,7 +26,7 @@
     "moduleResolution": "Node" /* Specify how TypeScript looks up a file from a given module specifier. */,
     "baseUrl": "." /* Specify the base directory to resolve non-relative module names. */,
     "paths": {
-      "@app/*": ["src/*"]
+      "~*": ["src/*"]
     } /* Specify a set of entries that re-map imports to additional lookup locations. */,
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     // "typeRoots": [],                                  /* Specify multiple folders that act like `./node_modules/@types`. */
@@ -97,9 +97,5 @@
     ]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules/**/*", "build/**/*"],
-  "ts-node": {
-    "transpileOnly": true,
-    "require": ["tsconfig-paths/register"]
-  }
+  "exclude": ["node_modules/**/*", "build/**/*"]
 }
