@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     /* Projects */
     // "incremental": true,                              /* Enable incremental compilation */
@@ -91,11 +92,14 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
     "plugins": [
-      {
-        "transform": "typescript-transform-paths"
-      }
+      { "transform": "typescript-transform-paths" },
+      { "transform": "typescript-transform-paths", "afterDeclarations": true }
     ]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules/**/*", "build/**/*"]
+  "exclude": ["node_modules/**/*", "build/**/*"],
+  "ts-node": {
+    "transpileOnly": true,
+    "require": ["tsconfig-paths/register"]
+  }
 }
