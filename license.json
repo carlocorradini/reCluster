@@ -28,9 +28,11 @@
     "txt": {}
   },
   "ignore": [
-    "build",
-    "coverage",
-    "mode_modules",
+    "**/*.d.ts",
+    "**/.d.ts.map",
+    "**/build",
+    "**/coverage",
+    "**/mode_modules",
     ".github",
     ".husky",
     ".vscode",
