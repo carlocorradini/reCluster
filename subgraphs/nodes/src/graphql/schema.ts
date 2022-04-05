@@ -1,4 +1,4 @@
-import { buildFederatedSchema } from '~/helpers';
+import { buildFederatedSchema } from '@recluster/helpers';
 import { NodeResolver, resolveNodeReference } from './resolvers';
 import { Node } from './types';
 

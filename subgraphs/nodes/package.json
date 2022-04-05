@@ -1,0 +1,19 @@
+{
+  "name": "@recluster/subgraph-nodes",
+  "version": "0.0.1",
+  "description": "reCluster subgraph nodes",
+  "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "main": "build/app.js",
+  "scripts": {},
+  "dependencies": {
+    "@recluster/graphql": "^0.0.1",
+    "@recluster/helpers": "^0.0.1",
+    "apollo-server": "^3.6.7",
+    "class-validator": "^0.13.2",
+    "graphql": "^15.8.0",
+    "reflect-metadata": "^0.1.13",
+    "type-graphql": "^1.1.1"
+  }
+}

@@ -1,7 +1,7 @@
 import { Arg, Query, Resolver } from 'type-graphql';
-import { GraphQLID } from '~/graphql/scalars';
+import { GraphQLID } from '@recluster/graphql';
+import { nodes } from '~/data';
 import { Node } from '../types';
-import { nodes } from '../../data';
 
 @Resolver(Node)
 export class NodeResolver {

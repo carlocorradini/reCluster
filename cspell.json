@@ -3,14 +3,19 @@
   "version": "0.2",
   "language": "en",
   "useGitignore": true,
-  "ignorePaths": ["build", "node_modules", "package.json", "tsconfig.json"],
+  "ignorePaths": ["build", "coverage", "node_modules", "package-lock.json"],
   "words": [
-    "Corradini",
     "carlocorradini",
-    "reCluster",
+    "codepaths",
+    "commitlint",
+    "Corradini",
     "fastify",
     "GraphQLID",
+    "reCluster",
+    "respawn",
+    "supergraph",
     "supergraphSdl",
-    "supergraph"
+    "tsbuildinfo",
+    "tsdoc"
   ]
 }
