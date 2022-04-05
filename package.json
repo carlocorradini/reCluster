@@ -36,6 +36,11 @@
     "check:lint": "npx eslint .",
     "check:markdown": "npx markdownlint \"**/*.md\"",
     "check:spell": "npx cspell lint --config cspell.json --no-progress --show-context \"**\"",
+    "fix": "npx npm-run-all --npm-path npm --serial fix:*",
+    "fix:format": "npx prettier --write .",
+    "fix:license": "npx license-check-and-add add -f license.json",
+    "fix:lint": "npx eslint --fix .",
+    "fix:markdown": "npx markdownlint --fix \"**/*.md\"",
     "prepare": "npx husky install && npx ts-patch install -s"
   },
   "devDependencies": {
