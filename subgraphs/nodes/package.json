@@ -5,8 +5,10 @@
   "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
   "license": "MIT",
   "private": true,
-  "main": "build/app.js",
-  "scripts": {},
+  "scripts": {
+    "start": "build/app.js",
+    "watch": "npx ts-node-dev --respawn --clear --transpile-only --require tsconfig-paths/register src/app.ts"
+  },
   "dependencies": {
     "@recluster/graphql": "^0.0.1",
     "@recluster/helpers": "^0.0.1",
