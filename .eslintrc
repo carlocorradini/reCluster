@@ -6,11 +6,7 @@
   },
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": [
-      "gateway/tsconfig.json",
-      "packages/**/tsconfig.json",
-      "subgraphs/**/tsconfig.json"
-    ],
+    "project": ["packages/**/tsconfig.json", "subgraphs/**/tsconfig.json"],
     "ecmaVersion": 2022,
     "sourceType": "module"
   },
@@ -21,11 +17,7 @@
     "import/resolver": {
       "typescript": {
         "alwaysTryTypes": true,
-        "project": [
-          "gateway/tsconfig.json",
-          "packages/**/tsconfig.json",
-          "subgraphs/**/tsconfig.json"
-        ]
+        "project": ["packages/**/tsconfig.json", "subgraphs/**/tsconfig.json"]
       }
     }
   },

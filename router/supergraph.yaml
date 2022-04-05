@@ -1,0 +1,5 @@
+subgraphs:
+  nodes:
+    routing_url: http://localhost:8000
+    schema:
+      subgraph_url: http://localhost:8000

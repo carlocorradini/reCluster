@@ -9,12 +9,9 @@
     "codepaths",
     "commitlint",
     "Corradini",
-    "fastify",
     "GraphQLID",
-    "reCluster",
+    "recluster",
     "respawn",
-    "supergraph",
-    "supergraphSdl",
     "tsbuildinfo",
     "tsdoc"
   ]
