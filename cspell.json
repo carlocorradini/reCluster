@@ -14,6 +14,7 @@
     "coverage",
     "node_modules",
     "package-lock.json",
+    "license.json",
     "scripts/__logger.sh"
   ],
   "words": [
