@@ -17,6 +17,8 @@ jobs:
           failOnWarnings: true
       - name: Install dependencies
         run: npm install
+      - name: Build
+        run: npm run build
       - name: Checks
         run: npm run check
       - name: ShellCheck
@@ -24,5 +26,3 @@ jobs:
         with:
           severity: error
           ignore_paths: build coverage node_modules
-      - name: Build
-        run: npm run build
