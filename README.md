@@ -2,7 +2,7 @@
 
 [![ci](https://github.com/carlocorradini/reCluster/actions/workflows/ci.yml/badge.svg)](https://github.com/carlocorradini/reCluster/actions/workflows/ci.yml)
 
-The reCluster is an architecture for a data centre that actively reduces its impact and minimizes its resource utilization.
+The reCluster is an architecture for a data center that actively reduces its impact and minimizes its resource utilization.
 
 ## Members
 
