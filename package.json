@@ -23,7 +23,6 @@
     "cluster"
   ],
   "workspaces": [
-    "gateway",
     "packages/*",
     "subgraphs/*"
   ],
