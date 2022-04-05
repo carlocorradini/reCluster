@@ -1,0 +1,13 @@
+{
+  "name": "@recluster/configs",
+  "version": "0.0.1",
+  "description": "reCluster configs",
+  "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "main": "build/index.js",
+  "scripts": {},
+  "devDependencies": {
+    "pino": "^7.9.2"
+  }
+}

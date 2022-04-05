@@ -22,19 +22,4 @@
  * SOFTWARE.
  */
 
-import 'reflect-metadata';
-import { ApolloServer } from 'apollo-server';
-import { schema } from './graphql';
-import { logger } from './logger';
-
-const server = new ApolloServer({
-  schema
-});
-
-server
-  .listen({ port: 8000, host: '0.0.0.0' })
-  .then(({ url }) => logger.info(`Server ready: ${url}`))
-  .catch((error) => {
-    logger.fatal(`Server error: ${error}`);
-    process.kill(process.pid, 'SIGTERM');
-  });
+export * from './logger';
