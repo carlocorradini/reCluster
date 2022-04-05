@@ -7,15 +7,20 @@
   "private": true,
   "scripts": {
     "start": "build/app.js",
-    "watch": "npx ts-node-dev --respawn --clear --transpile-only --require tsconfig-paths/register src/app.ts"
+    "watch": "npx ts-node-dev --respawn --clear --transpile-only --require tsconfig-paths/register src/app.ts | npx pino-pretty"
   },
   "dependencies": {
+    "@recluster/configs": "^0.0.1",
     "@recluster/graphql": "^0.0.1",
     "@recluster/helpers": "^0.0.1",
     "apollo-server": "^3.6.7",
     "class-validator": "^0.13.2",
     "graphql": "^15.8.0",
+    "pino": "^7.9.2",
     "reflect-metadata": "^0.1.13",
     "type-graphql": "^1.1.1"
+  },
+  "devDependencies": {
+    "pino-pretty": "^7.6.0"
   }
 }

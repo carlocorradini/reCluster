@@ -4,10 +4,10 @@
   "language": "en",
   "useGitignore": true,
   "import": [
-    "@cspell/dict-typescript/cspell-ext.json",
+    "@cspell/dict-bash/cspell-ext.json",
     "@cspell/dict-node/cspell-ext.json",
     "@cspell/dict-npm/cspell-ext.json",
-    "@cspell/dict-bash/cspell-ext.json"
+    "@cspell/dict-typescript/cspell-ext.json"
   ],
   "ignorePaths": [
     "build",
@@ -24,7 +24,8 @@
     "commitlint",
     "corradini",
     "graphqlid",
-    "readlink",
+    "pino",
+    "readlink" /* FIXME Remove when new version is available */,
     "recluster",
     "respawn",
     "supergraph",
