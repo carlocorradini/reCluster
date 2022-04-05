@@ -21,8 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
-
 # Current directory
 DIRNAME="$(dirname "$(readlink -f "$0")")"
 readonly DIRNAME
