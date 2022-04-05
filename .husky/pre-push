@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+. "$(dirname "$0")/_/husky.sh"
+
+if ! npm run check ; then
+cat << EOF
+Checks failed.
+See why: 'npm run check'
+Try to automatically fix: 'npm run fix'
+EOF
+fi
