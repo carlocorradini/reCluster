@@ -34,12 +34,16 @@
     "check:format": "npx prettier --check .",
     "check:lint": "npx eslint .",
     "check:markdown": "npx markdownlint \"**/*.md\"",
-    "check:spell": "npx cspell lint \"**\" --no-progress --show-context",
+    "check:spell": "npx cspell lint --config cspell.json --no-progress --show-context \"**\"",
     "prepare": "npx husky install && npx ts-patch install -s"
   },
   "devDependencies": {
     "@commitlint/cli": "^16.2.3",
     "@commitlint/config-conventional": "^16.2.1",
+    "@cspell/dict-bash": "^2.0.1",
+    "@cspell/dict-node": "^2.0.0",
+    "@cspell/dict-npm": "^2.0.2",
+    "@cspell/dict-typescript": "^2.0.0",
     "@typescript-eslint/eslint-plugin": "^5.17.0",
     "@typescript-eslint/parser": "^5.17.0",
     "cspell": "^5.19.3",
