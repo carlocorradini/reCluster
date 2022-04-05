@@ -3,15 +3,30 @@
   "version": "0.2",
   "language": "en",
   "useGitignore": true,
-  "ignorePaths": ["build", "coverage", "node_modules", "package-lock.json"],
+  "import": [
+    "@cspell/dict-typescript/cspell-ext.json",
+    "@cspell/dict-node/cspell-ext.json",
+    "@cspell/dict-npm/cspell-ext.json",
+    "@cspell/dict-bash/cspell-ext.json"
+  ],
+  "ignorePaths": [
+    "build",
+    "coverage",
+    "node_modules",
+    "package-lock.json",
+    "scripts/__logger.sh"
+  ],
   "words": [
+    "apollographql",
     "carlocorradini",
     "codepaths",
     "commitlint",
-    "Corradini",
-    "GraphQLID",
+    "corradini",
+    "graphqlid",
+    "readlink",
     "recluster",
     "respawn",
+    "supergraph",
     "tsbuildinfo",
     "tsdoc"
   ]
