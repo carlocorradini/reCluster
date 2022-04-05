@@ -54,8 +54,19 @@ local machine for development and testing purposes.
    scripts/router.sh
    ```
 
-1. Execute Queries \
-   Visit <http://localhost:4000> in your browser.
+1. Execute Queries
+
+   - Apollo Sandbox \
+     Visit <http://localhost:4000> in your browser.
+
+   - Manually
+
+     ```bash
+     curl --request POST \
+         --header 'content-type: application/json' \
+         --url 'http://localhost:4000' \
+         --data '{"query": "{ nodes { id, name } }"}'
+     ```
 
 ## License
 
