@@ -1,0 +1,55 @@
+{
+  "$schema": "https://raw.githubusercontent.com/awjh/license-check-and-add/master/config-schema.json",
+  "ignoreFile": ".gitignore",
+  "license": "LICENSE",
+  "trailingWhitespace": "TRIM",
+  "defaultFormat": {
+    "prepend": "/*",
+    "append": "*/\n"
+  },
+  "licenseFormats": {
+    "gitignore|npmignore|eslintignore|dockerignore|sh|py|graphql|yaml|yml": {
+      "eachLine": {
+        "prepend": "# "
+      },
+      "append": "\n"
+    },
+    "html|xml|svg": {
+      "prepend": "<!--",
+      "append": "-->\n"
+    },
+    "js|ts|css|scss|less|php|as|c|java|cpp|go|cto|acl": {
+      "prepend": "/*",
+      "eachLine": {
+        "prepend": " * "
+      },
+      "append": " */\n"
+    },
+    "txt": {}
+  },
+  "ignore": [
+    "build",
+    "coverage",
+    "mode_modules",
+    ".github",
+    ".husky",
+    ".vscode",
+    ".commitlintrc",
+    ".editorconfig",
+    ".eslintignore",
+    ".eslintrc",
+    ".gitattributes",
+    ".gitignore",
+    ".lintstagedrc",
+    ".markdownlint.json",
+    ".markdownlintignore",
+    ".npmrc",
+    ".nvmrc",
+    ".prettierignore",
+    ".prettierrc",
+    ".shellcheckrc",
+    "cspell.json",
+    "README.md",
+    "scripts/__logger.sh"
+  ]
+}
