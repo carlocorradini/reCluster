@@ -1,5 +1,5 @@
+import { nodes } from '~/data';
 import type { Node } from '../types';
-import { nodes } from '../../data';
 
 export async function resolveNodeReference(
   ref: Pick<Node, 'id'>

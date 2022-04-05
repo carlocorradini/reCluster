@@ -2,14 +2,15 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "recluster",
   "version": "0.0.1",
-  "description": "The reCluster is an architecture for a data centre that actively reduces its impact and minimizes its resource utilisation",
-  "author": "Carlo Corradini",
+  "description": "The reCluster is an architecture for a data centre that actively reduces its impact and minimizes its resource utilization",
+  "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
   "license": "MIT",
   "private": true,
   "engines": {
     "node": ">=16",
     "npm": ">=8"
   },
+  "homepage": "https://github.com/carlocorradini/reCluster#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/carlocorradini/reCluster.git"
@@ -17,22 +18,26 @@
   "bugs": {
     "url": "https://github.com/carlocorradini/reCluster/issues"
   },
-  "homepage": "https://github.com/carlocorradini/reCluster#readme",
   "keywords": [
     "reCluster",
     "cluster"
   ],
-  "main": "build/app.js",
+  "workspaces": [
+    "gateway",
+    "packages/*",
+    "subgraphs/*"
+  ],
   "scripts": {
     "build": "npx tsc --build tsconfig.json",
+    "build:watch": "npx tsc --build --watch tsconfig.json",
+    "build:clean": "npx tsc --build --clean tsconfig.json",
     "check": "npx npm-run-all --npm-path npm --serial check:*",
     "check:format": "npx prettier --check .",
     "check:lint": "npx eslint .",
     "check:markdown": "npx markdownlint \"**/*.md\"",
     "check:spell": "npx cspell lint \"**\" --no-progress --show-context",
-    "clean": "npx rimraf build",
+    "clean": "npx rimraf build FIXME",
     "prepare": "npx husky install && npx ts-patch install -s",
-    "start": "node build/app.js",
     "watch:gateway": "npx ts-node-dev --respawn --clear --transpile-only --require tsconfig-paths/register src/gateway/app.ts",
     "watch:nodes": "npx ts-node-dev --respawn --clear --transpile-only --require tsconfig-paths/register src/subgraphs/nodes/app.ts"
   },
@@ -61,18 +66,5 @@
     "tsconfig-paths": "^3.14.1",
     "typescript": "^4.6.3",
     "typescript-transform-paths": "^3.3.1"
-  },
-  "dependencies": {
-    "@apollo/gateway": "^2.0.0-preview.9",
-    "@apollo/subgraph": "^0.4.0",
-    "@graphql-tools/schema": "^8.3.6",
-    "@graphql-tools/utils": "^8.6.5",
-    "apollo-server": "^3.6.7",
-    "class-validator": "^0.13.2",
-    "graphql": "^16.3.0",
-    "graphql-scalars": "^1.17.0",
-    "graphql-tag": "^2.12.6",
-    "reflect-metadata": "^0.1.13",
-    "type-graphql": "^1.1.1"
   }
 }
