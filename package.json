@@ -32,6 +32,7 @@
     "build:watch": "npx tsc --build --watch tsconfig.json",
     "check": "npx npm-run-all --npm-path npm --serial check:*",
     "check:format": "npx prettier --check .",
+    "check:license": "npx license-check-and-add check -f license.json",
     "check:lint": "npx eslint .",
     "check:markdown": "npx markdownlint \"**/*.md\"",
     "check:spell": "npx cspell lint --config cspell.json --no-progress --show-context \"**\"",
