@@ -2,11 +2,19 @@
 
 [![ci](https://github.com/carlocorradini/reCluster/actions/workflows/ci.yml/badge.svg)](https://github.com/carlocorradini/reCluster/actions/workflows/ci.yml)
 
+The reCluster is an architecture for a data centre that actively reduces its impact and minimizes its resource utilization.
+
 ## Members
 
 | Name  |  Surname  |     Username     |    MAT     |
 | :---: | :-------: | :--------------: | :--------: |
 | Carlo | Corradini | `carlocorradini` | **223811** |
+
+## Requirements
+
+- [Node.js](https://nodejs.org)
+- [npm](https://www.npmjs.com)
+- [Docker](https://www.docker.com)
 
 ## Getting Started
 
