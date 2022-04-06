@@ -32,6 +32,7 @@
     "airbnb-base",
     "airbnb-typescript/base",
     "eslint:recommended",
+    "plugin:@cspell/recommended",
     "plugin:@typescript-eslint/recommended",
     // "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:import/recommended",
