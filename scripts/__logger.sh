@@ -3,6 +3,7 @@
 # Script Name: b-log
 # Script Version: See B_LOG_VERSION
 # Script Date: 30 June 2016
+# Script Repository: https://github.com/idelsink/b-log
 #########################################################################
 #
 # a bash-logging interface, hence the name b-log.

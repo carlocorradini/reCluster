@@ -25,7 +25,6 @@
     "corradini",
     "graphqlid",
     "pino",
-    "readlink" /* FIXME Remove when new version is available */,
     "recluster",
     "respawn",
     "supergraph",
