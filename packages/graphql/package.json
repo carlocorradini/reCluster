@@ -8,10 +8,12 @@
   "main": "build/index.js",
   "peerDependencies": {
     "graphql": "^15.8.0",
-    "graphql-scalars": "^1.17.0"
+    "graphql-scalars": "^1.17.0",
+    "type-graphql": "^1.1.1"
   },
   "devDependencies": {
     "graphql": "^15.8.0",
-    "graphql-scalars": "^1.17.0"
+    "graphql-scalars": "^1.17.0",
+    "type-graphql": "^1.1.1"
   }
 }

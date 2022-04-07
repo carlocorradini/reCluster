@@ -23,9 +23,8 @@
  */
 
 import { Arg, Ctx, Query, Resolver } from 'type-graphql';
-import { GraphQLID } from '@recluster/graphql';
+import { GraphQLID, Node } from '@recluster/graphql';
 import type { IContext } from '~graphql';
-import { Node } from '../types';
 
 @Resolver(Node)
 export class NodeResolver {
