@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-import type { PrismaClient } from '@prisma/client';
-import { prisma } from '@recluster/prisma';
+import { Field, InputType } from 'type-graphql';
+import { GraphQLNonEmptyString, Node } from '@recluster/graphql';
 
-export interface IContext {
-  prisma: PrismaClient;
+@InputType()
+export class NodeAddInput implements Partial<Node> {
+  @Field(() => GraphQLNonEmptyString)
+  name!: string;
 }
-
-export const context: IContext = { prisma };

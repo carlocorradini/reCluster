@@ -22,6 +22,4 @@
  * SOFTWARE.
  */
 
-export * from './inputs';
-export * from './resolvers';
-export * from './schema';
+export * from './NodeAddInput';

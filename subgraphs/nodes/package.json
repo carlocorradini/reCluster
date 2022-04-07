@@ -20,7 +20,8 @@
     "graphql": "^15.8.0",
     "pino": "^7.9.2",
     "reflect-metadata": "^0.1.13",
-    "type-graphql": "^1.1.1"
+    "type-graphql": "^1.1.1",
+    "typedi": "^0.10.0"
   },
   "devDependencies": {
     "pino-pretty": "^7.6.0"

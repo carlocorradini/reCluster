@@ -22,24 +22,30 @@
  * SOFTWARE.
  */
 
-import { Arg, Ctx, Query, Resolver } from 'type-graphql';
+import { Arg, Mutation, Query, Resolver } from 'type-graphql';
+import { Service, Inject } from 'typedi';
 import { GraphQLID, Node } from '@recluster/graphql';
-import type { IContext } from '~graphql';
+import { PrismaClient } from '@prisma/client';
+import { NodeAddInput } from '~graphql/inputs';
 
 @Resolver(Node)
+@Service()
 export class NodeResolver {
-  // eslint-disable-next-line class-methods-use-this
-  @Query(() => Node, { nullable: true })
-  async node(
-    @Arg('id', () => GraphQLID) id: string,
-    @Ctx() ctx: IContext
-  ): Promise<Node | null> {
-    return ctx.prisma.node.findUnique({ where: { id } });
+  @Inject()
+  private readonly prisma!: PrismaClient;
+
+  @Query(() => [Node])
+  async nodes() {
+    return this.prisma.node.findMany();
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  @Query(() => [Node])
-  async nodes(@Ctx() ctx: IContext): Promise<Node[]> {
-    return ctx.prisma.node.findMany();
+  @Query(() => Node, { nullable: true })
+  async node(@Arg('id', () => GraphQLID) id: string) {
+    return this.prisma.node.findUnique({ where: { id } });
+  }
+
+  @Mutation(() => Node)
+  async addNode(@Arg('node') nodeInput: NodeAddInput) {
+    return this.prisma.node.create({ data: { ...nodeInput } });
   }
 }
