@@ -25,6 +25,12 @@
       },
       "append": " */\n"
     },
+    "prisma": {
+      "eachLine": {
+        "prepend": "// "
+      },
+      "append": "\n"
+    },
     "txt": {}
   },
   "ignore": [
@@ -34,6 +40,8 @@
     "**/coverage",
     "**/mode_modules",
     "docker",
+    "packages/prisma/migrations",
+    "**/.gitignore",
     ".github",
     ".husky",
     ".vscode",
