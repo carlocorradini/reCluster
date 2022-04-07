@@ -48,7 +48,13 @@ local machine for development and testing purposes.
 
 ## Development
 
-1. Services
+1. Database
+
+   ```bash
+   scripts/database.sh
+   ```
+
+1. Subgraphs
 
    - Nodes
 
