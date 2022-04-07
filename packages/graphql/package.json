@@ -6,7 +6,6 @@
   "license": "MIT",
   "private": true,
   "main": "build/index.js",
-  "scripts": {},
   "peerDependencies": {
     "graphql": "^15.8.0",
     "graphql-scalars": "^1.17.0"
