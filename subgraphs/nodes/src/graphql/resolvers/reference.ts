@@ -23,10 +23,8 @@
  */
 
 import { prisma } from '@recluster/prisma';
-import type { Node } from '@recluster/graphql';
+import { Node } from '@recluster/graphql';
 
-export async function resolveNodeReference(
-  ref: Pick<Node, 'id'>
-): Promise<Node | null> {
+export async function resolveNodeReference(ref: Pick<Node, 'id'>) {
   return prisma.node.findUnique({ where: { id: ref.id } });
 }

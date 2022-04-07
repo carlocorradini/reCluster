@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import { Container } from 'typedi';
 import { buildFederatedSchema } from '@recluster/helpers';
 import { Node } from '@recluster/graphql';
 import { NodeResolver, resolveNodeReference } from './resolvers';
@@ -29,7 +30,8 @@ import { NodeResolver, resolveNodeReference } from './resolvers';
 export const schema = buildFederatedSchema(
   {
     resolvers: [NodeResolver],
-    orphanedTypes: [Node]
+    orphanedTypes: [Node],
+    container: Container
   },
   {
     Node: { __resolveReference: resolveNodeReference }

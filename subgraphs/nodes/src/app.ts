@@ -24,12 +24,16 @@
 
 import 'reflect-metadata';
 import { ApolloServer } from 'apollo-server';
-import { schema, context } from './graphql';
+import { Container } from 'typedi';
+import { PrismaClient } from '@prisma/client';
+import { prisma } from '@recluster/prisma';
+import { schema } from './graphql';
 import { logger } from './logger';
 
+Container.set(PrismaClient, prisma);
+
 const server = new ApolloServer({
-  schema,
-  context
+  schema
 });
 
 server
