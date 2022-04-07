@@ -50,8 +50,16 @@ local machine for development and testing purposes.
 
 1. Database
 
+   Start:
+
    ```bash
    scripts/database.sh
+   ```
+
+   Synchronize:
+
+   ```bash
+   npm run migrate --workspace=packages/prisma
    ```
 
 1. Subgraphs
@@ -79,7 +87,12 @@ local machine for development and testing purposes.
      curl --request POST \
          --header 'content-type: application/json' \
          --url 'http://localhost:4000' \
-         --data '{"query": "{ nodes { id, name } }"}'
+         --data '{ "query": "mutation { addNode(node: { name: \"Test\" }) { id, name } }" }'
+
+     curl --request POST \
+         --header 'content-type: application/json' \
+         --url 'http://localhost:4000' \
+         --data '{ "query": "{ nodes { id, name } }" }'
      ```
 
 ## License
