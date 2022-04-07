@@ -1,0 +1,22 @@
+{
+  "name": "@recluster/prisma",
+  "version": "0.0.1",
+  "description": "reCluster prisma",
+  "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "main": "build/index.js",
+  "scripts": {
+    "generate": "npx prisma generate --schema schema.prisma",
+    "generate:watch": "npx prisma generate --schema schema.prisma --watch",
+    "migrate": "npx prisma migrate dev --schema schema.prisma --name recluster",
+    "reset": "npx prisma migrate reset --schema schema.prisma --force"
+  },
+  "peerDependencies": {
+    "@prisma/client": "3.12.0"
+  },
+  "devDependencies": {
+    "@prisma/client": "3.12.0",
+    "prisma": "^3.12.0"
+  }
+}

@@ -24,11 +24,12 @@
 
 import 'reflect-metadata';
 import { ApolloServer } from 'apollo-server';
-import { schema } from './graphql';
+import { schema, context } from './graphql';
 import { logger } from './logger';
 
 const server = new ApolloServer({
-  schema
+  schema,
+  context
 });
 
 server

@@ -22,15 +22,11 @@
  * SOFTWARE.
  */
 
-import type { Node } from './graphql';
+import type { PrismaClient } from '@prisma/client';
+import { prisma } from '@recluster/prisma';
 
-export const nodes: Node[] = [
-  {
-    id: '0',
-    name: 'test0'
-  },
-  {
-    id: '1',
-    name: 'test1'
-  }
-];
+export interface IContext {
+  prisma: PrismaClient;
+}
+
+export const context: IContext = { prisma };
