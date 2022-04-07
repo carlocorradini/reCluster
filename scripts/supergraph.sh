@@ -24,17 +24,36 @@
 # Current directory
 DIRNAME="$(dirname "$(readlink -f "$0")")"
 readonly DIRNAME
+# Apollo Rover version
+readonly APOLLO_ROVER_VERSION="latest"
+# Apollo Rover image
+readonly APOLLO_ROVER_IMAGE="apollographql/router:$APOLLO_ROVER_VERSION"
+# Apollo Rover Dockerfile
+APOLLO_ROVER_DOCKERFILE=$(readlink -f "$DIRNAME/../docker/Dockerfile.rover")
+readonly APOLLO_ROVER_DOCKERFILE
 # Supergraph input
-readonly SUPERGRAPH_INPUT="$DIRNAME/../router/supergraph.yaml"
+SUPERGRAPH_INPUT=$(readlink -f "$DIRNAME/../router/supergraph.yaml")
+readonly SUPERGRAPH_INPUT
 # Supergraph output
-readonly SUPERGRAPH_OUTPUT="$DIRNAME/../router/supergraph.graphql"
+SUPERGRAPH_OUTPUT=$(readlink -f "$DIRNAME/../router/supergraph.graphql")
+readonly SUPERGRAPH_OUTPUT
 
 # Commons
 source "$DIRNAME/__commons.sh"
 
 # Assert
-assert_tool rover
+assert_tool docker
+assert_docker_image "$APOLLO_ROVER_IMAGE" "$APOLLO_ROVER_DOCKERFILE"
 
-# Rover
-INFO "Generating supergraph '$SUPERGRAPH_OUTPUT' from '$SUPERGRAPH_INPUT'"
-rover fed2 supergraph compose --config "$SUPERGRAPH_INPUT" > "$SUPERGRAPH_OUTPUT"
+# Generate supergraph
+INFO "Generating supergraph from '$SUPERGRAPH_INPUT'"
+SUPERGRAPH=$(docker run \
+    --mount "type=bind,source=$SUPERGRAPH_INPUT,target=/root/supergraph.yaml" \
+    --rm \
+    $APOLLO_ROVER_IMAGE \
+    fed2 supergraph compose --config /root/supergraph.yaml)
+readonly SUPERGRAPH
+
+# Save supergraph
+INFO "Saving supergraph in '$SUPERGRAPH_OUTPUT'"
+printf "%s" "$SUPERGRAPH" > "$SUPERGRAPH_OUTPUT"

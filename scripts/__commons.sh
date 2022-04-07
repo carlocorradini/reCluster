@@ -41,6 +41,27 @@ B_LOG --log-level 500
 
 # Check installed tool
 function assert_tool() {
-    command -v "$1" >/dev/null 2>&1 || { FATAL "'$1' is not installed"; exit 1; }
-    DEBUG "'$1' found at $(command -v "$1")"
+  if ! command -v "$1" >/dev/null 2>&1; then
+    FATAL "'$1' not found"
+  fi
+
+  DEBUG "'$1' found at $(command -v "$1")"
+}
+
+# Check docker image
+function assert_docker_image() {
+  assert_tool docker
+
+  if [[ "$(docker images -q "$1" 2> /dev/null)" == "" ]]; then
+    WARN "Docker image '$1' not found"
+
+    if [ "$#" -ne 2 ] || [ -z "$2" ]; then
+      FATAL "Unable to build '$1' because no Dockerfile has been provided"
+    fi
+
+    INFO "Building Docker image '$1' using Dockerfile '$2'"
+    docker build --rm -t "$1" -f "$2" "$__DIRNAME/.."
+  else
+    DEBUG "Docker image '$1' found"
+  fi
 }

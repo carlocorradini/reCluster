@@ -26,6 +26,14 @@ DIRNAME="$(dirname "$(readlink -f "$0")")"
 readonly DIRNAME
 # Apollo Router version
 readonly APOLLO_ROUTER_VERSION="v0.1.0-preview.2"
+# Apollo Router image
+readonly APOLLO_ROUTER_IMAGE="ghcr.io/apollographql/router:$APOLLO_ROUTER_VERSION"
+# Apollo Router config
+APOLLO_ROUTER_CONFIG=$(readlink -f "$DIRNAME/../router/router.yaml")
+readonly APOLLO_ROUTER_CONFIG
+# Apollo Router supergraph
+APOLLO_ROUTER_SUPERGRAPH=$(readlink -f "$DIRNAME/../router/supergraph.graphql")
+readonly APOLLO_ROUTER_SUPERGRAPH
 
 # Commons
 source "$DIRNAME/__commons.sh"
@@ -34,12 +42,12 @@ source "$DIRNAME/__commons.sh"
 assert_tool docker
 
 # Apollo Router
-INFO "Starting Apollo Router $APOLLO_ROUTER_VERSION"
+INFO "Starting Apollo Router '$APOLLO_ROUTER_VERSION': { config: '$APOLLO_ROUTER_CONFIG', supergraph: '$APOLLO_ROUTER_SUPERGRAPH' }"
 docker run \
   -p 4000:4000 \
-  --mount "type=bind,source=$DIRNAME/../router/router.yaml,target=/dist/config/router.yaml" \
-  --mount "type=bind,source=$DIRNAME/../router/supergraph.graphql,target=/dist/config/supergraph.graphql" \
+  --mount "type=bind,source=$APOLLO_ROUTER_CONFIG,target=/dist/config/router.yaml" \
+  --mount "type=bind,source=$APOLLO_ROUTER_SUPERGRAPH,target=/dist/config/supergraph.graphql" \
   --rm \
-  "ghcr.io/apollographql/router:$APOLLO_ROUTER_VERSION" \
+  "$APOLLO_ROUTER_IMAGE" \
   --config config/router.yaml \
   --supergraph config/supergraph.graphql
