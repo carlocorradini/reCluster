@@ -23,7 +23,7 @@
  */
 
 import { prisma } from '@recluster/prisma';
-import type { Node } from '../types';
+import type { Node } from '@recluster/graphql';
 
 export async function resolveNodeReference(
   ref: Pick<Node, 'id'>
