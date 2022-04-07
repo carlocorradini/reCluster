@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-import { Arg, Query, Resolver } from 'type-graphql';
+import { Arg, Ctx, Query, Resolver } from 'type-graphql';
 import { GraphQLID } from '@recluster/graphql';
-import { nodes } from '~/data';
+import type { IContext } from '~graphql';
 import { Node } from '../types';
 
 @Resolver(Node)
@@ -32,14 +32,15 @@ export class NodeResolver {
   // eslint-disable-next-line class-methods-use-this
   @Query(() => Node, { nullable: true })
   async node(
-    @Arg('id', () => GraphQLID) id: string
-  ): Promise<Node | undefined> {
-    return nodes.find((node) => node.id === id);
+    @Arg('id', () => GraphQLID) id: string,
+    @Ctx() ctx: IContext
+  ): Promise<Node | null> {
+    return ctx.prisma.node.findUnique({ where: { id } });
   }
 
   // eslint-disable-next-line class-methods-use-this
   @Query(() => [Node])
-  async nodes(): Promise<Node[]> {
-    return nodes;
+  async nodes(@Ctx() ctx: IContext): Promise<Node[]> {
+    return ctx.prisma.node.findMany();
   }
 }

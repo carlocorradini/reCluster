@@ -4,6 +4,7 @@
     { "path": "packages/configs" },
     { "path": "packages/graphql" },
     { "path": "packages/helpers" },
+    { "path": "packages/prisma" },
     { "path": "subgraphs/nodes" }
   ]
 }

@@ -12,6 +12,7 @@
     "mikestead.dotenv",
     "ms-azuretools.vscode-docker",
     "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "Prisma.prisma",
     "redhat.vscode-yaml",
     "timonwong.shellcheck",
     "usernamehw.errorlens"

@@ -22,11 +22,6 @@
  * SOFTWARE.
  */
 
-import { prisma } from '@recluster/prisma';
-import type { Node } from '../types';
+import { PrismaClient } from '@prisma/client';
 
-export async function resolveNodeReference(
-  ref: Pick<Node, 'id'>
-): Promise<Node | null> {
-  return prisma.node.findUnique({ where: { id: ref.id } });
-}
+export const prisma = new PrismaClient();
