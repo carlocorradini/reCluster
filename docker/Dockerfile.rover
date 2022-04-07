@@ -1,0 +1,60 @@
+# MIT License
+#
+# Copyright (c) 2022-2022 Carlo Corradini
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Build image
+FROM --platform=linux/amd64 alpine:latest AS build
+
+# Rover release
+ARG ROVER_RELEASE=v0.4.8
+
+# Download Rover core
+ADD https://github.com/apollographql/rover/releases/download/${ROVER_RELEASE}/rover-${ROVER_RELEASE}-x86_64-unknown-linux-gnu.tar.gz /tmp/rover.tar.gz
+# Download Rover Federation 2 plugin
+ADD https://github.com/apollographql/rover/releases/download/${ROVER_RELEASE}/rover-fed2-${ROVER_RELEASE}-x86_64-unknown-linux-gnu.tar.gz /tmp/rover-fed2.tar.gz
+
+# Create dist directory
+RUN mkdir /dist
+
+# Extract rover.tar.gz
+RUN tar xvzf /tmp/rover.tar.gz --strip-components=1 -C /dist
+# Extract rover-fed2.tar.gz
+RUN tar xvzf /tmp/rover-fed2.tar.gz --strip-components=1 -C /dist
+
+# Final image
+FROM --platform=linux/amd64 gcr.io/distroless/cc-debian11
+
+LABEL org.opencontainers.image.authors="Carlo Corradini <carlo.corradini98@gmail.com>, ApolloGraphQL https://github.com/apollographql/rover"
+
+# Copy required shared libraries
+COPY --from=build /lib/libz.so.1 /lib/x86_64-linux-gnu/
+COPY --from=build /lib/libc.musl-x86_64.so.1 /lib/x86_64-linux-gnu/
+
+# Copy Rover core
+COPY --from=build /dist/rover /root/.rover/bin/rover
+# Copy Rover Federation 2 plugin
+COPY --from=build /dist/rover-fed2 /root/.rover/bin/rover-fed2
+
+# Update PATH
+ENV PATH="/root/.rover/bin:${PATH}"
+
+# Default executable is rover
+ENTRYPOINT ["/root/.rover/bin/rover"]

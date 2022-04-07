@@ -360,6 +360,10 @@ function B_LOG_print_message() {
         logger "${B_LOG_LOG_VIA_SYSLOG}" "${B_LOG_CONVERTED_TEMPLATE_STRING}" || err_ret_code=$?
         B_LOG_ERR "${err_ret_code}" "Error while logging with syslog. Where these flags ok: '${B_LOG_LOG_VIA_SYSLOG}'"
     fi
+    # exit error if log level fatal
+    if [ "${log_level}" -eq "${LOG_LEVEL_FATAL}" ]; then
+       exit 1
+    fi
 }
 
 # Define commands
