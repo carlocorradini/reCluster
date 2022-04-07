@@ -13,6 +13,7 @@
     "build",
     "coverage",
     "node_modules",
+    "docker",
     "package-lock.json",
     "license.json",
     "scripts/__logger.sh"
