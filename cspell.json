@@ -24,12 +24,15 @@
     "codepaths",
     "commitlint",
     "corradini",
+    "cuid",
+    "datasource",
     "graphqlid",
     "pino",
     "recluster",
     "respawn",
     "supergraph",
     "tsbuildinfo",
-    "tsdoc"
+    "tsdoc",
+    "typedi"
   ]
 }
