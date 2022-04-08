@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { prisma } from '@recluster/prisma';
+import { prisma } from '@recluster/database';
 import { Node } from '@recluster/graphql';
 
 export async function resolveNodeReference(ref: Pick<Node, 'id'>) {

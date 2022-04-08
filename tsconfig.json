@@ -2,9 +2,9 @@
   "files": [],
   "references": [
     { "path": "packages/configs" },
+    { "path": "packages/database" },
     { "path": "packages/graphql" },
     { "path": "packages/helpers" },
-    { "path": "packages/prisma" },
     { "path": "subgraphs/nodes" }
   ]
 }

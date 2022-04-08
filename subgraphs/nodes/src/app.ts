@@ -26,7 +26,7 @@ import 'reflect-metadata';
 import { ApolloServer } from 'apollo-server';
 import { Container } from 'typedi';
 import { PrismaClient } from '@prisma/client';
-import { prisma } from '@recluster/prisma';
+import { prisma } from '@recluster/database';
 import { schema } from './graphql';
 import { logger } from './logger';
 

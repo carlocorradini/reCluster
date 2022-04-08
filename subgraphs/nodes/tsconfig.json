@@ -10,9 +10,9 @@
   },
   "references": [
     { "path": "../../packages/configs" },
+    { "path": "../../packages/database" },
     { "path": "../../packages/graphql" },
-    { "path": "../../packages/helpers" },
-    { "path": "../../packages/prisma" }
+    { "path": "../../packages/helpers" }
   ],
   "include": ["src/**/*"],
   "exclude": ["node_modules/**/*", "build/**/*"]
