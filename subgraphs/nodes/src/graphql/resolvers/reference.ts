@@ -22,9 +22,12 @@
  * SOFTWARE.
  */
 
-import { prisma } from '@recluster/database';
+import Container from 'typedi';
 import { Node } from '@recluster/graphql';
+import { NodeService } from '~services';
+
+const nodeService: NodeService = Container.get(NodeService);
 
 export async function resolveNodeReference(ref: Pick<Node, 'id'>) {
-  return prisma.node.findUnique({ where: { id: ref.id } });
+  return nodeService.node(ref.id);
 }

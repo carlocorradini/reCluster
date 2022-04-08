@@ -22,30 +22,4 @@
  * SOFTWARE.
  */
 
-import { Arg, Mutation, Query, Resolver } from 'type-graphql';
-import { Service, Inject } from 'typedi';
-import { GraphQLID, Node } from '@recluster/graphql';
-import { NodeService } from '~services';
-import { NodeAddInput } from '../inputs';
-
-@Resolver(Node)
-@Service()
-export class NodeResolver {
-  @Inject()
-  private readonly nodeService!: NodeService;
-
-  @Query(() => [Node])
-  async nodes() {
-    return this.nodeService.nodes();
-  }
-
-  @Query(() => Node, { nullable: true })
-  async node(@Arg('id', () => GraphQLID) id: string) {
-    return this.nodeService.node(id);
-  }
-
-  @Mutation(() => Node)
-  async addNode(@Arg('node') input: NodeAddInput) {
-    return this.nodeService.addNode(input);
-  }
-}
+export * from './NodeService';

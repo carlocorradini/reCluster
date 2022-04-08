@@ -22,30 +22,23 @@
  * SOFTWARE.
  */
 
-import { Arg, Mutation, Query, Resolver } from 'type-graphql';
-import { Service, Inject } from 'typedi';
-import { GraphQLID, Node } from '@recluster/graphql';
-import { NodeService } from '~services';
-import { NodeAddInput } from '../inputs';
+import { Service } from 'typedi';
+import { prisma } from '@recluster/database';
+import { NodeAddInput } from '~graphql/inputs';
 
-@Resolver(Node)
 @Service()
-export class NodeResolver {
-  @Inject()
-  private readonly nodeService!: NodeService;
+export class NodeService {
+  private readonly prisma = prisma;
 
-  @Query(() => [Node])
-  async nodes() {
-    return this.nodeService.nodes();
+  public async nodes() {
+    return this.prisma.node.findMany();
   }
 
-  @Query(() => Node, { nullable: true })
-  async node(@Arg('id', () => GraphQLID) id: string) {
-    return this.nodeService.node(id);
+  async node(id: string) {
+    return this.prisma.node.findUnique({ where: { id } });
   }
 
-  @Mutation(() => Node)
-  async addNode(@Arg('node') input: NodeAddInput) {
-    return this.nodeService.addNode(input);
+  async addNode(input: NodeAddInput) {
+    return this.prisma.node.create({ data: { ...input } });
   }
 }
