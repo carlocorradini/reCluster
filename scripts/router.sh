@@ -25,7 +25,7 @@
 DIRNAME="$(dirname "$(readlink -f "$0")")"
 readonly DIRNAME
 # Apollo Router version
-readonly APOLLO_ROUTER_VERSION="v0.1.0-preview.2"
+readonly APOLLO_ROUTER_VERSION="v0.1.0-preview.3"
 # Apollo Router image
 readonly APOLLO_ROUTER_IMAGE="ghcr.io/apollographql/router:$APOLLO_ROUTER_VERSION"
 # Apollo Router config
