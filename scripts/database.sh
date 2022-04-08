@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # Current directory
-DIRNAME="$(dirname "$(readlink -f "$0")")"
+DIRNAME=$(dirname "${BASH_SOURCE[0]}")
 readonly DIRNAME
 # PostgreSQL version
 readonly POSTGRESQL_VERSION="14.2"
@@ -42,7 +42,7 @@ source "$DIRNAME/__commons.sh"
 assert_tool docker
 
 # PostgreSQL
-INFO "Starting PostgreSQL '$POSTGRESQL_VERSION'"
+INFO "Starting PostgreSQL '$POSTGRESQL_IMAGE'"
 docker run \
   -p 5432:5432 \
   -e POSTGRES_USER="$POSTGRESQL_USER" \

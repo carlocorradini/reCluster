@@ -37,7 +37,7 @@ local machine for development and testing purposes.
 1. Install Dependencies
 
    ```bash
-   npm install
+   npm ci
    ```
 
 1. Build

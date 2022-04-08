@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # Current directory
-DIRNAME="$(dirname "$(readlink -f "$0")")"
+DIRNAME=$(dirname "${BASH_SOURCE[0]}")
 readonly DIRNAME
 # Apollo Router version
 readonly APOLLO_ROUTER_VERSION="v0.1.0-preview.3"
@@ -42,7 +42,7 @@ source "$DIRNAME/__commons.sh"
 assert_tool docker
 
 # Apollo Router
-INFO "Starting Apollo Router '$APOLLO_ROUTER_VERSION': { config: '$APOLLO_ROUTER_CONFIG', supergraph: '$APOLLO_ROUTER_SUPERGRAPH' }"
+INFO "Starting Apollo Router '$APOLLO_ROUTER_IMAGE': { config: '$APOLLO_ROUTER_CONFIG', supergraph: '$APOLLO_ROUTER_SUPERGRAPH' }"
 docker run \
   -p 4000:4000 \
   --mount "type=bind,source=$APOLLO_ROUTER_CONFIG,target=/dist/config/router.yaml" \

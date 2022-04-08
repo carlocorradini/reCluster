@@ -22,46 +22,29 @@
 # SOFTWARE.
 
 # Current directory
-__DIRNAME=$(dirname "${BASH_SOURCE[0]}")
-readonly __DIRNAME
+DIRNAME=$(dirname "${BASH_SOURCE[0]}")
+readonly DIRNAME
+# Subgraph nodes version
+readonly SUBGRAPH_NODES_VERSION="latest"
+# Subgraph nodes image
+readonly SUBGRAPH_NODES_IMAGE="recluster/subgraphs/nodes:$SUBGRAPH_NODES_VERSION"
+# Subgraph nodes Dockerfile
+SUBGRAPH_NODES_DOCKERFILE=$(readlink -f "$DIRNAME/../../docker/subgraphs/Dockerfile.nodes")
+readonly SUBGRAPH_NODES_DOCKERFILE
+# Database
+readonly DATABASE_URL="postgresql://recluster:password@localhost:5432/recluster?schema=public"
 
-# Fail on error
-set -o errexit
-# Fail on unset var usage
-set -o nounset
-# Prevents errors in a pipeline from being masked
-set -o pipefail
-# Disable wildcard character expansion
-set -o noglob
+# Commons
+source "$DIRNAME/../__commons.sh"
 
-# Logger
-source "$__DIRNAME/__logger.sh"
-# Default log level
-B_LOG --log-level 500
+# Assert
+assert_tool docker
+assert_docker_image "$SUBGRAPH_NODES_IMAGE" "$SUBGRAPH_NODES_DOCKERFILE"
 
-# Check installed tool
-function assert_tool() {
-  if ! command -v "$1" >/dev/null 2>&1; then
-    FATAL "'$1' not found"
-  fi
-
-  DEBUG "'$1' found at $(command -v "$1")"
-}
-
-# Check docker image
-function assert_docker_image() {
-  assert_tool docker
-
-  if [[ "$(docker images -q "$1" 2> /dev/null)" == "" ]]; then
-    WARN "Docker image '$1' not found"
-
-    if [ "$#" -ne 2 ] || [ -z "$2" ]; then
-      FATAL "Unable to build '$1' because no Dockerfile has been provided"
-    fi
-
-    INFO "Building Docker image '$1' using Dockerfile '$2'"
-    docker build --rm -t "$1" -f "$2" "$__DIRNAME/.."
-  else
-    DEBUG "Docker image '$1' found"
-  fi
-}
+# Subgraph nodes
+INFO "Starting subgraph nodes '$SUBGRAPH_NODES_IMAGE'"
+docker run \
+  -p 8000:8000 \
+  -e "DATABASE_URL=$DATABASE_URL" \
+  --rm \
+  "$SUBGRAPH_NODES_IMAGE"
