@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # Current directory
-DIRNAME="$(dirname "$(readlink -f "$0")")"
+DIRNAME=$(dirname "${BASH_SOURCE[0]}")
 readonly DIRNAME
 # Apollo Rover version
 readonly APOLLO_ROVER_VERSION="latest"
