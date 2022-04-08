@@ -41,8 +41,9 @@ RUN npm run build
 RUN npm run generate --workspace=packages/database
 
 # Remove unnecessary files and directories
-RUN find packages subgraphs '!' \( -name "package.json" -type f -o -name "build" -type d \) -mindepth 2 -maxdepth 2 -exec rm -rf {} +
-RUN find ./ -type f \( -name "tsconfig.json" -o -name "tsconfig.*.json" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" \) -not -path "./node_modules/*" -exec rm -rf {} +
+RUN find packages subgraphs -mindepth 2 -maxdepth 2 '!' \( -name "package.json" -type f -o -name "build" -type d \) -exec rm -rf {} +
+RUN find ./ -not -path "./node_modules/*" -type f \( -name "tsconfig.json" -o -name "tsconfig.*.json" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" \) -exec rm -rf {} +
+RUN find subgraphs -mindepth 1 -maxdepth 1 '!' \( -name "tsconfig.json" -type f -o -name "nodes" -type d \) -exec rm -rf {} +
 
 # Remove non-production dependencies
 RUN npm prune --production --workspaces --include-workspace-root
