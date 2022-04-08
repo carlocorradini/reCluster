@@ -30,4 +30,4 @@ export {
   GraphQLBoolean
 } from 'graphql';
 
-export { GraphQLNonEmptyString } from 'graphql-scalars';
+export { GraphQLNonEmptyString, GraphQLNonNegativeInt } from 'graphql-scalars';
