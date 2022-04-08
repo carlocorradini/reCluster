@@ -25,13 +25,19 @@
 import { Service } from 'typedi';
 import { prisma } from '@recluster/database';
 import { NodeAddInput } from '~graphql/inputs';
+import { PaginationArgs } from '@recluster/graphql';
 
 @Service()
 export class NodeService {
   private readonly prisma = prisma;
 
-  public async nodes() {
-    return this.prisma.node.findMany();
+  public async nodes(options: PaginationArgs) {
+    return this.prisma.node.findMany({
+      skip: options.cursor ? options.skip + 1 : options.skip,
+      take: options.take,
+      ...(options.cursor && { cursor: { id: options.cursor } }),
+      orderBy: { id: 'asc' }
+    });
   }
 
   async node(id: string) {

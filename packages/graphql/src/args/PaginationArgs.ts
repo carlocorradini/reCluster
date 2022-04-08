@@ -22,30 +22,39 @@
  * SOFTWARE.
  */
 
-import { Arg, Args, Mutation, Query, Resolver } from 'type-graphql';
-import { Service, Inject } from 'typedi';
-import { GraphQLID, Node, PaginationArgs } from '@recluster/graphql';
-import { NodeService } from '~services';
-import { NodeAddInput } from '../inputs';
+import { ArgsType, Field } from 'type-graphql';
+import { Max, Min } from 'class-validator';
+import { GraphQLNonNegativeInt, GraphQLInt, GraphQLID } from '../scalars';
 
-@Resolver(Node)
-@Service()
-export class NodeResolver {
-  @Inject()
-  private readonly nodeService!: NodeService;
+@ArgsType()
+export class PaginationArgs {
+  public static readonly DEFAULT_SKIP: number = 0;
 
-  @Query(() => [Node])
-  async nodes(@Args() options: PaginationArgs) {
-    return this.nodeService.nodes(options);
-  }
+  public static readonly DEFAULT_TAKE: number = 8;
 
-  @Query(() => Node, { nullable: true })
-  async node(@Arg('id', () => GraphQLID) id: string) {
-    return this.nodeService.node(id);
-  }
+  public static readonly TAKE_MIN_VALUE: number = -16;
 
-  @Mutation(() => Node)
-  async addNode(@Arg('node') input: NodeAddInput) {
-    return this.nodeService.addNode(input);
-  }
+  public static readonly TAKE_MAX_VALUE: number = 16;
+
+  @Field(() => GraphQLNonNegativeInt, {
+    defaultValue: PaginationArgs.DEFAULT_SKIP,
+    nullable: true,
+    description: `Skip 'n' data`
+  })
+  skip!: number;
+
+  @Field(() => GraphQLInt, {
+    defaultValue: PaginationArgs.DEFAULT_TAKE,
+    nullable: true,
+    description: `Take 'n' data`
+  })
+  @Min(PaginationArgs.TAKE_MIN_VALUE)
+  @Max(PaginationArgs.TAKE_MAX_VALUE)
+  take!: number;
+
+  @Field(() => GraphQLID, {
+    nullable: true,
+    description: `Data cursor`
+  })
+  cursor?: string;
 }
