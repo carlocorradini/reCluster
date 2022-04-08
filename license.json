@@ -46,6 +46,7 @@
     ".husky",
     ".vscode",
     ".commitlintrc",
+    ".dockerignore",
     ".editorconfig",
     ".eslintignore",
     ".eslintrc",
