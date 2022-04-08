@@ -1,7 +1,7 @@
 {
-  "name": "@recluster/prisma",
+  "name": "@recluster/database",
   "version": "0.0.1",
-  "description": "reCluster prisma",
+  "description": "reCluster database",
   "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
   "license": "MIT",
   "private": true,
