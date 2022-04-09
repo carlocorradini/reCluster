@@ -46,6 +46,7 @@ RUN find ./ -not -path "./node_modules/*" -type f \( -name "tsconfig.json" -o -n
 RUN find subgraphs -mindepth 1 -maxdepth 1 '!' \( -name "tsconfig.json" -type f -o -name "nodes" -type d \) -exec rm -rf {} +
 
 # Remove non-production dependencies
+# FIXME Uninstall all except current subgraph
 RUN npm prune --production --workspaces --include-workspace-root
 
 # Final image
