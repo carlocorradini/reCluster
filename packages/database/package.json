@@ -7,10 +7,12 @@
   "private": true,
   "main": "build/index.js",
   "scripts": {
+    "format": "npx prisma format --schema schema.prisma",
     "generate": "npx prisma generate --schema schema.prisma",
     "generate:watch": "npx prisma generate --schema schema.prisma --watch",
     "migrate": "npx prisma migrate dev --schema schema.prisma --name recluster",
-    "reset": "npx prisma migrate reset --schema schema.prisma"
+    "reset": "npx prisma migrate reset --schema schema.prisma",
+    "studio": "npx prisma studio --schema schema.prisma"
   },
   "peerDependencies": {
     "@prisma/client": "3.12.0"
