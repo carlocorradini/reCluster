@@ -37,8 +37,6 @@ COPY subgraphs subgraphs
 RUN npm ci
 # Build
 RUN npm run build
-# Generate database artifacts
-RUN npm run generate --workspace=packages/database
 
 # Remove unnecessary files and directories
 RUN find packages subgraphs -mindepth 2 -maxdepth 2 '!' \( -name "package.json" -type f -o -name "build" -type d \) -exec rm -rf {} +
