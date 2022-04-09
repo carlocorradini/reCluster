@@ -43,7 +43,7 @@
     "fix:license": "npx license-check-and-add add -f license.json",
     "fix:lint": "npx eslint --fix .",
     "fix:markdown": "npx markdownlint --fix \"**/*.md\"",
-    "prepare": "npx husky install && npx ts-patch install -s"
+    "prepare": "npx husky install && npx ts-patch install -s && npm run generate --workspace=packages/database"
   },
   "devDependencies": {
     "@commitlint/cli": "^16.2.3",
