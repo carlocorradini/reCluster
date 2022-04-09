@@ -28,23 +28,23 @@ import { GraphQLNonNegativeInt, GraphQLInt, GraphQLID } from '../scalars';
 
 @ArgsType()
 export class PaginationArgs {
-  public static readonly DEFAULT_SKIP: number = 0;
+  public static readonly SKIP_DEFAULT_VALUE: number = 0;
 
-  public static readonly DEFAULT_TAKE: number = 8;
+  public static readonly TAKE_DEFAULT_VALUE: number = 8;
 
   public static readonly TAKE_MIN_VALUE: number = -16;
 
   public static readonly TAKE_MAX_VALUE: number = 16;
 
   @Field(() => GraphQLNonNegativeInt, {
-    defaultValue: PaginationArgs.DEFAULT_SKIP,
+    defaultValue: PaginationArgs.SKIP_DEFAULT_VALUE,
     nullable: true,
     description: `Skip 'n' data`
   })
   skip!: number;
 
   @Field(() => GraphQLInt, {
-    defaultValue: PaginationArgs.DEFAULT_TAKE,
+    defaultValue: PaginationArgs.TAKE_DEFAULT_VALUE,
     nullable: true,
     description: `Take 'n' data`
   })
