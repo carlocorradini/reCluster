@@ -23,7 +23,7 @@
  */
 
 import { Directive, Field, ObjectType } from 'type-graphql';
-import { GraphQLID, GraphQLNonEmptyString } from '~/scalars';
+import { GraphQLID, GraphQLNonEmptyString } from '@recluster/graphql';
 
 @ObjectType()
 @Directive(`@key(fields: "id")`)

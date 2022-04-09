@@ -24,8 +24,9 @@
 
 import { Arg, Args, Mutation, Query, Resolver } from 'type-graphql';
 import { Service, Inject } from 'typedi';
-import { GraphQLID, Node, PaginationArgs } from '@recluster/graphql';
+import { GraphQLID, PaginationArgs } from '@recluster/graphql';
 import { NodeService } from '~services';
+import { Node } from '../types';
 import { NodeAddInput } from '../inputs';
 
 @Resolver(Node)

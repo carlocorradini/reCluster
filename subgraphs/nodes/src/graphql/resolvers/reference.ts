@@ -23,8 +23,8 @@
  */
 
 import Container from 'typedi';
-import { Node } from '@recluster/graphql';
 import { NodeService } from '~services';
+import { Node } from '../types';
 
 const nodeService: NodeService = Container.get(NodeService);
 

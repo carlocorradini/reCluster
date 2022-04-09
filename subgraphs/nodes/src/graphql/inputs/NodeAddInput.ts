@@ -23,7 +23,8 @@
  */
 
 import { Field, InputType } from 'type-graphql';
-import { GraphQLNonEmptyString, Node } from '@recluster/graphql';
+import { GraphQLNonEmptyString } from '@recluster/graphql';
+import { Node } from '../types';
 
 @InputType()
 export class NodeAddInput implements Partial<Node> {
