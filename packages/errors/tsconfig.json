@@ -8,13 +8,6 @@
       "~*": ["src/*"]
     }
   },
-  "references": [
-    { "path": "../../packages/configs" },
-    { "path": "../../packages/database" },
-    { "path": "../../packages/errors" },
-    { "path": "../../packages/graphql" },
-    { "path": "../../packages/helpers" }
-  ],
   "include": ["src/**/*"],
   "exclude": ["node_modules/**/*", "build/**/*"]
 }

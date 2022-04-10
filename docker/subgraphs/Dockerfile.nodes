@@ -64,4 +64,4 @@ COPY --from=build /app .
 EXPOSE 8000
 
 # Default executable is nodes
-ENTRYPOINT [ "node", "subgraphs/nodes/build/app.js" ]
+ENTRYPOINT [ "node", "subgraphs/nodes/build/main.js" ]

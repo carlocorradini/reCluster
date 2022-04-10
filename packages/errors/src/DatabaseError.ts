@@ -22,19 +22,14 @@
  * SOFTWARE.
  */
 
-import 'reflect-metadata';
-import { ApolloServer } from 'apollo-server';
-import { schema } from './graphql';
-import { logger } from './logger';
+import { ApolloError } from 'apollo-server-errors';
 
-const server = new ApolloServer({
-  schema
-});
+export class DatabaseError extends ApolloError {
+  constructor(code?: string) {
+    super('Internal Server Error', 'INTERNAL_SERVER_ERROR', {
+      kind: code ? code.replace('P', 'DB') : 'DB0000'
+    });
 
-server
-  .listen({ port: 8000, host: '0.0.0.0' })
-  .then(({ url }) => logger.info(`Server ready: ${url}`))
-  .catch((error) => {
-    logger.fatal(`Server error: ${error}`);
-    process.kill(process.pid, 'SIGTERM');
-  });
+    Object.defineProperty(this, 'name', { value: 'DatabaseError' });
+  }
+}
