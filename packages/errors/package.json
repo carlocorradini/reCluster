@@ -1,0 +1,12 @@
+{
+  "name": "@recluster/errors",
+  "version": "0.0.1",
+  "description": "reCluster errors",
+  "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "main": "build/index.js",
+  "dependencies": {
+    "apollo-server-errors": "^3.3.1"
+  }
+}

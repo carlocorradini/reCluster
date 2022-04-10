@@ -6,13 +6,14 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "build/app.js",
-    "watch": "npx ts-node-dev --respawn --clear --transpile-only --require tsconfig-paths/register src/app.ts | npx pino-pretty"
+    "start": "build/main.js",
+    "watch": "npx ts-node-dev --respawn --clear --rs --transpile-only --require tsconfig-paths/register src/main.ts | npx pino-pretty"
   },
   "dependencies": {
     "@prisma/client": "^3.12.0",
     "@recluster/configs": "^0.0.1",
     "@recluster/database": "^0.0.1",
+    "@recluster/errors": "^0.0.1",
     "@recluster/graphql": "^0.0.1",
     "@recluster/helpers": "^0.0.1",
     "apollo-server": "^3.6.7",
