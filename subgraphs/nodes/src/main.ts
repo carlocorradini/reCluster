@@ -24,16 +24,17 @@
 
 import 'reflect-metadata';
 import { ApolloServer } from 'apollo-server';
+import { ArgumentValidationError } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@recluster/database';
-import { DatabaseError } from '@recluster/errors';
+import { DatabaseError, ValidationError } from '@recluster/errors';
 import { schema } from './graphql';
 import { logger } from './logger';
 
 const server = new ApolloServer({
   schema,
   formatError: (error) => {
-    logger.error(`Server error: ${JSON.stringify(error)}`);
+    logger.error(`Server error: ${error}`);
 
     // Database
     if (
@@ -43,11 +44,17 @@ const server = new ApolloServer({
       error.originalError instanceof Prisma.PrismaClientInitializationError ||
       error.originalError instanceof Prisma.PrismaClientValidationError
     ) {
+      // TODO When PrismaClientRustPanicError occurs restart Node process
       return new DatabaseError(
         error.originalError instanceof Prisma.PrismaClientKnownRequestError
           ? error.originalError.code
           : undefined
       );
+    }
+
+    // Validation
+    if (error.originalError instanceof ArgumentValidationError) {
+      return new ValidationError(error.originalError.validationErrors);
     }
 
     // Generic
@@ -61,7 +68,7 @@ async function main() {
     await prisma.$connect();
     logger.info(`Database connected`);
   } catch (error) {
-    logger.fatal(`Database error: ${JSON.stringify(error)}`);
+    logger.fatal(`Database error: ${error}`);
     throw error;
   }
 
@@ -70,12 +77,12 @@ async function main() {
     const serverInfo = await server.listen({ port: 8000, host: '0.0.0.0' });
     logger.info(`Server started at ${serverInfo.url}`);
   } catch (error) {
-    logger.fatal(`Server error: ${JSON.stringify(error)}`);
+    logger.fatal(`Server error: ${error}`);
     throw error;
   }
 }
 
 main().catch((error) => {
-  logger.fatal(`Error starting subgraph: ${JSON.stringify(error)}`);
+  logger.fatal(`Error starting subgraph: ${error}`);
   throw error;
 });
