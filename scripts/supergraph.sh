@@ -27,7 +27,7 @@ readonly DIRNAME
 # Apollo Rover version
 readonly APOLLO_ROVER_VERSION="latest"
 # Apollo Rover image
-readonly APOLLO_ROVER_IMAGE="apollographql/router:$APOLLO_ROVER_VERSION"
+readonly APOLLO_ROVER_IMAGE="recluster/router:$APOLLO_ROVER_VERSION"
 # Apollo Rover Dockerfile
 APOLLO_ROVER_DOCKERFILE=$(readlink -f "$DIRNAME/../docker/Dockerfile.rover")
 readonly APOLLO_ROVER_DOCKERFILE
@@ -51,7 +51,7 @@ SUPERGRAPH=$(docker run \
     --mount "type=bind,source=$SUPERGRAPH_INPUT,target=/root/supergraph.yaml" \
     --rm \
     $APOLLO_ROVER_IMAGE \
-    fed2 supergraph compose --config /root/supergraph.yaml)
+    supergraph compose --config /root/supergraph.yaml)
 readonly SUPERGRAPH
 
 # Save supergraph
