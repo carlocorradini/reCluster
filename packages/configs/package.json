@@ -7,6 +7,6 @@
   "private": true,
   "main": "build/index.js",
   "devDependencies": {
-    "pino": "^7.9.2"
+    "pino": "^7.10.0"
   }
 }
