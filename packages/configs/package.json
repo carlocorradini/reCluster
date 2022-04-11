@@ -6,6 +6,7 @@
   "license": "MIT",
   "private": true,
   "main": "build/index.js",
+  "types": "build/index.d.ts",
   "devDependencies": {
     "pino": "^7.10.0"
   }
