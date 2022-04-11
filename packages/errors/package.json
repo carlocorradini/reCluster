@@ -6,6 +6,7 @@
   "license": "MIT",
   "private": true,
   "main": "build/index.js",
+  "types": "build/index.d.ts",
   "dependencies": {
     "apollo-server-errors": "^3.3.1"
   }

@@ -6,6 +6,7 @@
   "license": "MIT",
   "private": true,
   "main": "build/index.js",
+  "types": "build/index.d.ts",
   "peerDependencies": {
     "graphql": "^15.8.0",
     "type-graphql": "^1.1.1"
