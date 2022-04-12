@@ -22,6 +22,16 @@
  * SOFTWARE.
  */
 
-export * from './config';
-export * from './env';
-export * from './logger';
+export type IConfig = {
+  name: string;
+  node: {
+    env: string;
+  };
+  server: {
+    host: string;
+    port: number;
+  };
+  database: {
+    url: string;
+  };
+};

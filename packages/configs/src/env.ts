@@ -22,6 +22,15 @@
  * SOFTWARE.
  */
 
-export * from './config';
-export * from './env';
-export * from './logger';
+import { host, port, str, url } from 'envalid';
+
+export const env = {
+  NODE_ENV: str({
+    choices: ['development', 'production', 'test'],
+    default: 'production',
+    desc: 'Node environment'
+  }),
+  HOST: host({ default: '0.0.0.0', desc: 'Listening host' }),
+  PORT: port({ default: 80, desc: 'Listening port' }),
+  DATABASE_URL: url({ desc: 'Database connection URL' })
+};

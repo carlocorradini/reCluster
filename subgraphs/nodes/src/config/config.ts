@@ -22,6 +22,19 @@
  * SOFTWARE.
  */
 
-export * from './config';
-export * from './env';
-export * from './logger';
+import type { IConfig } from '@recluster/configs';
+import { env } from './env';
+
+export const config: IConfig = {
+  name: 'subgraph-nodes',
+  node: {
+    env: env.NODE_ENV
+  },
+  server: {
+    host: env.HOST,
+    port: env.PORT
+  },
+  database: {
+    url: env.DATABASE_URL
+  }
+};
