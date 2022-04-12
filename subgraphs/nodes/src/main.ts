@@ -27,9 +27,9 @@ import 'dotenv/config';
 import { ApolloServer } from 'apollo-server';
 import { ArgumentValidationError } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { prisma } from '@recluster/database';
 import { DatabaseError, ValidationError } from '@recluster/errors';
 import { config } from './config';
+import { prisma } from './database';
 import { schema } from './graphql';
 import { logger } from './logger';
 
