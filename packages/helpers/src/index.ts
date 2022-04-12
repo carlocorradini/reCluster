@@ -23,3 +23,4 @@
  */
 
 export * from './buildFederatedSchema';
+export * from './formatErrorApolloServer';

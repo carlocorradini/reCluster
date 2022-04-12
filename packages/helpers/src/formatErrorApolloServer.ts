@@ -22,47 +22,33 @@
  * SOFTWARE.
  */
 
-import 'reflect-metadata';
-import 'dotenv/config';
-import { ApolloServer } from 'apollo-server';
-import { formatErrorApolloServer } from '@recluster/helpers';
-import { config } from './config';
-import { prisma } from './database';
-import { schema } from './graphql';
-import { logger } from './logger';
+import { GraphQLError } from 'graphql';
+import { ArgumentValidationError } from 'type-graphql';
+import { Prisma } from '@prisma/client';
+import { DatabaseError, ValidationError } from '@recluster/errors';
 
-const server = new ApolloServer({
-  schema,
-  formatError: (error) => {
-    logger.error(`Server error: ${error}`);
-    return formatErrorApolloServer(error);
-  }
-});
-
-async function main() {
+export function formatErrorApolloServer(error: GraphQLError) {
   // Database
-  try {
-    await prisma.$connect();
-    logger.info(`Database connected`);
-  } catch (error) {
-    logger.fatal(`Database error: ${error}`);
-    throw error;
+  if (
+    error.originalError instanceof Prisma.PrismaClientKnownRequestError ||
+    error.originalError instanceof Prisma.PrismaClientUnknownRequestError ||
+    error.originalError instanceof Prisma.PrismaClientRustPanicError ||
+    error.originalError instanceof Prisma.PrismaClientInitializationError ||
+    error.originalError instanceof Prisma.PrismaClientValidationError
+  ) {
+    // TODO When PrismaClientRustPanicError occurs restart Node process
+    return new DatabaseError(
+      error.originalError instanceof Prisma.PrismaClientKnownRequestError
+        ? error.originalError.code
+        : undefined
+    );
   }
 
-  // Server
-  try {
-    const serverInfo = await server.listen({
-      port: config.server.port,
-      host: config.server.host
-    });
-    logger.info(`Server started at ${serverInfo.url}`);
-  } catch (error) {
-    logger.fatal(`Server error: ${error}`);
-    throw error;
+  // Validation
+  if (error.originalError instanceof ArgumentValidationError) {
+    return new ValidationError(error.originalError.validationErrors);
   }
+
+  // Generic
+  return error;
 }
-
-main().catch((error) => {
-  logger.fatal(`Error starting subgraph: ${error}`);
-  throw error;
-});
