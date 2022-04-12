@@ -34,7 +34,8 @@
     "txt": {}
   },
   "ignore": [
-    "**/.env.example",
+    "**/*.env",
+    "**/*.env.*",
     "**/*.d.ts",
     "**/.d.ts.map",
     "**/build",
