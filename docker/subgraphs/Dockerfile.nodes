@@ -28,20 +28,21 @@ WORKDIR /app
 # Copy required files
 COPY package.json package-lock.json ./
 COPY tsconfig.json tsconfig.common.json ./
+COPY schema.prisma ./
 
 # Copy required directories
 COPY packages packages
 COPY subgraphs subgraphs
 
 # Install all dependencies
-RUN npm ci
+RUN npm install
 # Build
 RUN npm run build
 
 # Remove unnecessary files and directories
+RUN find subgraphs -mindepth 1 -maxdepth 1 '!' \( -name "nodes" -type d \) -exec rm -rf {} +
 RUN find packages subgraphs -mindepth 2 -maxdepth 2 '!' \( -name "package.json" -type f -o -name "build" -type d \) -exec rm -rf {} +
-RUN find ./ -not -path "./node_modules/*" -type f \( -name "tsconfig.json" -o -name "tsconfig.*.json" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" \) -exec rm -rf {} +
-RUN find subgraphs -mindepth 1 -maxdepth 1 '!' \( -name "tsconfig.json" -type f -o -name "nodes" -type d \) -exec rm -rf {} +
+RUN find ./ -not -path "./node_modules/*" -type f \( -name "schema.prisma" -o -name "tsconfig.json" -o -name "tsconfig.*.json" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" \) -exec rm -rf {} +
 
 # Remove non-production dependencies
 # FIXME Uninstall all except current subgraph
@@ -52,8 +53,11 @@ FROM node:alpine
 
 LABEL org.opencontainers.image.authors="Carlo Corradini <carlo.corradini98@gmail.com>"
 
-# Production environment
+# Environment
 ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=80
+ENV DATABASE_URL=
 
 WORKDIR /app
 
@@ -61,7 +65,7 @@ WORKDIR /app
 COPY --from=build /app .
 
 # Port
-EXPOSE 8000
+EXPOSE 80
 
 # Default executable is nodes
 ENTRYPOINT [ "node", "subgraphs/nodes/build/main.js" ]

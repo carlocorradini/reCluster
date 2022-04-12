@@ -23,7 +23,7 @@
  */
 
 import { Service } from 'typedi';
-import { prisma } from '@recluster/database';
+import { prisma } from '~/database';
 import { NodeAddInput } from '~graphql/inputs';
 import { PaginationArgs } from '@recluster/graphql';
 

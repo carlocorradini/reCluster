@@ -48,6 +48,16 @@ local machine for development and testing purposes.
 
 ## Development
 
+1. Environment
+
+   Copy & paste each `.env.example` file, name it `.env` and edit it according to your configuration.
+
+   Here is the location of each `.env.example`:
+
+   - `.env.example`
+
+   - `subgraphs/nodes/.env.example`
+
 1. Database
 
    Start:
@@ -59,7 +69,7 @@ local machine for development and testing purposes.
    Synchronize:
 
    ```bash
-   npm run migrate --workspace=packages/database
+   npm run db:migrate
    ```
 
 1. Subgraphs
