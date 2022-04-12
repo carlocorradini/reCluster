@@ -59,7 +59,7 @@ local machine for development and testing purposes.
    Synchronize:
 
    ```bash
-   npm run migrate --workspace=packages/database
+   npm run db:migrate
    ```
 
 1. Subgraphs
