@@ -10,7 +10,6 @@
   },
   "references": [
     { "path": "../../packages/configs" },
-    { "path": "../../packages/database" },
     { "path": "../../packages/errors" },
     { "path": "../../packages/graphql" },
     { "path": "../../packages/helpers" }

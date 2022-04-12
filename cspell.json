@@ -26,6 +26,7 @@
     "corradini",
     "cuid",
     "datasource",
+    "envalid",
     "graphqlid",
     "pino",
     "recluster",

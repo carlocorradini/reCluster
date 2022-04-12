@@ -44,7 +44,7 @@ assert_docker_image "$SUBGRAPH_NODES_IMAGE" "$SUBGRAPH_NODES_DOCKERFILE"
 # Subgraph nodes
 INFO "Starting subgraph nodes '$SUBGRAPH_NODES_IMAGE'"
 docker run \
-  -p 8000:8000 \
+  -p 80:8000 \
   -e "DATABASE_URL=$DATABASE_URL" \
   --rm \
   "$SUBGRAPH_NODES_IMAGE"
