@@ -23,11 +23,13 @@
  */
 
 import 'reflect-metadata';
+import 'dotenv/config';
 import { ApolloServer } from 'apollo-server';
 import { ArgumentValidationError } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@recluster/database';
 import { DatabaseError, ValidationError } from '@recluster/errors';
+import { config } from './config';
 import { schema } from './graphql';
 import { logger } from './logger';
 
@@ -74,7 +76,10 @@ async function main() {
 
   // Server
   try {
-    const serverInfo = await server.listen({ port: 8000, host: '0.0.0.0' });
+    const serverInfo = await server.listen({
+      port: config.server.port,
+      host: config.server.host
+    });
     logger.info(`Server started at ${serverInfo.url}`);
   } catch (error) {
     logger.fatal(`Server error: ${error}`);

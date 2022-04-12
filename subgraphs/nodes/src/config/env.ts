@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
-export * from './config';
-export * from './env';
-export * from './logger';
+import { cleanEnv } from 'envalid';
+import { env as envConfig } from '@recluster/configs';
+
+export const env = cleanEnv(process.env, { ...envConfig });
