@@ -8,7 +8,7 @@
     "append": "*/\n"
   },
   "licenseFormats": {
-    "gitignore|npmignore|eslintignore|dockerignore|^Dockerfile|sh|py|graphql|yaml|yml|^.env": {
+    "gitignore|npmignore|eslintignore|dockerignore|^Dockerfile|sh|py|graphql|yaml|yml": {
       "eachLine": {
         "prepend": "# "
       },
@@ -34,6 +34,7 @@
     "txt": {}
   },
   "ignore": [
+    "**/.env.example",
     "**/*.d.ts",
     "**/.d.ts.map",
     "**/build",
