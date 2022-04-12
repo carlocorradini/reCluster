@@ -12,7 +12,6 @@
   "dependencies": {
     "@prisma/client": "^3.12.0",
     "@recluster/configs": "^0.0.1",
-    "@recluster/errors": "^0.0.1",
     "@recluster/graphql": "^0.0.1",
     "@recluster/helpers": "^0.0.1",
     "apollo-server": "^3.6.7",
@@ -24,8 +23,5 @@
     "reflect-metadata": "^0.1.13",
     "type-graphql": "^1.1.1",
     "typedi": "^0.10.0"
-  },
-  "devDependencies": {
-    "pino-pretty": "^7.6.1"
   }
 }
