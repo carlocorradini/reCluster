@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -20,40 +21,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FROM alpine:3.14
+# Current directory
+DIRNAME=$(dirname "${BASH_SOURCE[0]}")
+readonly DIRNAME
+# Alpine version
+readonly ALPINE_VERSION=v3.14
+# mkimage profile
+MKIMAGE_PROFILE=$(readlink -f "$DIRNAME/mkimg.recluster.sh")
+readonly MKIMAGE_PROFILE
+# mkimage output
+MKIMAGE_OUTPUT=$(readlink -f "$DIRNAME/iso")
+readonly MKIMAGE_OUTPUT
 
-RUN apk add --no-cache \
-  alpine-sdk \
-  build-base \
-  apk-tools \
-  alpine-conf \
-  busybox \
-  fakeroot \
-  syslinux \
-  xorriso \
-  squashfs-tools \
-  sudo
+CONTAINER=$(docker run --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/mkimg.recluster.sh" --volume "$MKIMAGE_OUTPUT:/home/build/iso" --detach --interactive --tty recluster/alpine:latest)
+readonly CONTAINER
 
-RUN apk add --no-cache \
-  mtools \
-  dosfstools \
-  grub-efi
+docker exec "$CONTAINER" chmod +x /home/build/aports/scripts/mkimg.recluster.sh
 
-RUN apk add --no-cache \
-  bash
+docker exec "$CONTAINER" /home/build/aports/scripts/mkimage.sh --tag "$ALPINE_VERSION" --outdir /home/build/iso --arch x86_64 --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/main" --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/community" --profile recluster
 
-RUN adduser \
-  --disabled-password \
-  --home /home/build \
-  --ingroup abuild \
-  build
+docker stop "$CONTAINER"
 
-RUN echo "abuild ALL=(ALL) ALL" > /etc/sudoers.d/abuild
-
-RUN ["/bin/bash", "-c", "bash", "abuild-keygen", "--install", "--append", "<<<", "password"]
-
-RUN git clone --depth=1 https://gitlab.alpinelinux.org/alpine/aports.git /home/build/aports
-
-RUN apk update
-
-ENTRYPOINT [ "/bin/bash" ]
+docker rm "$CONTAINER"
