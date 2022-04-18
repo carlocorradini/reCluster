@@ -33,6 +33,11 @@ readonly MKIMAGE_PROFILE
 MKIMAGE_OUTPUT=$(readlink -f "$DIRNAME/iso")
 readonly MKIMAGE_OUTPUT
 
+if [ -d  "$DIRNAME/iso" ]; then
+  rm -rf "$DIRNAME/iso"
+fi
+mkdir "$DIRNAME/iso"
+
 CONTAINER=$(docker run --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/mkimg.recluster.sh" --volume "$MKIMAGE_OUTPUT:/home/build/iso" --detach --interactive --tty recluster/alpine:latest)
 readonly CONTAINER
 
