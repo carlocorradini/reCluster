@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FROM alpine:3.14
+FROM alpine:edge
 
 RUN apk add --no-cache \
   alpine-sdk \
@@ -50,7 +50,7 @@ RUN adduser \
 
 RUN echo "abuild ALL=(ALL) ALL" > /etc/sudoers.d/abuild
 
-RUN ["/bin/bash", "-c", "bash", "abuild-keygen", "--install", "--append", "<<<", "password"]
+RUN abuild-keygen -n --install --append
 
 RUN git clone --depth=1 https://gitlab.alpinelinux.org/alpine/aports.git /home/build/aports
 

@@ -25,7 +25,7 @@
 DIRNAME=$(dirname "${BASH_SOURCE[0]}")
 readonly DIRNAME
 # Alpine version
-readonly ALPINE_VERSION=v3.14
+readonly ALPINE_VERSION=edge
 # mkimage profile
 MKIMAGE_PROFILE=$(readlink -f "$DIRNAME/mkimg.recluster.sh")
 readonly MKIMAGE_PROFILE
@@ -38,7 +38,7 @@ readonly CONTAINER
 
 docker exec "$CONTAINER" chmod +x /home/build/aports/scripts/mkimg.recluster.sh
 
-docker exec "$CONTAINER" /home/build/aports/scripts/mkimage.sh --tag "$ALPINE_VERSION" --outdir /home/build/iso --arch x86_64 --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/main" --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/community" --profile recluster
+docker exec "$CONTAINER" /home/build/aports/scripts/mkimage.sh --tag "$ALPINE_VERSION" --outdir /home/build/iso --arch x86_64 --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/main" --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/community" --repository "https://dl-cdn.alpinelinux.org/alpine/v3.14/main" --profile recluster
 
 docker stop "$CONTAINER"
 
