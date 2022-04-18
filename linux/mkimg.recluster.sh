@@ -22,16 +22,16 @@
 # SOFTWARE.
 
 profile_recluster() {
-    profile_standard
-    kernel_cmdline="unionfs_size=512M console=tty0 console=ttyS0,115200"
-    syslinux_serial="0 115200"
-    kernel_addons="zfs"
-    apks="$apks iscsi-scst zfs-scripts zfs zfs-utils-py cciss_vol_status lvm2 mdadm mkinitfs mtools nfs-utils parted rsync sfdisk syslinux unrar util-linux xfsprogs dosfstools ntfs-3g"
-    for _kf in $kernel_flavors; do
-        apks="$apks linux-$_kf"
-        for _ka in $kernel_addons; do
-            apks="$apks $_ka-$_kf"
-        done
-    done
-    apks="$apks linux-firmware"
+  title="reCluster"
+  desc="reCluster Alpine"
+  profile_standard
+  kernel_addons="zfs"
+  apks="$apks iscsi-scst zfs-scripts zfs zfs-utils-py cciss_vol_status lvm2 mdadm mkinitfs mtools nfs-utils parted rsync sfdisk syslinux unrar util-linux xfsprogs dosfstools ntfs-3g"
+  for _kf in $kernel_flavors; do
+      apks="$apks linux-$_kf"
+      for _ka in $kernel_addons; do
+          apks="$apks $_ka-$_kf"
+      done
+  done
+  apks="$apks linux-firmware"
 }
