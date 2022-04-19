@@ -39,21 +39,18 @@ RUN apk add --no-cache \
   dosfstools \
   grub-efi
 
-RUN apk add --no-cache \
-  bash
-
 RUN adduser \
   --disabled-password \
   --home /home/build \
   --ingroup abuild \
   build
 
-RUN echo "abuild ALL=(ALL) ALL" > /etc/sudoers.d/abuild
+RUN echo "%abuild ALL=(ALL) ALL" > /etc/sudoers.d/abuild
+
+RUN apk update
 
 RUN abuild-keygen -n --install --append
 
 RUN git clone --depth=1 https://gitlab.alpinelinux.org/alpine/aports.git /home/build/aports
 
-RUN apk update
-
-ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "/bin/sh" ]
