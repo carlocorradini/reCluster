@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # Current directory
-__DIRNAME=$(dirname "${BASH_SOURCE[0]}")
+__DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly __DIRNAME
 
 # Fail on error

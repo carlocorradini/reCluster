@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # Current directory
-DIRNAME=$(dirname "${BASH_SOURCE[0]}")
+DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Subgraph nodes version
 readonly SUBGRAPH_NODES_VERSION="latest"

@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # Current directory
-DIRNAME=$(dirname "${BASH_SOURCE[0]}")
+DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # PostgreSQL version
 readonly POSTGRESQL_VERSION="14.2"
