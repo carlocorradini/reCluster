@@ -22,10 +22,12 @@
 # SOFTWARE.
 
 profile_recluster() {
+  profile_standard
   title="reCluster"
   desc="reCluster Alpine"
-  profile_standard
-  kernel_addons="zfs"
+  arch="x86_64"
+	apkovl="genapkovl-recluster.sh"
+  syslinux_serial="0 115200"
   apks="$apks "
   for _kf in $kernel_flavors; do
       apks="$apks linux-$_kf"
