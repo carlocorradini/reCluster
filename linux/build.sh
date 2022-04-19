@@ -43,7 +43,7 @@ readonly CONTAINER
 
 docker exec "$CONTAINER" chmod +x /home/build/aports/scripts/mkimg.recluster.sh
 
-docker exec "$CONTAINER" /home/build/aports/scripts/mkimage.sh --tag "$ALPINE_VERSION" --outdir /home/build/iso --arch x86_64 --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/main" --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/community" --repository "https://dl-cdn.alpinelinux.org/alpine/v3.14/main" --profile recluster
+docker exec "$CONTAINER" /home/build/aports/scripts/mkimage.sh --tag "$ALPINE_VERSION" --outdir /home/build/iso --arch x86_64 --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/main" --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/community" --profile recluster
 
 docker stop "$CONTAINER"
 

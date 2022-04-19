@@ -26,7 +26,7 @@ profile_recluster() {
   desc="reCluster Alpine"
   profile_standard
   kernel_addons="zfs"
-  apks="$apks iscsi-scst zfs-scripts zfs zfs-utils-py cciss_vol_status lvm2 mdadm mkinitfs mtools nfs-utils parted rsync sfdisk syslinux unrar util-linux xfsprogs dosfstools ntfs-3g"
+  apks="$apks "
   for _kf in $kernel_flavors; do
       apks="$apks linux-$_kf"
       for _ka in $kernel_addons; do
