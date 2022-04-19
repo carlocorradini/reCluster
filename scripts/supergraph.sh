@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # Current directory
-DIRNAME=$(dirname "${BASH_SOURCE[0]}")
+DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Apollo Rover version
 readonly APOLLO_ROVER_VERSION="latest"

@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 # Current directory
-DIRNAME=$(dirname "${BASH_SOURCE[0]}")
+DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Apollo Router version
 readonly APOLLO_ROUTER_VERSION="v0.1.0-preview.4"
