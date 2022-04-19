@@ -22,26 +22,29 @@
 # SOFTWARE.
 
 # Current directory
-DIRNAME=$(dirname "${BASH_SOURCE[0]}")
+DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Alpine version
 readonly ALPINE_VERSION=edge
 # mkimage profile
 MKIMAGE_PROFILE=$(readlink -f "$DIRNAME/mkimg.recluster.sh")
 readonly MKIMAGE_PROFILE
-# mkimage output
-MKIMAGE_OUTPUT=$(readlink -f "$DIRNAME/iso")
-readonly MKIMAGE_OUTPUT
+# mkimage iso directory
+MKIMAGE_ISO_DIR=$(readlink -f "$DIRNAME/iso")
+readonly MKIMAGE_ISO_DIR
+# genapkovl
+GENAPKOVL=$(readlink -f "$DIRNAME/genapkovl-recluster.sh")
+readonly GENAPKOVL
 
-if [ -d  "$DIRNAME/iso" ]; then
-  rm -rf "$DIRNAME/iso"
+if [ -d  "$MKIMAGE_ISO_DIR" ]; then
+  rm -rf "$MKIMAGE_ISO_DIR"
 fi
-mkdir "$DIRNAME/iso"
+mkdir "$MKIMAGE_ISO_DIR"
 
-CONTAINER=$(docker run --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/mkimg.recluster.sh" --volume "$MKIMAGE_OUTPUT:/home/build/iso" --detach --interactive --tty recluster/alpine:latest)
+CONTAINER=$(docker run --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/mkimg.recluster.sh" --volume "$GENAPKOVL:/home/build/aports/scripts/genapkovl-recluster.sh" --volume "$MKIMAGE_ISO_DIR:/home/build/iso" --detach --interactive --tty recluster/alpine:latest)
 readonly CONTAINER
 
-docker exec "$CONTAINER" chmod +x /home/build/aports/scripts/mkimg.recluster.sh
+docker exec "$CONTAINER" chmod +x /home/build/aports/scripts/mkimg.recluster.sh /home/build/aports/scripts/genapkovl-recluster.sh
 
 docker exec "$CONTAINER" /home/build/aports/scripts/mkimage.sh --tag "$ALPINE_VERSION" --outdir /home/build/iso --arch x86_64 --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/main" --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/community" --profile recluster
 
