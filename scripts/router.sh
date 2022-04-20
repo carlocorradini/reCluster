@@ -25,7 +25,7 @@
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Apollo Router version
-readonly APOLLO_ROUTER_VERSION="v0.1.0-preview.4"
+readonly APOLLO_ROUTER_VERSION="v0.1.0-preview.5"
 # Apollo Router image
 readonly APOLLO_ROUTER_IMAGE="ghcr.io/apollographql/router:$APOLLO_ROUTER_VERSION"
 # Apollo Router config
