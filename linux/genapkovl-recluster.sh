@@ -26,7 +26,6 @@ rc_add() {
 }
 
 tmp=$(mktemp -d)
-readonly tmp
 trap cleanup EXIT
 
 # Networking
