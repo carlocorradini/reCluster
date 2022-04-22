@@ -29,10 +29,16 @@ set -o nounset
 set -o noglob
 
 # ================
-# ARGUMENTS
+# GLOBALS
 # ================
+# CPU information
+CPU_INFO=
 # Installation stage
-ARG_STAGE=
+INSTALLATION_STAGE=
+# Log level
+LOG_LEVEL=
+# reCluster directory
+RECLUSTER_DIR=
 
 # ================
 # LOGGER
@@ -47,9 +53,6 @@ LOG_LEVEL_WARN=300
 LOG_LEVEL_INFO=500
 # Debug log level
 LOG_LEVEL_DEBUG=600
-
-# Default log level
-LOG_LEVEL=$LOG_LEVEL_INFO
 
 # Print log message
 # @param $1 Log level
@@ -111,18 +114,30 @@ INFO() { log_print_message ${LOG_LEVEL_INFO} "$@"; }
 DEBUG() { log_print_message ${LOG_LEVEL_DEBUG} "$@"; }
 
 # ================
-# UTILS
+# FUNCTIONS
 # ================
 # Show help message
 show_help() {
 cat << EOF
-Usage: recluster.sh [--help] --stage <STAGE>
+Usage: recluster.sh [--help] [--log-level <LEVEL>] --stage <STAGE>
 
 reCluster installation script.
 
 Options:
-  --help     Show this help message and exit
-  --stage    Specify installation stage
+  --help                Show this help message and exit
+
+  --log-level <LEVEL>   Logger level
+                        Default: info
+                        Values:
+                          fatal    Fatal
+                          error    Error
+                          warn     Warning
+                          info     Informational
+                          debug    Debug
+
+  --stage <STAGE>       Specify installation stage
+                        Values:
+                          0    Initial stage
 EOF
 }
 
@@ -132,7 +147,7 @@ assert_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     FATAL "'$1' not found"
   fi
-  DEBUG "'$1' found at $(command -v "$1")"
+  DEBUG "'$1' found at '$(command -v "$1")'"
 }
 
 # Parse command line arguments
@@ -146,15 +161,32 @@ parse_args() {
         show_help
         exit 1
       ;;
+      --log-level)
+        # Log level
+        if [ -z "${2+x}" ]; then FATAL "Argument '--log-level' requires a non-empty value"; fi
+        case $2 in
+          fatal) LOG_LEVEL=$LOG_LEVEL_FATAL ;;
+          error) LOG_LEVEL=$LOG_LEVEL_ERROR ;;
+          warn) LOG_LEVEL=$LOG_LEVEL_WARN ;;
+          info) LOG_LEVEL=$LOG_LEVEL_INFO ;;
+          debug) LOG_LEVEL=$LOG_LEVEL_DEBUG ;;
+          *) FATAL "Value '$2' of argument '--log-level' is invalid" ;;
+        esac
+
+        shift
+        shift
+      ;;
       --stage)
         # Installation stage
-        if [ -n "${2+x}" ]; then
-          ARG_STAGE=$2
-          shift
-          shift
-        else
-          FATAL "Argument '--stage' requires a non-empty value"
-        fi
+        if [ -z "${2+x}" ]; then FATAL "Argument '--stage' requires a non-empty value"; fi
+        case $2 in
+          0) ;;
+          *) FATAL "Value '$2' of argument '--stage' is invalid"
+        esac
+
+        INSTALLATION_STAGE=$2
+        shift
+        shift
       ;;
       -*)
         # Unknown argument
@@ -170,21 +202,7 @@ parse_args() {
   done
 
   # Checks
-  if [ -z "$ARG_STAGE" ]; then FATAL "Argument '--stage' is required"; fi
-}
-
-# Stage 0
-stage_0() {
-  # reCluster directory
-  if [ -d "$RECLUSTER_DIR" ]; then
-    FATAL "reCluster directory '$RECLUSTER_DIR' already exists"
-  fi
-  INFO "Creating reCluster directory '$RECLUSTER_DIR'"
-  mkdir -p "$RECLUSTER_DIR"
-
-  INFO "Reading CPU info"
-  read_cpu_info
-  INFO "CPU is '$(echo "$CPU_INFO" | jq --raw-output .name)'"
+  if [ -z "$INSTALLATION_STAGE" ]; then FATAL "Argument '--stage' is required"; fi
 }
 
 # Read CPU info
@@ -196,51 +214,53 @@ read_cpu_info() {
                   | add
                   | with_entries(if .key | endswith(":") then .key |= sub(":";"") else . end)
                   | .Flags /= " "
-                  | ."CPU op-mode(s)" /= ", "
                   | .vulnerabilities = (to_entries | map(.key | select(startswith("Vulnerability "))[14:]))
                   | with_entries(select(.key | startswith("Vulnerability ") | not))
                   | . + {"architecture": .Architecture}
                   | . + {"flags": .Flags}
-                  | . + {"modes": ."CPU op-mode(s)" | map(. | split("-")[0] | tonumber)}
-                  | . + {"byteOrder": ."Byte Order"}
-                  | . + {"cores": ."CPU(s)" | tonumber}
+                  | . + {"cores": (."CPU(s)" | tonumber)}
                   | . + {"vendor": ."Vendor ID"}
-                  | . + {"family": ."CPU family" | tonumber}
-                  | . + {"model": .Model | tonumber}
+                  | . + {"family": (."CPU family" | tonumber)}
+                  | . + {"model": (.Model | tonumber)}
                   | . + {"name": ."Model name"}
-                  | . + {"frequency": ."CPU MHz" | tonumber}
-                  | . + {"cache": {"l1d": ."L1d cache", "l1i": ."L1i cache", "l2": ."L2 cache", "l3": ."L3 cache"}}
-                  | with_entries(select(.key as $f | ["architecture", "flags", "modes", "byteOrder", "cores", "vendor", "family", "model", "name", "frequency", "cache", "vulnerabilities"] | index($f)))
+                  | . + {"cache": {}}
+                  | .cache += {"l1d": (."L1d cache" | split(" ") | .[0] + " " + .[1])}
+                  | .cache += {"l1i": (."L1i cache" | split(" ") | .[0] + " " + .[1])}
+                  | .cache += {"l2": (."L2 cache" | split(" ") | .[0] + " " + .[1])}
+                  | .cache += {"l3": (."L3 cache" | split(" ") | .[0] + " " + .[1])}
+                  | with_entries(select(.key as $f | ["architecture", "flags", "cores", "vendor", "family", "model", "name", "cache", "vulnerabilities"] | index($f)))
                 '
   )"
-
-  DEBUG "CPU info: $(echo "$CPU_INFO" | jq .)"
 }
 
 ################################################################################################################################
 
 # === CONFIGURATION ===
 # Log level
-LOG_LEVEL=$LOG_LEVEL_DEBUG
+LOG_LEVEL=$LOG_LEVEL_INFO
 # reCluster directory
 RECLUSTER_DIR="/etc/recluster"
-
-# === ASSERT ===
-if [ "$(id -u)" -ne 0 ]; then FATAL "Run as 'root' for administrative rights"; fi
-assert_cmd "curl"
-assert_cmd "lscpu"
-assert_cmd "lshw"
-assert_cmd "lsmem"
 
 # === ARGUMENTS ===
 parse_args "$@"
 
+# === ASSERT ===
+if [ "$(id -u)" -ne 0 ]; then FATAL "Run as 'root' for administrative rights"; fi
+assert_cmd "jq"
+assert_cmd "lscpu"
+
 # === MAIN ===
-case $ARG_STAGE in
+case $INSTALLATION_STAGE in
   0)
-    stage_0
-  ;;
-  *)
-    FATAL "Unknown stage '$ARG_STAGE'"
+    # reCluster directory
+    if [ -d "$RECLUSTER_DIR" ]; then FATAL "reCluster directory '$RECLUSTER_DIR' already exists"; fi
+    INFO "Creating reCluster directory '$RECLUSTER_DIR'"
+    mkdir -p "$RECLUSTER_DIR"
+
+    # CPU info
+    INFO "Reading CPU info"
+    read_cpu_info
+    DEBUG "CPU info: $(echo "$CPU_INFO" | jq .)"
+    INFO "CPU is '$(echo "$CPU_INFO" | jq --raw-output .name)'"
   ;;
 esac
