@@ -33,6 +33,8 @@ set -o noglob
 # ================
 # CPU information
 CPU_INFO=
+# RAM information
+RAM_INFO=
 # Installation stage
 INSTALLATION_STAGE=
 # Log level
@@ -233,6 +235,18 @@ read_cpu_info() {
   )"
 }
 
+# Read RAM info
+read_ram_info() {
+  RAM_INFO="$(lsmem --bytes --json \
+              | jq --compact-output --sort-keys '
+                  .memory
+                  | map(.size)
+                  | add
+                  | { "size": . }
+                '
+  )"
+}
+
 ################################################################################################################################
 
 # === CONFIGURATION ===
@@ -258,9 +272,15 @@ case $INSTALLATION_STAGE in
     mkdir -p "$RECLUSTER_DIR"
 
     # CPU info
-    INFO "Reading CPU info"
+    INFO "Reading CPU information"
     read_cpu_info
     DEBUG "CPU info: $(echo "$CPU_INFO" | jq .)"
     INFO "CPU is '$(echo "$CPU_INFO" | jq --raw-output .name)'"
+
+    # RAM info
+    INFO "Reading RAM information"
+    read_ram_info
+    DEBUG "RAM info: $(echo "$RAM_INFO" | jq .)"
+    INFO "RAM is '$(echo "$RAM_INFO" | jq --raw-output .size)' bytes"
   ;;
 esac
