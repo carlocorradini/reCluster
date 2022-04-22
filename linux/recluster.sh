@@ -29,6 +29,12 @@ set -o nounset
 set -o noglob
 
 # ================
+# ARGUMENTS
+# ================
+# Installation stage
+ARG_STAGE=
+
+# ================
 # LOGGER
 # ================
 # Fatal log level. Cause exit failure
@@ -107,6 +113,19 @@ DEBUG() { log_print_message ${LOG_LEVEL_DEBUG} "$@"; }
 # ================
 # UTILS
 # ================
+# Show help message
+show_help() {
+cat << EOF
+Usage: recluster.sh [--help] --stage <STAGE>
+
+reCluster installation script.
+
+Options:
+  --help     Show this help message and exit
+  --stage    Specify installation stage
+EOF
+}
+
 # Assert command is installed
 # @param $1 Command name
 assert_cmd() {
@@ -116,6 +135,88 @@ assert_cmd() {
   DEBUG "'$1' found at $(command -v "$1")"
 }
 
+# Parse command line arguments
+# @param $# Arguments
+parse_args() {
+  # Parse
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --help)
+        # Display help message and exit
+        show_help
+        exit 1
+      ;;
+      --stage)
+        # Installation stage
+        if [ -n "${2+x}" ]; then
+          ARG_STAGE=$2
+          shift
+          shift
+        else
+          FATAL "Argument '--stage' requires a non-empty value"
+        fi
+      ;;
+      -*)
+        # Unknown argument
+        WARN "Unknown argument '$1' is ignored"
+        shift
+      ;;
+      *)
+        # No argument
+        DEBUG "Skipping argument '$1'"
+        shift
+      ;;
+    esac
+  done
+
+  # Checks
+  if [ -z "$ARG_STAGE" ]; then FATAL "Argument '--stage' is required"; fi
+}
+
+# Stage 0
+stage_0() {
+  # reCluster directory
+  if [ -d "$RECLUSTER_DIR" ]; then
+    FATAL "reCluster directory '$RECLUSTER_DIR' already exists"
+  fi
+  INFO "Creating reCluster directory '$RECLUSTER_DIR'"
+  mkdir -p "$RECLUSTER_DIR"
+
+  INFO "Reading CPU info"
+  read_cpu_info
+  INFO "CPU is '$(echo "$CPU_INFO" | jq --raw-output .name)'"
+}
+
+# Read CPU info
+read_cpu_info() {
+  CPU_INFO="$(lscpu --json \
+              | jq --compact-output --sort-keys '
+                  .lscpu
+                  | map({(.field): .data})
+                  | add
+                  | with_entries(if .key | endswith(":") then .key |= sub(":";"") else . end)
+                  | .Flags /= " "
+                  | ."CPU op-mode(s)" /= ", "
+                  | .vulnerabilities = (to_entries | map(.key | select(startswith("Vulnerability "))[14:]))
+                  | with_entries(select(.key | startswith("Vulnerability ") | not))
+                  | . + {"architecture": .Architecture}
+                  | . + {"flags": .Flags}
+                  | . + {"modes": ."CPU op-mode(s)" | map(. | split("-")[0] | tonumber)}
+                  | . + {"byteOrder": ."Byte Order"}
+                  | . + {"cores": ."CPU(s)" | tonumber}
+                  | . + {"vendor": ."Vendor ID"}
+                  | . + {"family": ."CPU family" | tonumber}
+                  | . + {"model": .Model | tonumber}
+                  | . + {"name": ."Model name"}
+                  | . + {"frequency": ."CPU MHz" | tonumber}
+                  | . + {"cache": {"l1d": ."L1d cache", "l1i": ."L1i cache", "l2": ."L2 cache", "l3": ."L3 cache"}}
+                  | with_entries(select(.key as $f | ["architecture", "flags", "modes", "byteOrder", "cores", "vendor", "family", "model", "name", "frequency", "cache", "vulnerabilities"] | index($f)))
+                '
+  )"
+
+  DEBUG "CPU info: $(echo "$CPU_INFO" | jq .)"
+}
+
 ################################################################################################################################
 
 # === CONFIGURATION ===
@@ -123,8 +224,6 @@ assert_cmd() {
 LOG_LEVEL=$LOG_LEVEL_DEBUG
 # reCluster directory
 RECLUSTER_DIR="/etc/recluster"
-# reCluster node id file
-RECLUSTER_FILE_NODE_ID="$RECLUSTER_DIR/id"
 
 # === ASSERT ===
 if [ "$(id -u)" -ne 0 ]; then FATAL "Run as 'root' for administrative rights"; fi
@@ -133,23 +232,15 @@ assert_cmd "lscpu"
 assert_cmd "lshw"
 assert_cmd "lsmem"
 
-# === MAIN ===
-# reCluster directory
-if [ -d "$RECLUSTER_DIR" ]; then
-  DEBUG "reCluster directory '$RECLUSTER_DIR' already exists"
-else
-  WARN "reCluster directory '$RECLUSTER_DIR' does not exists"
-  INFO "Creating reCluster directory at '$RECLUSTER_DIR'"
-  mkdir -p "$RECLUSTER_DIR"
-fi
+# === ARGUMENTS ===
+parse_args "$@"
 
-# Node id
-if [ -s "$RECLUSTER_FILE_NODE_ID" ]; then
-  RECLUSTER_NODE_ID="$(cat $RECLUSTER_FILE_NODE_ID)"
-  INFO "Node already registered with id '$RECLUSTER_NODE_ID'"
-else
-  WARN "Node not registered"
-  RECLUSTER_NODE_ID="$(uuidgen)"
-  printf "%s" "$RECLUSTER_NODE_ID" > "$RECLUSTER_FILE_NODE_ID"
-  INFO "Node registered with id '$RECLUSTER_NODE_ID'"
-fi
+# === MAIN ===
+case $ARG_STAGE in
+  0)
+    stage_0
+  ;;
+  *)
+    FATAL "Unknown stage '$ARG_STAGE'"
+  ;;
+esac
