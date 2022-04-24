@@ -9,12 +9,12 @@
   "types": "build/index.d.ts",
   "peerDependencies": {
     "class-validator": "^0.13.2",
-    "graphql": "^15.8.0",
+    "graphql": "^16.3.0",
     "type-graphql": "^1.1.1"
   },
   "devDependencies": {
     "class-validator": "^0.13.2",
-    "graphql": "^15.8.0",
+    "graphql": "^16.3.0",
     "type-graphql": "^1.1.1"
   },
   "dependencies": {
