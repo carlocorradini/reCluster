@@ -28,7 +28,7 @@ profile_recluster() {
   arch="x86_64"
 	apkovl="genapkovl-recluster.sh"
   syslinux_serial="0 115200"
-  apks="$apks "
+  apks="$apks jq util-linux"
   for _kf in $kernel_flavors; do
       apks="$apks linux-$_kf"
       for _ka in $kernel_addons; do
