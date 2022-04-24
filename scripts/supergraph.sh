@@ -42,7 +42,7 @@ readonly SUPERGRAPH_OUTPUT
 source "$DIRNAME/__commons.sh"
 
 # Assert
-assert_tool docker
+assert_cmd docker
 assert_docker_image "$APOLLO_ROVER_IMAGE" "$APOLLO_ROVER_DOCKERFILE"
 
 # Generate supergraph

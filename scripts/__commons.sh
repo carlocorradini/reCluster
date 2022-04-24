@@ -39,13 +39,13 @@ source "$__DIRNAME/__logger.sh"
 # Default log level
 B_LOG --log-level 500
 
-# Check installed tool
-function assert_tool() {
+# Assert command is installed
+# @param $1 Command name
+assert_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     FATAL "'$1' not found"
   fi
-
-  DEBUG "'$1' found at $(command -v "$1")"
+  DEBUG "'$1' found at '$(command -v "$1")'"
 }
 
 # Check docker image
