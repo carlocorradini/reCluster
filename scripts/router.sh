@@ -39,7 +39,7 @@ readonly APOLLO_ROUTER_SUPERGRAPH
 source "$DIRNAME/__commons.sh"
 
 # Assert
-assert_tool docker
+assert_cmd docker
 
 # Apollo Router
 INFO "Starting Apollo Router '$APOLLO_ROUTER_IMAGE': { config: '$APOLLO_ROUTER_CONFIG', supergraph: '$APOLLO_ROUTER_SUPERGRAPH' }"

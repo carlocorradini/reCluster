@@ -38,7 +38,7 @@ readonly DATABASE_URL="postgresql://recluster:password@localhost:5432/recluster?
 source "$DIRNAME/../__commons.sh"
 
 # Assert
-assert_tool docker
+assert_cmd docker
 assert_docker_image "$SUBGRAPH_NODES_IMAGE" "$SUBGRAPH_NODES_DOCKERFILE"
 
 # Subgraph nodes

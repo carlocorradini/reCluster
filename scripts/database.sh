@@ -39,7 +39,7 @@ readonly POSTGRESQL_DATABASE="recluster"
 source "$DIRNAME/__commons.sh"
 
 # Assert
-assert_tool docker
+assert_cmd docker
 
 # PostgreSQL
 INFO "Starting PostgreSQL '$POSTGRESQL_IMAGE'"
