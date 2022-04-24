@@ -31,10 +31,8 @@ set -o noglob
 # ================
 # GLOBALS
 # ================
-# CPU information
-CPU_INFO=
-# RAM information
-RAM_INFO=
+# Node facts
+NODE_FACTS=
 # Installation stage
 INSTALLATION_STAGE=
 # Log level
@@ -96,7 +94,7 @@ log_print_message() {
   esac
 
   # Output to stdout
-  printf "%b[%-6s] %s%b\n" "$_log_prefix" "$_log_name" "$_log_message" "$_log_suffix"
+  printf '%b[%-5s] %b%b\n' "$_log_prefix" "$_log_name" "$_log_message" "$_log_suffix"
 
   # Exit if fatal
   if [ "$_log_level" -eq "${LOG_LEVEL_FATAL}" ]; then
@@ -209,7 +207,7 @@ parse_args() {
 
 # Read CPU info
 read_cpu_info() {
-  CPU_INFO="$(lscpu --json \
+  _cpu_info="$(lscpu --json \
               | jq --compact-output --sort-keys '
                   .lscpu
                   | map({(.field): .data})
@@ -233,16 +231,26 @@ read_cpu_info() {
                   | with_entries(select(.key as $f | ["architecture", "flags", "cores", "vendor", "family", "model", "name", "cache", "vulnerabilities"] | index($f)))
                 '
   )"
+  NODE_FACTS="$(echo "$NODE_FACTS" \
+              | jq --compact-output --sort-keys --argjson cpuinfo "$_cpu_info" '
+                  .cpu += $cpuinfo
+                '
+  )"
 }
 
 # Read RAM info
 read_ram_info() {
-  RAM_INFO="$(lsmem --bytes --json \
+  _ram_info="$(lsmem --bytes --json \
               | jq --compact-output --sort-keys '
                   .memory
                   | map(.size)
                   | add
                   | { "size": . }
+                '
+  )"
+  NODE_FACTS="$(echo "$NODE_FACTS" \
+              | jq --compact-output --sort-keys --argjson raminfo "$_ram_info" '
+                  .ram += $raminfo
                 '
   )"
 }
@@ -252,6 +260,14 @@ read_ram_info() {
 # === CONFIGURATION ===
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
+# Node facts
+NODE_FACTS="$(cat << 'EOF'
+{
+  "cpu": {},
+  "ram": {}
+}
+EOF
+)"
 # reCluster directory
 RECLUSTER_DIR="/etc/recluster"
 
@@ -262,6 +278,7 @@ parse_args "$@"
 if [ "$(id -u)" -ne 0 ]; then FATAL "Run as 'root' for administrative rights"; fi
 assert_cmd "jq"
 assert_cmd "lscpu"
+assert_cmd "lsmem"
 
 # === MAIN ===
 case $INSTALLATION_STAGE in
@@ -274,13 +291,13 @@ case $INSTALLATION_STAGE in
     # CPU info
     INFO "Reading CPU information"
     read_cpu_info
-    DEBUG "CPU info: $(echo "$CPU_INFO" | jq .)"
-    INFO "CPU is '$(echo "$CPU_INFO" | jq --raw-output .name)'"
+    DEBUG "CPU info: \n$(echo "$NODE_FACTS" | jq .cpu)"
+    INFO "CPU is '$(echo "$NODE_FACTS" | jq --raw-output .cpu.name)'"
 
     # RAM info
     INFO "Reading RAM information"
     read_ram_info
-    DEBUG "RAM info: $(echo "$RAM_INFO" | jq .)"
-    INFO "RAM is '$(echo "$RAM_INFO" | jq --raw-output .size)' bytes"
+    DEBUG "RAM info: \n$(echo "$NODE_FACTS" | jq .ram)"
+    INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .ram.size)' B"
   ;;
 esac
