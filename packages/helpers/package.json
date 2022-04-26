@@ -13,7 +13,7 @@
     "type-graphql": "^1.1.1"
   },
   "dependencies": {
-    "@apollo/subgraph": "^0.4.1",
+    "@apollo/subgraph": "^0.4.2",
     "@graphql-tools/schema": "^8.3.10",
     "@graphql-tools/utils": "^8.6.9",
     "@recluster/errors": "^0.0.1",
