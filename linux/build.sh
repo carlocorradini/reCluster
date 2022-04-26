@@ -25,7 +25,7 @@
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Alpine version
-readonly ALPINE_VERSION=edge
+readonly ALPINE_VERSION=v3.15
 # mkimage profile
 MKIMAGE_PROFILE=$(readlink -f "$DIRNAME/mkimg.recluster.sh")
 readonly MKIMAGE_PROFILE

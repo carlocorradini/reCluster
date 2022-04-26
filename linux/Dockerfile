@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FROM alpine:edge
+FROM alpine:3.15
 
 RUN apk add --no-cache \
   alpine-sdk \
