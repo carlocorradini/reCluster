@@ -147,7 +147,7 @@ assert_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     FATAL "'$1' not found"
   fi
-  DEBUG "'$1' found at '$(command -v "$1")'"
+  DEBUG "Command '$1' found at '$(command -v "$1")'"
 }
 
 # Parse command line arguments
@@ -228,9 +228,27 @@ read_cpu_info() {
                   | .cache += {"l1i": (."L1i cache" | split(" ") | .[0] + " " + .[1])}
                   | .cache += {"l2": (."L2 cache" | split(" ") | .[0] + " " + .[1])}
                   | .cache += {"l3": (."L3 cache" | split(" ") | .[0] + " " + .[1])}
-                  | with_entries(select(.key as $f | ["architecture", "flags", "cores", "vendor", "family", "model", "name", "cache", "vulnerabilities"] | index($f)))
+                  | {architecture, flags, cores, vendor, family, model, name, cache, vulnerabilities}
                 '
   )"
+
+  # Convert cache to bytes
+  _l1d_cache="$(echo "$_cpu_info" | jq --raw-output '.cache.l1d' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)"
+  _l1i_cache="$(echo "$_cpu_info" | jq --raw-output '.cache.l1i' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)"
+  _l2_cache="$(echo "$_cpu_info" | jq --raw-output '.cache.l2' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)"
+  _l3_cache="$(echo "$_cpu_info" | jq --raw-output '.cache.l3' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)"
+
+  # Update cache
+  _cpu_info="$(echo "$_cpu_info" \
+            | jq --compact-output --sort-keys --arg l1d "$_l1d_cache" --arg l1i "$_l1i_cache" --arg l2 "$_l2_cache" --arg l3 "$_l3_cache" '
+                .cache.l1d = ($l1d | tonumber)
+                | .cache.l1i = ($l1i | tonumber)
+                | .cache.l2 = ($l2 | tonumber)
+                | .cache.l3 = ($l3 | tonumber)
+            '
+  )"
+
+  # Update node facts
   NODE_FACTS="$(echo "$NODE_FACTS" \
               | jq --compact-output --sort-keys --argjson cpuinfo "$_cpu_info" '
                   .cpu += $cpuinfo
@@ -248,9 +266,63 @@ read_ram_info() {
                   | { "size": . }
                 '
   )"
+  # Update node facts
   NODE_FACTS="$(echo "$NODE_FACTS" \
               | jq --compact-output --sort-keys --argjson raminfo "$_ram_info" '
                   .ram += $raminfo
+                '
+  )"
+}
+
+# Read Disk(s) info
+read_disks_info() {
+  _disks_info="$(lsblk --bytes --json \
+              | jq --compact-output --sort-keys '
+                  .blockdevices
+                  | map(select(.type == "disk"))
+                  | map({name, size})
+                '
+  )"
+
+  # Update node facts
+  NODE_FACTS="$(echo "$NODE_FACTS" \
+              | jq --compact-output --sort-keys --argjson disksinfo "$_disks_info" '
+                  .disks += $disksinfo
+                '
+  )"
+}
+
+# Read Interface(s) info
+read_interfaces_info() {
+  _interfaces_info="$(ip -details -json link show \
+              | jq --compact-output --sort-keys '
+                  map(if .linkinfo.info_kind // .link_type == "loopback" then empty else . end)
+                  | map(.name = .ifname)
+                  | map({address, name})
+                '
+  )"
+
+  # Cycle interface to obtain additional information
+  while read -r _interface; do
+    _iname="$(echo "$_interface" | jq --raw-output '.name')"
+    # Speed
+    _speed="$(ethtool "$_iname" | grep Speed | sed 's/Speed://g' | sed 's/^[[:space:]]*//g' | sed 's/b.*//' | numfmt --from=si)"
+    # Wake on Lan
+    _wol="$(ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')"
+    # Update interfaces
+    _interfaces_info="$(echo "$_interfaces_info" \
+                      | jq --compact-output --sort-keys --arg iname "$_iname" --arg speed "$_speed" --arg wol "$_wol" '
+                          map(if .name == $iname then . + {"speed": $speed | tonumber, "wol": (if $wol == null or $wol == "" then null else $wol end)} else . end)
+                        '
+    )"
+  done << EOF
+$(echo "$_interfaces_info" | jq --compact-output '.[]')
+EOF
+
+  # Update node facts
+  NODE_FACTS="$(echo "$NODE_FACTS" \
+              | jq --compact-output --sort-keys --argjson interfacesinfo "$_interfaces_info" '
+                  .interfaces += $interfacesinfo
                 '
   )"
 }
@@ -264,7 +336,9 @@ LOG_LEVEL=$LOG_LEVEL_INFO
 NODE_FACTS="$(cat << 'EOF'
 {
   "cpu": {},
-  "ram": {}
+  "ram": {},
+  "disks": [],
+  "interfaces": []
 }
 EOF
 )"
@@ -276,9 +350,15 @@ parse_args "$@"
 
 # === ASSERT ===
 if [ "$(id -u)" -ne 0 ]; then FATAL "Run as 'root' for administrative rights"; fi
+assert_cmd "ethtool"
+assert_cmd "grep"
+assert_cmd "ip"
 assert_cmd "jq"
 assert_cmd "lscpu"
 assert_cmd "lsmem"
+assert_cmd "lsblk"
+assert_cmd "numfmt"
+assert_cmd "sed"
 
 # === MAIN ===
 case $INSTALLATION_STAGE in
@@ -289,15 +369,23 @@ case $INSTALLATION_STAGE in
     mkdir -p "$RECLUSTER_DIR"
 
     # CPU info
-    INFO "Reading CPU information"
     read_cpu_info
-    DEBUG "CPU info: \n$(echo "$NODE_FACTS" | jq .cpu)"
+    DEBUG "CPU info:\n $(echo "$NODE_FACTS" | jq .cpu)"
     INFO "CPU is '$(echo "$NODE_FACTS" | jq --raw-output .cpu.name)'"
 
     # RAM info
-    INFO "Reading RAM information"
     read_ram_info
-    DEBUG "RAM info: \n$(echo "$NODE_FACTS" | jq .ram)"
-    INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .ram.size)' B"
+    DEBUG "RAM info:\n $(echo "$NODE_FACTS" | jq .ram)"
+    INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .ram.size)' Bytes"
+
+    # Disk(s) info
+    read_disks_info
+    DEBUG "Disk(s) info:\n $(echo "$NODE_FACTS" | jq .disks)"
+    INFO "Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.disks | length'):\n $(echo "$NODE_FACTS" | jq --raw-output '.disks[] | "\t'\''\(.name)'\'' of '\''\(.size)'\'' Bytes"')"
+
+    # Interface(s) info
+    read_interfaces_info
+    DEBUG "Interface(s) info:\n $(echo "$NODE_FACTS" | jq .interfaces)"
+    INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.interfaces | length'):\n $(echo "$NODE_FACTS" | jq --raw-output '.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
   ;;
 esac
