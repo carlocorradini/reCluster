@@ -9,10 +9,10 @@
   "types": "build/index.d.ts",
   "peerDependencies": {
     "envalid": "^7.3.1",
-    "pino": "^7.10.0"
+    "pino": "^7.11.0"
   },
   "devDependencies": {
     "envalid": "^7.3.1",
-    "pino": "^7.10.0"
+    "pino": "^7.11.0"
   }
 }
