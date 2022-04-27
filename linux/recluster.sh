@@ -248,12 +248,8 @@ read_cpu_info() {
             '
   )"
 
-  # Update node facts
-  NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --compact-output --sort-keys --argjson cpuinfo "$_cpu_info" '
-                  .cpu += $cpuinfo
-                '
-  )"
+  # Return
+  echo "$_cpu_info"
 }
 
 # Read RAM info
@@ -266,12 +262,9 @@ read_ram_info() {
                   | { "size": . }
                 '
   )"
-  # Update node facts
-  NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --compact-output --sort-keys --argjson raminfo "$_ram_info" '
-                  .ram += $raminfo
-                '
-  )"
+
+  # Return
+  echo "$_ram_info"
 }
 
 # Read Disk(s) info
@@ -284,12 +277,8 @@ read_disks_info() {
                 '
   )"
 
-  # Update node facts
-  NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --compact-output --sort-keys --argjson disksinfo "$_disks_info" '
-                  .disks += $disksinfo
-                '
-  )"
+  # Return
+  echo "$_disks_info"
 }
 
 # Read Interface(s) info
@@ -302,13 +291,15 @@ read_interfaces_info() {
                 '
   )"
 
-  # Cycle interface to obtain additional information
+  # Cycle interfaces to obtain additional information
   while read -r _interface; do
     _iname="$(echo "$_interface" | jq --raw-output '.name')"
+
     # Speed
-    _speed="$(ethtool "$_iname" | grep Speed | sed 's/Speed://g' | sed 's/^[[:space:]]*//g' | sed 's/b.*//' | numfmt --from=si)"
+    _speed="$(ethtool "$_iname" | grep Speed | sed 's/Speed://g' | sed 's/[[:space:]]*//g' | sed 's/b.*//' | numfmt --from=si)"
     # Wake on Lan
     _wol="$(ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')"
+
     # Update interfaces
     _interfaces_info="$(echo "$_interfaces_info" \
                       | jq --compact-output --sort-keys --arg iname "$_iname" --arg speed "$_speed" --arg wol "$_wol" '
@@ -319,12 +310,8 @@ read_interfaces_info() {
 $(echo "$_interfaces_info" | jq --compact-output '.[]')
 EOF
 
-  # Update node facts
-  NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --compact-output --sort-keys --argjson interfacesinfo "$_interfaces_info" '
-                  .interfaces += $interfacesinfo
-                '
-  )"
+  # Return
+  echo "$_interfaces_info"
 }
 
 ################################################################################################################################
@@ -332,16 +319,6 @@ EOF
 # === CONFIGURATION ===
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
-# Node facts
-NODE_FACTS="$(cat << 'EOF'
-{
-  "cpu": {},
-  "ram": {},
-  "disks": [],
-  "interfaces": []
-}
-EOF
-)"
 # reCluster directory
 RECLUSTER_DIR="/etc/recluster"
 
@@ -369,23 +346,23 @@ case $INSTALLATION_STAGE in
     mkdir -p "$RECLUSTER_DIR"
 
     # CPU info
-    read_cpu_info
-    DEBUG "CPU info:\n $(echo "$NODE_FACTS" | jq .cpu)"
-    INFO "CPU is '$(echo "$NODE_FACTS" | jq --raw-output .cpu.name)'"
+    _cpu_info="$(read_cpu_info)"
+    DEBUG "CPU info:\n$(echo "$_cpu_info" | jq .)"
+    INFO "CPU is '$(echo "$_cpu_info" | jq --raw-output .name)'"
 
     # RAM info
-    read_ram_info
-    DEBUG "RAM info:\n $(echo "$NODE_FACTS" | jq .ram)"
-    INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .ram.size)' Bytes"
+    _ram_info="$(read_ram_info)"
+    DEBUG "RAM info:\n$(echo "$_ram_info" | jq .)"
+    INFO "RAM is '$(echo "$_ram_info" | jq --raw-output .size)' Bytes"
 
     # Disk(s) info
-    read_disks_info
-    DEBUG "Disk(s) info:\n $(echo "$NODE_FACTS" | jq .disks)"
-    INFO "Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.disks | length'):\n $(echo "$NODE_FACTS" | jq --raw-output '.disks[] | "\t'\''\(.name)'\'' of '\''\(.size)'\'' Bytes"')"
+    _disks_info="$(read_disks_info)"
+    DEBUG "Disk(s) info:\n$(echo "$_disks_info" | jq .)"
+    INFO "Disk(s) found $(echo "$_disks_info" | jq --raw-output '. | length'):\n $(echo "$_disks_info" | jq --raw-output '.[] | "\t'\''\(.name)'\'' of '\''\(.size)'\'' Bytes"')"
 
     # Interface(s) info
-    read_interfaces_info
-    DEBUG "Interface(s) info:\n $(echo "$NODE_FACTS" | jq .interfaces)"
-    INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.interfaces | length'):\n $(echo "$NODE_FACTS" | jq --raw-output '.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
+    _interfaces_info="$(read_interfaces_info)"
+    DEBUG "Interface(s) info:\n$(echo "$_interfaces_info" | jq .)"
+    INFO "Interface(s) found $(echo "$_interfaces_info" | jq --raw-output '. | length'):\n $(echo "$_interfaces_info" | jq --raw-output '.[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
   ;;
 esac
