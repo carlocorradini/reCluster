@@ -28,17 +28,18 @@ set -o nounset
 # Disable wildcard character expansion
 set -o noglob
 
-# ================
-# GLOBALS
-# ================
-# Node facts
-NODE_FACTS=
-# Installation stage
-INSTALLATION_STAGE=
-# Log level
-LOG_LEVEL=
-# reCluster directory
-RECLUSTER_DIR=
+# Cleanup
+cleanup() {
+  # Restore cursor position
+	tput rc
+  # Cursor normal
+	tput cnorm
+
+	return 1
+}
+
+# Trap
+trap cleanup INT QUIT TERM
 
 # ================
 # LOGGER
@@ -54,80 +55,201 @@ LOG_LEVEL_INFO=500
 # Debug log level
 LOG_LEVEL_DEBUG=600
 
+# Default log level
+LOG_LEVEL=$LOG_LEVEL_INFO
+# Log disable color flag
+LOG_DISABLE_COLOR=1
+
 # Print log message
 # @param $1 Log level
 # @param $2 Message
-log_print_message() {
+_log_print_message() {
   _log_level=$1
   shift
   _log_message=${*:-}
   _log_name=""
   _log_prefix=""
-  _log_suffix="\e[0m"
+  _log_suffix="\033[0m"
 
-  # Check log level is enabled
-  if [ "$_log_level" -gt "$LOG_LEVEL" ]; then
-    return
-  fi
+  # Log level is enabled
+  if [ "$_log_level" -gt "$LOG_LEVEL" ]; then return; fi
 
   case $_log_level in
     "$LOG_LEVEL_FATAL")
       _log_name="FATAL"
-      _log_prefix="\e[41;37m"
+      _log_prefix="\033[41;37m"
     ;;
     "$LOG_LEVEL_ERROR")
       _log_name="ERROR"
-      _log_prefix="\e[1;31m"
+      _log_prefix="\033[1;31m"
     ;;
     "$LOG_LEVEL_WARN")
       _log_name="WARN"
-      _log_prefix="\e[1;33m"
+      _log_prefix="\033[1;33m"
     ;;
     "$LOG_LEVEL_INFO")
       _log_name="INFO"
-      _log_prefix="\e[37m"
+      _log_prefix="\033[37m"
     ;;
     "$LOG_LEVEL_DEBUG")
       _log_name="DEBUG"
-      _log_prefix="\e[1;34m"
+      _log_prefix="\033[1;34m"
     ;;
   esac
 
+  # Color disable flag
+  if [ "$LOG_DISABLE_COLOR" -eq 0 ]; then
+    _log_prefix=""
+    _log_suffix=""
+  fi
+
   # Output to stdout
   printf '%b[%-5s] %b%b\n' "$_log_prefix" "$_log_name" "$_log_message" "$_log_suffix"
-
-  # Exit if fatal
-  if [ "$_log_level" -eq "${LOG_LEVEL_FATAL}" ]; then
-      exit 1
-  fi
 }
 
 # Fatal log message
-FATAL() { log_print_message ${LOG_LEVEL_FATAL} "$@"; }
+FATAL() { _log_print_message ${LOG_LEVEL_FATAL} "$@"; exit 1; }
 # Error log message
-ERROR() { log_print_message ${LOG_LEVEL_ERROR} "$@"; }
+ERROR() { _log_print_message ${LOG_LEVEL_ERROR} "$@"; }
 # Warning log message
-WARN() { log_print_message ${LOG_LEVEL_WARN} "$@"; }
+WARN() { _log_print_message ${LOG_LEVEL_WARN} "$@"; }
 # Informational log message
-INFO() { log_print_message ${LOG_LEVEL_INFO} "$@"; }
+INFO() { _log_print_message ${LOG_LEVEL_INFO} "$@"; }
 # Debug log message
-DEBUG() { log_print_message ${LOG_LEVEL_DEBUG} "$@"; }
+DEBUG() { _log_print_message ${LOG_LEVEL_DEBUG} "$@"; }
+
+# Return log level as string
+# @param $1 Log level value
+log_level_string() {
+  case $1 in
+    "$LOG_LEVEL_FATAL") echo "fatal" ;;
+    "$LOG_LEVEL_ERROR") echo "error" ;;
+    "$LOG_LEVEL_WARN") echo "warn" ;;
+    "$LOG_LEVEL_INFO") echo "info" ;;
+    "$LOG_LEVEL_DEBUG") echo "debug" ;;
+  esac
+}
+
+# Return log level as value
+# @param $1 Log level string
+log_level_value() {
+  case $1 in
+    fatal) echo "$LOG_LEVEL_FATAL" ;;
+    error) echo "$LOG_LEVEL_ERROR" ;;
+    warn) echo "$LOG_LEVEL_WARN" ;;
+    info) echo "$LOG_LEVEL_INFO" ;;
+    debug) echo "$LOG_LEVEL_DEBUG" ;;
+  esac
+}
+
+# ================
+# SPINNER
+# ================
+# Spinner PID
+SPINNER_PID=
+# Spinner symbol time in seconds
+SPINNER_TIME=.1
+# Spinner disable flag
+SPINNER_DISABLE=1
+# Spinner symbols
+SPINNER_SYMBOLS="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
+
+# Spinner logic
+_spinner() {
+  _spinner_message="${1:-"Loading..."}"
+  # Termination flag
+  _terminate=1
+  # Termination signal
+  trap '_terminate=0' USR1
+
+  # Parent PID
+  _spinner_ppid="$(ps -p "$$" -o ppid=)"
+
+  while :; do
+    # Cursor invisible
+    tput civis
+
+    for s in $SPINNER_SYMBOLS; do
+      # Save cursor position
+      tput sc
+      # Symbol and message
+      env printf "%s %s" "$s" "$_spinner_message"
+      # Restore cursor position
+      tput rc
+
+      # Terminate
+      if [ $_terminate -eq 0 ]; then
+        # Clear line from position to end
+        tput el
+        break 2
+      fi
+
+      # Animation time
+      env sleep "$SPINNER_TIME"
+
+      # Check parent still alive
+      if [ -n "$_spinner_ppid" ]; then
+        # shellcheck disable=SC2086
+        _spinner_parentup="$(ps --no-headers $_spinner_ppid)"
+        if [ -z "$_spinner_parentup" ]; then  break 2; fi
+      fi
+    done
+  done
+
+  # Cursor normal
+  tput cnorm
+  return 0
+}
+
+# Start spinner
+# @param $1 Message
+# shellcheck disable=SC2120
+spinner_start() {
+  if [ "$SPINNER_DISABLE" -eq 0 ]; then return; fi
+  if [ -n "$SPINNER_PID" ]; then FATAL "Spinner PID is already defined"; fi
+  _spinner ${1:+"$1"} &
+  SPINNER_PID=$!
+}
+
+# Stop spinner
+spinner_stop() {
+  if [ "$SPINNER_DISABLE" -eq 0 ]; then return; fi
+  if [ -z "$SPINNER_PID" ]; then FATAL "Spinner PID is undefined"; fi
+  kill -s USR1 "$SPINNER_PID"
+  wait "$SPINNER_PID"
+}
 
 # ================
 # FUNCTIONS
 # ================
 # Show help message
 show_help() {
-cat << EOF
-Usage: recluster.sh [--help] [--log-level <LEVEL>] --stage <STAGE>
+  _log_level="$(log_level_string "$LOG_LEVEL")"
+  cat << EOF
+Usage: recluster.sh [--bench-time <TIME>] [--disable-color] [--disable-spinner]
+                    [--help] [--log-level <LEVEL>] --stage <STAGE>
 
 reCluster installation script.
 
 Options:
+  --bench-time <TIME>   Benchmark execution time in seconds
+                        Required: false
+                        Default: $BENCH_TIME
+                        Values:
+                          Any positive number
+
+  --disable-color       Disable color
+                        Required: false
+
+  --disable-spinner     Disable spinner
+                        Required: false
+
   --help                Show this help message and exit
+                        Required: false
 
   --log-level <LEVEL>   Logger level
-                        Default: info
+                        Required: false
+                        Default: $_log_level
                         Values:
                           fatal    Fatal
                           error    Error
@@ -135,7 +257,8 @@ Options:
                           info     Informational
                           debug    Debug
 
-  --stage <STAGE>       Specify installation stage
+  --stage <STAGE>       Installation stage
+                        Required: true
                         Values:
                           0    Initial stage
 EOF
@@ -150,12 +273,41 @@ assert_cmd() {
   DEBUG "Command '$1' found at '$(command -v "$1")'"
 }
 
+# Check if parameter is a number
+# @param $1 Parameter
+is_number() {
+  if [ -z "${1+x}" ]; then return 1; fi
+  case $1 in
+    ''|*[!0-9]*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
 # Parse command line arguments
 # @param $# Arguments
 parse_args() {
   # Parse
   while [ $# -gt 0 ]; do
     case $1 in
+      --bench-time)
+        # Benchmark time
+        if [ -z "${2+x}" ]; then FATAL "Argument '--bench-time' requires a non-empty value"; fi
+        if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '--bench-time' is not a positive number"; fi
+
+        BENCH_TIME=$2
+        shift
+        shift
+      ;;
+      --disable-color)
+        # Disable color
+        LOG_DISABLE_COLOR=0
+        shift
+      ;;
+      --disable-spinner)
+        # Disable spinner
+        SPINNER_DISABLE=0
+        shift
+      ;;
       --help)
         # Display help message and exit
         show_help
@@ -164,15 +316,10 @@ parse_args() {
       --log-level)
         # Log level
         if [ -z "${2+x}" ]; then FATAL "Argument '--log-level' requires a non-empty value"; fi
-        case $2 in
-          fatal) LOG_LEVEL=$LOG_LEVEL_FATAL ;;
-          error) LOG_LEVEL=$LOG_LEVEL_ERROR ;;
-          warn) LOG_LEVEL=$LOG_LEVEL_WARN ;;
-          info) LOG_LEVEL=$LOG_LEVEL_INFO ;;
-          debug) LOG_LEVEL=$LOG_LEVEL_DEBUG ;;
-          *) FATAL "Value '$2' of argument '--log-level' is invalid" ;;
-        esac
+        _log_level="$(log_level_value "$2")"
+        if [ -z "$_log_level" ]; then FATAL "Value '$2' of argument '--log-level' is invalid"; fi
 
+        LOG_LEVEL=$_log_level
         shift
         shift
       ;;
@@ -205,7 +352,7 @@ parse_args() {
   if [ -z "$INSTALLATION_STAGE" ]; then FATAL "Argument '--stage' is required"; fi
 }
 
-# Read CPU info
+# Read CPU information
 read_cpu_info() {
   _cpu_info="$(lscpu --json \
               | jq --compact-output --sort-keys '
@@ -229,8 +376,7 @@ read_cpu_info() {
                   | .cache += {"l2": (."L2 cache" | split(" ") | .[0] + " " + .[1])}
                   | .cache += {"l3": (."L3 cache" | split(" ") | .[0] + " " + .[1])}
                   | {architecture, flags, cores, vendor, family, model, name, cache, vulnerabilities}
-                '
-  )"
+                ')"
 
   # Convert cache to bytes
   _l1d_cache="$(echo "$_cpu_info" | jq --raw-output '.cache.l1d' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)"
@@ -245,14 +391,13 @@ read_cpu_info() {
                 | .cache.l1i = ($l1i | tonumber)
                 | .cache.l2 = ($l2 | tonumber)
                 | .cache.l3 = ($l3 | tonumber)
-            '
-  )"
+              ')"
 
   # Return
   echo "$_cpu_info"
 }
 
-# Read RAM info
+# Read RAM information
 read_ram_info() {
   _ram_info="$(lsmem --bytes --json \
               | jq --compact-output --sort-keys '
@@ -260,36 +405,33 @@ read_ram_info() {
                   | map(.size)
                   | add
                   | { "size": . }
-                '
-  )"
+                ')"
 
   # Return
   echo "$_ram_info"
 }
 
-# Read Disk(s) info
+# Read Disk(s) information
 read_disks_info() {
   _disks_info="$(lsblk --bytes --json \
               | jq --compact-output --sort-keys '
                   .blockdevices
                   | map(select(.type == "disk"))
                   | map({name, size})
-                '
-  )"
+                ')"
 
   # Return
   echo "$_disks_info"
 }
 
-# Read Interface(s) info
+# Read Interface(s) information
 read_interfaces_info() {
   _interfaces_info="$(ip -details -json link show \
               | jq --compact-output --sort-keys '
                   map(if .linkinfo.info_kind // .link_type == "loopback" then empty else . end)
                   | map(.name = .ifname)
                   | map({address, name})
-                '
-  )"
+                ')"
 
   # Cycle interfaces to obtain additional information
   while read -r _interface; do
@@ -304,8 +446,7 @@ read_interfaces_info() {
     _interfaces_info="$(echo "$_interfaces_info" \
                       | jq --compact-output --sort-keys --arg iname "$_iname" --arg speed "$_speed" --arg wol "$_wol" '
                           map(if .name == $iname then . + {"speed": $speed | tonumber, "wol": (if $wol == null or $wol == "" then null else $wol end)} else . end)
-                        '
-    )"
+                        ')"
   done << EOF
 $(echo "$_interfaces_info" | jq --compact-output '.[]')
 EOF
@@ -314,9 +455,35 @@ EOF
   echo "$_interfaces_info"
 }
 
+# Execute CPU benchmark
+run_cpu_bench() {
+  _threads="$(grep -c ^processor /proc/cpuinfo)"
+
+  _single_thread="$(sysbench --validate --time="$BENCH_TIME" cpu run \
+                  | grep 'events per second' \
+                  | sed 's/events per second://g' \
+                  | sed 's/[[:space:]]*//g' \
+                  | xargs printf "%.0f")"
+
+  _multi_thread="$(sysbench --validate --time="$BENCH_TIME" --threads="$_threads" cpu run \
+                  | grep 'events per second' \
+                  | sed 's/events per second://g' \
+                  | sed 's/[[:space:]]*//g' \
+                  | xargs printf "%.0f")"
+
+  _cpu_bench="$(jq --compact-output --sort-keys --null-input --arg singlethread "$_single_thread" --arg multithread "$_multi_thread" '
+                  {"single": ($singlethread|tonumber), "multi": ($multithread|tonumber)}
+                ')"
+
+  # Return
+  echo "$_cpu_bench"
+}
+
 ################################################################################################################################
 
 # === CONFIGURATION ===
+# Benchmark time in seconds
+BENCH_TIME=16
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
 # reCluster directory
@@ -326,8 +493,11 @@ RECLUSTER_DIR="/etc/recluster"
 parse_args "$@"
 
 # === ASSERT ===
+# Sudo
 if [ "$(id -u)" -ne 0 ]; then FATAL "Run as 'root' for administrative rights"; fi
+# Commands
 assert_cmd "ethtool"
+assert_cmd "env"
 assert_cmd "grep"
 assert_cmd "ip"
 assert_cmd "jq"
@@ -335,7 +505,11 @@ assert_cmd "lscpu"
 assert_cmd "lsmem"
 assert_cmd "lsblk"
 assert_cmd "numfmt"
+assert_cmd "ps"
 assert_cmd "sed"
+assert_cmd "sysbench"
+assert_cmd "tput"
+assert_cmd "xargs"
 
 # === MAIN ===
 case $INSTALLATION_STAGE in
@@ -364,5 +538,12 @@ case $INSTALLATION_STAGE in
     _interfaces_info="$(read_interfaces_info)"
     DEBUG "Interface(s) info:\n$(echo "$_interfaces_info" | jq .)"
     INFO "Interface(s) found $(echo "$_interfaces_info" | jq --raw-output '. | length'):\n $(echo "$_interfaces_info" | jq --raw-output '.[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
+
+    # CPU bench
+    spinner_start "CPU benchmarks"
+    _cpu_bench="$(run_cpu_bench)"
+    spinner_stop
+    DEBUG "CPU bench:\n$(echo "$_cpu_bench" | jq .)"
+    INFO "CPU bench:\n \tSingle-thread score '$(echo "$_cpu_bench" | jq --raw-output .single)'\n \tMulti-thread score '$(echo "$_cpu_bench" | jq --raw-output .multi)'"
   ;;
 esac
