@@ -55,7 +55,7 @@ LOG_LEVEL_INFO=500
 # Debug log level
 LOG_LEVEL_DEBUG=600
 
-# Default log level
+# Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
 # Log disable color flag
 LOG_DISABLE_COLOR=1
@@ -118,30 +118,6 @@ INFO() { _log_print_message ${LOG_LEVEL_INFO} "$@"; }
 # Debug log message
 DEBUG() { _log_print_message ${LOG_LEVEL_DEBUG} "$@"; }
 
-# Return log level as string
-# @param $1 Log level value
-log_level_string() {
-  case $1 in
-    "$LOG_LEVEL_FATAL") echo "fatal" ;;
-    "$LOG_LEVEL_ERROR") echo "error" ;;
-    "$LOG_LEVEL_WARN") echo "warn" ;;
-    "$LOG_LEVEL_INFO") echo "info" ;;
-    "$LOG_LEVEL_DEBUG") echo "debug" ;;
-  esac
-}
-
-# Return log level as value
-# @param $1 Log level string
-log_level_value() {
-  case $1 in
-    fatal) echo "$LOG_LEVEL_FATAL" ;;
-    error) echo "$LOG_LEVEL_ERROR" ;;
-    warn) echo "$LOG_LEVEL_WARN" ;;
-    info) echo "$LOG_LEVEL_INFO" ;;
-    debug) echo "$LOG_LEVEL_DEBUG" ;;
-  esac
-}
-
 # ================
 # SPINNER
 # ================
@@ -151,8 +127,16 @@ SPINNER_PID=
 SPINNER_TIME=.1
 # Spinner disable flag
 SPINNER_DISABLE=1
+
+# Spinner symbols dots
+SPINNER_SYMBOLS_DOTS="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
+# Spinner symbols greyscale
+SPINNER_SYMBOLS_GREYSCALE="░░░░░░░ ▒░░░░░░ ▒▒░░░░░ ▒▒▒░░░░ ▒▒▒▒░░░ ▒▒▒▒▒░░ ▒▒▒▒▒▒░ ▒▒▒▒▒▒▒ ░▒▒▒▒▒▒ ░░▒▒▒▒▒ ░░░▒▒▒▒ ░░░░▒▒▒ ░░░░░▒▒ ░░░░░░▒"
+# Spinner symbols propeller
+SPINNER_SYMBOLS_PROPELLER="/ - \\ |"
+
 # Spinner symbols
-SPINNER_SYMBOLS="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
+SPINNER_SYMBOLS=$SPINNER_SYMBOLS_DOTS
 
 # Spinner logic
 _spinner() {
@@ -224,32 +208,27 @@ spinner_stop() {
 # ================
 # Show help message
 show_help() {
-  _log_level="$(log_level_string "$LOG_LEVEL")"
   cat << EOF
 Usage: recluster.sh [--bench-time <TIME>] [--disable-color] [--disable-spinner]
-                    [--help] [--log-level <LEVEL>] --stage <STAGE>
+                    [--help] [--log-level <LEVEL>] [--spinner <SPINNER>]
+                    --stage <STAGE>
 
 reCluster installation script.
 
 Options:
   --bench-time <TIME>   Benchmark execution time in seconds
-                        Required: false
-                        Default: $BENCH_TIME
+                        Default: 16
                         Values:
                           Any positive number
 
   --disable-color       Disable color
-                        Required: false
 
   --disable-spinner     Disable spinner
-                        Required: false
 
   --help                Show this help message and exit
-                        Required: false
 
   --log-level <LEVEL>   Logger level
-                        Required: false
-                        Default: $_log_level
+                        Default: info
                         Values:
                           fatal    Fatal
                           error    Error
@@ -257,8 +236,15 @@ Options:
                           info     Informational
                           debug    Debug
 
+  --spinner <SPINNER>   Spinner symbols
+                        Default: dots
+                        Values:
+                          dots         $SPINNER_SYMBOLS_DOTS
+                          greyscale    $SPINNER_SYMBOLS_GREYSCALE
+                          propeller    $SPINNER_SYMBOLS_PROPELLER
+
   --stage <STAGE>       Installation stage
-                        Required: true
+                        Required
                         Values:
                           0    Initial stage
 EOF
@@ -291,8 +277,8 @@ parse_args() {
     case $1 in
       --bench-time)
         # Benchmark time
-        if [ -z "${2+x}" ]; then FATAL "Argument '--bench-time' requires a non-empty value"; fi
-        if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '--bench-time' is not a positive number"; fi
+        if [ -z "${2+x}" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
+        if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
 
         BENCH_TIME=$2
         shift
@@ -315,22 +301,45 @@ parse_args() {
       ;;
       --log-level)
         # Log level
-        if [ -z "${2+x}" ]; then FATAL "Argument '--log-level' requires a non-empty value"; fi
-        _log_level="$(log_level_value "$2")"
-        if [ -z "$_log_level" ]; then FATAL "Value '$2' of argument '--log-level' is invalid"; fi
+        if [ -z "${2+x}" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
 
-        LOG_LEVEL=$_log_level
+        case $2 in
+          fatal) LOG_LEVEL=$LOG_LEVEL_FATAL ;;
+          error) LOG_LEVEL=$LOG_LEVEL_ERROR ;;
+          warn) LOG_LEVEL=$LOG_LEVEL_WARN ;;
+          info) LOG_LEVEL=$LOG_LEVEL_INFO ;;
+          debug) LOG_LEVEL=$LOG_LEVEL_DEBUG ;;
+          *) FATAL "Value '$2' of argument '$1' is invalid" ;;
+        esac
+        shift
+        shift
+      ;;
+      --spinner)
+        if [ -z "${2+x}" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
+
+        case $2 in
+          dots)
+            SPINNER_SYMBOLS=$SPINNER_SYMBOLS_DOTS
+          ;;
+          greyscale)
+            SPINNER_SYMBOLS=$SPINNER_SYMBOLS_GREYSCALE
+          ;;
+          propeller)
+            SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
+          ;;
+          *) FATAL "Value '$2' of argument '$1' is invalid"
+        esac
         shift
         shift
       ;;
       --stage)
         # Installation stage
-        if [ -z "${2+x}" ]; then FATAL "Argument '--stage' requires a non-empty value"; fi
+        if [ -z "${2+x}" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
+
         case $2 in
           0) ;;
-          *) FATAL "Value '$2' of argument '--stage' is invalid"
+          *) FATAL "Value '$2' of argument '$1' is invalid"
         esac
-
         INSTALLATION_STAGE=$2
         shift
         shift
