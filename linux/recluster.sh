@@ -230,11 +230,11 @@ Options:
   --log-level <LEVEL>   Logger level
                         Default: info
                         Values:
-                          fatal    Fatal
-                          error    Error
-                          warn     Warning
-                          info     Informational
-                          debug    Debug
+                          fatal    Fatal level
+                          error    Error level
+                          warn     Warning level
+                          info     Informational level
+                          debug    Debug level
 
   --spinner <SPINNER>   Spinner symbols
                         Default: dots
