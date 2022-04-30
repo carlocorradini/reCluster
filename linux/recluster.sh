@@ -191,6 +191,7 @@ _spinner() {
 spinner_start() {
   if [ "$SPINNER_DISABLE" -eq 0 ]; then return; fi
   if [ -n "$SPINNER_PID" ]; then FATAL "Spinner PID is already defined"; fi
+
   _spinner ${1:+"$1"} &
   SPINNER_PID=$!
 }
@@ -199,8 +200,10 @@ spinner_start() {
 spinner_stop() {
   if [ "$SPINNER_DISABLE" -eq 0 ]; then return; fi
   if [ -z "$SPINNER_PID" ]; then FATAL "Spinner PID is undefined"; fi
+
   kill -s USR1 "$SPINNER_PID"
   wait "$SPINNER_PID"
+  SPINNER_PID=
 }
 
 # ================
@@ -404,7 +407,7 @@ read_cpu_info() {
 
   # Update node facts
   NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --compact-output --sort-keys --argjson cpuinfo "$_cpu_info" '.info.cpu = $cpuinfo')"
+              | jq --argjson cpuinfo "$_cpu_info" '.info.cpu = $cpuinfo')"
 }
 
 # Read RAM information
@@ -419,7 +422,7 @@ read_ram_info() {
 
   # Update node facts
   NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --compact-output --sort-keys --argjson raminfo "$_ram_info" '.info.ram = $raminfo')"
+              | jq --argjson raminfo "$_ram_info" '.info.ram = $raminfo')"
 }
 
 # Read Disk(s) information
@@ -433,7 +436,7 @@ read_disks_info() {
 
   # Update node facts
   NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --compact-output --sort-keys --argjson disksinfo "$_disks_info" '.info.disks = $disksinfo')"
+              | jq --argjson disksinfo "$_disks_info" '.info.disks = $disksinfo')"
 }
 
 # Read Interface(s) information
@@ -465,22 +468,24 @@ EOF
 
   # Update node facts
   NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --compact-output --sort-keys --argjson interfacesinfo "$_interfaces_info" '.info.interfaces = $interfacesinfo')"
+              | jq --argjson interfacesinfo "$_interfaces_info" '.info.interfaces = $interfacesinfo')"
 }
 
 # Execute CPU benchmark
 run_cpu_bench() {
+  # Single-thread
   _single_thread="$(sysbench --validate --time="$BENCH_TIME" cpu run \
                   | grep 'events per second' \
                   | sed 's/events per second://g' \
                   | sed 's/[[:space:]]*//g' \
-                  | xargs printf "%.0f")"
+                  | xargs --max-args=1 printf "%.0f")"
 
+  # Multi-thread
   _multi_thread="$(sysbench --validate --time="$BENCH_TIME" --threads="$(grep -c ^processor /proc/cpuinfo)" cpu run \
                   | grep 'events per second' \
                   | sed 's/events per second://g' \
                   | sed 's/[[:space:]]*//g' \
-                  | xargs printf "%.0f")"
+                  | xargs --max-args=1 printf "%.0f")"
 
   _cpu_bench="$(jq --null-input --arg singlethread "$_single_thread" --arg multithread "$_multi_thread" '
                   {"single": ($singlethread|tonumber), "multi": ($multithread|tonumber)}
@@ -488,7 +493,57 @@ run_cpu_bench() {
 
   # Update node facts
   NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --compact-output --sort-keys --argjson cpubench "$_cpu_bench" '.bench.cpu = $cpubench')"
+              | jq --argjson cpubench "$_cpu_bench" '.bench.cpu = $cpubench')"
+}
+
+# Execute RAM benchmark
+run_ram_bench() {
+  # Read sequential
+  _read_seq="$(sysbench --validate --time="$BENCH_TIME" --memory-oper=read --memory-access-mode=seq memory run \
+                | grep 'transferred' \
+                | sed 's/.*(\(.*\))/\1/' \
+                | sed 's/B.*//' \
+                | sed 's/[[:space:]]*//g' \
+                | numfmt --from=iec-i)"
+  _read_seq="$((_read_seq*8))"
+
+  # Read random
+  _read_rand="$(sysbench --validate --time="$BENCH_TIME" --memory-oper=read --memory-access-mode=rnd memory run \
+                | grep 'transferred' \
+                | sed 's/.*(\(.*\))/\1/' \
+                | sed 's/B.*//' \
+                | sed 's/[[:space:]]*//g' \
+                | numfmt --from=iec-i)"
+  _read_rand="$((_read_rand*8))"
+
+  # Write sequential
+  _write_seq="$(sysbench --validate --time="$BENCH_TIME" --memory-oper=write --memory-access-mode=seq memory run \
+                | grep 'transferred' \
+                | sed 's/.*(\(.*\))/\1/' \
+                | sed 's/B.*//' \
+                | sed 's/[[:space:]]*//g' \
+                | numfmt --from=iec-i)"
+  _write_seq="$((_write_seq*8))"
+
+  # Write random
+  _write_rand="$(sysbench --validate --time="$BENCH_TIME" --memory-oper=write --memory-access-mode=rnd memory run \
+                | grep 'transferred' \
+                | sed 's/.*(\(.*\))/\1/' \
+                | sed 's/B.*//' \
+                | sed 's/[[:space:]]*//g' \
+                | numfmt --from=iec-i)"
+  _write_rand="$((_write_rand*8))"
+
+  _ram_bench="$(jq --null-input --arg readseq "$_read_seq" --arg readrand "$_read_rand" --arg writeseq "$_write_seq" --arg writerand "$_write_rand" '
+                  {
+                    "read": {"seq": ($readseq|tonumber), "rand": ($readrand|tonumber)},
+                    "write": {"seq": ($writeseq|tonumber), "rand": ($writerand|tonumber)}
+                  }
+                ')"
+
+  # Update node facts
+  NODE_FACTS="$(echo "$NODE_FACTS" \
+              | jq --argjson rambench "$_ram_bench" '.bench.ram = $rambench')"
 }
 
 ################################################################################################################################
@@ -545,11 +600,13 @@ case $INSTALLATION_STAGE in
     # Disk(s) info
     read_disks_info
     DEBUG "Disk(s) info:\n$(echo "$NODE_FACTS" | jq .info.disks)"
-    INFO "Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.disks | length'):\n $(echo "$NODE_FACTS" | jq --raw-output '.info.disks[] | "\t'\''\(.name)'\'' of '\''\(.size)'\'' Bytes"')"
+    INFO "Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.disks | length'):
+      $(echo "$NODE_FACTS" | jq --raw-output '.info.disks[] | "\t'\''\(.name)'\'' of '\''\(.size)'\'' Bytes"')"
     # Interface(s) info
     read_interfaces_info
     DEBUG "Interface(s) info:\n$(echo "$NODE_FACTS" | jq .info.interfaces)"
-    INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces | length'):\n $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
+    INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces | length'):
+      $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
 
     # === BENCHMARK ===
     # CPU bench
@@ -557,6 +614,18 @@ case $INSTALLATION_STAGE in
     run_cpu_bench
     spinner_stop
     DEBUG "CPU bench:\n$(echo "$NODE_FACTS" | jq .bench.cpu)"
-    INFO "CPU bench:\n \tSingle-thread score '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.single)'\n \tMulti-thread score '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.multi)'"
+    INFO "CPU bench:
+      \tSingle-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.single)' events/s
+      \tMulti-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.multi)' events/s"
+    # RAM bench
+    spinner_start "RAM benchmarks"
+    run_ram_bench
+    spinner_stop
+    DEBUG "RAM bench:\n$(echo "$NODE_FACTS" | jq .bench.ram)"
+    INFO "RAM bench:
+      \tRead sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.seq)' b/s
+      \tRead random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.rand)' b/s
+      \tWrite sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.seq)' b/s
+      \tWrite random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.rand)' b/s"
   ;;
 esac
