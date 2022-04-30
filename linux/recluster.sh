@@ -364,7 +364,7 @@ parse_args() {
 # Read CPU information
 read_cpu_info() {
   _cpu_info="$(lscpu --json \
-              | jq --compact-output --sort-keys '
+              | jq '
                   .lscpu
                   | map({(.field): .data})
                   | add
@@ -395,48 +395,51 @@ read_cpu_info() {
 
   # Update cache
   _cpu_info="$(echo "$_cpu_info" \
-            | jq --compact-output --sort-keys --arg l1d "$_l1d_cache" --arg l1i "$_l1i_cache" --arg l2 "$_l2_cache" --arg l3 "$_l3_cache" '
+            | jq --arg l1d "$_l1d_cache" --arg l1i "$_l1i_cache" --arg l2 "$_l2_cache" --arg l3 "$_l3_cache" '
                 .cache.l1d = ($l1d | tonumber)
                 | .cache.l1i = ($l1i | tonumber)
                 | .cache.l2 = ($l2 | tonumber)
                 | .cache.l3 = ($l3 | tonumber)
               ')"
 
-  # Return
-  echo "$_cpu_info"
+  # Update node facts
+  NODE_FACTS="$(echo "$NODE_FACTS" \
+              | jq --compact-output --sort-keys --argjson cpuinfo "$_cpu_info" '.info.cpu = $cpuinfo')"
 }
 
 # Read RAM information
 read_ram_info() {
   _ram_info="$(lsmem --bytes --json \
-              | jq --compact-output --sort-keys '
+              | jq '
                   .memory
                   | map(.size)
                   | add
                   | { "size": . }
                 ')"
 
-  # Return
-  echo "$_ram_info"
+  # Update node facts
+  NODE_FACTS="$(echo "$NODE_FACTS" \
+              | jq --compact-output --sort-keys --argjson raminfo "$_ram_info" '.info.ram = $raminfo')"
 }
 
 # Read Disk(s) information
 read_disks_info() {
   _disks_info="$(lsblk --bytes --json \
-              | jq --compact-output --sort-keys '
+              | jq '
                   .blockdevices
                   | map(select(.type == "disk"))
                   | map({name, size})
                 ')"
 
-  # Return
-  echo "$_disks_info"
+  # Update node facts
+  NODE_FACTS="$(echo "$NODE_FACTS" \
+              | jq --compact-output --sort-keys --argjson disksinfo "$_disks_info" '.info.disks = $disksinfo')"
 }
 
 # Read Interface(s) information
 read_interfaces_info() {
   _interfaces_info="$(ip -details -json link show \
-              | jq --compact-output --sort-keys '
+              | jq '
                   map(if .linkinfo.info_kind // .link_type == "loopback" then empty else . end)
                   | map(.name = .ifname)
                   | map({address, name})
@@ -453,39 +456,39 @@ read_interfaces_info() {
 
     # Update interfaces
     _interfaces_info="$(echo "$_interfaces_info" \
-                      | jq --compact-output --sort-keys --arg iname "$_iname" --arg speed "$_speed" --arg wol "$_wol" '
+                      | jq --arg iname "$_iname" --arg speed "$_speed" --arg wol "$_wol" '
                           map(if .name == $iname then . + {"speed": $speed | tonumber, "wol": (if $wol == null or $wol == "" then null else $wol end)} else . end)
                         ')"
   done << EOF
 $(echo "$_interfaces_info" | jq --compact-output '.[]')
 EOF
 
-  # Return
-  echo "$_interfaces_info"
+  # Update node facts
+  NODE_FACTS="$(echo "$NODE_FACTS" \
+              | jq --compact-output --sort-keys --argjson interfacesinfo "$_interfaces_info" '.info.interfaces = $interfacesinfo')"
 }
 
 # Execute CPU benchmark
 run_cpu_bench() {
-  _threads="$(grep -c ^processor /proc/cpuinfo)"
-
   _single_thread="$(sysbench --validate --time="$BENCH_TIME" cpu run \
                   | grep 'events per second' \
                   | sed 's/events per second://g' \
                   | sed 's/[[:space:]]*//g' \
                   | xargs printf "%.0f")"
 
-  _multi_thread="$(sysbench --validate --time="$BENCH_TIME" --threads="$_threads" cpu run \
+  _multi_thread="$(sysbench --validate --time="$BENCH_TIME" --threads="$(grep -c ^processor /proc/cpuinfo)" cpu run \
                   | grep 'events per second' \
                   | sed 's/events per second://g' \
                   | sed 's/[[:space:]]*//g' \
                   | xargs printf "%.0f")"
 
-  _cpu_bench="$(jq --compact-output --sort-keys --null-input --arg singlethread "$_single_thread" --arg multithread "$_multi_thread" '
+  _cpu_bench="$(jq --null-input --arg singlethread "$_single_thread" --arg multithread "$_multi_thread" '
                   {"single": ($singlethread|tonumber), "multi": ($multithread|tonumber)}
                 ')"
 
-  # Return
-  echo "$_cpu_bench"
+  # Update node facts
+  NODE_FACTS="$(echo "$NODE_FACTS" \
+              | jq --compact-output --sort-keys --argjson cpubench "$_cpu_bench" '.bench.cpu = $cpubench')"
 }
 
 ################################################################################################################################
@@ -495,6 +498,8 @@ run_cpu_bench() {
 BENCH_TIME=16
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
+# Node facts
+NODE_FACTS="{}"
 # reCluster directory
 RECLUSTER_DIR="/etc/recluster"
 
@@ -528,31 +533,30 @@ case $INSTALLATION_STAGE in
     INFO "Creating reCluster directory '$RECLUSTER_DIR'"
     mkdir -p "$RECLUSTER_DIR"
 
+    # === INFO ===
     # CPU info
-    _cpu_info="$(read_cpu_info)"
-    DEBUG "CPU info:\n$(echo "$_cpu_info" | jq .)"
-    INFO "CPU is '$(echo "$_cpu_info" | jq --raw-output .name)'"
-
+    read_cpu_info
+    DEBUG "CPU info:\n$(echo "$NODE_FACTS" | jq .info.cpu)"
+    INFO "CPU is '$(echo "$NODE_FACTS" | jq --raw-output .info.cpu.name)'"
     # RAM info
-    _ram_info="$(read_ram_info)"
-    DEBUG "RAM info:\n$(echo "$_ram_info" | jq .)"
-    INFO "RAM is '$(echo "$_ram_info" | jq --raw-output .size)' Bytes"
-
+    read_ram_info
+    DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .info.ram)"
+    INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .info.ram.size)' Bytes"
     # Disk(s) info
-    _disks_info="$(read_disks_info)"
-    DEBUG "Disk(s) info:\n$(echo "$_disks_info" | jq .)"
-    INFO "Disk(s) found $(echo "$_disks_info" | jq --raw-output '. | length'):\n $(echo "$_disks_info" | jq --raw-output '.[] | "\t'\''\(.name)'\'' of '\''\(.size)'\'' Bytes"')"
-
+    read_disks_info
+    DEBUG "Disk(s) info:\n$(echo "$NODE_FACTS" | jq .info.disks)"
+    INFO "Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.disks | length'):\n $(echo "$NODE_FACTS" | jq --raw-output '.info.disks[] | "\t'\''\(.name)'\'' of '\''\(.size)'\'' Bytes"')"
     # Interface(s) info
-    _interfaces_info="$(read_interfaces_info)"
-    DEBUG "Interface(s) info:\n$(echo "$_interfaces_info" | jq .)"
-    INFO "Interface(s) found $(echo "$_interfaces_info" | jq --raw-output '. | length'):\n $(echo "$_interfaces_info" | jq --raw-output '.[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
+    read_interfaces_info
+    DEBUG "Interface(s) info:\n$(echo "$NODE_FACTS" | jq .info.interfaces)"
+    INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces | length'):\n $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
 
+    # === BENCHMARK ===
     # CPU bench
     spinner_start "CPU benchmarks"
-    _cpu_bench="$(run_cpu_bench)"
+    run_cpu_bench
     spinner_stop
-    DEBUG "CPU bench:\n$(echo "$_cpu_bench" | jq .)"
-    INFO "CPU bench:\n \tSingle-thread score '$(echo "$_cpu_bench" | jq --raw-output .single)'\n \tMulti-thread score '$(echo "$_cpu_bench" | jq --raw-output .multi)'"
+    DEBUG "CPU bench:\n$(echo "$NODE_FACTS" | jq .bench.cpu)"
+    INFO "CPU bench:\n \tSingle-thread score '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.single)'\n \tMulti-thread score '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.multi)'"
   ;;
 esac
