@@ -473,22 +473,24 @@ EOF
 
 # Execute CPU benchmark
 run_cpu_bench() {
-  # Single-thread
-  _single_thread="$(sysbench --validate --time="$BENCH_TIME" cpu run \
+  _run_cpu_bench() {
+    sysbench --time="$BENCH_TIME" --threads="$1" cpu run \
                   | grep 'events per second' \
                   | sed 's/events per second://g' \
                   | sed 's/[[:space:]]*//g' \
-                  | xargs --max-args=1 printf "%.0f")"
+                  | xargs --max-args=1 printf "%.0f"
+  }
 
+  # Single-thread
+  _single_thread="$(_run_cpu_bench 1)"
   # Multi-thread
-  _multi_thread="$(sysbench --validate --time="$BENCH_TIME" --threads="$(grep -c ^processor /proc/cpuinfo)" cpu run \
-                  | grep 'events per second' \
-                  | sed 's/events per second://g' \
-                  | sed 's/[[:space:]]*//g' \
-                  | xargs --max-args=1 printf "%.0f")"
+  _multi_thread="$(_run_cpu_bench "$(grep -c ^processor /proc/cpuinfo)")"
 
   _cpu_bench="$(jq --null-input --arg singlethread "$_single_thread" --arg multithread "$_multi_thread" '
-                  {"single": ($singlethread|tonumber), "multi": ($multithread|tonumber)}
+                  {
+                    "single": ($singlethread|tonumber),
+                    "multi": ($multithread|tonumber)
+                  }
                 ')"
 
   # Update node facts
@@ -498,52 +500,134 @@ run_cpu_bench() {
 
 # Execute RAM benchmark
 run_ram_bench() {
-  # Read sequential
-  _read_seq="$(sysbench --validate --time="$BENCH_TIME" --memory-oper=read --memory-access-mode=seq memory run \
+  _run_ram_bench() {
+    _ram_output="$(sysbench --time="$BENCH_TIME" --memory-oper="$1" --memory-access-mode="$2" memory run \
                 | grep 'transferred' \
                 | sed 's/.*(\(.*\))/\1/' \
                 | sed 's/B.*//' \
                 | sed 's/[[:space:]]*//g' \
                 | numfmt --from=iec-i)"
-  _read_seq="$((_read_seq*8))"
+    echo "$((_ram_output*8))"
+  }
 
+  # Read sequential
+  _read_seq="$(_run_ram_bench read seq)"
   # Read random
-  _read_rand="$(sysbench --validate --time="$BENCH_TIME" --memory-oper=read --memory-access-mode=rnd memory run \
-                | grep 'transferred' \
-                | sed 's/.*(\(.*\))/\1/' \
-                | sed 's/B.*//' \
-                | sed 's/[[:space:]]*//g' \
-                | numfmt --from=iec-i)"
-  _read_rand="$((_read_rand*8))"
+  _read_rand="$(_run_ram_bench read rnd)"
 
   # Write sequential
-  _write_seq="$(sysbench --validate --time="$BENCH_TIME" --memory-oper=write --memory-access-mode=seq memory run \
-                | grep 'transferred' \
-                | sed 's/.*(\(.*\))/\1/' \
-                | sed 's/B.*//' \
-                | sed 's/[[:space:]]*//g' \
-                | numfmt --from=iec-i)"
-  _write_seq="$((_write_seq*8))"
-
+  _write_seq="$(_run_ram_bench write seq)"
   # Write random
-  _write_rand="$(sysbench --validate --time="$BENCH_TIME" --memory-oper=write --memory-access-mode=rnd memory run \
-                | grep 'transferred' \
-                | sed 's/.*(\(.*\))/\1/' \
-                | sed 's/B.*//' \
-                | sed 's/[[:space:]]*//g' \
-                | numfmt --from=iec-i)"
-  _write_rand="$((_write_rand*8))"
+  _write_rand="$(_run_ram_bench write rnd)"
 
-  _ram_bench="$(jq --null-input --arg readseq "$_read_seq" --arg readrand "$_read_rand" --arg writeseq "$_write_seq" --arg writerand "$_write_rand" '
+  _ram_bench="$(jq --null-input \
+                --arg readseq "$_read_seq" --arg readrand "$_read_rand" \
+                --arg writeseq "$_write_seq" --arg writerand "$_write_rand" \
+                '
                   {
-                    "read": {"seq": ($readseq|tonumber), "rand": ($readrand|tonumber)},
-                    "write": {"seq": ($writeseq|tonumber), "rand": ($writerand|tonumber)}
+                    "read": {
+                      "seq": ($readseq|tonumber),
+                      "rand": ($readrand|tonumber)
+                    },
+                    "write": {
+                      "seq": ($writeseq|tonumber),
+                      "rand": ($writerand|tonumber)
+                    }
                   }
                 ')"
 
   # Update node facts
   NODE_FACTS="$(echo "$NODE_FACTS" \
               | jq --argjson rambench "$_ram_bench" '.bench.ram = $rambench')"
+}
+
+# Execute IO benchmark
+run_io_bench() {
+  _run_io_bench() {
+    # Io operation
+    _io_opt=
+    case $1 in
+      read) _io_opt="$1" ;;
+      write) _io_opt="written" ;;
+    esac
+
+    _io_output="$(sysbench --time="$BENCH_TIME" --file-test-mode="$2" --file-io-mode="$3" fileio run | grep "$_io_opt, ")"
+    _io_throughput_value="$(echo "$_io_output" | sed 's/^.*: //' | sed 's/[[:space:]]*//g')"
+    _io_throughput_unit="$(echo "$_io_output" | sed 's/.*,\(.*\)B\/s.*/\1/' | sed 's/[[:space:]]*//g')"
+
+    _io_throughput="$(printf "%s%s\n" "$_io_throughput_value" "$_io_throughput_unit" | numfmt --from=iec-i)"
+    echo "$((_io_throughput*8))"
+  }
+
+  # Prepare sysbench IO
+  sysbench fileio cleanup > /dev/null
+  sysbench fileio prepare > /dev/null
+
+  # Read sequential synchronous
+  _read_seq_sync="$(_run_io_bench read seqrd sync)"
+  # Read sequential asynchronous
+  _read_seq_async="$(_run_io_bench read seqrd async)"
+  # Read sequential mmap
+  _read_seq_mmap="$(_run_io_bench read seqrd mmap)"
+
+  # Read random synchronous
+  _read_rand_sync="$(_run_io_bench read rndrd sync)"
+  # Read random asynchronous
+  _read_rand_async="$(_run_io_bench read rndrd async)"
+  # Read random mmap
+  _read_rand_mmap="$(_run_io_bench read rndrd mmap)"
+
+  # Write sequential synchronous
+  _write_seq_sync="$(_run_io_bench write seqwr sync)"
+  # Write sequential asynchronous
+  _write_seq_async="$(_run_io_bench write seqwr async)"
+  # Write sequential mmap
+  _write_seq_mmap="$(_run_io_bench write seqwr mmap)"
+
+  # Write random synchronous
+  _write_rand_sync="$(_run_io_bench write rndwr sync)"
+  # Write random asynchronous
+  _write_rand_async="$(_run_io_bench write rndwr async)"
+  # Write random mmap
+  _write_rand_mmap="$(_run_io_bench write rndwr mmap)"
+
+  _io_bench="$(jq --null-input \
+                --arg readseqsync "$_read_seq_sync" --arg readseqasync "$_read_seq_async" --arg readseqmmap "$_read_seq_mmap" \
+                --arg readrandsync "$_read_rand_sync" --arg readrandasync "$_read_rand_async" --arg readrandmmap "$_read_rand_mmap" \
+                --arg writeseqsync "$_write_seq_sync" --arg writeseqasync "$_write_seq_async" --arg writeseqmmap "$_write_seq_mmap" \
+                --arg writerandsync "$_write_rand_sync" --arg writerandasync "$_write_rand_async" --arg writerandmmap "$_write_rand_mmap" \
+                '
+                  {
+                    "read": {
+                      "seq": {
+                        "sync": ($readseqsync|tonumber),
+                        "async": ($readseqasync|tonumber),
+                        "mmap": ($readseqmmap|tonumber)
+                      },
+                      "rand": {
+                        "sync": ($readrandsync|tonumber),
+                        "async": ($readrandasync|tonumber),
+                        "mmap": ($readrandmmap|tonumber)
+                      }
+                    },
+                    "write": {
+                      "seq": {
+                        "sync": ($writeseqsync|tonumber),
+                        "async": ($writeseqasync|tonumber),
+                        "mmap": ($writeseqmmap|tonumber)
+                      },
+                      "rand": {
+                        "sync": ($writerandsync|tonumber),
+                        "async": ($writerandasync|tonumber),
+                        "mmap": ($writerandmmap|tonumber)
+                      }
+                    }
+                  }
+                ')"
+
+  # Update node facts
+  NODE_FACTS="$(echo "$NODE_FACTS" \
+              | jq --argjson iobench "$_io_bench" '.bench.io = $iobench')"
 }
 
 ################################################################################################################################
@@ -596,7 +680,7 @@ case $INSTALLATION_STAGE in
     # RAM info
     read_ram_info
     DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .info.ram)"
-    INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .info.ram.size)' Bytes"
+    INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .info.ram.size | numfmt --to=iec-i)B'"
     # Disk(s) info
     read_disks_info
     DEBUG "Disk(s) info:\n$(echo "$NODE_FACTS" | jq .info.disks)"
@@ -623,9 +707,27 @@ case $INSTALLATION_STAGE in
     spinner_stop
     DEBUG "RAM bench:\n$(echo "$NODE_FACTS" | jq .bench.ram)"
     INFO "RAM bench:
-      \tRead sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.seq)' b/s
-      \tRead random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.rand)' b/s
-      \tWrite sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.seq)' b/s
-      \tWrite random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.rand)' b/s"
+      \tRead Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.seq | numfmt --to=si)b/s'
+      \tRead Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.rand | numfmt --to=si)b/s'
+      \tWrite Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.seq | numfmt --to=si)b/s'
+      \tWrite Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.rand | numfmt --to=si)b/s'"
+    # IO bench
+    spinner_start "IO benchmarks"
+    run_io_bench
+    spinner_stop
+    DEBUG "IO bench:\n$(echo "$NODE_FACTS" | jq .bench.io)"
+    INFO "IO bench:
+      \tRead Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.sync | numfmt --to=si)b/s'
+      \tRead Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.async | numfmt --to=si)b/s'
+      \tRead Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.mmap | numfmt --to=si)b/s'
+      \tRead Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.sync | numfmt --to=si)b/s'
+      \tRead Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.async | numfmt --to=si)b/s'
+      \tRead Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.mmap | numfmt --to=si)b/s'
+      \tWrite Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.sync | numfmt --to=si)b/s'
+      \tWrite Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.async | numfmt --to=si)b/s'
+      \tWrite Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.mmap | numfmt --to=si)b/s'
+      \tWrite Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.sync | numfmt --to=si)b/s'
+      \tWrite Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.async | numfmt --to=si)b/s'
+      \tWrite Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.mmap | numfmt --to=si)b/s'"
   ;;
 esac
