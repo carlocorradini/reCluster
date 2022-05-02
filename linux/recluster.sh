@@ -275,12 +275,19 @@ is_number() {
 # Parse command line arguments
 # @param $# Arguments
 parse_args() {
+  _parse_args_value() {
+    if [ -z "${2+x}" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
+  }
+  _parse_args_invalid_value() {
+    FATAL "Value '$2' of argument '$1' is invalid"
+  }
+
   # Parse
   while [ $# -gt 0 ]; do
     case $1 in
       --bench-time)
         # Benchmark time
-        if [ -z "${2+x}" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
+        _parse_args_value "$@"
         if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
 
         BENCH_TIME=$2
@@ -304,7 +311,7 @@ parse_args() {
       ;;
       --log-level)
         # Log level
-        if [ -z "${2+x}" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
+         _parse_args_value "$@"
 
         case $2 in
           fatal) LOG_LEVEL=$LOG_LEVEL_FATAL ;;
@@ -312,13 +319,13 @@ parse_args() {
           warn) LOG_LEVEL=$LOG_LEVEL_WARN ;;
           info) LOG_LEVEL=$LOG_LEVEL_INFO ;;
           debug) LOG_LEVEL=$LOG_LEVEL_DEBUG ;;
-          *) FATAL "Value '$2' of argument '$1' is invalid" ;;
+          *) _parse_args_invalid_value "$1" "$2"
         esac
         shift
         shift
       ;;
       --spinner)
-        if [ -z "${2+x}" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
+         _parse_args_value "$@"
 
         case $2 in
           dots)
@@ -330,20 +337,8 @@ parse_args() {
           propeller)
             SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
           ;;
-          *) FATAL "Value '$2' of argument '$1' is invalid"
+          *) _parse_args_invalid_value "$1" "$2"
         esac
-        shift
-        shift
-      ;;
-      --stage)
-        # Installation stage
-        if [ -z "${2+x}" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
-
-        case $2 in
-          0) ;;
-          *) FATAL "Value '$2' of argument '$1' is invalid"
-        esac
-        INSTALLATION_STAGE=$2
         shift
         shift
       ;;
@@ -354,14 +349,11 @@ parse_args() {
       ;;
       *)
         # No argument
-        DEBUG "Skipping argument '$1'"
+        WARN "Skipping argument '$1'"
         shift
       ;;
     esac
   done
-
-  # Checks
-  if [ -z "$INSTALLATION_STAGE" ]; then FATAL "Argument '--stage' is required"; fi
 }
 
 # Read CPU information
@@ -665,69 +657,65 @@ assert_cmd "tput"
 assert_cmd "xargs"
 
 # === MAIN ===
-case $INSTALLATION_STAGE in
-  0)
-    # reCluster directory
-    if [ -d "$RECLUSTER_DIR" ]; then FATAL "reCluster directory '$RECLUSTER_DIR' already exists"; fi
-    INFO "Creating reCluster directory '$RECLUSTER_DIR'"
-    mkdir -p "$RECLUSTER_DIR"
+# reCluster directory
+if [ -d "$RECLUSTER_DIR" ]; then FATAL "reCluster directory '$RECLUSTER_DIR' already exists"; fi
+INFO "Creating reCluster directory '$RECLUSTER_DIR'"
+mkdir -p "$RECLUSTER_DIR"
 
-    # === INFO ===
-    # CPU info
-    read_cpu_info
-    DEBUG "CPU info:\n$(echo "$NODE_FACTS" | jq .info.cpu)"
-    INFO "CPU is '$(echo "$NODE_FACTS" | jq --raw-output .info.cpu.name)'"
-    # RAM info
-    read_ram_info
-    DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .info.ram)"
-    INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .info.ram.size | numfmt --to=iec-i)' B"
-    # Disk(s) info
-    read_disks_info
-    DEBUG "Disk(s) info:\n$(echo "$NODE_FACTS" | jq .info.disks)"
-    INFO "Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.disks | length'):
-      $(echo "$NODE_FACTS" | jq --raw-output '.info.disks[] | "\t'\''\(.name)'\'' of '\''\(.size)'\'' Bytes"')"
-    # Interface(s) info
-    read_interfaces_info
-    DEBUG "Interface(s) info:\n$(echo "$NODE_FACTS" | jq .info.interfaces)"
-    INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces | length'):
-      $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
+# === INFO ===
+# CPU info
+read_cpu_info
+DEBUG "CPU info:\n$(echo "$NODE_FACTS" | jq .info.cpu)"
+INFO "CPU is '$(echo "$NODE_FACTS" | jq --raw-output .info.cpu.name)'"
+# RAM info
+read_ram_info
+DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .info.ram)"
+INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .info.ram.size | numfmt --to=iec-i)' B"
+# Disk(s) info
+read_disks_info
+DEBUG "Disk(s) info:\n$(echo "$NODE_FACTS" | jq .info.disks)"
+INFO "Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.disks | length'):
+  $(echo "$NODE_FACTS" | jq --raw-output '.info.disks[] | "\t'\''\(.name)'\'' of '\''\(.size)'\'' Bytes"')"
+# Interface(s) info
+read_interfaces_info
+DEBUG "Interface(s) info:\n$(echo "$NODE_FACTS" | jq .info.interfaces)"
+INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces | length'):
+  $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
 
-    # === BENCHMARK ===
-    # CPU bench
-    spinner_start "CPU benchmarks"
-    run_cpu_bench
-    spinner_stop
-    DEBUG "CPU bench:\n$(echo "$NODE_FACTS" | jq .bench.cpu)"
-    INFO "CPU bench:
-      \tSingle-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.single)' events/s
-      \tMulti-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.multi)' events/s"
-    # RAM bench
-    spinner_start "RAM benchmarks"
-    run_ram_bench
-    spinner_stop
-    DEBUG "RAM bench:\n$(echo "$NODE_FACTS" | jq .bench.ram)"
-    INFO "RAM bench:
-      \tRead Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.seq | numfmt --to=si)' b/s
-      \tRead Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.rand | numfmt --to=si)' b/s
-      \tWrite Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.seq | numfmt --to=si)' b/s
-      \tWrite Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.rand | numfmt --to=si)' b/s"
-    # IO bench
-    spinner_start "IO benchmarks"
-    run_io_bench
-    spinner_stop
-    DEBUG "IO bench:\n$(echo "$NODE_FACTS" | jq .bench.io)"
-    INFO "IO bench:
-      \tRead Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.sync | numfmt --to=si)' b/s
-      \tRead Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.async | numfmt --to=si)' b/s
-      \tRead Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.mmap | numfmt --to=si)' b/s
-      \tRead Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.sync | numfmt --to=si)' b/s
-      \tRead Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.async | numfmt --to=si)' b/s
-      \tRead Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.mmap | numfmt --to=si)' b/s
-      \tWrite Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.sync | numfmt --to=si)' b/s
-      \tWrite Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.async | numfmt --to=si)' b/s
-      \tWrite Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.mmap | numfmt --to=si)' b/s
-      \tWrite Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.sync | numfmt --to=si)' b/s
-      \tWrite Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.async | numfmt --to=si)' b/s
-      \tWrite Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.mmap | numfmt --to=si)' b/s"
-  ;;
-esac
+# === BENCHMARK ===
+# CPU bench
+spinner_start "CPU benchmarks"
+run_cpu_bench
+spinner_stop
+DEBUG "CPU bench:\n$(echo "$NODE_FACTS" | jq .bench.cpu)"
+INFO "CPU bench:
+  \tSingle-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.single)' events/s
+  \tMulti-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.multi)' events/s"
+# RAM bench
+spinner_start "RAM benchmarks"
+run_ram_bench
+spinner_stop
+DEBUG "RAM bench:\n$(echo "$NODE_FACTS" | jq .bench.ram)"
+INFO "RAM bench:
+  \tRead Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.seq | numfmt --to=si)' b/s
+  \tRead Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.rand | numfmt --to=si)' b/s
+  \tWrite Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.seq | numfmt --to=si)' b/s
+  \tWrite Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.rand | numfmt --to=si)' b/s"
+# IO bench
+spinner_start "IO benchmarks"
+run_io_bench
+spinner_stop
+DEBUG "IO bench:\n$(echo "$NODE_FACTS" | jq .bench.io)"
+INFO "IO bench:
+  \tRead Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.sync | numfmt --to=si)' b/s
+  \tRead Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.async | numfmt --to=si)' b/s
+  \tRead Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.mmap | numfmt --to=si)' b/s
+  \tRead Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.sync | numfmt --to=si)' b/s
+  \tRead Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.async | numfmt --to=si)' b/s
+  \tRead Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.mmap | numfmt --to=si)' b/s
+  \tWrite Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.sync | numfmt --to=si)' b/s
+  \tWrite Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.async | numfmt --to=si)' b/s
+  \tWrite Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.mmap | numfmt --to=si)' b/s
+  \tWrite Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.sync | numfmt --to=si)' b/s
+  \tWrite Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.async | numfmt --to=si)' b/s
+  \tWrite Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.mmap | numfmt --to=si)' b/s"
