@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
   "version": "0.2",
   "language": "en",
   "useGitignore": true,
@@ -10,13 +9,14 @@
     "@cspell/dict-typescript/cspell-ext.json"
   ],
   "ignorePaths": [
-    "build",
-    "coverage",
-    "node_modules",
-    "docker",
-    "package-lock.json",
-    "license.json",
-    "scripts/__logger.sh"
+    "**/build/",
+    "**/coverage/",
+    "**/node_modules/",
+    "linux/",
+    "**/Dockerfile",
+    "**/Dockerfile.*",
+    "**/package-lock.json",
+    "license.json"
   ],
   "words": [
     "apollographql",
@@ -28,6 +28,7 @@
     "datasource",
     "datasources",
     "envalid",
+    "FUNCNAME",
     "graphqlid",
     "pino",
     "recluster",

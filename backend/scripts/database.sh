@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -20,26 +21,32 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FROM --platform=linux/amd64 debian:latest
+# Current directory
+DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly DIRNAME
+# PostgreSQL version
+readonly POSTGRESQL_VERSION="14.2"
+# PostgreSQL image
+readonly POSTGRESQL_IMAGE="docker.io/postgres:$POSTGRESQL_VERSION"
+# PostgreSQL user
+readonly POSTGRESQL_USER="recluster"
+# PostgreSQL password
+readonly POSTGRESQL_PASSWORD="password"
+# PostgreSQL database
+readonly POSTGRESQL_DATABASE="recluster"
 
-LABEL org.opencontainers.image.authors="Carlo Corradini <carlo.corradini98@gmail.com>, ApolloGraphQL https://github.com/apollographql/rover"
+# Commons
+source "$DIRNAME/../../scripts/__commons.sh"
 
-# Rover release
-ARG ROVER_RELEASE=v0.5.0
+# Assert
+assert_cmd docker
 
-# Accept license
-ENV APOLLO_ELV2_LICENSE=accept
-
-# Install curl
-RUN apt-get update && \
-  apt-get install -y \
-  curl
-
-# Install Rover
-RUN curl -sSL https://rover.apollo.dev/nix/${ROVER_RELEASE} | sh
-
-# Install Federation 2 plugin
-RUN /root/.rover/bin/rover install --plugin supergraph@latest-2
-
-# Default executable is rover
-ENTRYPOINT ["/root/.rover/bin/rover"]
+# PostgreSQL
+INFO "Starting PostgreSQL '$POSTGRESQL_IMAGE'"
+docker run \
+  -p 5432:5432 \
+  -e POSTGRES_USER="$POSTGRESQL_USER" \
+  -e POSTGRES_PASSWORD="$POSTGRESQL_PASSWORD" \
+  -e POSTGRES_DB="$POSTGRESQL_DATABASE" \
+  --rm \
+  "$POSTGRESQL_IMAGE"

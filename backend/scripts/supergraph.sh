@@ -24,29 +24,36 @@
 # Current directory
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
-# PostgreSQL version
-readonly POSTGRESQL_VERSION="14.2"
-# PostgreSQL image
-readonly POSTGRESQL_IMAGE="docker.io/postgres:$POSTGRESQL_VERSION"
-# PostgreSQL user
-readonly POSTGRESQL_USER="recluster"
-# PostgreSQL password
-readonly POSTGRESQL_PASSWORD="password"
-# PostgreSQL database
-readonly POSTGRESQL_DATABASE="recluster"
+# Apollo Rover version
+readonly APOLLO_ROVER_VERSION="latest"
+# Apollo Rover image
+readonly APOLLO_ROVER_IMAGE="recluster/router:$APOLLO_ROVER_VERSION"
+# Apollo Rover Dockerfile
+APOLLO_ROVER_DOCKERFILE=$(readlink -f "$DIRNAME/../docker/Dockerfile.rover")
+readonly APOLLO_ROVER_DOCKERFILE
+# Supergraph input
+SUPERGRAPH_INPUT=$(readlink -f "$DIRNAME/../router/supergraph.yaml")
+readonly SUPERGRAPH_INPUT
+# Supergraph output
+SUPERGRAPH_OUTPUT=$(readlink -f "$DIRNAME/../router/supergraph.graphql")
+readonly SUPERGRAPH_OUTPUT
 
 # Commons
-source "$DIRNAME/__commons.sh"
+source "$DIRNAME/../../scripts/__commons.sh"
 
 # Assert
 assert_cmd docker
+assert_docker_image "$APOLLO_ROVER_IMAGE" "$APOLLO_ROVER_DOCKERFILE"
 
-# PostgreSQL
-INFO "Starting PostgreSQL '$POSTGRESQL_IMAGE'"
-docker run \
-  -p 5432:5432 \
-  -e POSTGRES_USER="$POSTGRESQL_USER" \
-  -e POSTGRES_PASSWORD="$POSTGRESQL_PASSWORD" \
-  -e POSTGRES_DB="$POSTGRESQL_DATABASE" \
-  --rm \
-  "$POSTGRESQL_IMAGE"
+# Generate supergraph
+INFO "Generating supergraph from '$SUPERGRAPH_INPUT'"
+SUPERGRAPH=$(docker run \
+    --mount "type=bind,source=$SUPERGRAPH_INPUT,target=/root/supergraph.yaml" \
+    --rm \
+    $APOLLO_ROVER_IMAGE \
+    supergraph compose --config /root/supergraph.yaml)
+readonly SUPERGRAPH
+
+# Save supergraph
+INFO "Saving supergraph in '$SUPERGRAPH_OUTPUT'"
+printf "%s" "$SUPERGRAPH" > "$SUPERGRAPH_OUTPUT"

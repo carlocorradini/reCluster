@@ -25,7 +25,7 @@
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Apollo Router version
-readonly APOLLO_ROUTER_VERSION="v0.1.0-preview.5"
+readonly APOLLO_ROUTER_VERSION="v0.1.0-preview.6"
 # Apollo Router image
 readonly APOLLO_ROUTER_IMAGE="ghcr.io/apollographql/router:$APOLLO_ROUTER_VERSION"
 # Apollo Router config
@@ -36,7 +36,7 @@ APOLLO_ROUTER_SUPERGRAPH=$(readlink -f "$DIRNAME/../router/supergraph.graphql")
 readonly APOLLO_ROUTER_SUPERGRAPH
 
 # Commons
-source "$DIRNAME/__commons.sh"
+source "$DIRNAME/../../scripts/__commons.sh"
 
 # Assert
 assert_cmd docker

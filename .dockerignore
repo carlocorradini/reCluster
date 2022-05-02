@@ -1,55 +1,41 @@
 # Node
-node_modules
-**/node_modules
+**/node_modules/
 
 # Secrets
-.env
-.env.*
 **/.env
 **/.env.*
 
 # Git
-.git
-.gitignore
-.gitattributes
-.github
+**/.git
+**/.gitignore
+**/.gitattributes
+.github/
 
 # Cache
-.cache/*
-tsconfig.tsbuildinfo
+**/.cache/
 **/tsconfig.tsbuildinfo
 
 # Build
-build
-**/build
+**/build/
 
 # npm
-!.npmrc
+**/!.npmrc
 
 # Docker related
-.dockerignore
-Dockerfile
+**/.dockerignore
 **/Dockerfile
-Dockerfile.*
 **/Dockerfile.*
-docker-compose.yml
 **/docker-compose.yml
-docker-compose.*.yml
 **/docker-compose.*.yml
-docker
 
 # Log files
-logs
-**/logs
-*.log
+**/logs/
 **/*.log
 
 # Temp files
-tmp
-**/tmp
-*.tmp
+**/tmp/
 **/*.tmp
 
 # IDE
-.idea
-.vscode
+.idea/
+.vscode/
