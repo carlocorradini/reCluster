@@ -242,9 +242,9 @@ Options:
   --spinner <SPINNER>   Spinner symbols
                         Default: dots
                         Values:
-                          dots         $SPINNER_SYMBOLS_DOTS
-                          greyscale    $SPINNER_SYMBOLS_GREYSCALE
-                          propeller    $SPINNER_SYMBOLS_PROPELLER
+                          dots         Dots spinner
+                          greyscale    Greyscale spinner
+                          propeller    Propeller spinner
 
   --stage <STAGE>       Installation stage
                         Required
