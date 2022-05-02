@@ -1,8 +1,7 @@
 # Project
-build/
-coverage/
-node_modules/
-migrations/
+**/build/
+**/coverage/
+**/node_modules/
 *.iso
 
 # Logs

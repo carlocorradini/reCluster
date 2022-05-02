@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -21,30 +20,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Current directory
-DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly DIRNAME
-# Subgraph nodes version
-readonly SUBGRAPH_NODES_VERSION="latest"
-# Subgraph nodes image
-readonly SUBGRAPH_NODES_IMAGE="recluster/subgraphs/nodes:$SUBGRAPH_NODES_VERSION"
-# Subgraph nodes Dockerfile
-SUBGRAPH_NODES_DOCKERFILE=$(readlink -f "$DIRNAME/../../docker/subgraphs/Dockerfile.nodes")
-readonly SUBGRAPH_NODES_DOCKERFILE
-# Database
-readonly DATABASE_URL="postgresql://recluster:password@localhost:5432/recluster?schema=public"
+FROM --platform=linux/amd64 debian:latest
 
-# Commons
-source "$DIRNAME/../__commons.sh"
+LABEL org.opencontainers.image.authors="Carlo Corradini <carlo.corradini98@gmail.com>, ApolloGraphQL https://github.com/apollographql/rover"
 
-# Assert
-assert_cmd docker
-assert_docker_image "$SUBGRAPH_NODES_IMAGE" "$SUBGRAPH_NODES_DOCKERFILE"
+# Rover release
+ARG ROVER_RELEASE=v0.5.4
 
-# Subgraph nodes
-INFO "Starting subgraph nodes '$SUBGRAPH_NODES_IMAGE'"
-docker run \
-  -p 80:8000 \
-  -e "DATABASE_URL=$DATABASE_URL" \
-  --rm \
-  "$SUBGRAPH_NODES_IMAGE"
+# Accept license
+ENV APOLLO_ELV2_LICENSE=accept
+
+# Install curl
+RUN apt-get update && \
+  apt-get install -y \
+  curl
+
+# Install Rover
+RUN curl -sSL https://rover.apollo.dev/nix/${ROVER_RELEASE} | sh
+
+# Install Federation 2 plugin
+RUN /root/.rover/bin/rover install --plugin supergraph@latest-2
+
+# Default executable is rover
+ENTRYPOINT ["/root/.rover/bin/rover"]

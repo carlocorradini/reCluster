@@ -24,36 +24,27 @@
 # Current directory
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
-# Apollo Rover version
-readonly APOLLO_ROVER_VERSION="latest"
-# Apollo Rover image
-readonly APOLLO_ROVER_IMAGE="recluster/router:$APOLLO_ROVER_VERSION"
-# Apollo Rover Dockerfile
-APOLLO_ROVER_DOCKERFILE=$(readlink -f "$DIRNAME/../docker/Dockerfile.rover")
-readonly APOLLO_ROVER_DOCKERFILE
-# Supergraph input
-SUPERGRAPH_INPUT=$(readlink -f "$DIRNAME/../router/supergraph.yaml")
-readonly SUPERGRAPH_INPUT
-# Supergraph output
-SUPERGRAPH_OUTPUT=$(readlink -f "$DIRNAME/../router/supergraph.graphql")
-readonly SUPERGRAPH_OUTPUT
+# Subgraph nodes version
+readonly SUBGRAPH_NODES_VERSION="latest"
+# Subgraph nodes image
+readonly SUBGRAPH_NODES_IMAGE="recluster/subgraphs/nodes:$SUBGRAPH_NODES_VERSION"
+# Subgraph nodes Dockerfile
+SUBGRAPH_NODES_DOCKERFILE=$(readlink -f "$DIRNAME/../../docker/subgraphs/Dockerfile.nodes")
+readonly SUBGRAPH_NODES_DOCKERFILE
+# Database
+readonly DATABASE_URL="postgresql://recluster:password@localhost:5432/recluster?schema=public"
 
 # Commons
-source "$DIRNAME/__commons.sh"
+source "$DIRNAME/../../../scripts/__commons.sh"
 
 # Assert
 assert_cmd docker
-assert_docker_image "$APOLLO_ROVER_IMAGE" "$APOLLO_ROVER_DOCKERFILE"
+assert_docker_image "$SUBGRAPH_NODES_IMAGE" "$SUBGRAPH_NODES_DOCKERFILE"
 
-# Generate supergraph
-INFO "Generating supergraph from '$SUPERGRAPH_INPUT'"
-SUPERGRAPH=$(docker run \
-    --mount "type=bind,source=$SUPERGRAPH_INPUT,target=/root/supergraph.yaml" \
-    --rm \
-    $APOLLO_ROVER_IMAGE \
-    supergraph compose --config /root/supergraph.yaml)
-readonly SUPERGRAPH
-
-# Save supergraph
-INFO "Saving supergraph in '$SUPERGRAPH_OUTPUT'"
-printf "%s" "$SUPERGRAPH" > "$SUPERGRAPH_OUTPUT"
+# Subgraph nodes
+INFO "Starting subgraph nodes '$SUBGRAPH_NODES_IMAGE'"
+docker run \
+  -p 80:8000 \
+  -e "DATABASE_URL=$DATABASE_URL" \
+  --rm \
+  "$SUBGRAPH_NODES_IMAGE"
