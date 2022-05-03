@@ -30,16 +30,34 @@ set -o noglob
 
 # Cleanup
 cleanup() {
-  # Restore cursor position
-	tput rc
-  # Cursor normal
-	tput cnorm
+  # Exit code
+  _exit_code=$?
+  # Remove temporary directory
+  [ -n "$TMP_DIR" ] && rm -rf "$TMP_DIR"
+  # Reset cursor if spinner is active
+  if [ -n "$SPINNER_PID" ]; then
+    echo "WOW" > "a.txt"
+    # Restore cursor position
+    tput rc
+    # Cursor normal
+    tput cnorm
+  fi
 
-	return 1
+	return "$_exit_code"
 }
 
 # Trap
-trap cleanup INT QUIT TERM
+trap cleanup INT QUIT TERM EXIT
+
+# ================
+# CONFIGURATION
+# ================
+# Benchmark time in seconds
+DEFAULT_BENCH_TIME=16
+# K3s version
+DEFAULT_K3S_VERSION="v1.23.6+k3s1"
+# Log level
+DEFAULT_LOG_LEVEL=500
 
 # ================
 # LOGGER
@@ -71,8 +89,8 @@ _log_print_message() {
   _log_prefix=""
   _log_suffix="\033[0m"
 
-  # Log level is enabled
-  if [ "$_log_level" -gt "$LOG_LEVEL" ]; then return; fi
+  # Log level enabled
+  [ "$_log_level" -gt "$LOG_LEVEL" ] && return
 
   case $_log_level in
     "$LOG_LEVEL_FATAL")
@@ -146,9 +164,6 @@ _spinner() {
   # Termination signal
   trap '_terminate=0' USR1
 
-  # Parent PID
-  _spinner_ppid="$(ps -p "$$" -o ppid=)"
-
   while :; do
     # Cursor invisible
     tput civis
@@ -172,6 +187,8 @@ _spinner() {
       env sleep "$SPINNER_TIME"
 
       # Check parent still alive
+      # Parent PID
+      _spinner_ppid="$(ps -p "$$" -o ppid=)"
       if [ -n "$_spinner_ppid" ]; then
         # shellcheck disable=SC2086
         _spinner_parentup="$(ps --no-headers $_spinner_ppid)"
@@ -189,8 +206,9 @@ _spinner() {
 # @param $1 Message
 # shellcheck disable=SC2120
 spinner_start() {
-  if [ "$SPINNER_DISABLE" -eq 0 ]; then return; fi
-  if [ -n "$SPINNER_PID" ]; then FATAL "Spinner PID is already defined"; fi
+  [ -n "${1+x}" ] && INFO "$1"
+  [ "$SPINNER_DISABLE" -eq 0 ] && return;
+  [ -n "$SPINNER_PID" ] && FATAL "Spinner PID already defined"
 
   _spinner ${1:+"$1"} &
   SPINNER_PID=$!
@@ -198,8 +216,8 @@ spinner_start() {
 
 # Stop spinner
 spinner_stop() {
-  if [ "$SPINNER_DISABLE" -eq 0 ]; then return; fi
-  if [ -z "$SPINNER_PID" ]; then FATAL "Spinner PID is undefined"; fi
+  [ "$SPINNER_DISABLE" -eq 0 ] && return
+  [ -z "$SPINNER_PID" ] && FATAL "Spinner PID undefined"
 
   kill -s USR1 "$SPINNER_PID"
   wait "$SPINNER_PID"
@@ -211,49 +229,110 @@ spinner_stop() {
 # ================
 # Show help message
 show_help() {
+  # Log level string
+  _log_level=
+  case $DEFAULT_LOG_LEVEL in
+    "$LOG_LEVEL_FATAL") _log_level="fatal" ;;
+    "$LOG_LEVEL_ERROR") _log_level="error" ;;
+    "$LOG_LEVEL_WARN") _log_level="warn" ;;
+    "$LOG_LEVEL_INFO") _log_level="info" ;;
+    "$LOG_LEVEL_DEBUG") _log_level="debug" ;;
+  esac
+
   cat << EOF
 Usage: recluster.sh [--bench-time <TIME>] [--disable-color] [--disable-spinner]
-                    [--help] [--log-level <LEVEL>] [--spinner <SPINNER>]
+                    [--k3s-version <VERSION>] [--help] [--log-level <LEVEL>]
+                    [--spinner <SPINNER>]
 
 reCluster installation script.
 
 Options:
-  --bench-time <TIME>   Benchmark execution time in seconds
-                        Default: 16
-                        Values:
-                          Any positive number
+  --bench-time <TIME>        Benchmark execution time in seconds
+                             Default: $DEFAULT_BENCH_TIME
+                             Values:
+                               Any positive number
 
-  --disable-color       Disable color
+  --disable-color            Disable color
 
-  --disable-spinner     Disable spinner
+  --disable-spinner          Disable spinner
 
-  --help                Show this help message and exit
+  --k3s-version <VERSION>    K3s version
+                             Default: $DEFAULT_K3S_VERSION
+                             Values:
+                               Any K3s version released
 
-  --log-level <LEVEL>   Logger level
-                        Default: info
-                        Values:
-                          fatal    Fatal level
-                          error    Error level
-                          warn     Warning level
-                          info     Informational level
-                          debug    Debug level
+  --help                     Show this help message and exit
 
-  --spinner <SPINNER>   Spinner symbols
-                        Default: dots
-                        Values:
-                          dots         Dots spinner
-                          greyscale    Greyscale spinner
-                          propeller    Propeller spinner
+  --log-level <LEVEL>        Logger level
+                             Default: $_log_level
+                             Values:
+                               fatal    Fatal level
+                               error    Error level
+                               warn     Warning level
+                               info     Informational level
+                               debug    Debug level
+
+  --spinner <SPINNER>        Spinner symbols
+                             Default: dots
+                             Values:
+                               dots         Dots spinner
+                               greyscale    Greyscale spinner
+                               propeller    Propeller spinner
 EOF
 }
 
 # Assert command is installed
 # @param $1 Command name
 assert_cmd() {
-  if ! command -v "$1" >/dev/null 2>&1; then
-    FATAL "'$1' not found"
-  fi
+  command -v "$1" >/dev/null 2>&1 || FATAL "'$1' not found"
   DEBUG "Command '$1' found at '$(command -v "$1")'"
+}
+
+# Assert a downloader command is installed
+# @param $@ Downloader commands list
+downloader_cmd() {
+  # Cycle downloader commands
+  for cmd in ${1:+"$@"}; do
+    # Check if exists
+    if command -v "$cmd" >/dev/null 2>&1; then
+      # Found
+      DOWNLOADER=$cmd
+      DEBUG "Downloader command '$DOWNLOADER' found at '$(command -v "$1")'"
+      return
+    fi
+  done
+
+  # Not found
+  FATAL "Unable to find downloader command in list '$*'"
+}
+
+# Download a file
+# @param $1 Output location
+# @param $1 Download URL
+download() {
+  [ $# -eq 2 ] || FATAL "Download requires exactly 2 arguments but '$#' found"
+
+  # Disable fail on error
+  set +o errexit
+
+  # Download
+  case $DOWNLOADER in
+    curl)
+      curl --fail --silent --location --output "$1" "$2"
+    ;;
+    wget)
+      wget --quiet --output-document="$1" "$2"
+    ;;
+    *)
+      FATAL "Unknown downloader '$DOWNLOADER'"
+    ;;
+  esac
+
+  # shellcheck disable=SC2181
+  [ $? -eq 0 ] || FATAL "Download '$2' failed"
+
+  # Re-enable fail on error
+  set -o errexit
 }
 
 # Check if parameter is a number
@@ -267,9 +346,9 @@ is_number() {
 }
 
 # Parse command line arguments
-# @param $# Arguments
+# @param $@ Arguments
 parse_args() {
-  _parse_args_value() {
+  _parse_args_assert_value() {
     if [ -z "${2+x}" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
   }
   _parse_args_invalid_value() {
@@ -281,10 +360,10 @@ parse_args() {
     case $1 in
       --bench-time)
         # Benchmark time
-        _parse_args_value "$@"
+        _parse_args_assert_value "$@"
         if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
 
-        BENCH_TIME=$2
+        BENCH_TIME="$2"
         shift
         shift
       ;;
@@ -303,9 +382,17 @@ parse_args() {
         show_help
         exit 1
       ;;
+      --k3s-version)
+        # K3s version
+        _parse_args_assert_value "$@"
+
+        K3S_VERSION="$2"
+        shift
+        shift
+      ;;
       --log-level)
         # Log level
-         _parse_args_value "$@"
+        _parse_args_assert_value "$@"
 
         case $2 in
           fatal) LOG_LEVEL=$LOG_LEVEL_FATAL ;;
@@ -319,7 +406,7 @@ parse_args() {
         shift
       ;;
       --spinner)
-         _parse_args_value "$@"
+        _parse_args_assert_value "$@"
 
         case $2 in
           dots)
@@ -618,46 +705,77 @@ run_io_bench() {
 
 ################################################################################################################################
 
-# === CONFIGURATION ===
+# === VARS ===
 # Benchmark time in seconds
-BENCH_TIME=16
+BENCH_TIME=$DEFAULT_BENCH_TIME
+# K3s version
+K3S_VERSION=$DEFAULT_K3S_VERSION
 # Log level
-LOG_LEVEL=$LOG_LEVEL_INFO
+LOG_LEVEL=$DEFAULT_LOG_LEVEL
 # Node facts
 NODE_FACTS="{}"
-# reCluster directory
-RECLUSTER_DIR="/etc/recluster"
+# Temporary directory
+TMP_DIR=
+# Sudo
+SUDO=
 
 # === ARGUMENTS ===
 parse_args "$@"
 
 # === ASSERT ===
-# Sudo
-if [ "$(id -u)" -ne 0 ]; then FATAL "Run as 'root' for administrative rights"; fi
-# Commands
-assert_cmd "ethtool"
+# Commands common
 assert_cmd "env"
 assert_cmd "grep"
 assert_cmd "ip"
-assert_cmd "jq"
 assert_cmd "lscpu"
 assert_cmd "lsmem"
 assert_cmd "lsblk"
+assert_cmd "mktemp"
 assert_cmd "numfmt"
 assert_cmd "ps"
 assert_cmd "read"
 assert_cmd "sed"
-assert_cmd "sysbench"
+assert_cmd "sudo"
 assert_cmd "tput"
 assert_cmd "xargs"
+# Commands uncommon
+assert_cmd "ethtool"
+assert_cmd "jq"
+assert_cmd "sysbench"
+# Downloader command
+downloader_cmd "curl" "wget"
+# Sudo
+if [ "$(id -u)" -eq 0 ]; then
+  INFO "Already running as 'root'"
+  SUDO=
+else
+  INFO "Requesting 'root' privileges"
+  SUDO=sudo
+  $SUDO --reset-timestamp
+  $SUDO true || FATAL "Failed to obtain 'root' privileges"
+fi
 
-# === MAIN ===
-# reCluster directory
-if [ -d "$RECLUSTER_DIR" ]; then FATAL "reCluster directory '$RECLUSTER_DIR' already exists"; fi
-INFO "Creating reCluster directory '$RECLUSTER_DIR'"
-mkdir -p "$RECLUSTER_DIR"
+# === TMP ===
+TMP_DIR="$(mktemp --directory -t recluster.XXXXXXXX)"
+DEBUG "Temporary directory '$TMP_DIR'"
+
+# === K3S ===
+# Download installer
+K3S_INSTALLER="$TMP_DIR/k3s.installer.sh"
+spinner_start "Downloading K3s installer"
+download "$K3S_INSTALLER" "https://get.k3s.io"
+spinner_stop
+chmod 755 "$K3S_INSTALLER"
+# Install
+spinner_start "Installing K3s $K3S_VERSION"
+env \
+  INSTALL_K3S_SKIP_START=true \
+  INSTALL_K3S_VERSION="$K3S_VERSION" \
+  "$K3S_INSTALLER" || FATAL "Error installing K3s"
+spinner_stop
 
 # === INFO ===
+spinner_start "System Info"
 # CPU info
 read_cpu_info
 DEBUG "CPU info:\n$(echo "$NODE_FACTS" | jq .info.cpu)"
@@ -681,6 +799,7 @@ read_interfaces_info
 DEBUG "Interface(s) info:\n$(echo "$NODE_FACTS" | jq .info.interfaces)"
 INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces | length'):
   $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
+spinner_stop
 
 # === BENCHMARK ===
 # CPU bench
