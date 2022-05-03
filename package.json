@@ -5,10 +5,6 @@
   "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
   "license": "MIT",
   "private": true,
-  "engines": {
-    "node": ">=16",
-    "npm": ">=8"
-  },
   "homepage": "https://github.com/carlocorradini/reCluster#readme",
   "repository": {
     "type": "git",

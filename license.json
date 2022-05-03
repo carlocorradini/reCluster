@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/awjh/license-check-and-add/master/config-schema.json",
   "ignoreFile": ".gitignore",
   "license": "LICENSE",
   "trailingWhitespace": "TRIM",
