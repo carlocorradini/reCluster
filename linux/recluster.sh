@@ -645,6 +645,7 @@ assert_cmd "lsmem"
 assert_cmd "lsblk"
 assert_cmd "numfmt"
 assert_cmd "ps"
+assert_cmd "read"
 assert_cmd "sed"
 assert_cmd "sysbench"
 assert_cmd "tput"
@@ -664,12 +665,17 @@ INFO "CPU is '$(echo "$NODE_FACTS" | jq --raw-output .info.cpu.name)'"
 # RAM info
 read_ram_info
 DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .info.ram)"
-INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .info.ram.size | numfmt --to=iec-i)' B"
+INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .info.ram.size | numfmt --to=iec-i)B'"
 # Disk(s) info
 read_disks_info
 DEBUG "Disk(s) info:\n$(echo "$NODE_FACTS" | jq .info.disks)"
-INFO "Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.disks | length'):
-  $(echo "$NODE_FACTS" | jq --raw-output '.info.disks[] | "\t'\''\(.name)'\'' of '\''\(.size)'\'' Bytes"')"
+_disks_info="Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.disks | length'):"
+while read -r _disk_info; do
+  _disks_info="$_disks_info\n\t'$(echo "$_disk_info" | jq --raw-output .name)' of '$(echo "$_disk_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
+done << EOF
+$(echo "$NODE_FACTS" | jq --compact-output '.info.disks[]')
+EOF
+INFO "$_disks_info"
 # Interface(s) info
 read_interfaces_info
 DEBUG "Interface(s) info:\n$(echo "$NODE_FACTS" | jq .info.interfaces)"
@@ -683,33 +689,33 @@ run_cpu_bench
 spinner_stop
 DEBUG "CPU bench:\n$(echo "$NODE_FACTS" | jq .bench.cpu)"
 INFO "CPU bench:
-  \tSingle-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.single)' events/s
-  \tMulti-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.multi)' events/s"
+  \tSingle-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.single)events/s'
+  \tMulti-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.multi)events/s'"
 # RAM bench
 spinner_start "RAM benchmarks"
 run_ram_bench
 spinner_stop
 DEBUG "RAM bench:\n$(echo "$NODE_FACTS" | jq .bench.ram)"
 INFO "RAM bench:
-  \tRead Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.seq | numfmt --to=si)' b/s
-  \tRead Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.rand | numfmt --to=si)' b/s
-  \tWrite Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.seq | numfmt --to=si)' b/s
-  \tWrite Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.rand | numfmt --to=si)' b/s"
+  \tRead Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.seq | numfmt --to=si)b/s'
+  \tRead Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.rand | numfmt --to=si)b/s'
+  \tWrite Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.seq | numfmt --to=si)b/s'
+  \tWrite Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.rand | numfmt --to=si)b/s'"
 # IO bench
 spinner_start "IO benchmarks"
 run_io_bench
 spinner_stop
 DEBUG "IO bench:\n$(echo "$NODE_FACTS" | jq .bench.io)"
 INFO "IO bench:
-  \tRead Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.sync | numfmt --to=si)' b/s
-  \tRead Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.async | numfmt --to=si)' b/s
-  \tRead Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.mmap | numfmt --to=si)' b/s
-  \tRead Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.sync | numfmt --to=si)' b/s
-  \tRead Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.async | numfmt --to=si)' b/s
-  \tRead Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.mmap | numfmt --to=si)' b/s
-  \tWrite Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.sync | numfmt --to=si)' b/s
-  \tWrite Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.async | numfmt --to=si)' b/s
-  \tWrite Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.mmap | numfmt --to=si)' b/s
-  \tWrite Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.sync | numfmt --to=si)' b/s
-  \tWrite Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.async | numfmt --to=si)' b/s
-  \tWrite Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.mmap | numfmt --to=si)' b/s"
+  \tRead Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.sync | numfmt --to=si)b/s'
+  \tRead Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.async | numfmt --to=si)b/s'
+  \tRead Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.mmap | numfmt --to=si)b/s'
+  \tRead Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.sync | numfmt --to=si)b/s'
+  \tRead Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.async | numfmt --to=si)b/s'
+  \tRead Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.mmap | numfmt --to=si)b/s'
+  \tWrite Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.sync | numfmt --to=si)b/s'
+  \tWrite Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.async | numfmt --to=si)b/s'
+  \tWrite Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.mmap | numfmt --to=si)b/s'
+  \tWrite Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.sync | numfmt --to=si)b/s'
+  \tWrite Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.async | numfmt --to=si)b/s'
+  \tWrite Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.mmap | numfmt --to=si)b/s'"
