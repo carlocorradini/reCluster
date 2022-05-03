@@ -214,7 +214,6 @@ show_help() {
   cat << EOF
 Usage: recluster.sh [--bench-time <TIME>] [--disable-color] [--disable-spinner]
                     [--help] [--log-level <LEVEL>] [--spinner <SPINNER>]
-                    --stage <STAGE>
 
 reCluster installation script.
 
@@ -245,11 +244,6 @@ Options:
                           dots         Dots spinner
                           greyscale    Greyscale spinner
                           propeller    Propeller spinner
-
-  --stage <STAGE>       Installation stage
-                        Required
-                        Values:
-                          0    Initial stage
 EOF
 }
 
