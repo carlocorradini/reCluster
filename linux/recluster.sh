@@ -23,8 +23,6 @@
 
 # Fail on error
 set -o errexit
-# Fail on unset var usage
-set -o nounset
 # Disable wildcard character expansion
 set -o noglob
 
@@ -33,31 +31,20 @@ cleanup() {
   # Exit code
   _exit_code=$?
   # Remove temporary directory
-  [ -n "$TMP_DIR" ] && rm -rf "$TMP_DIR"
+  if [ -n "$TMP_DIR" ]; then rm -rf "$TMP_DIR"; fi
   # Reset cursor if spinner is active
   if [ -n "$SPINNER_PID" ]; then
-    echo "WOW" > "a.txt"
     # Restore cursor position
     tput rc
     # Cursor normal
     tput cnorm
   fi
 
-	return "$_exit_code"
+	exit "$_exit_code"
 }
 
 # Trap
 trap cleanup INT QUIT TERM EXIT
-
-# ================
-# CONFIGURATION
-# ================
-# Benchmark time in seconds
-DEFAULT_BENCH_TIME=16
-# K3s version
-DEFAULT_K3S_VERSION="v1.23.6+k3s1"
-# Log level
-DEFAULT_LOG_LEVEL=500
 
 # ================
 # LOGGER
@@ -73,11 +60,6 @@ LOG_LEVEL_INFO=500
 # Debug log level
 LOG_LEVEL_DEBUG=600
 
-# Log level
-LOG_LEVEL=$LOG_LEVEL_INFO
-# Log disable color flag
-LOG_DISABLE_COLOR=1
-
 # Print log message
 # @param $1 Log level
 # @param $2 Message
@@ -85,8 +67,8 @@ _log_print_message() {
   _log_level=$1
   shift
   _log_message=${*:-}
-  _log_name=""
-  _log_prefix=""
+  _log_name=
+  _log_prefix=
   _log_suffix="\033[0m"
 
   # Log level enabled
@@ -94,31 +76,31 @@ _log_print_message() {
 
   case $_log_level in
     "$LOG_LEVEL_FATAL")
-      _log_name="FATAL"
+      _log_name=FATAL
       _log_prefix="\033[41;37m"
     ;;
     "$LOG_LEVEL_ERROR")
-      _log_name="ERROR"
+      _log_name=ERROR
       _log_prefix="\033[1;31m"
     ;;
     "$LOG_LEVEL_WARN")
-      _log_name="WARN"
+      _log_name=WARN
       _log_prefix="\033[1;33m"
     ;;
     "$LOG_LEVEL_INFO")
-      _log_name="INFO"
+      _log_name=INFO
       _log_prefix="\033[37m"
     ;;
     "$LOG_LEVEL_DEBUG")
-      _log_name="DEBUG"
+      _log_name=DEBUG
       _log_prefix="\033[1;34m"
     ;;
   esac
 
   # Color disable flag
   if [ "$LOG_DISABLE_COLOR" -eq 0 ]; then
-    _log_prefix=""
-    _log_suffix=""
+    _log_prefix=
+    _log_suffix=
   fi
 
   # Output to stdout
@@ -126,11 +108,11 @@ _log_print_message() {
 }
 
 # Fatal log message
-FATAL() { _log_print_message ${LOG_LEVEL_FATAL} "$@"; exit 1; }
+FATAL() { _log_print_message ${LOG_LEVEL_FATAL} "$@" >&2; exit 1; }
 # Error log message
-ERROR() { _log_print_message ${LOG_LEVEL_ERROR} "$@"; }
+ERROR() { _log_print_message ${LOG_LEVEL_ERROR} "$@" >&2; }
 # Warning log message
-WARN() { _log_print_message ${LOG_LEVEL_WARN} "$@"; }
+WARN() { _log_print_message ${LOG_LEVEL_WARN} "$@" >&2; }
 # Informational log message
 INFO() { _log_print_message ${LOG_LEVEL_INFO} "$@"; }
 # Debug log message
@@ -143,8 +125,6 @@ DEBUG() { _log_print_message ${LOG_LEVEL_DEBUG} "$@"; }
 SPINNER_PID=
 # Spinner symbol time in seconds
 SPINNER_TIME=.1
-# Spinner disable flag
-SPINNER_DISABLE=1
 
 # Spinner symbols dots
 SPINNER_SYMBOLS_DOTS="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
@@ -153,16 +133,14 @@ SPINNER_SYMBOLS_GREYSCALE="░░░░░░░ ▒░░░░░░ ▒▒░
 # Spinner symbols propeller
 SPINNER_SYMBOLS_PROPELLER="/ - \\ |"
 
-# Spinner symbols
-SPINNER_SYMBOLS=$SPINNER_SYMBOLS_DOTS
-
 # Spinner logic
 _spinner() {
-  _spinner_message="${1:-"Loading..."}"
   # Termination flag
   _terminate=1
   # Termination signal
   trap '_terminate=0' USR1
+  # Message
+  _spinner_message="${1:-"Loading..."}"
 
   while :; do
     # Cursor invisible
@@ -188,10 +166,10 @@ _spinner() {
 
       # Check parent still alive
       # Parent PID
-      _spinner_ppid="$(ps -p "$$" -o ppid=)"
+      _spinner_ppid=$(ps -p "$$" -o ppid=)
       if [ -n "$_spinner_ppid" ]; then
         # shellcheck disable=SC2086
-        _spinner_parentup="$(ps --no-headers $_spinner_ppid)"
+        _spinner_parentup=$(ps --no-headers $_spinner_ppid)
         if [ -z "$_spinner_parentup" ]; then  break 2; fi
       fi
     done
@@ -206,21 +184,27 @@ _spinner() {
 # @param $1 Message
 # shellcheck disable=SC2120
 spinner_start() {
-  [ -n "${1+x}" ] && INFO "$1"
-  [ "$SPINNER_DISABLE" -eq 0 ] && return;
-  [ -n "$SPINNER_PID" ] && FATAL "Spinner PID already defined"
+  # Print message if present
+  if [ -n "$1" ]; then  INFO "$1"; fi
+  if [ "$SPINNER_DISABLE" -eq 0 ]; then return; fi
+  if [ -n "$SPINNER_PID" ]; then FATAL "Spinner PID already defined"; fi
 
-  _spinner ${1:+"$1"} &
+  # Spawn spinner process
+  _spinner "$1" &
+  # Spinner process id
   SPINNER_PID=$!
 }
 
 # Stop spinner
 spinner_stop() {
-  [ "$SPINNER_DISABLE" -eq 0 ] && return
-  [ -z "$SPINNER_PID" ] && FATAL "Spinner PID undefined"
+  if [ "$SPINNER_DISABLE" -eq 0 ]; then return; fi
+  if [ -z "$SPINNER_PID" ]; then FATAL "Spinner PID undefined"; fi
 
+  # Send termination signal
   kill -s USR1 "$SPINNER_PID"
-  wait "$SPINNER_PID"
+  # Wait may fail
+  wait "$SPINNER_PID" || :
+  # Reset pid
   SPINNER_PID=
 }
 
@@ -232,11 +216,11 @@ show_help() {
   # Log level string
   _log_level=
   case $DEFAULT_LOG_LEVEL in
-    "$LOG_LEVEL_FATAL") _log_level="fatal" ;;
-    "$LOG_LEVEL_ERROR") _log_level="error" ;;
-    "$LOG_LEVEL_WARN") _log_level="warn" ;;
-    "$LOG_LEVEL_INFO") _log_level="info" ;;
-    "$LOG_LEVEL_DEBUG") _log_level="debug" ;;
+    "$LOG_LEVEL_FATAL") _log_level=fatal ;;
+    "$LOG_LEVEL_ERROR") _log_level=error ;;
+    "$LOG_LEVEL_WARN") _log_level=warn ;;
+    "$LOG_LEVEL_INFO") _log_level=info ;;
+    "$LOG_LEVEL_DEBUG") _log_level=debug ;;
   esac
 
   cat << EOF
@@ -284,7 +268,7 @@ EOF
 # Assert command is installed
 # @param $1 Command name
 assert_cmd() {
-  command -v "$1" >/dev/null 2>&1 || FATAL "'$1' not found"
+  command -v "$1" >/dev/null 2>&1 || FATAL "Command '$1' not found"
   DEBUG "Command '$1' found at '$(command -v "$1")'"
 }
 
@@ -292,18 +276,18 @@ assert_cmd() {
 # @param $@ Downloader commands list
 downloader_cmd() {
   # Cycle downloader commands
-  for cmd in ${1:+"$@"}; do
+  for _cmd in "$@"; do
     # Check if exists
-    if command -v "$cmd" >/dev/null 2>&1; then
+    if command -v "$_cmd" >/dev/null 2>&1; then
       # Found
-      DOWNLOADER=$cmd
-      DEBUG "Downloader command '$DOWNLOADER' found at '$(command -v "$1")'"
+      DOWNLOADER=$_cmd
+      DEBUG "Downloader command '$DOWNLOADER' found at '$(command -v "$_cmd")'"
       return
     fi
   done
 
   # Not found
-  FATAL "Unable to find downloader command in list '$*'"
+  FATAL "Unable to find any downloader command in list '$*'"
 }
 
 # Download a file
@@ -312,33 +296,24 @@ downloader_cmd() {
 download() {
   [ $# -eq 2 ] || FATAL "Download requires exactly 2 arguments but '$#' found"
 
-  # Disable fail on error
-  set +o errexit
-
   # Download
   case $DOWNLOADER in
     curl)
-      curl --fail --silent --location --output "$1" "$2"
+      curl --fail --silent --location --output "$1" "$2" || fatal "Download '$2' failed"
     ;;
     wget)
-      wget --quiet --output-document="$1" "$2"
+      wget --quiet --output-document="$1" "$2" || fatal "Download '$2' failed"
     ;;
     *)
       FATAL "Unknown downloader '$DOWNLOADER'"
     ;;
   esac
-
-  # shellcheck disable=SC2181
-  [ $? -eq 0 ] || FATAL "Download '$2' failed"
-
-  # Re-enable fail on error
-  set -o errexit
 }
 
 # Check if parameter is a number
 # @param $1 Parameter
 is_number() {
-  if [ -z "${1+x}" ]; then return 1; fi
+  if [ -z "$1" ]; then return 1; fi
   case $1 in
     ''|*[!0-9]*) return 1 ;;
     *) return 0 ;;
@@ -349,7 +324,7 @@ is_number() {
 # @param $@ Arguments
 parse_args() {
   _parse_args_assert_value() {
-    if [ -z "${2+x}" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
+    if [ -z "$2" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
   }
   _parse_args_invalid_value() {
     FATAL "Value '$2' of argument '$1' is invalid"
@@ -363,18 +338,18 @@ parse_args() {
         _parse_args_assert_value "$@"
         if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
 
-        BENCH_TIME="$2"
+        _bench_time=$2
         shift
         shift
       ;;
       --disable-color)
         # Disable color
-        LOG_DISABLE_COLOR=0
+        _disable_color=0
         shift
       ;;
       --disable-spinner)
         # Disable spinner
-        SPINNER_DISABLE=0
+        _disable_spinner=0
         shift
       ;;
       --help)
@@ -386,7 +361,7 @@ parse_args() {
         # K3s version
         _parse_args_assert_value "$@"
 
-        K3S_VERSION="$2"
+        _k3s_version=$2
         shift
         shift
       ;;
@@ -395,13 +370,21 @@ parse_args() {
         _parse_args_assert_value "$@"
 
         case $2 in
-          fatal) LOG_LEVEL=$LOG_LEVEL_FATAL ;;
-          error) LOG_LEVEL=$LOG_LEVEL_ERROR ;;
-          warn) LOG_LEVEL=$LOG_LEVEL_WARN ;;
-          info) LOG_LEVEL=$LOG_LEVEL_INFO ;;
-          debug) LOG_LEVEL=$LOG_LEVEL_DEBUG ;;
+          fatal) _log_level=$LOG_LEVEL_FATAL ;;
+          error) _log_level=$LOG_LEVEL_ERROR ;;
+          warn) _log_level=$LOG_LEVEL_WARN ;;
+          info) _log_level=$LOG_LEVEL_INFO ;;
+          debug) _log_level=$LOG_LEVEL_DEBUG ;;
           *) _parse_args_invalid_value "$1" "$2"
         esac
+        shift
+        shift
+      ;;
+      --node-exporter-version)
+        # Node exporter version
+        _parse_args_assert_value "$@"
+
+        _node_exporter_version=$2
         shift
         shift
       ;;
@@ -410,13 +393,13 @@ parse_args() {
 
         case $2 in
           dots)
-            SPINNER_SYMBOLS=$SPINNER_SYMBOLS_DOTS
+            _spinner=$SPINNER_SYMBOLS_DOTS
           ;;
           greyscale)
-            SPINNER_SYMBOLS=$SPINNER_SYMBOLS_GREYSCALE
+            _spinner=$SPINNER_SYMBOLS_GREYSCALE
           ;;
           propeller)
-            SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
+            _spinner=$SPINNER_SYMBOLS_PROPELLER
           ;;
           *) _parse_args_invalid_value "$1" "$2"
         esac
@@ -435,11 +418,26 @@ parse_args() {
       ;;
     esac
   done
+
+  # Benchmark time in seconds
+  if [ -n "$_bench_time" ]; then BENCH_TIME=$_bench_time; fi
+  # Disable log color
+  if [ -n "$_disable_color" ]; then LOG_DISABLE_COLOR=$_disable_color; fi
+  # Disable spinner
+  if [ -n "$_disable_spinner" ]; then SPINNER_DISABLE=$_disable_spinner; fi
+  # K3s version
+  if [ -n "$_k3s_version" ]; then K3S_VERSION=$_k3s_version; fi
+  # Log level
+  if [ -n "$_log_level" ]; then LOG_LEVEL=$_log_level; fi
+  # Node exporter version
+  if [ -n "$_node_exporter_version" ]; then NODE_EXPORTER_VERSION=$_node_exporter_version; fi
+  # Spinner
+  if [ -n "$_spinner" ]; then SPINNER_SYMBOLS=$_spinner; fi
 }
 
 # Read CPU information
 read_cpu_info() {
-  _cpu_info="$(lscpu --json \
+  _cpu_info=$(lscpu --json \
               | jq '
                   .lscpu
                   | map({(.field): .data})
@@ -461,87 +459,87 @@ read_cpu_info() {
                   | .cache += {"l2": (."L2 cache" | split(" ") | .[0] + " " + .[1])}
                   | .cache += {"l3": (."L3 cache" | split(" ") | .[0] + " " + .[1])}
                   | {architecture, flags, cores, vendor, family, model, name, cache, vulnerabilities}
-                ')"
+                ')
 
   # Convert cache to bytes
-  _l1d_cache="$(echo "$_cpu_info" | jq --raw-output '.cache.l1d' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)"
-  _l1i_cache="$(echo "$_cpu_info" | jq --raw-output '.cache.l1i' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)"
-  _l2_cache="$(echo "$_cpu_info" | jq --raw-output '.cache.l2' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)"
-  _l3_cache="$(echo "$_cpu_info" | jq --raw-output '.cache.l3' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)"
+  _l1d_cache=$(echo "$_cpu_info" | jq --raw-output '.cache.l1d' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _l1i_cache=$(echo "$_cpu_info" | jq --raw-output '.cache.l1i' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _l2_cache=$(echo "$_cpu_info" | jq --raw-output '.cache.l2' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _l3_cache=$(echo "$_cpu_info" | jq --raw-output '.cache.l3' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
 
   # Update cache
-  _cpu_info="$(echo "$_cpu_info" \
+  _cpu_info=$(echo "$_cpu_info" \
             | jq --arg l1d "$_l1d_cache" --arg l1i "$_l1i_cache" --arg l2 "$_l2_cache" --arg l3 "$_l3_cache" '
                 .cache.l1d = ($l1d | tonumber)
                 | .cache.l1i = ($l1i | tonumber)
                 | .cache.l2 = ($l2 | tonumber)
                 | .cache.l3 = ($l3 | tonumber)
-              ')"
+              ')
 
   # Update node facts
-  NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --argjson cpuinfo "$_cpu_info" '.info.cpu = $cpuinfo')"
+  NODE_FACTS=$(echo "$NODE_FACTS" \
+              | jq --argjson cpuinfo "$_cpu_info" '.info.cpu = $cpuinfo')
 }
 
 # Read RAM information
 read_ram_info() {
-  _ram_info="$(lsmem --bytes --json \
+  _ram_info=$(lsmem --bytes --json \
               | jq '
                   .memory
                   | map(.size)
                   | add
                   | { "size": . }
-                ')"
+                ')
 
   # Update node facts
-  NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --argjson raminfo "$_ram_info" '.info.ram = $raminfo')"
+  NODE_FACTS=$(echo "$NODE_FACTS" \
+              | jq --argjson raminfo "$_ram_info" '.info.ram = $raminfo')
 }
 
 # Read Disk(s) information
 read_disks_info() {
-  _disks_info="$(lsblk --bytes --json \
+  _disks_info=$(lsblk --bytes --json \
               | jq '
                   .blockdevices
                   | map(select(.type == "disk"))
                   | map({name, size})
-                ')"
+                ')
 
   # Update node facts
-  NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --argjson disksinfo "$_disks_info" '.info.disks = $disksinfo')"
+  NODE_FACTS=$(echo "$NODE_FACTS" \
+              | jq --argjson disksinfo "$_disks_info" '.info.disks = $disksinfo')
 }
 
 # Read Interface(s) information
 read_interfaces_info() {
-  _interfaces_info="$(ip -details -json link show \
+  _interfaces_info=$(ip -details -json link show \
               | jq '
                   map(if .linkinfo.info_kind // .link_type == "loopback" then empty else . end)
                   | map(.name = .ifname)
                   | map({address, name})
-                ')"
+                ')
 
   # Cycle interfaces to obtain additional information
   while read -r _interface; do
-    _iname="$(echo "$_interface" | jq --raw-output '.name')"
+    _iname=$(echo "$_interface" | jq --raw-output '.name')
 
     # Speed
-    _speed="$(ethtool "$_iname" | grep Speed | sed 's/Speed://g' | sed 's/[[:space:]]*//g' | sed 's/b.*//' | numfmt --from=si)"
+    _speed=$(ethtool "$_iname" | grep Speed | sed 's/Speed://g' | sed 's/[[:space:]]*//g' | sed 's/b.*//' | numfmt --from=si)
     # Wake on Lan
-    _wol="$(ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')"
+    _wol=$(ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')
 
     # Update interfaces
-    _interfaces_info="$(echo "$_interfaces_info" \
+    _interfaces_info=$(echo "$_interfaces_info" \
                       | jq --arg iname "$_iname" --arg speed "$_speed" --arg wol "$_wol" '
                           map(if .name == $iname then . + {"speed": $speed | tonumber, "wol": (if $wol == null or $wol == "" then null else $wol end)} else . end)
-                        ')"
+                        ')
   done << EOF
 $(echo "$_interfaces_info" | jq --compact-output '.[]')
 EOF
 
   # Update node facts
-  NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --argjson interfacesinfo "$_interfaces_info" '.info.interfaces = $interfacesinfo')"
+  NODE_FACTS=$(echo "$NODE_FACTS" \
+              | jq --argjson interfacesinfo "$_interfaces_info" '.info.interfaces = $interfacesinfo')
 }
 
 # Execute CPU benchmark
@@ -555,45 +553,45 @@ run_cpu_bench() {
   }
 
   # Single-thread
-  _single_thread="$(_run_cpu_bench 1)"
+  _single_thread=$(_run_cpu_bench 1)
   # Multi-thread
-  _multi_thread="$(_run_cpu_bench "$(grep -c ^processor /proc/cpuinfo)")"
+  _multi_thread=$(_run_cpu_bench "$(grep -c ^processor /proc/cpuinfo)")
 
-  _cpu_bench="$(jq --null-input --arg singlethread "$_single_thread" --arg multithread "$_multi_thread" '
+  _cpu_bench=$(jq --null-input --arg singlethread "$_single_thread" --arg multithread "$_multi_thread" '
                   {
                     "single": ($singlethread|tonumber),
                     "multi": ($multithread|tonumber)
                   }
-                ')"
+                ')
 
   # Update node facts
-  NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --argjson cpubench "$_cpu_bench" '.bench.cpu = $cpubench')"
+  NODE_FACTS=$(echo "$NODE_FACTS" \
+              | jq --argjson cpubench "$_cpu_bench" '.bench.cpu = $cpubench')
 }
 
 # Execute RAM benchmark
 run_ram_bench() {
   _run_ram_bench() {
-    _ram_output="$(sysbench --time="$BENCH_TIME" --memory-oper="$1" --memory-access-mode="$2" memory run \
+    _ram_output=$(sysbench --time="$BENCH_TIME" --memory-oper="$1" --memory-access-mode="$2" memory run \
                 | grep 'transferred' \
                 | sed 's/.*(\(.*\))/\1/' \
                 | sed 's/B.*//' \
                 | sed 's/[[:space:]]*//g' \
-                | numfmt --from=iec-i)"
-    echo "$((_ram_output*8))"
+                | numfmt --from=iec-i)
+    echo $((_ram_output*8))
   }
 
   # Read sequential
-  _read_seq="$(_run_ram_bench read seq)"
+  _read_seq=$(_run_ram_bench read seq)
   # Read random
-  _read_rand="$(_run_ram_bench read rnd)"
+  _read_rand=$(_run_ram_bench read rnd)
 
   # Write sequential
-  _write_seq="$(_run_ram_bench write seq)"
+  _write_seq=$(_run_ram_bench write seq)
   # Write random
-  _write_rand="$(_run_ram_bench write rnd)"
+  _write_rand=$(_run_ram_bench write rnd)
 
-  _ram_bench="$(jq --null-input \
+  _ram_bench=$(jq --null-input \
                 --arg readseq "$_read_seq" --arg readrand "$_read_rand" \
                 --arg writeseq "$_write_seq" --arg writerand "$_write_rand" \
                 '
@@ -607,11 +605,11 @@ run_ram_bench() {
                       "rand": ($writerand|tonumber)
                     }
                   }
-                ')"
+                ')
 
   # Update node facts
-  NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --argjson rambench "$_ram_bench" '.bench.ram = $rambench')"
+  NODE_FACTS=$(echo "$NODE_FACTS" \
+              | jq --argjson rambench "$_ram_bench" '.bench.ram = $rambench')
 }
 
 # Execute IO benchmark
@@ -620,16 +618,16 @@ run_io_bench() {
     # Io operation
     _io_opt=
     case $1 in
-      read) _io_opt="$1" ;;
-      write) _io_opt="written" ;;
+      read) _io_opt=$1 ;;
+      write) _io_opt=written ;;
     esac
 
-    _io_output="$(sysbench --time="$BENCH_TIME" --file-test-mode="$2" --file-io-mode="$3" fileio run | grep "$_io_opt, ")"
-    _io_throughput_value="$(echo "$_io_output" | sed 's/^.*: //' | sed 's/[[:space:]]*//g')"
-    _io_throughput_unit="$(echo "$_io_output" | sed 's/.*,\(.*\)B\/s.*/\1/' | sed 's/[[:space:]]*//g')"
+    _io_output=$(sysbench --time="$BENCH_TIME" --file-test-mode="$2" --file-io-mode="$3" fileio run | grep "$_io_opt, ")
+    _io_throughput_value=$(echo "$_io_output" | sed 's/^.*: //' | sed 's/[[:space:]]*//g')
+    _io_throughput_unit=$(echo "$_io_output" | sed 's/.*,\(.*\)B\/s.*/\1/' | sed 's/[[:space:]]*//g')
 
-    _io_throughput="$(printf "%s%s\n" "$_io_throughput_value" "$_io_throughput_unit" | numfmt --from=iec-i)"
-    echo "$((_io_throughput*8))"
+    _io_throughput=$(printf "%s%s\n" "$_io_throughput_value" "$_io_throughput_unit" | numfmt --from=iec-i)
+    echo $((_io_throughput*8))
   }
 
   # Prepare sysbench IO
@@ -637,34 +635,34 @@ run_io_bench() {
   sysbench fileio prepare > /dev/null
 
   # Read sequential synchronous
-  _read_seq_sync="$(_run_io_bench read seqrd sync)"
+  _read_seq_sync=$(_run_io_bench read seqrd sync)
   # Read sequential asynchronous
-  _read_seq_async="$(_run_io_bench read seqrd async)"
+  _read_seq_async=$(_run_io_bench read seqrd async)
   # Read sequential mmap
-  _read_seq_mmap="$(_run_io_bench read seqrd mmap)"
+  _read_seq_mmap=$(_run_io_bench read seqrd mmap)
 
   # Read random synchronous
-  _read_rand_sync="$(_run_io_bench read rndrd sync)"
+  _read_rand_sync=$(_run_io_bench read rndrd sync)
   # Read random asynchronous
-  _read_rand_async="$(_run_io_bench read rndrd async)"
+  _read_rand_async=$(_run_io_bench read rndrd async)
   # Read random mmap
-  _read_rand_mmap="$(_run_io_bench read rndrd mmap)"
+  _read_rand_mmap=$(_run_io_bench read rndrd mmap)
 
   # Write sequential synchronous
-  _write_seq_sync="$(_run_io_bench write seqwr sync)"
+  _write_seq_sync=$(_run_io_bench write seqwr sync)
   # Write sequential asynchronous
-  _write_seq_async="$(_run_io_bench write seqwr async)"
+  _write_seq_async=$(_run_io_bench write seqwr async)
   # Write sequential mmap
-  _write_seq_mmap="$(_run_io_bench write seqwr mmap)"
+  _write_seq_mmap=$(_run_io_bench write seqwr mmap)
 
   # Write random synchronous
-  _write_rand_sync="$(_run_io_bench write rndwr sync)"
+  _write_rand_sync=$(_run_io_bench write rndwr sync)
   # Write random asynchronous
-  _write_rand_async="$(_run_io_bench write rndwr async)"
+  _write_rand_async=$(_run_io_bench write rndwr async)
   # Write random mmap
-  _write_rand_mmap="$(_run_io_bench write rndwr mmap)"
+  _write_rand_mmap=$(_run_io_bench write rndwr mmap)
 
-  _io_bench="$(jq --null-input \
+  _io_bench=$(jq --null-input \
                 --arg readseqsync "$_read_seq_sync" --arg readseqasync "$_read_seq_async" --arg readseqmmap "$_read_seq_mmap" \
                 --arg readrandsync "$_read_rand_sync" --arg readrandasync "$_read_rand_async" --arg readrandmmap "$_read_rand_mmap" \
                 --arg writeseqsync "$_write_seq_sync" --arg writeseqasync "$_write_seq_async" --arg writeseqmmap "$_write_seq_mmap" \
@@ -696,145 +694,206 @@ run_io_bench() {
                       }
                     }
                   }
-                ')"
+                ')
 
   # Update node facts
-  NODE_FACTS="$(echo "$NODE_FACTS" \
-              | jq --argjson iobench "$_io_bench" '.bench.io = $iobench')"
+  NODE_FACTS=$(echo "$NODE_FACTS" \
+              | jq --argjson iobench "$_io_bench" '.bench.io = $iobench')
 }
 
 ################################################################################################################################
 
-# === VARS ===
-# Benchmark time in seconds
-BENCH_TIME=$DEFAULT_BENCH_TIME
-# K3s version
-K3S_VERSION=$DEFAULT_K3S_VERSION
-# Log level
-LOG_LEVEL=$DEFAULT_LOG_LEVEL
-# Node facts
-NODE_FACTS="{}"
-# Temporary directory
-TMP_DIR=
-# Sudo
-SUDO=
+# Verify system
+verify_system() {
+  # Commands common
+  assert_cmd "cp"
+  assert_cmd "env"
+  assert_cmd "grep"
+  assert_cmd "ip"
+  assert_cmd "lscpu"
+  assert_cmd "lsmem"
+  assert_cmd "lsblk"
+  assert_cmd "mktemp"
+  assert_cmd "numfmt"
+  assert_cmd "ps"
+  assert_cmd "read"
+  assert_cmd "sed"
+  assert_cmd "sudo"
+  assert_cmd "tar"
+  assert_cmd "tput"
+  assert_cmd "uname"
+  assert_cmd "xargs"
+  # Commands uncommon
+  assert_cmd "ethtool"
+  assert_cmd "jq"
+  assert_cmd "sysbench"
+  # Downloader command
+  downloader_cmd "curl" "wget"
+  # Sudo
+  if [ "$(id -u)" -eq 0 ]; then
+    INFO "Already running as 'root'"
+    SUDO=
+  else
+    INFO "Requesting 'root' privileges"
+    SUDO=sudo
+    $SUDO --reset-timestamp
+    $SUDO true || FATAL "Failed to obtain 'root' privileges"
+  fi
+}
 
-# === ARGUMENTS ===
-parse_args "$@"
+# Setup system
+setup_system() {
+  TMP_DIR=$(mktemp --directory -t recluster.XXXXXXXX)
+  DEBUG "Temporary directory '$TMP_DIR'"
+}
 
-# === ASSERT ===
-# Commands common
-assert_cmd "env"
-assert_cmd "grep"
-assert_cmd "ip"
-assert_cmd "lscpu"
-assert_cmd "lsmem"
-assert_cmd "lsblk"
-assert_cmd "mktemp"
-assert_cmd "numfmt"
-assert_cmd "ps"
-assert_cmd "read"
-assert_cmd "sed"
-assert_cmd "sudo"
-assert_cmd "tput"
-assert_cmd "xargs"
-# Commands uncommon
-assert_cmd "ethtool"
-assert_cmd "jq"
-assert_cmd "sysbench"
-# Downloader command
-downloader_cmd "curl" "wget"
-# Sudo
-if [ "$(id -u)" -eq 0 ]; then
-  INFO "Already running as 'root'"
-  SUDO=
-else
-  INFO "Requesting 'root' privileges"
-  SUDO=sudo
-  $SUDO --reset-timestamp
-  $SUDO true || FATAL "Failed to obtain 'root' privileges"
-fi
+# Install K3s
+install_k3s() {
+  _k3s_installer="$TMP_DIR/k3s.installer.sh"
 
-# === TMP ===
-TMP_DIR="$(mktemp --directory -t recluster.XXXXXXXX)"
-DEBUG "Temporary directory '$TMP_DIR'"
+  # Download installer
+  spinner_start "Downloading K3s installer"
+  download "$_k3s_installer" https://get.k3s.io
+  chmod 755 "$_k3s_installer"
+  spinner_stop
 
-# === K3S ===
-# Download installer
-K3S_INSTALLER="$TMP_DIR/k3s.installer.sh"
-spinner_start "Downloading K3s installer"
-download "$K3S_INSTALLER" "https://get.k3s.io"
-spinner_stop
-chmod 755 "$K3S_INSTALLER"
-# Install
-spinner_start "Installing K3s $K3S_VERSION"
-env \
-  INSTALL_K3S_SKIP_START=true \
-  INSTALL_K3S_VERSION="$K3S_VERSION" \
-  "$K3S_INSTALLER" || FATAL "Error installing K3s"
-spinner_stop
+  # Install
+  spinner_start "Installing K3s $K3S_VERSION"
+  env \
+    INSTALL_K3S_SKIP_START=true \
+    INSTALL_K3S_VERSION="$K3S_VERSION" \
+    "$_k3s_installer" || FATAL "Error installing K3s $K3S_VERSION"
+  spinner_stop
 
-# === INFO ===
-spinner_start "System Info"
-# CPU info
-read_cpu_info
-DEBUG "CPU info:\n$(echo "$NODE_FACTS" | jq .info.cpu)"
-INFO "CPU is '$(echo "$NODE_FACTS" | jq --raw-output .info.cpu.name)'"
-# RAM info
-read_ram_info
-DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .info.ram)"
-INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .info.ram.size | numfmt --to=iec-i)B'"
-# Disk(s) info
-read_disks_info
-DEBUG "Disk(s) info:\n$(echo "$NODE_FACTS" | jq .info.disks)"
-_disks_info="Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.disks | length'):"
-while read -r _disk_info; do
-  _disks_info="$_disks_info\n\t'$(echo "$_disk_info" | jq --raw-output .name)' of '$(echo "$_disk_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
-done << EOF
+  # Success
+  INFO "Successfully installed K3s $K3S_VERSION"
+}
+
+# Install Node exporter
+install_node_exporter() {
+  _node_exporter_installer="$TMP_DIR/node_exporter.installer.sh"
+
+  # Download installer
+  spinner_start "Downloading Node exporter installer"
+  download "$_node_exporter_installer" https://raw.githubusercontent.com/carlocorradini/node_exporter_installer/main/install.sh
+  chmod 755 "$_node_exporter_installer"
+  spinner_stop
+
+  # Install
+  spinner_start "Installing Node exporter $NODE_EXPORTER_VERSION"
+  env \
+    INSTALL_NODE_EXPORTER_SKIP_START=true \
+    INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
+    "$_node_exporter_installer" || FATAL "Error installing Node exporter $NODE_EXPORTER_VERSION"
+  spinner_stop
+
+  # Success
+  INFO "Successfully installed Node exporter $NODE_EXPORTER_VERSION"
+}
+
+# Read system information
+read_system_info() {
+  spinner_start "System Info"
+
+  # CPU info
+  read_cpu_info
+  DEBUG "CPU info:\n$(echo "$NODE_FACTS" | jq .info.cpu)"
+  INFO "CPU is '$(echo "$NODE_FACTS" | jq --raw-output .info.cpu.name)'"
+
+  # RAM info
+  read_ram_info
+  DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .info.ram)"
+  INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .info.ram.size | numfmt --to=iec-i)B'"
+
+  # Disk(s) info
+  read_disks_info
+  DEBUG "Disk(s) info:\n$(echo "$NODE_FACTS" | jq .info.disks)"
+  _disks_info="Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.disks | length'):"
+  while read -r _disk_info; do
+    _disks_info="$_disks_info\n\t'$(echo "$_disk_info" | jq --raw-output .name)' of '$(echo "$_disk_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
+  done << EOF
 $(echo "$NODE_FACTS" | jq --compact-output '.info.disks[]')
 EOF
-INFO "$_disks_info"
-# Interface(s) info
-read_interfaces_info
-DEBUG "Interface(s) info:\n$(echo "$NODE_FACTS" | jq .info.interfaces)"
-INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces | length'):
-  $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
-spinner_stop
+  INFO "$_disks_info"
 
-# === BENCHMARK ===
-# CPU bench
-spinner_start "CPU benchmarks"
-run_cpu_bench
-spinner_stop
-DEBUG "CPU bench:\n$(echo "$NODE_FACTS" | jq .bench.cpu)"
-INFO "CPU bench:
-  \tSingle-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.single)events/s'
-  \tMulti-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.multi)events/s'"
-# RAM bench
-spinner_start "RAM benchmarks"
-run_ram_bench
-spinner_stop
-DEBUG "RAM bench:\n$(echo "$NODE_FACTS" | jq .bench.ram)"
-INFO "RAM bench:
-  \tRead Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.seq | numfmt --to=si)b/s'
-  \tRead Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.rand | numfmt --to=si)b/s'
-  \tWrite Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.seq | numfmt --to=si)b/s'
-  \tWrite Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.rand | numfmt --to=si)b/s'"
-# IO bench
-spinner_start "IO benchmarks"
-run_io_bench
-spinner_stop
-DEBUG "IO bench:\n$(echo "$NODE_FACTS" | jq .bench.io)"
-INFO "IO bench:
-  \tRead Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.sync | numfmt --to=si)b/s'
-  \tRead Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.async | numfmt --to=si)b/s'
-  \tRead Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.mmap | numfmt --to=si)b/s'
-  \tRead Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.sync | numfmt --to=si)b/s'
-  \tRead Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.async | numfmt --to=si)b/s'
-  \tRead Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.mmap | numfmt --to=si)b/s'
-  \tWrite Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.sync | numfmt --to=si)b/s'
-  \tWrite Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.async | numfmt --to=si)b/s'
-  \tWrite Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.mmap | numfmt --to=si)b/s'
-  \tWrite Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.sync | numfmt --to=si)b/s'
-  \tWrite Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.async | numfmt --to=si)b/s'
-  \tWrite Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.mmap | numfmt --to=si)b/s'"
+  # Interface(s) info
+  read_interfaces_info
+  DEBUG "Interface(s) info:\n$(echo "$NODE_FACTS" | jq .info.interfaces)"
+  INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces | length'):
+    $(echo "$NODE_FACTS" | jq --raw-output '.info.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
+
+  spinner_stop
+}
+
+# Execute benchmarks
+run_benchmarks() {
+  # CPU bench
+  spinner_start "CPU benchmarks"
+  run_cpu_bench
+  spinner_stop
+  DEBUG "CPU bench:\n$(echo "$NODE_FACTS" | jq .bench.cpu)"
+  INFO "CPU bench:
+    \tSingle-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.single)events/s'
+    \tMulti-thread '$(echo "$NODE_FACTS" | jq --raw-output .bench.cpu.multi)events/s'"
+
+  # RAM bench
+  spinner_start "RAM benchmarks"
+  run_ram_bench
+  spinner_stop
+  DEBUG "RAM bench:\n$(echo "$NODE_FACTS" | jq .bench.ram)"
+  INFO "RAM bench:
+    \tRead Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.seq | numfmt --to=si)b/s'
+    \tRead Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.read.rand | numfmt --to=si)b/s'
+    \tWrite Sequential '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.seq | numfmt --to=si)b/s'
+    \tWrite Random '$(echo "$NODE_FACTS" | jq --raw-output .bench.ram.write.rand | numfmt --to=si)b/s'"
+
+  # IO bench
+  spinner_start "IO benchmarks"
+  run_io_bench
+  spinner_stop
+  DEBUG "IO bench:\n$(echo "$NODE_FACTS" | jq .bench.io)"
+  INFO "IO bench:
+    \tRead Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.sync | numfmt --to=si)b/s'
+    \tRead Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.async | numfmt --to=si)b/s'
+    \tRead Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.seq.mmap | numfmt --to=si)b/s'
+    \tRead Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.sync | numfmt --to=si)b/s'
+    \tRead Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.async | numfmt --to=si)b/s'
+    \tRead Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.read.rand.mmap | numfmt --to=si)b/s'
+    \tWrite Sequential Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.sync | numfmt --to=si)b/s'
+    \tWrite Sequential Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.async | numfmt --to=si)b/s'
+    \tWrite Sequential Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.seq.mmap | numfmt --to=si)b/s'
+    \tWrite Random Sync '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.sync | numfmt --to=si)b/s'
+    \tWrite Random Async '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.async | numfmt --to=si)b/s'
+    \tWrite Random Mmap '$(echo "$NODE_FACTS" | jq --raw-output .bench.io.write.rand.mmap | numfmt --to=si)b/s'"
+}
+
+# ================
+# CONFIGURATION
+# ================
+# Benchmark time in seconds
+BENCH_TIME=16
+# K3s version
+K3S_VERSION=v1.23.6+k3s1
+# Log disable color flag
+LOG_DISABLE_COLOR=1
+# Log level
+LOG_LEVEL=$LOG_LEVEL_INFO
+# Node exporter version
+NODE_EXPORTER_VERSION=v1.3.1
+# Spinner disable flag
+SPINNER_DISABLE=1
+# Spinner symbols
+SPINNER_SYMBOLS=$SPINNER_SYMBOLS_DOTS
+
+# ================
+# MAIN
+# ================
+{
+  parse_args "$@"
+  verify_system
+  setup_system
+  install_k3s
+  install_node_exporter
+  read_system_info
+  run_benchmarks
+}
