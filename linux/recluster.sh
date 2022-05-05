@@ -491,7 +491,8 @@ read_ram_info() {
               | sed 's/[[:space:]]*//g' \
               | sed 's/B.*//' \
               | sed 's/[k,m,g,t,p,e,z,y]/\U&/g' \
-              | numfmt --from iec)
+              | numfmt --from iec \
+              | jq '{"total": .}')
 
   # Update node facts
   NODE_FACTS=$(echo "$NODE_FACTS" \
@@ -805,7 +806,7 @@ read_system_info() {
   # RAM info
   read_ram_info
   DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .info.ram)"
-  INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .info.ram.size | numfmt --to=iec-i)B'"
+  INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .info.ram.total | numfmt --to=iec-i)B'"
 
   # Disk(s) info
   read_disks_info
