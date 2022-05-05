@@ -215,7 +215,7 @@ spinner_stop() {
 show_help() {
   # Log level string
   _log_level=
-  case $DEFAULT_LOG_LEVEL in
+  case $LOG_LEVEL in
     "$LOG_LEVEL_FATAL") _log_level=fatal ;;
     "$LOG_LEVEL_ERROR") _log_level=error ;;
     "$LOG_LEVEL_WARN") _log_level=warn ;;
@@ -225,43 +225,46 @@ show_help() {
 
   cat << EOF
 Usage: recluster.sh [--bench-time <TIME>] [--disable-color] [--disable-spinner]
-                    [--k3s-version <VERSION>] [--help] [--log-level <LEVEL>]
-                    [--spinner <SPINNER>]
+                    [--help] [--k3s-version <VERSION>] [--log-level <LEVEL>]
+                    [--node-exporter-version <VERSION>] [--spinner <SPINNER>]
 
 reCluster installation script.
 
 Options:
-  --bench-time <TIME>        Benchmark execution time in seconds
-                             Default: $DEFAULT_BENCH_TIME
-                             Values:
-                               Any positive number
+  --bench-time <TIME>                  Benchmark execution time in seconds
+                                       Default: $BENCH_TIME
+                                       Values:
+                                         Any positive number
 
-  --disable-color            Disable color
+  --disable-color                      Disable color
 
-  --disable-spinner          Disable spinner
+  --disable-spinner                    Disable spinner
 
-  --k3s-version <VERSION>    K3s version
-                             Default: $DEFAULT_K3S_VERSION
-                             Values:
-                               Any K3s version released
+  --help                               Show this help message and exit
 
-  --help                     Show this help message and exit
+  --k3s-version <VERSION>              K3s version
+                                       Default: $K3S_VERSION
+                                       Values:
+                                         Any K3s version released
 
-  --log-level <LEVEL>        Logger level
-                             Default: $_log_level
-                             Values:
-                               fatal    Fatal level
-                               error    Error level
-                               warn     Warning level
-                               info     Informational level
-                               debug    Debug level
+  --log-level <LEVEL>                  Logger level
+                                       Default: $_log_level
+                                       Values:
+                                         fatal    Fatal level
+                                         error    Error level
+                                         warn     Warning level
+                                         info     Informational level
+                                         debug    Debug level
 
-  --spinner <SPINNER>        Spinner symbols
-                             Default: dots
-                             Values:
-                               dots         Dots spinner
-                               greyscale    Greyscale spinner
-                               propeller    Propeller spinner
+  --node-exporter-version <VERSION>    Node exporter version
+                                       Default: $NODE_EXPORTER_VERSION
+
+  --spinner <SPINNER>                  Spinner symbols
+                                       Default: dots
+                                       Values:
+                                         dots         Dots spinner
+                                         greyscale    Greyscale spinner
+                                         propeller    Propeller spinner
 EOF
 }
 
@@ -483,13 +486,12 @@ read_cpu_info() {
 
 # Read RAM information
 read_ram_info() {
-  _ram_info=$(lsmem --bytes --json \
-              | jq '
-                  .memory
-                  | map(.size)
-                  | add
-                  | { "size": . }
-                ')
+  _ram_info=$(grep MemTotal /proc/meminfo \
+              | sed 's/MemTotal://g' \
+              | sed 's/[[:space:]]*//g' \
+              | sed 's/B.*//' \
+              | sed 's/[k,m,g,t,p,e,z,y]/\U&/g' \
+              | numfmt --from iec)
 
   # Update node facts
   NODE_FACTS=$(echo "$NODE_FACTS" \
@@ -713,7 +715,6 @@ verify_system() {
   assert_cmd "ip"
   assert_cmd "jq"
   assert_cmd "lscpu"
-  assert_cmd "lsmem"
   assert_cmd "lsblk"
   assert_cmd "mktemp"
   assert_cmd "numfmt"
