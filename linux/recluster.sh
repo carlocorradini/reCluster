@@ -490,7 +490,7 @@ read_ram_info() {
               | sed 's/MemTotal://g' \
               | sed 's/[[:space:]]*//g' \
               | sed 's/B.*//' \
-              | sed 's/[k,m,g,t,p,e,z,y]/\U&/g' \
+              | tr '[:lower:]' '[:upper:]' \
               | numfmt --from iec \
               | jq '{"total": .}')
 
@@ -726,6 +726,7 @@ verify_system() {
   assert_cmd "sysbench"
   assert_cmd "tar"
   assert_cmd "tput"
+  assert_cmd "tr"
   assert_cmd "uname"
   assert_cmd "xargs"
 
