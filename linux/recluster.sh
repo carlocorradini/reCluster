@@ -260,7 +260,7 @@ Options:
                                        Default: $NODE_EXPORTER_VERSION
 
   --spinner <SPINNER>                  Spinner symbols
-                                       Default: dots
+                                       Default: propeller
                                        Values:
                                          dots         Dots spinner
                                          greyscale    Greyscale spinner
@@ -897,7 +897,7 @@ NODE_EXPORTER_VERSION=v1.3.1
 # Spinner disable flag
 SPINNER_DISABLE=1
 # Spinner symbols
-SPINNER_SYMBOLS=$SPINNER_SYMBOLS_DOTS
+SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
 # Node facts
 NODE_FACTS={}
 
