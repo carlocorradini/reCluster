@@ -524,9 +524,9 @@ read_interfaces_info() {
     _iname=$(echo "$_interface" | jq --raw-output '.name')
 
     # Speed
-    _speed=$(ethtool "$_iname" | grep Speed | sed 's/Speed://g' | sed 's/[[:space:]]*//g' | sed 's/b.*//' | numfmt --from=si)
+    _speed=$($SUDO ethtool "$_iname" | grep Speed | sed 's/Speed://g' | sed 's/[[:space:]]*//g' | sed 's/b.*//' | numfmt --from=si)
     # Wake on Lan
-    _wol=$(ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')
+    _wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')
 
     # Update interfaces
     _interfaces_info=$(echo "$_interfaces_info" \
@@ -705,11 +705,13 @@ run_io_bench() {
 
 # Verify system
 verify_system() {
-  # Commands common
+  # Commands
   assert_cmd "cp"
   assert_cmd "env"
+  assert_cmd "ethtool"
   assert_cmd "grep"
   assert_cmd "ip"
+  assert_cmd "jq"
   assert_cmd "lscpu"
   assert_cmd "lsmem"
   assert_cmd "lsblk"
@@ -719,16 +721,15 @@ verify_system() {
   assert_cmd "read"
   assert_cmd "sed"
   assert_cmd "sudo"
+  assert_cmd "sysbench"
   assert_cmd "tar"
   assert_cmd "tput"
   assert_cmd "uname"
   assert_cmd "xargs"
-  # Commands uncommon
-  assert_cmd "ethtool"
-  assert_cmd "jq"
-  assert_cmd "sysbench"
+
   # Downloader command
   downloader_cmd "curl" "wget"
+
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
     INFO "Already running as 'root'"
@@ -884,6 +885,8 @@ NODE_EXPORTER_VERSION=v1.3.1
 SPINNER_DISABLE=1
 # Spinner symbols
 SPINNER_SYMBOLS=$SPINNER_SYMBOLS_DOTS
+# Node facts
+NODE_FACTS={}
 
 # ================
 # MAIN
@@ -892,8 +895,8 @@ SPINNER_SYMBOLS=$SPINNER_SYMBOLS_DOTS
   parse_args "$@"
   verify_system
   setup_system
-  install_k3s
-  install_node_exporter
+  #install_k3s
+  #install_node_exporter
   read_system_info
   run_benchmarks
 }
