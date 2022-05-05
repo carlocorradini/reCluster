@@ -275,6 +275,14 @@ assert_cmd() {
   DEBUG "Command '$1' found at '$(command -v "$1")'"
 }
 
+# Assert command is original
+# @param $1 Command name
+# @param $2 Test arguments
+assert_cmd_original() {
+  # shellcheck disable=SC2086
+  $1 $2 > /dev/null 2>&1 || FATAL "Command '$1' is not original, see https://command-not-found.com/$1 for installation"
+}
+
 # Assert a downloader command is installed
 # @param $@ Downloader commands list
 downloader_cmd() {
@@ -321,121 +329,6 @@ is_number() {
     ''|*[!0-9]*) return 1 ;;
     *) return 0 ;;
   esac
-}
-
-# Parse command line arguments
-# @param $@ Arguments
-parse_args() {
-  _parse_args_assert_value() {
-    if [ -z "$2" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
-  }
-  _parse_args_invalid_value() {
-    FATAL "Value '$2' of argument '$1' is invalid"
-  }
-
-  # Parse
-  while [ $# -gt 0 ]; do
-    case $1 in
-      --bench-time)
-        # Benchmark time
-        _parse_args_assert_value "$@"
-        if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
-
-        _bench_time=$2
-        shift
-        shift
-      ;;
-      --disable-color)
-        # Disable color
-        _disable_color=0
-        shift
-      ;;
-      --disable-spinner)
-        # Disable spinner
-        _disable_spinner=0
-        shift
-      ;;
-      --help)
-        # Display help message and exit
-        show_help
-        exit 1
-      ;;
-      --k3s-version)
-        # K3s version
-        _parse_args_assert_value "$@"
-
-        _k3s_version=$2
-        shift
-        shift
-      ;;
-      --log-level)
-        # Log level
-        _parse_args_assert_value "$@"
-
-        case $2 in
-          fatal) _log_level=$LOG_LEVEL_FATAL ;;
-          error) _log_level=$LOG_LEVEL_ERROR ;;
-          warn) _log_level=$LOG_LEVEL_WARN ;;
-          info) _log_level=$LOG_LEVEL_INFO ;;
-          debug) _log_level=$LOG_LEVEL_DEBUG ;;
-          *) _parse_args_invalid_value "$1" "$2"
-        esac
-        shift
-        shift
-      ;;
-      --node-exporter-version)
-        # Node exporter version
-        _parse_args_assert_value "$@"
-
-        _node_exporter_version=$2
-        shift
-        shift
-      ;;
-      --spinner)
-        _parse_args_assert_value "$@"
-
-        case $2 in
-          dots)
-            _spinner=$SPINNER_SYMBOLS_DOTS
-          ;;
-          greyscale)
-            _spinner=$SPINNER_SYMBOLS_GREYSCALE
-          ;;
-          propeller)
-            _spinner=$SPINNER_SYMBOLS_PROPELLER
-          ;;
-          *) _parse_args_invalid_value "$1" "$2"
-        esac
-        shift
-        shift
-      ;;
-      -*)
-        # Unknown argument
-        WARN "Unknown argument '$1' is ignored"
-        shift
-      ;;
-      *)
-        # No argument
-        WARN "Skipping argument '$1'"
-        shift
-      ;;
-    esac
-  done
-
-  # Benchmark time in seconds
-  if [ -n "$_bench_time" ]; then BENCH_TIME=$_bench_time; fi
-  # Disable log color
-  if [ -n "$_disable_color" ]; then LOG_DISABLE_COLOR=$_disable_color; fi
-  # Disable spinner
-  if [ -n "$_disable_spinner" ]; then SPINNER_DISABLE=$_disable_spinner; fi
-  # K3s version
-  if [ -n "$_k3s_version" ]; then K3S_VERSION=$_k3s_version; fi
-  # Log level
-  if [ -n "$_log_level" ]; then LOG_LEVEL=$_log_level; fi
-  # Node exporter version
-  if [ -n "$_node_exporter_version" ]; then NODE_EXPORTER_VERSION=$_node_exporter_version; fi
-  # Spinner
-  if [ -n "$_spinner" ]; then SPINNER_SYMBOLS=$_spinner; fi
 }
 
 # Read CPU information
@@ -706,6 +599,121 @@ run_io_bench() {
 
 ################################################################################################################################
 
+# Parse command line arguments
+# @param $@ Arguments
+parse_args() {
+  _parse_args_assert_value() {
+    if [ -z "$2" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
+  }
+  _parse_args_invalid_value() {
+    FATAL "Value '$2' of argument '$1' is invalid"
+  }
+
+  # Parse
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --bench-time)
+        # Benchmark time
+        _parse_args_assert_value "$@"
+        if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
+
+        _bench_time=$2
+        shift
+        shift
+      ;;
+      --disable-color)
+        # Disable color
+        _disable_color=0
+        shift
+      ;;
+      --disable-spinner)
+        # Disable spinner
+        _disable_spinner=0
+        shift
+      ;;
+      --help)
+        # Display help message and exit
+        show_help
+        exit 1
+      ;;
+      --k3s-version)
+        # K3s version
+        _parse_args_assert_value "$@"
+
+        _k3s_version=$2
+        shift
+        shift
+      ;;
+      --log-level)
+        # Log level
+        _parse_args_assert_value "$@"
+
+        case $2 in
+          fatal) _log_level=$LOG_LEVEL_FATAL ;;
+          error) _log_level=$LOG_LEVEL_ERROR ;;
+          warn) _log_level=$LOG_LEVEL_WARN ;;
+          info) _log_level=$LOG_LEVEL_INFO ;;
+          debug) _log_level=$LOG_LEVEL_DEBUG ;;
+          *) _parse_args_invalid_value "$1" "$2"
+        esac
+        shift
+        shift
+      ;;
+      --node-exporter-version)
+        # Node exporter version
+        _parse_args_assert_value "$@"
+
+        _node_exporter_version=$2
+        shift
+        shift
+      ;;
+      --spinner)
+        _parse_args_assert_value "$@"
+
+        case $2 in
+          dots)
+            _spinner=$SPINNER_SYMBOLS_DOTS
+          ;;
+          greyscale)
+            _spinner=$SPINNER_SYMBOLS_GREYSCALE
+          ;;
+          propeller)
+            _spinner=$SPINNER_SYMBOLS_PROPELLER
+          ;;
+          *) _parse_args_invalid_value "$1" "$2"
+        esac
+        shift
+        shift
+      ;;
+      -*)
+        # Unknown argument
+        WARN "Unknown argument '$1' is ignored"
+        shift
+      ;;
+      *)
+        # No argument
+        WARN "Skipping argument '$1'"
+        shift
+      ;;
+    esac
+  done
+
+  # Benchmark time in seconds
+  if [ -n "$_bench_time" ]; then BENCH_TIME=$_bench_time; fi
+  # Disable log color
+  if [ -n "$_disable_color" ]; then LOG_DISABLE_COLOR=$_disable_color; fi
+  # Disable spinner
+  if [ -n "$_disable_spinner" ]; then SPINNER_DISABLE=$_disable_spinner; fi
+  # K3s version
+  if [ -n "$_k3s_version" ]; then K3S_VERSION=$_k3s_version; fi
+  # Log level
+  if [ -n "$_log_level" ]; then LOG_LEVEL=$_log_level; fi
+  # Node exporter version
+  if [ -n "$_node_exporter_version" ]; then NODE_EXPORTER_VERSION=$_node_exporter_version; fi
+  # Spinner
+  if [ -n "$_spinner" ]; then SPINNER_SYMBOLS=$_spinner; fi
+}
+
 # Verify system
 verify_system() {
   # Commands
@@ -714,6 +722,7 @@ verify_system() {
   assert_cmd "ethtool"
   assert_cmd "grep"
   assert_cmd "ip"
+  assert_cmd_original "ip" "-details -json link show"
   assert_cmd "jq"
   assert_cmd "lscpu"
   assert_cmd "lsblk"
@@ -728,16 +737,12 @@ verify_system() {
   assert_cmd "uname"
   assert_cmd "xargs"
 
-  # Commands original
-  ip -details -json link show >/dev/null 2>&1 || FATAL "Command 'ip' is not original"
-
   # Spinner enabled
   if [ "$SPINNER_DISABLE" -eq 1 ]; then
     # Commands
     assert_cmd "ps"
+    assert_cmd_original "ps" "--version"
     assert_cmd "tput"
-    # Commands original
-    ps --version > /dev/null 2>&1 || FATAL "Command 'ps' is not original"
   fi
 
   # Downloader command
