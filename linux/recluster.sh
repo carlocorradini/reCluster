@@ -32,8 +32,8 @@ cleanup() {
   _exit_code=$?
   # Remove temporary directory
   if [ -n "$TMP_DIR" ]; then rm -rf "$TMP_DIR"; fi
-  # Reset cursor if spinner is active
-  if [ -n "$SPINNER_PID" ]; then
+  # Reset cursor if spinner enabled and active
+  if [ "$SPINNER_DISABLE" -eq 1 ] && [ -n "$SPINNER_PID" ]; then
     # Restore cursor position
     tput rc
     # Cursor normal
@@ -552,7 +552,7 @@ run_cpu_bench() {
                   | grep 'events per second' \
                   | sed 's/events per second://g' \
                   | sed 's/[[:space:]]*//g' \
-                  | xargs --max-args=1 printf "%.0f"
+                  | xargs printf "%.0f"
   }
 
   # Single-thread
@@ -719,16 +719,26 @@ verify_system() {
   assert_cmd "lsblk"
   assert_cmd "mktemp"
   assert_cmd "numfmt"
-  assert_cmd "ps"
   assert_cmd "read"
   assert_cmd "sed"
   assert_cmd "sudo"
   assert_cmd "sysbench"
   assert_cmd "tar"
-  assert_cmd "tput"
   assert_cmd "tr"
   assert_cmd "uname"
   assert_cmd "xargs"
+
+  # Commands original
+  ip -details -json link show >/dev/null 2>&1 || FATAL "Command 'ip' is not original"
+
+  # Spinner enabled
+  if [ "$SPINNER_DISABLE" -eq 1 ]; then
+    # Commands
+    assert_cmd "ps"
+    assert_cmd "tput"
+    # Commands original
+    ps --version > /dev/null 2>&1 || FATAL "Command 'ps' is not original"
+  fi
 
   # Downloader command
   downloader_cmd "curl" "wget"
@@ -898,8 +908,8 @@ NODE_FACTS={}
   parse_args "$@"
   verify_system
   setup_system
-  #install_k3s
-  #install_node_exporter
+  install_k3s
+  install_node_exporter
   read_system_info
   run_benchmarks
 }
