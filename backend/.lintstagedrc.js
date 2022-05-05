@@ -1,4 +1,4 @@
-import config from '../.lintstagedrc.js';
+const config = require('../.lintstagedrc.js');
 
 module.exports = {
   ...config,
