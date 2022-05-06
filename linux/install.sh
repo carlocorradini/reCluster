@@ -670,15 +670,9 @@ parse_args() {
         _parse_args_assert_value "$@"
 
         case $2 in
-          dots)
-            _spinner=$SPINNER_SYMBOLS_DOTS
-          ;;
-          greyscale)
-            _spinner=$SPINNER_SYMBOLS_GREYSCALE
-          ;;
-          propeller)
-            _spinner=$SPINNER_SYMBOLS_PROPELLER
-          ;;
+          dots) _spinner=$SPINNER_SYMBOLS_DOTS ;;
+          greyscale) _spinner=$SPINNER_SYMBOLS_GREYSCALE ;;
+          propeller) _spinner=$SPINNER_SYMBOLS_PROPELLER ;;
           *) _parse_args_invalid_value "$1" "$2"
         esac
         shift
