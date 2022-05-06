@@ -30,7 +30,7 @@ local machine for development and testing purposes.
 1. Scripts Permissions
 
    ```bash
-   chmod -R +x scripts backend/scripts
+   chmod -R +x scripts linux backend/scripts
    ```
 
 1. Install Dependencies
