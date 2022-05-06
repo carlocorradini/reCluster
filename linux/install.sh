@@ -224,7 +224,7 @@ show_help() {
   esac
 
   cat << EOF
-Usage: recluster.sh [--bench-time <TIME>] [--disable-color] [--disable-spinner]
+Usage: install.sh [--bench-time <TIME>] [--disable-color] [--disable-spinner]
                     [--help] [--k3s-version <VERSION>] [--log-level <LEVEL>]
                     [--node-exporter-version <VERSION>] [--spinner <SPINNER>]
 
@@ -275,12 +275,11 @@ assert_cmd() {
   DEBUG "Command '$1' found at '$(command -v "$1")'"
 }
 
-# Assert command is original
-# @param $1 Command name
-# @param $2 Test arguments
-assert_cmd_original() {
-  # shellcheck disable=SC2086
-  $1 $2 > /dev/null 2>&1 || FATAL "Command '$1' is not original, see https://command-not-found.com/$1 for installation"
+# Assert command features
+# @param $1 Command
+# @param $@ Command options
+assert_cmd_feature() {
+  "$@"> /dev/null 2>&1 || FATAL "Command '$1' is not fully featured, see https://command-not-found.com/$1 for update or installation"
 }
 
 # Assert a downloader command is installed
@@ -717,36 +716,36 @@ parse_args() {
 # Verify system
 verify_system() {
   # Commands
-  assert_cmd "cp"
-  assert_cmd "env"
-  assert_cmd "ethtool"
-  assert_cmd "grep"
-  assert_cmd "ip"
-  assert_cmd_original "ip" "-details -json link show"
-  assert_cmd "jq"
-  assert_cmd "lscpu"
-  assert_cmd "lsblk"
-  assert_cmd "mktemp"
-  assert_cmd "numfmt"
-  assert_cmd "read"
-  assert_cmd "sed"
-  assert_cmd "sudo"
-  assert_cmd "sysbench"
-  assert_cmd "tar"
-  assert_cmd "tr"
-  assert_cmd "uname"
-  assert_cmd "xargs"
+  assert_cmd cp
+  assert_cmd env
+  assert_cmd ethtool
+  assert_cmd grep
+  assert_cmd ip
+  assert_cmd_feature ip -details -json link show
+  assert_cmd jq
+  assert_cmd lscpu
+  assert_cmd lsblk
+  assert_cmd mktemp
+  assert_cmd numfmt
+  assert_cmd read
+  assert_cmd sed
+  assert_cmd sudo
+  assert_cmd sysbench
+  assert_cmd tar
+  assert_cmd tr
+  assert_cmd uname
+  assert_cmd xargs
 
   # Spinner enabled
   if [ "$SPINNER_DISABLE" -eq 1 ]; then
     # Commands
-    assert_cmd "ps"
-    assert_cmd_original "ps" "--version"
-    assert_cmd "tput"
+    assert_cmd ps
+    assert_cmd_feature ps -p "$$" -o ppid=
+    assert_cmd tput
   fi
 
   # Downloader command
-  downloader_cmd "curl" "wget"
+  downloader_cmd curl wget
 
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
