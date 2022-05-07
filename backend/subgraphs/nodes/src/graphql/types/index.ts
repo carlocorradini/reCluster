@@ -22,4 +22,5 @@
  * SOFTWARE.
  */
 
+export * from './Cpu';
 export * from './Node';

@@ -22,32 +22,13 @@
  * SOFTWARE.
  */
 
-import { Service } from 'typedi';
-import { prisma } from '~/database';
-import { AddNodeInput } from '~/graphql/inputs';
-import { NodesArgs } from '~/graphql/args';
+/* eslint-disable max-classes-per-file */
 
-@Service()
-export class NodeService {
-  private readonly prisma = prisma;
+import { Field, InputType } from 'type-graphql';
+import { AddCpuInput } from './AddCpuInput';
 
-  public async nodes(options: NodesArgs) {
-    return this.prisma.node.findMany({
-      skip: options.cursor ? options.skip + 1 : options.skip,
-      take: options.take,
-      ...(options.cursor && { cursor: { id: options.cursor } }),
-      where: {
-        ...(options.cpuId && { cpuId: options.cpuId })
-      },
-      orderBy: { id: 'asc' }
-    });
-  }
-
-  public async node(id: string) {
-    return this.prisma.node.findUnique({ where: { id } });
-  }
-
-  public async addNode(input: AddNodeInput) {
-    return this.prisma.node.create({ data: { cpu: { create: input.cpu } } });
-  }
+@InputType({ description: 'Add node input' })
+export class AddNodeInput {
+  @Field(() => AddCpuInput, { description: 'Node CPU' })
+  cpu!: AddCpuInput;
 }

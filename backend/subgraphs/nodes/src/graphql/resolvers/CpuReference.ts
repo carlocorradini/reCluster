@@ -23,11 +23,11 @@
  */
 
 import Container from 'typedi';
-import { NodeService } from '~services';
-import { Node } from '../types';
+import { CpuService } from '~/services';
+import { Cpu } from '../types';
 
-const nodeService: NodeService = Container.get(NodeService);
+const cpuService: CpuService = Container.get(CpuService);
 
-export async function resolveNodeReference(ref: Pick<Node, 'id'>) {
-  return nodeService.node(ref.id);
+export async function resolveCpuReference(ref: Pick<Cpu, 'id'>) {
+  return cpuService.cpu(ref.id);
 }

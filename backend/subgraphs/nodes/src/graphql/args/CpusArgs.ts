@@ -22,32 +22,23 @@
  * SOFTWARE.
  */
 
-import { Service } from 'typedi';
-import { prisma } from '~/database';
-import { AddNodeInput } from '~/graphql/inputs';
-import { NodesArgs } from '~/graphql/args';
+import { ArgsType, Field } from 'type-graphql';
+import { CpuArchitecture } from '@prisma/client';
+import { GraphQLNonEmptyString, PaginationArgs } from '@recluster/graphql';
 
-@Service()
-export class NodeService {
-  private readonly prisma = prisma;
+@ArgsType()
+export class CpusArgs extends PaginationArgs {
+  @Field(() => CpuArchitecture, {
+    nullable: true,
+    description: 'CPU architecture'
+  })
+  architecture?: CpuArchitecture;
 
-  public async nodes(options: NodesArgs) {
-    return this.prisma.node.findMany({
-      skip: options.cursor ? options.skip + 1 : options.skip,
-      take: options.take,
-      ...(options.cursor && { cursor: { id: options.cursor } }),
-      where: {
-        ...(options.cpuId && { cpuId: options.cpuId })
-      },
-      orderBy: { id: 'asc' }
-    });
-  }
+  @Field(() => [GraphQLNonEmptyString], {
+    nullable: true,
+    description: 'CPU flags'
+  })
+  flags?: string[];
 
-  public async node(id: string) {
-    return this.prisma.node.findUnique({ where: { id } });
-  }
-
-  public async addNode(input: AddNodeInput) {
-    return this.prisma.node.create({ data: { cpu: { create: input.cpu } } });
-  }
+  /* FIXME Implement */
 }
