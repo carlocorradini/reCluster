@@ -23,31 +23,34 @@
  */
 
 import { Service } from 'typedi';
+import { AddCpuInput } from '~/graphql/inputs';
+import { CpusArgs } from '~/graphql/args';
 import { prisma } from '~/database';
-import { AddNodeInput } from '~/graphql/inputs';
-import { NodesArgs } from '~/graphql/args';
 
 @Service()
-export class NodeService {
+export class CpuService {
   private readonly prisma = prisma;
 
-  public async nodes(options: NodesArgs) {
-    return this.prisma.node.findMany({
+  public async cpus(options: CpusArgs) {
+    return this.prisma.cpu.findMany({
       skip: options.cursor ? options.skip + 1 : options.skip,
       take: options.take,
       ...(options.cursor && { cursor: { id: options.cursor } }),
       where: {
-        ...(options.cpuId && { cpuId: options.cpuId })
+        ...(options.architecture && { architecture: options.architecture }),
+        ...(options.flags && { flags: { hasEvery: options.flags } })
       },
       orderBy: { id: 'asc' }
     });
   }
 
-  public async node(id: string) {
-    return this.prisma.node.findUnique({ where: { id } });
+  public async cpu(id: string) {
+    return this.prisma.cpu.findUnique({ where: { id } });
   }
 
-  public async addNode(input: AddNodeInput) {
-    return this.prisma.node.create({ data: { cpu: { create: input.cpu } } });
+  public async addCpu(input: AddCpuInput) {
+    return this.prisma.cpu.create({
+      data: { ...input }
+    });
   }
 }

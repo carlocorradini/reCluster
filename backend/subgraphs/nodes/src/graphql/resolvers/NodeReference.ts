@@ -22,32 +22,12 @@
  * SOFTWARE.
  */
 
-import { Service } from 'typedi';
-import { prisma } from '~/database';
-import { AddNodeInput } from '~/graphql/inputs';
-import { NodesArgs } from '~/graphql/args';
+import Container from 'typedi';
+import { NodeService } from '~/services';
+import { Node } from '../types';
 
-@Service()
-export class NodeService {
-  private readonly prisma = prisma;
+const nodeService: NodeService = Container.get(NodeService);
 
-  public async nodes(options: NodesArgs) {
-    return this.prisma.node.findMany({
-      skip: options.cursor ? options.skip + 1 : options.skip,
-      take: options.take,
-      ...(options.cursor && { cursor: { id: options.cursor } }),
-      where: {
-        ...(options.cpuId && { cpuId: options.cpuId })
-      },
-      orderBy: { id: 'asc' }
-    });
-  }
-
-  public async node(id: string) {
-    return this.prisma.node.findUnique({ where: { id } });
-  }
-
-  public async addNode(input: AddNodeInput) {
-    return this.prisma.node.create({ data: { cpu: { create: input.cpu } } });
-  }
+export async function resolveNodeReference(ref: Pick<Node, 'id'>) {
+  return nodeService.node(ref.id);
 }

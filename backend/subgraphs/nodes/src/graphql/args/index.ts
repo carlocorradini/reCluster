@@ -22,12 +22,5 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { GraphQLNonEmptyString } from '@recluster/graphql';
-import { Node } from '../types';
-
-@InputType()
-export class NodeAddInput implements Partial<Node> {
-  @Field(() => GraphQLNonEmptyString)
-  name!: string;
-}
+export * from './CpusArgs';
+export * from './NodesArgs';

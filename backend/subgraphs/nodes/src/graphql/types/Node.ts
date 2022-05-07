@@ -23,14 +23,20 @@
  */
 
 import { Directive, Field, ObjectType } from 'type-graphql';
-import { GraphQLID, GraphQLNonEmptyString } from '@recluster/graphql';
+import { GraphQLID, GraphQLTimestamp } from '@recluster/graphql';
 
-@ObjectType()
+@ObjectType({ description: 'Node' })
 @Directive(`@key(fields: "id")`)
 export class Node {
-  @Field(() => GraphQLID)
+  @Field(() => GraphQLID, { description: 'Node identifier' })
   id!: string;
 
-  @Field(() => GraphQLNonEmptyString)
-  name!: string;
+  @Field(() => GraphQLID, { description: 'CPU identifier' })
+  cpuId!: string;
+
+  @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
+  createdAt!: Date;
+
+  @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
+  updatedAt!: Date;
 }

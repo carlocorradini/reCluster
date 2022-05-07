@@ -117,10 +117,8 @@ DEBUG() { _log_print_message ${LOG_LEVEL_DEBUG} "$@"; }
 # Assert command is installed
 # @param $1 Command name
 function assert_cmd() {
-  if ! command -v "$1" >/dev/null 2>&1; then
-    FATAL "'$1' not found"
-  fi
-  DEBUG "'$1' found at '$(command -v "$1")'"
+  command -v "$1" >/dev/null 2>&1 || FATAL "Command '$1' not found"
+  DEBUG "Command '$1' found at '$(command -v "$1")'"
 }
 
 # Check docker image

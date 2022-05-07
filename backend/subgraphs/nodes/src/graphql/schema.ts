@@ -24,16 +24,22 @@
 
 import { Container } from 'typedi';
 import { buildFederatedSchema } from '@recluster/helpers';
-import { NodeResolver, resolveNodeReference } from './resolvers';
-import { Node } from './types';
+import {
+  CpuResolver,
+  NodeResolver,
+  resolveCpuReference,
+  resolveNodeReference
+} from './resolvers';
+import { Cpu, Node } from './types';
 
 export const schema = buildFederatedSchema(
   {
-    resolvers: [NodeResolver],
-    orphanedTypes: [Node],
+    resolvers: [CpuResolver, NodeResolver],
+    orphanedTypes: [Cpu, Node],
     container: Container
   },
   {
+    Cpu: { __resolveReference: resolveCpuReference },
     Node: { __resolveReference: resolveNodeReference }
   }
 );

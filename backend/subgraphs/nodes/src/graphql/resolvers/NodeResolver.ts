@@ -22,12 +22,21 @@
  * SOFTWARE.
  */
 
-import { Arg, Args, Mutation, Query, Resolver } from 'type-graphql';
+import {
+  Arg,
+  Args,
+  FieldResolver,
+  Mutation,
+  Query,
+  Resolver,
+  Root
+} from 'type-graphql';
 import { Service, Inject } from 'typedi';
-import { GraphQLID, PaginationArgs } from '@recluster/graphql';
-import { NodeService } from '~services';
-import { Node } from '../types';
-import { NodeAddInput } from '../inputs';
+import { GraphQLID } from '@recluster/graphql';
+import { CpuService, NodeService } from '~/services';
+import { Cpu, Node } from '../types';
+import { NodesArgs } from '../args';
+import { AddNodeInput } from '../inputs';
 
 @Resolver(Node)
 @Service()
@@ -35,18 +44,31 @@ export class NodeResolver {
   @Inject()
   private readonly nodeService!: NodeService;
 
-  @Query(() => [Node])
-  async nodes(@Args() options: PaginationArgs) {
+  @Inject()
+  private readonly cpuService!: CpuService;
+
+  @Query(() => [Node], { description: 'List of nodes' })
+  async nodes(@Args() options: NodesArgs) {
     return this.nodeService.nodes(options);
   }
 
-  @Query(() => Node, { nullable: true })
-  async node(@Arg('id', () => GraphQLID) id: string) {
+  @Query(() => Node, {
+    nullable: true,
+    description: 'Node matching the identifier'
+  })
+  async node(
+    @Arg('id', () => GraphQLID, { description: 'Node identifier' }) id: string
+  ) {
     return this.nodeService.node(id);
   }
 
-  @Mutation(() => Node)
-  async addNode(@Arg('node') input: NodeAddInput) {
+  @Mutation(() => Node, { description: 'Add a new node' })
+  async addNode(@Arg('input') input: AddNodeInput) {
     return this.nodeService.addNode(input);
+  }
+
+  @FieldResolver(() => Cpu, { description: 'Node CPU' })
+  async cpu(@Root() node: Node) {
+    return this.cpuService.cpu(node.cpuId);
   }
 }

@@ -22,4 +22,5 @@
  * SOFTWARE.
  */
 
-export * from './NodeAddInput';
+export * from './AddCpuInput';
+export * from './AddNodeInput';

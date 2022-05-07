@@ -30,6 +30,41 @@ datasource db {
 }
 
 model Node {
-  id   String @id @default(cuid())
-  name String
+  id        String   @id @default(cuid())
+  cpu       Cpu      @relation(fields: [cpuId], references: [id])
+  cpuId     String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @db.Timestamptz()
+}
+
+model Cpu {
+  id              String          @id @default(cuid())
+  architecture    CpuArchitecture
+  flags           String[]
+  cores           Int             @db.SmallInt
+  vendor          CpuVendor
+  family          Int             @db.SmallInt
+  model           Int             @db.SmallInt
+  name            String
+  cacheL1d        Int             @map("cache_l1d")
+  cacheL1i        Int             @map("cache_l1i")
+  cacheL2         Int             @map("cache_l2")
+  cacheL3         Int             @map("cache_l3")
+  vulnerabilities String[]
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime        @updatedAt @db.Timestamptz()
+
+  nodes Node[]
+
+  @@unique([vendor, family, model])
+}
+
+enum CpuArchitecture {
+  x86
+  x86_64
+}
+
+enum CpuVendor {
+  AMD
+  INTEL
 }

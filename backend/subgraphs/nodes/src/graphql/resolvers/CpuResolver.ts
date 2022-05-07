@@ -22,32 +22,39 @@
  * SOFTWARE.
  */
 
-import { Service } from 'typedi';
-import { prisma } from '~/database';
-import { AddNodeInput } from '~/graphql/inputs';
-import { NodesArgs } from '~/graphql/args';
+import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { Service, Inject } from 'typedi';
+import { GraphQLID } from '@recluster/graphql';
+import { CpuService, NodeService } from '~/services';
+import { NodesArgs, CpusArgs } from '~graphql/args';
+import { Cpu, Node } from '../types';
 
+@Resolver(Cpu)
 @Service()
-export class NodeService {
-  private readonly prisma = prisma;
+export class CpuResolver {
+  @Inject()
+  private readonly cpuService!: CpuService;
 
-  public async nodes(options: NodesArgs) {
-    return this.prisma.node.findMany({
-      skip: options.cursor ? options.skip + 1 : options.skip,
-      take: options.take,
-      ...(options.cursor && { cursor: { id: options.cursor } }),
-      where: {
-        ...(options.cpuId && { cpuId: options.cpuId })
-      },
-      orderBy: { id: 'asc' }
-    });
+  @Inject()
+  private readonly nodeService!: NodeService;
+
+  @Query(() => [Cpu], { description: 'List of CPUs' })
+  async cpus(@Args() options: CpusArgs) {
+    return this.cpuService.cpus(options);
   }
 
-  public async node(id: string) {
-    return this.prisma.node.findUnique({ where: { id } });
+  @Query(() => Cpu, {
+    nullable: true,
+    description: 'CPU matching the identifier'
+  })
+  async cpu(
+    @Arg('id', () => GraphQLID, { description: 'CPU identifier' }) id: string
+  ) {
+    return this.cpuService.cpu(id);
   }
 
-  public async addNode(input: AddNodeInput) {
-    return this.prisma.node.create({ data: { cpu: { create: input.cpu } } });
+  @FieldResolver(() => [Node], { description: 'Nodes equipped CPU' })
+  async nodes(@Root() cpu: Cpu, @Args() options: NodesArgs) {
+    return this.nodeService.nodes({ ...options, cpuId: cpu.id });
   }
 }
