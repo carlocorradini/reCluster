@@ -24,7 +24,7 @@
 
 import Container from 'typedi';
 import { NodeService } from '~/services';
-import { Node } from '../types';
+import { Node } from '../entities';
 
 const nodeService: NodeService = Container.get(NodeService);
 

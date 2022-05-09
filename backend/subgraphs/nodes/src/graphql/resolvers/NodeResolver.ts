@@ -34,7 +34,7 @@ import {
 import { Service, Inject } from 'typedi';
 import { GraphQLID } from '@recluster/graphql';
 import { CpuService, NodeService } from '~/services';
-import { Cpu, Node } from '../types';
+import { Cpu, Node } from '../entities';
 import { NodesArgs } from '../args';
 import { AddNodeInput } from '../inputs';
 
