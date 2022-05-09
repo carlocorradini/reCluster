@@ -27,7 +27,7 @@ import { Service, Inject } from 'typedi';
 import { GraphQLID } from '@recluster/graphql';
 import { CpuService, NodeService } from '~/services';
 import { NodesArgs, CpusArgs } from '~graphql/args';
-import { Cpu, Node } from '../types';
+import { Cpu, Node } from '../entities';
 
 @Resolver(Cpu)
 @Service()

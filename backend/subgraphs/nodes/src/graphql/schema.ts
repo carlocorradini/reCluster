@@ -30,7 +30,7 @@ import {
   resolveCpuReference,
   resolveNodeReference
 } from './resolvers';
-import { Cpu, Node } from './types';
+import { Cpu, Node } from './entities';
 
 export const schema = buildFederatedSchema(
   {

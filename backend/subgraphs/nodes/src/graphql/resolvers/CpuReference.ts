@@ -24,7 +24,7 @@
 
 import Container from 'typedi';
 import { CpuService } from '~/services';
-import { Cpu } from '../types';
+import { Cpu } from '../entities';
 
 const cpuService: CpuService = Container.get(CpuService);
 
