@@ -24,5 +24,9 @@
 
 import pino, { Logger, LoggerOptions } from 'pino';
 import { logger as loggerConfig } from '@recluster/configs';
+import { config } from '~/config';
 
-export const logger: Logger<LoggerOptions> = pino({ ...loggerConfig });
+export const logger: Logger<LoggerOptions> = pino({
+  ...loggerConfig,
+  name: config.name
+});
