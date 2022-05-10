@@ -22,29 +22,25 @@
  * SOFTWARE.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { createParamDecorator } from 'type-graphql';
 import graphqlFields from 'graphql-fields';
 
-export type FieldsMap = Record<string, any>;
+export type FieldsMap = Record<string, boolean>;
 
-function transformFields(fields: Record<string, any>): Record<string, any> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function transformFields(fields: Record<string, any>): Record<string, boolean> {
   return Object.fromEntries(
     Object.entries(fields)
-      // remove __typename and others
-      .filter(([key]) => !key.startsWith('__'))
-      .map<[string, any]>(([key, value]) => {
-        if (Object.keys(value).length === 0) {
-          return [key, true];
-        }
-        return [key, transformFields(value)];
-      })
+      .filter(
+        ([key, value]) =>
+          !key.startsWith('__') && Object.keys(value).length === 0
+      )
+      .map<[string, boolean]>(([key]) => [key, true])
   );
 }
 
 export function Fields(): ParameterDecorator {
-  return createParamDecorator(({ info }) => {
-    return transformFields(graphqlFields(info));
-  });
+  return createParamDecorator(({ info }) =>
+    transformFields(graphqlFields(info))
+  );
 }
