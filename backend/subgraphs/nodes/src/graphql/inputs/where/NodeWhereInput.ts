@@ -23,10 +23,22 @@
  */
 
 import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
+import { Prisma } from '@prisma/client';
+import { StringFilter, TimestampFilter } from '@recluster/graphql';
 
-@InputType({ description: 'Add Node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node Cpu' })
-  cpu!: AddCpuInput;
+@InputType({ isAbstract: true, description: 'Node where input' })
+export class NodeWhereInput
+  implements Omit<Prisma.NodeWhereInput, 'AND' | 'OR' | 'NOT' | 'cpu'>
+{
+  @Field({ nullable: true, description: 'Node identifier' })
+  id?: StringFilter;
+
+  @Field({ nullable: true, description: 'Cpu identifier' })
+  cpuId?: StringFilter;
+
+  @Field({ nullable: true, description: 'Creation timestamp' })
+  createdAt?: TimestampFilter;
+
+  @Field({ nullable: true, description: 'Update timestamp' })
+  updatedAt?: TimestampFilter;
 }

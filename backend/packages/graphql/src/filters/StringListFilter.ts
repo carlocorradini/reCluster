@@ -22,11 +22,42 @@
  * SOFTWARE.
  */
 
+import { GraphQLString } from 'graphql';
 import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
+import { Prisma } from '@prisma/client';
 
-@InputType({ description: 'Add Node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node Cpu' })
-  cpu!: AddCpuInput;
+@InputType({
+  isAbstract: true,
+  description: 'String list filter'
+})
+export class StringListFilter implements Prisma.StringNullableListFilter {
+  @Field({
+    nullable: true,
+    description: 'String exists in the list'
+  })
+  has?: string;
+
+  @Field(() => [GraphQLString], {
+    nullable: true,
+    description: 'Every string exists in the list'
+  })
+  hasEvery?: string[];
+
+  @Field(() => [GraphQLString], {
+    nullable: true,
+    description: 'At least one string exists in the list'
+  })
+  hasSome?: string[];
+
+  @Field({
+    nullable: true,
+    description: 'List is empty'
+  })
+  isEmpty?: boolean;
+
+  @Field(() => [GraphQLString], {
+    nullable: true,
+    description: 'List matches the given string list exactly'
+  })
+  equals?: string[];
 }

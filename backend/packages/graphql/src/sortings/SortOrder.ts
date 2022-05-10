@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
+import { registerEnumType } from 'type-graphql';
 
-@InputType({ description: 'Add Node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node Cpu' })
-  cpu!: AddCpuInput;
+export enum SortOrder {
+  ASC = 'asc',
+  DESC = 'desc'
 }
+
+registerEnumType(SortOrder, { name: 'SortOrder', description: 'Sort order' });

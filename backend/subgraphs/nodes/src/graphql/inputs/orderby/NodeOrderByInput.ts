@@ -22,11 +22,23 @@
  * SOFTWARE.
  */
 
+import { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
+import { SortOrder } from '@recluster/graphql';
 
-@InputType({ description: 'Add Node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node Cpu' })
-  cpu!: AddCpuInput;
+@InputType({ isAbstract: true, description: 'Node order by input' })
+export class NodeOrderByInput
+  implements Omit<Prisma.NodeOrderByWithRelationInput, 'cpu'>
+{
+  @Field(() => SortOrder, { nullable: true, description: 'Node identifier' })
+  id?: SortOrder;
+
+  @Field(() => SortOrder, { nullable: true, description: 'Cpu identifier' })
+  cpuId?: SortOrder;
+
+  @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
+  createdAt?: SortOrder;
+
+  @Field(() => SortOrder, { nullable: true, description: 'Update timestamp' })
+  updatedAt?: SortOrder;
 }

@@ -22,5 +22,7 @@
  * SOFTWARE.
  */
 
+export * from './orderby';
+export * from './where';
 export * from './AddCpuInput';
 export * from './AddNodeInput';

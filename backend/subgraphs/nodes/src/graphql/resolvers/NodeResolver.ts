@@ -32,8 +32,8 @@ import {
 } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
 import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
-import { AddNodeArgs, NodeArgs, NodesArgs } from '../args';
 import { Cpu, Node } from '../entities';
+import { AddNodeArgs, NodeArgs, NodesArgs } from '../args';
 
 @Resolver(Node)
 export class NodeResolver {
@@ -47,9 +47,9 @@ export class NodeResolver {
       select: fields,
       take: args.take,
       skip: args.skip,
-      ...(args.where && { where: args.where }),
-      ...(args.orderBy && { orderBy: args.orderBy }),
-      ...(args.cursor && { cursor: { id: args.cursor } })
+      where: args.where,
+      orderBy: args.orderBy,
+      cursor: { id: args.cursor }
     });
   }
 
@@ -108,7 +108,7 @@ export class NodeResolver {
     });
   }
 
-  @FieldResolver(() => Cpu, { description: 'Node CPU' })
+  @FieldResolver(() => Cpu, { description: 'Node Cpu' })
   async cpu(
     @Root() node: Node,
     @Fields() fields: FieldsMap,

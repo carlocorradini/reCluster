@@ -23,10 +23,30 @@
  */
 
 import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
+import { CpuArchitecture, Prisma } from '@prisma/client';
 
-@InputType({ description: 'Add Node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node Cpu' })
-  cpu!: AddCpuInput;
+@InputType({ isAbstract: true, description: 'Cpu architecture filter' })
+export class EnumCpuArchitectureFilter
+  implements Prisma.EnumCpuArchitectureFilter
+{
+  @Field(() => CpuArchitecture, {
+    nullable: true,
+    description: 'Cpu architecture equals'
+  })
+  equals?: CpuArchitecture;
+
+  @Field({ nullable: true, description: 'Cpu architecture not equals' })
+  not?: EnumCpuArchitectureFilter;
+
+  @Field(() => [CpuArchitecture], {
+    nullable: true,
+    description: 'Cpu architecture exists in list'
+  })
+  in?: CpuArchitecture[];
+
+  @Field(() => [CpuArchitecture], {
+    nullable: true,
+    description: 'Cpu architecture does not exists in list'
+  })
+  notIn?: CpuArchitecture[];
 }

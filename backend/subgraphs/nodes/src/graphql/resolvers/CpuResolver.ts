@@ -25,12 +25,12 @@
 import { Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
 import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
-import { CpuArgs, CpusArgs, NodesArgs } from '../args';
 import { Cpu, Node } from '../entities';
+import { CpuArgs, CpusArgs, NodesArgs } from '../args';
 
 @Resolver(Cpu)
 export class CpuResolver {
-  @Query(() => [Cpu], { description: 'List of CPUs' })
+  @Query(() => [Cpu], { description: 'List of Cpus' })
   async cpus(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
@@ -40,15 +40,15 @@ export class CpuResolver {
       select: fields,
       take: args.take,
       skip: args.skip,
-      ...(args.where && { where: args.where }),
-      ...(args.orderBy && { orderBy: args.orderBy }),
-      ...(args.cursor && { cursor: { id: args.cursor } })
+      where: args.where,
+      orderBy: args.orderBy,
+      cursor: { id: args.cursor }
     });
   }
 
   @Query(() => Cpu, {
     nullable: true,
-    description: 'CPU matching the identifier'
+    description: 'Cpu matching the identifier'
   })
   async cpu(
     @Fields() fields: FieldsMap,
@@ -58,7 +58,7 @@ export class CpuResolver {
     return prisma.cpu.findUnique({ where: { id: args.id }, select: fields });
   }
 
-  @FieldResolver(() => [Node], { description: 'Nodes equipped CPU' })
+  @FieldResolver(() => [Node], { description: 'Nodes equipped Cpu' })
   async nodes(
     @Root() cpu: Cpu,
     @Fields() fields: FieldsMap,

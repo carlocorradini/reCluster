@@ -23,10 +23,25 @@
  */
 
 import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
+import { CpuVendor, Prisma } from '@prisma/client';
 
-@InputType({ description: 'Add Node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node Cpu' })
-  cpu!: AddCpuInput;
+@InputType({ isAbstract: true, description: 'Cpu vendor filter' })
+export class EnumCpuVendorFilter implements Prisma.EnumCpuVendorFilter {
+  @Field(() => CpuVendor, { nullable: true, description: 'Cpu vendor equals' })
+  equals?: CpuVendor;
+
+  @Field({ nullable: true, description: 'Cpu vendor not equals' })
+  not?: EnumCpuVendorFilter;
+
+  @Field(() => [CpuVendor], {
+    nullable: true,
+    description: 'Cpu vendor exists in list'
+  })
+  in?: CpuVendor[];
+
+  @Field(() => [CpuVendor], {
+    nullable: true,
+    description: 'Cpu vendor does not exists in list'
+  })
+  notIn?: CpuVendor[];
 }
