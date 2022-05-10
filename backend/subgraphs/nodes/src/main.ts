@@ -28,11 +28,12 @@ import { ApolloServer } from 'apollo-server';
 import { formatErrorApolloServer } from '@recluster/helpers';
 import { config } from './config';
 import { prisma } from './database';
-import { schema } from './graphql';
+import { schema, context } from './graphql';
 import { logger } from './logger';
 
 const server = new ApolloServer({
   schema,
+  context,
   formatError: (error) => {
     logger.error(`Server error: ${error}`);
     return formatErrorApolloServer(error);

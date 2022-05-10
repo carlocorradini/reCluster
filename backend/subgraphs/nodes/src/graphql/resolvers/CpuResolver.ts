@@ -22,25 +22,28 @@
  * SOFTWARE.
  */
 
-import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
-import { Service, Inject } from 'typedi';
-import { GraphQLID } from '@recluster/graphql';
-import { CpuService, NodeService } from '~/services';
-import { NodesArgs, CpusArgs } from '~graphql/args';
+import { Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { PrismaClient } from '@prisma/client';
+import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
+import { CpuArgs, CpusArgs, NodesArgs } from '../args';
 import { Cpu, Node } from '../entities';
 
 @Resolver(Cpu)
-@Service()
 export class CpuResolver {
-  @Inject()
-  private readonly cpuService!: CpuService;
-
-  @Inject()
-  private readonly nodeService!: NodeService;
-
   @Query(() => [Cpu], { description: 'List of CPUs' })
-  async cpus(@Args() options: CpusArgs) {
-    return this.cpuService.cpus(options);
+  async cpus(
+    @Fields() fields: FieldsMap,
+    @Prisma() prisma: PrismaClient,
+    @Args() args: CpusArgs
+  ) {
+    return prisma.cpu.findMany({
+      select: fields,
+      take: args.take,
+      skip: args.skip,
+      ...(args.where && { where: args.where }),
+      ...(args.orderBy && { orderBy: args.orderBy }),
+      ...(args.cursor && { cursor: { id: args.cursor } })
+    });
   }
 
   @Query(() => Cpu, {
@@ -48,13 +51,27 @@ export class CpuResolver {
     description: 'CPU matching the identifier'
   })
   async cpu(
-    @Arg('id', () => GraphQLID, { description: 'CPU identifier' }) id: string
+    @Fields() fields: FieldsMap,
+    @Prisma() prisma: PrismaClient,
+    @Args() args: CpuArgs
   ) {
-    return this.cpuService.cpu(id);
+    return prisma.cpu.findUnique({ where: { id: args.id }, select: fields });
   }
 
   @FieldResolver(() => [Node], { description: 'Nodes equipped CPU' })
-  async nodes(@Root() cpu: Cpu, @Args() options: NodesArgs) {
-    return this.nodeService.nodes({ ...options, cpuId: cpu.id });
+  async nodes(
+    @Root() cpu: Cpu,
+    @Fields() fields: FieldsMap,
+    @Prisma() prisma: PrismaClient,
+    @Args() args: NodesArgs
+  ) {
+    return prisma.node.findMany({
+      select: fields,
+      take: args.take,
+      skip: args.skip,
+      where: { ...args.where, cpuId: cpu.id },
+      ...(args.orderBy && { orderBy: args.orderBy }),
+      ...(args.cursor && { cursor: { id: args.cursor } })
+    });
   }
 }

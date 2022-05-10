@@ -22,5 +22,11 @@
  * SOFTWARE.
  */
 
-export * from './CpuService';
-export * from './NodeService';
+import { ArgsType, Field } from 'type-graphql';
+import { AddNodeInput } from '~graphql/inputs';
+
+@ArgsType()
+export class AddNodeArgs {
+  @Field({ description: 'Node data' })
+  data!: AddNodeInput;
+}

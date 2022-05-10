@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
-import Container from 'typedi';
-import { NodeService } from '~/services';
+import { IContext } from '@recluster/configs';
 import { Node } from '../entities';
 
-const nodeService: NodeService = Container.get(NodeService);
-
-export async function resolveNodeReference(ref: Pick<Node, 'id'>) {
-  return nodeService.node(ref.id);
+export async function resolveNodeReference(
+  reference: Pick<Node, 'id'>,
+  context: IContext
+) {
+  return context.prisma.node.findUnique({ where: { id: reference.id } });
 }

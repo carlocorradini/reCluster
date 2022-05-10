@@ -23,11 +23,14 @@
  */
 
 import { Field, InputType } from 'type-graphql';
-import { GraphQLNonEmptyString, GraphQLPositiveInt } from '@recluster/graphql';
-import { CpuArchitecture, CpuVendor } from '@prisma/client';
+import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
+import { CpuArchitecture, CpuVendor } from '@generated/graphql';
+import { Cpu } from '../entities';
 
 @InputType({ description: 'Add CPU input' })
-export class AddCpuInput {
+export class AddCpuInput
+  implements Required<Omit<Cpu, 'id' | 'createdAt' | 'updatedAt'>>
+{
   @Field(() => CpuArchitecture, { description: 'CPU architecture' })
   architecture!: CpuArchitecture;
 

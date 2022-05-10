@@ -22,35 +22,8 @@
  * SOFTWARE.
  */
 
-import { Service } from 'typedi';
-import { AddCpuInput } from '~/graphql/inputs';
-import { CpusArgs } from '~/graphql/args';
-import { prisma } from '~/database';
+import type { PrismaClient } from '@prisma/client';
 
-@Service()
-export class CpuService {
-  private readonly prisma = prisma;
-
-  public async cpus(options: CpusArgs) {
-    return this.prisma.cpu.findMany({
-      skip: options.cursor ? options.skip + 1 : options.skip,
-      take: options.take,
-      ...(options.cursor && { cursor: { id: options.cursor } }),
-      where: {
-        ...(options.architecture && { architecture: options.architecture }),
-        ...(options.flags && { flags: { hasEvery: options.flags } })
-      },
-      orderBy: { id: 'asc' }
-    });
-  }
-
-  public async cpu(id: string) {
-    return this.prisma.cpu.findUnique({ where: { id } });
-  }
-
-  public async addCpu(input: AddCpuInput) {
-    return this.prisma.cpu.create({
-      data: { ...input }
-    });
-  }
-}
+export type IContext = {
+  prisma: PrismaClient;
+};

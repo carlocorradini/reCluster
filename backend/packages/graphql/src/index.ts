@@ -23,4 +23,4 @@
  */
 
 export * from './args';
-export * from './scalars';
+export * from './decorators';

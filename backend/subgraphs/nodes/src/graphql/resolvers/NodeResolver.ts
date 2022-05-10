@@ -23,7 +23,6 @@
  */
 
 import {
-  Arg,
   Args,
   FieldResolver,
   Mutation,
@@ -31,25 +30,27 @@ import {
   Resolver,
   Root
 } from 'type-graphql';
-import { Service, Inject } from 'typedi';
-import { GraphQLID } from '@recluster/graphql';
-import { CpuService, NodeService } from '~/services';
+import { PrismaClient } from '@prisma/client';
+import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
+import { AddNodeArgs, NodeArgs, NodesArgs } from '../args';
 import { Cpu, Node } from '../entities';
-import { NodesArgs } from '../args';
-import { AddNodeInput } from '../inputs';
 
 @Resolver(Node)
-@Service()
 export class NodeResolver {
-  @Inject()
-  private readonly nodeService!: NodeService;
-
-  @Inject()
-  private readonly cpuService!: CpuService;
-
   @Query(() => [Node], { description: 'List of nodes' })
-  async nodes(@Args() options: NodesArgs) {
-    return this.nodeService.nodes(options);
+  async nodes(
+    @Fields() fields: FieldsMap,
+    @Prisma() prisma: PrismaClient,
+    @Args() args: NodesArgs
+  ) {
+    return prisma.node.findMany({
+      select: fields,
+      take: args.take,
+      skip: args.skip,
+      ...(args.where && { where: args.where }),
+      ...(args.orderBy && { orderBy: args.orderBy }),
+      ...(args.cursor && { cursor: { id: args.cursor } })
+    });
   }
 
   @Query(() => Node, {
@@ -57,18 +58,65 @@ export class NodeResolver {
     description: 'Node matching the identifier'
   })
   async node(
-    @Arg('id', () => GraphQLID, { description: 'Node identifier' }) id: string
+    @Fields() fields: FieldsMap,
+    @Prisma() prisma: PrismaClient,
+    @Args() args: NodeArgs
   ) {
-    return this.nodeService.node(id);
+    return prisma.node.findUnique({ where: { id: args.id }, select: fields });
   }
 
   @Mutation(() => Node, { description: 'Add a new node' })
-  async addNode(@Arg('input') input: AddNodeInput) {
-    return this.nodeService.addNode(input);
+  async addNode(
+    @Fields() fields: FieldsMap,
+    @Prisma() prisma: PrismaClient,
+    @Args() args: AddNodeArgs
+  ) {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const vendor_family_model = {
+      vendor: args.data.cpu.vendor,
+      family: args.data.cpu.family,
+      model: args.data.cpu.model
+    };
+
+    // Find old vulnerabilities (if any)
+    // FIXME Should be done in upsert
+    const cpu = await prisma.cpu.findUnique({
+      where: { vendor_family_model },
+      select: { vulnerabilities: true }
+    });
+    const vulnerabilities = Array.from(
+      new Set([
+        ...(cpu?.vulnerabilities ?? []),
+        ...args.data.cpu.vulnerabilities
+      ])
+    );
+
+    // Add or update cpu
+    await prisma.cpu.upsert({
+      where: { vendor_family_model },
+      update: { vulnerabilities },
+      create: args.data.cpu
+    });
+
+    // Create
+    return prisma.node.create({
+      data: {
+        ...args.data,
+        cpu: { connect: { vendor_family_model } }
+      },
+      select: fields
+    });
   }
 
   @FieldResolver(() => Cpu, { description: 'Node CPU' })
-  async cpu(@Root() node: Node) {
-    return this.cpuService.cpu(node.cpuId);
+  async cpu(
+    @Root() node: Node,
+    @Fields() fields: FieldsMap,
+    @Prisma() prisma: PrismaClient
+  ) {
+    return prisma.cpu.findUnique({
+      select: fields,
+      where: { id: node.cpuId }
+    });
   }
 }

@@ -5,18 +5,26 @@
   },
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": ["packages/**/tsconfig.json", "subgraphs/**/tsconfig.json"],
+    "project": [
+      "packages/**/tsconfig.json",
+      "subgraphs/**/tsconfig.json"
+    ],
     "ecmaVersion": 2022,
     "sourceType": "module"
   },
   "settings": {
     "import/parsers": {
-      "@typescript-eslint/parser": [".ts"]
+      "@typescript-eslint/parser": [
+        ".ts"
+      ]
     },
     "import/resolver": {
       "typescript": {
         "alwaysTryTypes": true,
-        "project": ["packages/**/tsconfig.json", "subgraphs/**/tsconfig.json"]
+        "project": [
+          "packages/**/tsconfig.json",
+          "subgraphs/**/tsconfig.json"
+        ]
       }
     }
   },
@@ -41,8 +49,12 @@
   "rules": {
     "prettier/prettier": "error",
     "tsdoc/syntax": "warn",
-    "license-header/header": ["error", "license.js"],
+    "license-header/header": [
+      "error",
+      "license.js"
+    ],
     "import/no-default-export": "error",
-    "import/prefer-default-export": "off"
+    "import/prefer-default-export": "off",
+    "class-methods-use-this": "off"
   }
 }

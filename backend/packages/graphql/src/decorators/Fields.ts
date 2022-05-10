@@ -22,11 +22,29 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-@InputType({ description: 'Add node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node CPU' })
-  cpu!: AddCpuInput;
+import { createParamDecorator } from 'type-graphql';
+import graphqlFields from 'graphql-fields';
+
+export type FieldsMap = Record<string, any>;
+
+function transformFields(fields: Record<string, any>): Record<string, any> {
+  return Object.fromEntries(
+    Object.entries(fields)
+      // remove __typename and others
+      .filter(([key]) => !key.startsWith('__'))
+      .map<[string, any]>(([key, value]) => {
+        if (Object.keys(value).length === 0) {
+          return [key, true];
+        }
+        return [key, transformFields(value)];
+      })
+  );
+}
+
+export function Fields(): ParameterDecorator {
+  return createParamDecorator(({ info }) => {
+    return transformFields(graphqlFields(info));
+  });
 }

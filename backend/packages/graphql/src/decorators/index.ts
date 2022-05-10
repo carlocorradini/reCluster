@@ -22,11 +22,5 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
-
-@InputType({ description: 'Add node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node CPU' })
-  cpu!: AddCpuInput;
-}
+export * from './Fields';
+export * from './Prisma';

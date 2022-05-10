@@ -22,11 +22,7 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
+import { IContext } from '@recluster/configs';
+import { prisma } from '~/database';
 
-@InputType({ description: 'Add node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node CPU' })
-  cpu!: AddCpuInput;
-}
+export const context: IContext = { prisma };

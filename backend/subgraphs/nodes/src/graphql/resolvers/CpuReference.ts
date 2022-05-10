@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
-import Container from 'typedi';
-import { CpuService } from '~/services';
+import { IContext } from '@recluster/configs';
 import { Cpu } from '../entities';
 
-const cpuService: CpuService = Container.get(CpuService);
-
-export async function resolveCpuReference(ref: Pick<Cpu, 'id'>) {
-  return cpuService.cpu(ref.id);
+export async function resolveCpuReference(
+  reference: Pick<Cpu, 'id'>,
+  context: IContext
+) {
+  return context.prisma.cpu.findUnique({ where: { id: reference.id } });
 }

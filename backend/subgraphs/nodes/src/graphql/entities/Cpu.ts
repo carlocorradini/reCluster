@@ -22,18 +22,19 @@
  * SOFTWARE.
  */
 
-import { Directive, Field, ObjectType, registerEnumType } from 'type-graphql';
-import { CpuArchitecture, CpuVendor } from '@prisma/client';
+import { GraphQLID } from 'graphql';
+import { Cpu as CpuPrisma } from '@prisma/client';
+import { Directive, Field, ObjectType } from 'type-graphql';
 import {
-  GraphQLID,
   GraphQLNonEmptyString,
   GraphQLPositiveInt,
   GraphQLTimestamp
-} from '@recluster/graphql';
+} from 'graphql-scalars';
+import { CpuArchitecture, CpuVendor } from '@generated/graphql';
 
-@ObjectType({ description: 'CPU (Central Processing Unit)' })
+@ObjectType({ description: 'Cpu' })
 @Directive(`@key(fields: "id")`)
-export class Cpu {
+export class Cpu implements Required<CpuPrisma> {
   @Field(() => GraphQLID, { description: 'CPU identifier' })
   id!: string;
 
@@ -44,7 +45,7 @@ export class Cpu {
   flags!: string[];
 
   @Field(() => GraphQLPositiveInt, { description: 'CPU cores' })
-  cores!: number[];
+  cores!: number;
 
   @Field(() => CpuVendor, { description: 'CPU vendor' })
   vendor!: CpuVendor;
@@ -79,13 +80,3 @@ export class Cpu {
   @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
   updatedAt!: Date;
 }
-
-registerEnumType(CpuArchitecture, {
-  name: 'CpuArchitecture',
-  description: 'CPU architecture'
-});
-
-registerEnumType(CpuVendor, {
-  name: 'CpuVendor',
-  description: 'CPU vendor'
-});
