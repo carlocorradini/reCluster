@@ -23,22 +23,20 @@
  */
 
 import { ArgsType, Field } from 'type-graphql';
-import { CpuArchitecture } from '@prisma/client';
-import { GraphQLNonEmptyString, PaginationArgs } from '@recluster/graphql';
+import { CpuOrderByWithRelationInput, CpuWhereInput } from '@generated/graphql';
+import { PaginationArgs } from '@recluster/graphql';
 
 @ArgsType()
 export class CpusArgs extends PaginationArgs {
-  @Field(() => CpuArchitecture, {
+  @Field(() => CpuWhereInput, {
     nullable: true,
-    description: 'CPU architecture'
+    description: 'Filter options'
   })
-  architecture?: CpuArchitecture;
+  where?: CpuWhereInput;
 
-  @Field(() => [GraphQLNonEmptyString], {
+  @Field(() => CpuOrderByWithRelationInput, {
     nullable: true,
-    description: 'CPU flags'
+    description: 'Order options'
   })
-  flags?: string[];
-
-  /* FIXME Implement */
+  orderBy?: CpuOrderByWithRelationInput[];
 }

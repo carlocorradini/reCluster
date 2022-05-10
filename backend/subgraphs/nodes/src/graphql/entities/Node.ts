@@ -22,12 +22,14 @@
  * SOFTWARE.
  */
 
+import { GraphQLID } from 'graphql';
+import { Node as NodePrisma } from '@prisma/client';
 import { Directive, Field, ObjectType } from 'type-graphql';
-import { GraphQLID, GraphQLTimestamp } from '@recluster/graphql';
+import { GraphQLTimestamp } from 'graphql-scalars';
 
 @ObjectType({ description: 'Node' })
 @Directive(`@key(fields: "id")`)
-export class Node {
+export class Node implements Required<NodePrisma> {
   @Field(() => GraphQLID, { description: 'Node identifier' })
   id!: string;
 

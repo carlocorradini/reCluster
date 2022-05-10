@@ -23,10 +23,23 @@
  */
 
 import { ArgsType, Field } from 'type-graphql';
-import { PaginationArgs, GraphQLID } from '@recluster/graphql';
+import {
+  NodeOrderByWithRelationInput,
+  NodeWhereInput
+} from '@generated/graphql';
+import { PaginationArgs } from '@recluster/graphql';
 
 @ArgsType()
 export class NodesArgs extends PaginationArgs {
-  @Field(() => GraphQLID, { nullable: true, description: 'CPU identifier' })
-  cpuId?: string;
+  @Field(() => NodeWhereInput, {
+    nullable: true,
+    description: 'Filter options'
+  })
+  where?: NodeWhereInput;
+
+  @Field(() => NodeOrderByWithRelationInput, {
+    nullable: true,
+    description: 'Order options'
+  })
+  orderBy?: NodeOrderByWithRelationInput[];
 }

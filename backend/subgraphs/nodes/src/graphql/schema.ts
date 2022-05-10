@@ -22,21 +22,19 @@
  * SOFTWARE.
  */
 
-import { Container } from 'typedi';
 import { buildFederatedSchema } from '@recluster/helpers';
+import { Cpu, Node } from './entities';
 import {
   CpuResolver,
   NodeResolver,
   resolveCpuReference,
   resolveNodeReference
 } from './resolvers';
-import { Cpu, Node } from './entities';
 
 export const schema = buildFederatedSchema(
   {
     resolvers: [CpuResolver, NodeResolver],
-    orphanedTypes: [Cpu, Node],
-    container: Container
+    orphanedTypes: [Cpu, Node]
   },
   {
     Cpu: { __resolveReference: resolveCpuReference },

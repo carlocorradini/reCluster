@@ -22,9 +22,10 @@
  * SOFTWARE.
  */
 
+import { GraphQLID, GraphQLInt } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
+import { GraphQLNonNegativeInt } from 'graphql-scalars';
 import { Max, Min } from 'class-validator';
-import { GraphQLNonNegativeInt, GraphQLInt, GraphQLID } from '../scalars';
 
 @ArgsType()
 export class PaginationArgs {
@@ -38,15 +39,13 @@ export class PaginationArgs {
 
   @Field(() => GraphQLNonNegativeInt, {
     defaultValue: PaginationArgs.SKIP_DEFAULT_VALUE,
-    nullable: true,
-    description: `Skip 'n' data`
+    description: `Skip data`
   })
   skip!: number;
 
   @Field(() => GraphQLInt, {
     defaultValue: PaginationArgs.TAKE_DEFAULT_VALUE,
-    nullable: true,
-    description: `Take 'n' data`
+    description: `Take data`
   })
   @Min(PaginationArgs.TAKE_MIN_VALUE)
   @Max(PaginationArgs.TAKE_MAX_VALUE)

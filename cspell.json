@@ -36,6 +36,7 @@
     "supergraph",
     "tsbuildinfo",
     "tsdoc",
-    "typedi"
+    "typedi",
+    "upsert"
   ]
 }

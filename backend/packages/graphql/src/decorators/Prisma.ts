@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
+import { createParamDecorator } from 'type-graphql';
+import type { IContext } from '@recluster/configs';
 
-@InputType({ description: 'Add node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node CPU' })
-  cpu!: AddCpuInput;
+export function Prisma(): ParameterDecorator {
+  return createParamDecorator<IContext>(({ context }) => {
+    return context.prisma;
+  });
 }

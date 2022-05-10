@@ -22,17 +22,11 @@
  * SOFTWARE.
  */
 
-export {
-  GraphQLID,
-  GraphQLInt,
-  GraphQLFloat,
-  GraphQLString,
-  GraphQLBoolean
-} from 'graphql';
+import { GraphQLID } from 'graphql';
+import { ArgsType, Field } from 'type-graphql';
 
-export {
-  GraphQLNonEmptyString,
-  GraphQLNonNegativeInt,
-  GraphQLPositiveInt,
-  GraphQLTimestamp
-} from 'graphql-scalars';
+@ArgsType()
+export class NodeArgs {
+  @Field(() => GraphQLID, { description: 'Node identifier' })
+  id!: string;
+}

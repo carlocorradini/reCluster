@@ -22,5 +22,8 @@
  * SOFTWARE.
  */
 
+export * from './AddNodeArgs';
+export * from './CpuArgs';
 export * from './CpusArgs';
+export * from './NodeArgs';
 export * from './NodesArgs';
