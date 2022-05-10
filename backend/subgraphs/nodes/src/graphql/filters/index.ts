@@ -22,11 +22,5 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
-
-@InputType({ description: 'Add Node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node Cpu' })
-  cpu!: AddCpuInput;
-}
+export * from './EnumCpuArchitectureFilter';
+export * from './EnumCpuVendorFilter';

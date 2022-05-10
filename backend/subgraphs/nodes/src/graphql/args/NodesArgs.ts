@@ -23,11 +23,8 @@
  */
 
 import { ArgsType, Field } from 'type-graphql';
-import {
-  NodeOrderByWithRelationInput,
-  NodeWhereInput
-} from '@generated/graphql';
 import { PaginationArgs } from '@recluster/graphql';
+import { NodeWhereInput, NodeOrderByInput } from '../inputs';
 
 @ArgsType()
 export class NodesArgs extends PaginationArgs {
@@ -37,9 +34,9 @@ export class NodesArgs extends PaginationArgs {
   })
   where?: NodeWhereInput;
 
-  @Field(() => NodeOrderByWithRelationInput, {
+  @Field(() => [NodeOrderByInput], {
     nullable: true,
     description: 'Order options'
   })
-  orderBy?: NodeOrderByWithRelationInput[];
+  orderBy?: NodeOrderByInput[];
 }

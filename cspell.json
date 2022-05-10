@@ -33,6 +33,7 @@
     "pino",
     "recluster",
     "respawn",
+    "sortings",
     "supergraph",
     "tsbuildinfo",
     "tsdoc",

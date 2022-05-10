@@ -22,11 +22,54 @@
  * SOFTWARE.
  */
 
+import { GraphQLInt } from 'graphql';
 import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
+import { Prisma } from '@prisma/client';
 
-@InputType({ description: 'Add Node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node Cpu' })
-  cpu!: AddCpuInput;
+@InputType({ isAbstract: true, description: 'Integer filter' })
+export class IntFilter implements Prisma.IntFilter {
+  @Field(() => GraphQLInt, { nullable: true, description: 'Integer equals' })
+  equals?: number;
+
+  @Field(() => GraphQLInt, {
+    nullable: true,
+    description: 'Integer not equals'
+  })
+  not?: IntFilter;
+
+  @Field(() => [GraphQLInt], {
+    nullable: true,
+    description: 'Integer exists in list'
+  })
+  in?: number[];
+
+  @Field(() => [GraphQLInt], {
+    nullable: true,
+    description: 'Integer does not exists in list'
+  })
+  notIn?: number[];
+
+  @Field(() => GraphQLInt, {
+    nullable: true,
+    description: 'Integer is less than'
+  })
+  lt?: number;
+
+  @Field(() => GraphQLInt, {
+    nullable: true,
+    description: 'Integer is less than or equal to'
+  })
+  lte?: number;
+
+  @Field(() => GraphQLInt, {
+    nullable: true,
+    description: 'Integer is greater than'
+  })
+  gt?: number;
+
+  @Field(() => GraphQLInt, {
+    nullable: true,
+    description: 'Integer is greater than or equal to'
+  })
+  gte?: number;
 }

@@ -23,8 +23,8 @@
  */
 
 import { ArgsType, Field } from 'type-graphql';
-import { CpuOrderByWithRelationInput, CpuWhereInput } from '@generated/graphql';
 import { PaginationArgs } from '@recluster/graphql';
+import { CpuWhereInput, CpuOrderByInput } from '../inputs';
 
 @ArgsType()
 export class CpusArgs extends PaginationArgs {
@@ -34,9 +34,9 @@ export class CpusArgs extends PaginationArgs {
   })
   where?: CpuWhereInput;
 
-  @Field(() => CpuOrderByWithRelationInput, {
+  @Field(() => [CpuOrderByInput], {
     nullable: true,
     description: 'Order options'
   })
-  orderBy?: CpuOrderByWithRelationInput[];
+  orderBy?: CpuOrderByInput[];
 }

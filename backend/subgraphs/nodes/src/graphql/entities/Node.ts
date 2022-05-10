@@ -29,11 +29,11 @@ import { GraphQLTimestamp } from 'graphql-scalars';
 
 @ObjectType({ description: 'Node' })
 @Directive(`@key(fields: "id")`)
-export class Node implements Required<NodePrisma> {
+export class Node implements NodePrisma {
   @Field(() => GraphQLID, { description: 'Node identifier' })
   id!: string;
 
-  @Field(() => GraphQLID, { description: 'CPU identifier' })
+  @Field(() => GraphQLID, { description: 'Cpu identifier' })
   cpuId!: string;
 
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })

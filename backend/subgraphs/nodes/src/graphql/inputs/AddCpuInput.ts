@@ -24,46 +24,46 @@
 
 import { Field, InputType } from 'type-graphql';
 import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
-import { CpuArchitecture, CpuVendor } from '@generated/graphql';
+import { CpuArchitecture, CpuVendor } from '@prisma/client';
 import { Cpu } from '../entities';
 
-@InputType({ description: 'Add CPU input' })
+@InputType({ description: 'Add Cpu input' })
 export class AddCpuInput
   implements Required<Omit<Cpu, 'id' | 'createdAt' | 'updatedAt'>>
 {
-  @Field(() => CpuArchitecture, { description: 'CPU architecture' })
+  @Field(() => CpuArchitecture, { description: 'Cpu architecture' })
   architecture!: CpuArchitecture;
 
-  @Field(() => [GraphQLNonEmptyString], { description: 'CPU flags' })
+  @Field(() => [GraphQLNonEmptyString], { description: 'Cpu flags' })
   flags!: string[];
 
-  @Field(() => GraphQLPositiveInt, { description: 'CPU cores' })
+  @Field(() => GraphQLPositiveInt, { description: 'Cpu cores' })
   cores!: number;
 
-  @Field(() => CpuVendor, { description: 'CPU vendor' })
+  @Field(() => CpuVendor, { description: 'Cpu vendor' })
   vendor!: CpuVendor;
 
-  @Field(() => GraphQLPositiveInt, { description: 'CPU family' })
+  @Field(() => GraphQLPositiveInt, { description: 'Cpu family' })
   family!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'CPU model' })
+  @Field(() => GraphQLPositiveInt, { description: 'Cpu model' })
   model!: number;
 
-  @Field(() => GraphQLNonEmptyString, { description: 'CPU name' })
+  @Field(() => GraphQLNonEmptyString, { description: 'Cpu name' })
   name!: string;
 
-  @Field(() => GraphQLPositiveInt, { description: 'CPU L1d cache' })
+  @Field(() => GraphQLPositiveInt, { description: 'Cpu L1d cache' })
   cacheL1d!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'CPU L1i cache' })
+  @Field(() => GraphQLPositiveInt, { description: 'Cpu L1i cache' })
   cacheL1i!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'CPU L2 cache' })
+  @Field(() => GraphQLPositiveInt, { description: 'Cpu L2 cache' })
   cacheL2!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'CPU L3 cache' })
+  @Field(() => GraphQLPositiveInt, { description: 'Cpu L3 cache' })
   cacheL3!: number;
 
-  @Field(() => [GraphQLNonEmptyString], { description: 'CPU vulnerabilities' })
+  @Field(() => [GraphQLNonEmptyString], { description: 'Cpu vulnerabilities' })
   vulnerabilities!: string[];
 }
