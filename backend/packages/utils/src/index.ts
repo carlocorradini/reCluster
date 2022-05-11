@@ -22,21 +22,4 @@
  * SOFTWARE.
  */
 
-import { ArgsType, Field } from 'type-graphql';
-import { PaginationArgs } from '@recluster/graphql';
-import { NodeWhereInput, NodeOrderByInput } from '../inputs';
-
-@ArgsType()
-export class NodesArgs extends PaginationArgs {
-  @Field(() => NodeWhereInput, {
-    nullable: true,
-    description: 'Filter options'
-  })
-  where?: NodeWhereInput;
-
-  @Field(() => NodeOrderByInput, {
-    nullable: true,
-    description: 'Order options'
-  })
-  orderBy?: NodeOrderByInput;
-}
+export * from './types';

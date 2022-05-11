@@ -25,6 +25,10 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "npm"
+    directory: "/backend/packages/utils"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "npm"
     directory: "/backend/subgraphs/nodes"
     schedule:
       interval: "daily"

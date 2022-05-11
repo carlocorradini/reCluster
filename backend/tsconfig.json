@@ -1,10 +1,23 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/configs" },
-    { "path": "packages/errors" },
-    { "path": "packages/graphql" },
-    { "path": "packages/helpers" },
-    { "path": "subgraphs/nodes" }
+    {
+      "path": "packages/configs"
+    },
+    {
+      "path": "packages/errors"
+    },
+    {
+      "path": "packages/graphql"
+    },
+    {
+      "path": "packages/helpers"
+    },
+    {
+      "path": "packages/utils"
+    },
+    {
+      "path": "subgraphs/nodes"
+    }
   ]
 }
