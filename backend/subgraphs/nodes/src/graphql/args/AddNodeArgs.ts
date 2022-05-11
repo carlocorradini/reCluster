@@ -23,10 +23,10 @@
  */
 
 import { ArgsType, Field } from 'type-graphql';
-import { AddNodeInput } from '~graphql/inputs';
+import { CreateNodeInput } from '~graphql/inputs';
 
 @ArgsType()
 export class AddNodeArgs {
   @Field({ description: 'Node data' })
-  data!: AddNodeInput;
+  data!: CreateNodeInput;
 }

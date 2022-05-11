@@ -25,10 +25,10 @@
 import { Field, InputType } from 'type-graphql';
 import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
 import { CpuArchitecture, CpuVendor } from '@prisma/client';
-import { Cpu } from '../entities';
+import { Cpu } from '../../entities';
 
-@InputType({ description: 'Add Cpu input' })
-export class AddCpuInput
+@InputType({ description: 'Create Cpu input' })
+export class CreateCpuInput
   implements Required<Omit<Cpu, 'id' | 'createdAt' | 'updatedAt'>>
 {
   @Field(() => CpuArchitecture, { description: 'Cpu architecture' })
