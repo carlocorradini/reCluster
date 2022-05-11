@@ -23,10 +23,10 @@
  */
 
 import { Field, InputType } from 'type-graphql';
-import { AddCpuInput } from './AddCpuInput';
+import { CreateCpuInput } from './CreateCpuInput';
 
-@InputType({ description: 'Add Node input' })
-export class AddNodeInput {
-  @Field(() => AddCpuInput, { description: 'Node Cpu' })
-  cpu!: AddCpuInput;
+@InputType({ description: 'Create Node input' })
+export class CreateNodeInput {
+  @Field(() => CreateCpuInput, { description: 'Node Cpu' })
+  cpu!: CreateCpuInput;
 }
