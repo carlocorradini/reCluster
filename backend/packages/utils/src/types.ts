@@ -22,21 +22,40 @@
  * SOFTWARE.
  */
 
-import { ArgsType, Field } from 'type-graphql';
-import { PaginationArgs } from '@recluster/graphql';
-import { NodeWhereInput, NodeOrderByInput } from '../inputs';
+/**
+ * Required keys of T
+ */
+export type RequiredKeys<T> = {
+  [K in keyof T]-?: Record<string, never> extends { [P in K]: T[K] }
+    ? never
+    : K;
+}[keyof T];
 
-@ArgsType()
-export class NodesArgs extends PaginationArgs {
-  @Field(() => NodeWhereInput, {
-    nullable: true,
-    description: 'Filter options'
-  })
-  where?: NodeWhereInput;
+/**
+ * Optional keys of T
+ */
+export type OptionalKeys<T> = {
+  [K in keyof T]-?: Record<string, never> extends { [P in K]: T[K] }
+    ? K
+    : never;
+}[keyof T];
 
-  @Field(() => NodeOrderByInput, {
-    nullable: true,
-    description: 'Order options'
-  })
-  orderBy?: NodeOrderByInput;
-}
+/**
+ * Required properties of T
+ */
+export type PickRequired<T> = Pick<T, RequiredKeys<T>>;
+
+/**
+ * Optional properties of T
+ */
+export type PickOptional<T> = Pick<T, OptionalKeys<T>>;
+
+/**
+ * Properties of T can be null
+ */
+export type Nullable<T> = { [P in keyof T]: T[P] | null };
+
+/**
+ * Optional properties of T can be null
+ */
+export type NullableOptional<T> = PickRequired<T> & Nullable<PickOptional<T>>;

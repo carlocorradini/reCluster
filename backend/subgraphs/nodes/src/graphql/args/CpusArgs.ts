@@ -34,9 +34,9 @@ export class CpusArgs extends PaginationArgs {
   })
   where?: CpuWhereInput;
 
-  @Field(() => [CpuOrderByInput], {
+  @Field(() => CpuOrderByInput, {
     nullable: true,
     description: 'Order options'
   })
-  orderBy?: CpuOrderByInput[];
+  orderBy?: CpuOrderByInput;
 }
