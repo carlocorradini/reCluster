@@ -13,11 +13,11 @@ jobs:
       - name: Commitlint
         uses: wagoid/commitlint-github-action@v4
         with:
-          configFile: '.commitlintrc'
+          configFile: ".commitlintrc"
           failOnWarnings: true
       - name: Install dependencies
         run: npm ci
-      - name: Build
+      - name: Build backend
         working-directory: backend
         run: npm run build
       - name: Checks

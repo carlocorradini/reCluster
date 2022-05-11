@@ -1,6 +1,30 @@
 version: 2
 updates:
-  - package-ecosystem: 'npm'
-    directory: '/'
+  - package-ecosystem: "npm"
+    directory: "/"
     schedule:
-      interval: 'daily'
+      interval: "daily"
+  - package-ecosystem: "npm"
+    directory: "/backend"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "npm"
+    directory: "/backend/packages/configs"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "npm"
+    directory: "/backend/packages/errors"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "npm"
+    directory: "/backend/packages/graphql"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "npm"
+    directory: "/backend/packages/helpers"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "npm"
+    directory: "/backend/subgraphs/nodes"
+    schedule:
+      interval: "daily"
