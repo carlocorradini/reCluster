@@ -22,10 +22,9 @@
  * SOFTWARE.
  */
 
-import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
+import { Args, Directive, FieldResolver, Resolver, Root } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
 import { Fields, FieldsMap, Prisma, RemoveNullArgs } from '@recluster/graphql';
-import { RequiredFieldError } from '@recluster/errors';
 import { Cpu, Node } from '../entities';
 import { NodesArgs } from '../args';
 
@@ -33,14 +32,13 @@ import { NodesArgs } from '../args';
 export class CpuNodeResolver {
   @FieldResolver(() => [Node], { description: 'Nodes equipped Cpu' })
   @RemoveNullArgs()
+  @Directive(`@requires(fields: "id")`)
   async nodes(
     @Root() cpu: Cpu,
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
     @Args() args: NodesArgs
   ) {
-    if (!cpu.id) throw new RequiredFieldError('id', cpu.constructor.name);
-
     return prisma.node.findMany({
       select: fields,
       where: { ...args.where, cpuId: cpu.id },

@@ -23,5 +23,4 @@
  */
 
 export * from './DatabaseError';
-export * from './RequiredFieldError';
 export * from './ValidationError';
