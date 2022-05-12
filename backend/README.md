@@ -26,6 +26,8 @@ npm run build
 
    - `subgraphs/nodes/.env.example`
 
+   - `subgraphs/cpus/.env.example`
+
 1. Database
 
    Start:
@@ -48,6 +50,12 @@ npm run build
      npm run watch --workspace=subgraphs/nodes
      ```
 
+   - Cpus
+
+     ```bash
+     npm run watch --workspace=subgraphs/cpus
+     ```
+
 1. Router
 
    ```bash
@@ -64,11 +72,11 @@ npm run build
      ```bash
      curl --request POST \
          --header 'content-type: application/json' \
-         --url 'http://localhost:4000' \
+         --url 'http://localhost:4000/graphql' \
          --data '{ "query": "mutation { addNode(node: { name: \"Test\" }) { id, name } }" }'
 
      curl --request POST \
          --header 'content-type: application/json' \
-         --url 'http://localhost:4000' \
+         --url 'http://localhost:4000/graphql' \
          --data '{ "query": "{ nodes { id, name } }" }'
      ```
