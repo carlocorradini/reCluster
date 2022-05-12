@@ -22,18 +22,10 @@
  * SOFTWARE.
  */
 
-import {
-  Args,
-  FieldResolver,
-  Mutation,
-  Query,
-  Resolver,
-  Root
-} from 'type-graphql';
+import { Args, Mutation, Query, Resolver } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
 import { Fields, FieldsMap, Prisma, RemoveNullArgs } from '@recluster/graphql';
-import { RequiredFieldError } from '@recluster/errors';
-import { Cpu, Node } from '../entities';
+import { Node } from '../entities';
 import { CreateNodeArgs, NodeArgs, NodesArgs } from '../args';
 
 @Resolver(Node)
@@ -65,7 +57,10 @@ export class NodeResolver {
     @Prisma() prisma: PrismaClient,
     @Args() args: NodeArgs
   ) {
-    return prisma.node.findUnique({ where: { id: args.id }, select: fields });
+    return prisma.node.findUnique({
+      select: fields,
+      where: { id: args.id }
+    });
   }
 
   @Mutation(() => Node, { description: 'Create a new node' })
@@ -109,21 +104,6 @@ export class NodeResolver {
         ...args.data,
         cpu: { connect: { vendor_family_model } }
       }
-    });
-  }
-
-  @FieldResolver(() => Cpu, { description: 'Node Cpu' })
-  async cpu(
-    @Root() node: Node,
-    @Fields() fields: FieldsMap,
-    @Prisma() prisma: PrismaClient
-  ) {
-    if (!node.cpuId)
-      throw new RequiredFieldError('cpuId', node.constructor.name);
-
-    return prisma.cpu.findUnique({
-      select: fields,
-      where: { id: node.cpuId }
     });
   }
 }

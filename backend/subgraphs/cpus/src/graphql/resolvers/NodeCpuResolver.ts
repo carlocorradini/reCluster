@@ -22,23 +22,21 @@
  * SOFTWARE.
  */
 
-import { FieldResolver, Resolver, Root } from 'type-graphql';
+import { Directive, FieldResolver, Resolver, Root } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
-import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
-import { RequiredFieldError } from '@recluster/errors';
+import { Fields, FieldsMap, Prisma, RemoveNullArgs } from '@recluster/graphql';
 import { Node, Cpu } from '../entities';
 
 @Resolver(() => Node)
 export class NodeCpuResolver {
   @FieldResolver(() => Cpu, { description: 'Node Cpu' })
+  @RemoveNullArgs()
+  @Directive(`@requires(fields: "cpuId")`)
   async cpu(
     @Root() node: Node,
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient
   ) {
-    if (!node.cpuId)
-      throw new RequiredFieldError('cpuId', node.constructor.name);
-
     return prisma.cpu.findUnique({
       select: fields,
       where: { id: node.cpuId }
