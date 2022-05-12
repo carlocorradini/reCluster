@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-export * from './AddNodeArgs';
+export * from './CreateNodeArgs';
 export * from './CpuArgs';
 export * from './CpusArgs';
 export * from './NodeArgs';

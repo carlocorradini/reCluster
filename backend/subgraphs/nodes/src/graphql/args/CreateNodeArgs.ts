@@ -26,7 +26,7 @@ import { ArgsType, Field } from 'type-graphql';
 import { CreateNodeInput } from '~graphql/inputs';
 
 @ArgsType()
-export class AddNodeArgs {
+export class CreateNodeArgs {
   @Field({ description: 'Node data' })
   data!: CreateNodeInput;
 }

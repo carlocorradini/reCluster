@@ -34,7 +34,7 @@ import { PrismaClient } from '@prisma/client';
 import { Fields, FieldsMap, Prisma, RemoveNullArgs } from '@recluster/graphql';
 import { RequiredFieldError } from '@recluster/errors';
 import { Cpu, Node } from '../entities';
-import { AddNodeArgs, NodeArgs, NodesArgs } from '../args';
+import { CreateNodeArgs, NodeArgs, NodesArgs } from '../args';
 
 @Resolver(Node)
 export class NodeResolver {
@@ -68,12 +68,12 @@ export class NodeResolver {
     return prisma.node.findUnique({ where: { id: args.id }, select: fields });
   }
 
-  @Mutation(() => Node, { description: 'Add a new node' })
+  @Mutation(() => Node, { description: 'Create a new node' })
   @RemoveNullArgs()
-  async addNode(
+  async createNode(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
-    @Args() args: AddNodeArgs
+    @Args() args: CreateNodeArgs
   ) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const vendor_family_model = {
