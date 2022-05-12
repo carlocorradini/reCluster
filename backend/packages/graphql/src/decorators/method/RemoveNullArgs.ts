@@ -30,8 +30,14 @@ function removeNullProps<T>(obj: T): NotNullableRecursive<T> {
     Object.entries(obj)
       .filter(([, v]) => v !== null)
       .map(([k, v]) => {
+        // Array
         if (Array.isArray(v)) return [k, v.filter((av) => av !== null)];
+        // Date
+        if (v instanceof Date) return [k, v];
+        // Object
         if (typeof v === 'object') return [k, removeNullProps(v)];
+
+        // Primitive
         return [k, v];
       })
   ) as NotNullableRecursive<T>;
