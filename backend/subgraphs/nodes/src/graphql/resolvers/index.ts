@@ -24,4 +24,4 @@
 
 export * from './CpuNodeResolver';
 export * from './NodeResolver';
-export * from './NodeReference';
+export * from './resolveNodeReference';
