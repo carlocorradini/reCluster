@@ -22,5 +22,4 @@
  * SOFTWARE.
  */
 
-export * from './method';
-export * from './param';
+export * from './RemoveNullArgs';

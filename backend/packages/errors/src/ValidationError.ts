@@ -50,7 +50,7 @@ function formatValidationErrors(
 
 export class ValidationError extends UserInputError {
   constructor(validationErrors: ClassValidatorValidationError[]) {
-    super(`Validation Error`, {
+    super('Validation Error', {
       validationErrors: validationErrors.map((validationError) =>
         formatValidationErrors(validationError)
       )

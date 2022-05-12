@@ -24,13 +24,15 @@
 
 import { Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
-import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
+import { Fields, FieldsMap, Prisma, RemoveNullArgs } from '@recluster/graphql';
+import { RequiredFieldError } from '@recluster/errors';
 import { Cpu, Node } from '../entities';
 import { CpuArgs, CpusArgs, NodesArgs } from '../args';
 
 @Resolver(Cpu)
 export class CpuResolver {
   @Query(() => [Cpu], { description: 'List of Cpus' })
+  @RemoveNullArgs()
   async cpus(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
@@ -38,11 +40,11 @@ export class CpuResolver {
   ) {
     return prisma.cpu.findMany({
       select: fields,
-      take: args.take,
-      skip: args.skip,
       where: args.where,
       orderBy: args.orderBy,
-      cursor: { id: args.cursor }
+      cursor: args.cursor ? { id: args.cursor } : undefined,
+      take: args.take,
+      skip: args.skip
     });
   }
 
@@ -50,6 +52,7 @@ export class CpuResolver {
     nullable: true,
     description: 'Cpu matching the identifier'
   })
+  @RemoveNullArgs()
   async cpu(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
@@ -59,19 +62,22 @@ export class CpuResolver {
   }
 
   @FieldResolver(() => [Node], { description: 'Nodes equipped Cpu' })
+  @RemoveNullArgs()
   async nodes(
     @Root() cpu: Cpu,
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
     @Args() args: NodesArgs
   ) {
+    if (!cpu.id) throw new RequiredFieldError('id', cpu.constructor.name);
+
     return prisma.node.findMany({
       select: fields,
-      take: args.take,
-      skip: args.skip,
       where: { ...args.where, cpuId: cpu.id },
-      ...(args.orderBy && { orderBy: args.orderBy }),
-      ...(args.cursor && { cursor: { id: args.cursor } })
+      orderBy: args.orderBy,
+      cursor: args.cursor ? { id: args.cursor } : undefined,
+      take: args.take,
+      skip: args.skip
     });
   }
 }

@@ -22,25 +22,21 @@
  * SOFTWARE.
  */
 
-import { createParamDecorator } from 'type-graphql';
-import graphqlFields from 'graphql-fields';
+import { createMethodDecorator } from 'type-graphql';
+import { NotNullableRecursive } from '@recluster/utils';
 
-export type FieldsMap = Record<string, boolean>;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function transformFields(fields: Record<string, any>): Record<string, boolean> {
+function removeNullProps<T>(obj: T): NotNullableRecursive<T> {
   return Object.fromEntries(
-    Object.entries(fields)
-      .filter(
-        ([key, value]) =>
-          !key.startsWith('__') && Object.keys(value).length === 0
-      )
-      .map<[string, boolean]>(([key]) => [key, true])
-  );
+    Object.entries(obj)
+      .filter(([, v]) => v != null)
+      .map(([k, v]) => [k, v === Object(v) ? removeNullProps(v) : v])
+  ) as NotNullableRecursive<T>;
 }
 
-export function Fields(): ParameterDecorator {
-  return createParamDecorator(({ info }) =>
-    transformFields(graphqlFields(info))
-  );
+export function RemoveNullArgs() {
+  return createMethodDecorator((action, next) => {
+    // eslint-disable-next-line no-param-reassign
+    action.args = removeNullProps(action.args);
+    return next();
+  });
 }
