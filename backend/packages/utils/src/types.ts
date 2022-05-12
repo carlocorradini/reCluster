@@ -23,6 +23,15 @@
  */
 
 /**
+ * Expand T recursively
+ */
+export type ExpandRecursively<T> = T extends object
+  ? T extends infer O
+    ? { [K in keyof O]: ExpandRecursively<O[K]> }
+    : never
+  : T;
+
+/**
  * Required keys of T
  */
 export type RequiredKeys<T> = {
@@ -54,6 +63,23 @@ export type PickOptional<T> = Pick<T, OptionalKeys<T>>;
  * Properties of T can be null
  */
 export type Nullable<T> = { [P in keyof T]: T[P] | null };
+
+/**
+ * Properties and nested properties of T can be null
+ */
+export type NullableRecursive<T> = ExpandRecursively<Nullable<T>>;
+
+/**
+ * Properties of T can not be null
+ */
+export type NotNullable<T> = {
+  [K in keyof T]: Exclude<NotNullable<T[K]>, null>;
+};
+
+/**
+ * Properties and nested properties of T can not be null
+ */
+export type NotNullableRecursive<T> = ExpandRecursively<NotNullable<T>>;
 
 /**
  * Optional properties of T can be null

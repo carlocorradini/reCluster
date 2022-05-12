@@ -22,5 +22,13 @@
  * SOFTWARE.
  */
 
-export * from './method';
-export * from './param';
+import { createParamDecorator } from 'type-graphql';
+import { IContext } from '@recluster/configs';
+import { DatabaseError } from '@recluster/errors';
+
+export function Prisma(): ParameterDecorator {
+  return createParamDecorator<IContext>(({ context }) => {
+    if (!context.prisma) throw new DatabaseError();
+    return context.prisma;
+  });
+}

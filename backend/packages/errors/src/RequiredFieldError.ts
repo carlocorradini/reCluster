@@ -22,5 +22,14 @@
  * SOFTWARE.
  */
 
-export * from './method';
-export * from './param';
+import { UserInputError } from 'apollo-server-errors';
+
+export class RequiredFieldError extends UserInputError {
+  constructor(field: string, root: string) {
+    super('Required Field Error', {
+      field,
+      root,
+      reason: `Field '${field}' is missing from '${root}' selection`
+    });
+  }
+}

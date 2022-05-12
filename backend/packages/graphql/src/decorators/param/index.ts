@@ -22,5 +22,5 @@
  * SOFTWARE.
  */
 
-export * from './method';
-export * from './param';
+export * from './Fields';
+export * from './Prisma';

@@ -23,10 +23,24 @@
  */
 
 import { createParamDecorator } from 'type-graphql';
-import type { IContext } from '@recluster/configs';
+import graphqlFields from 'graphql-fields';
 
-export function Prisma(): ParameterDecorator {
-  return createParamDecorator<IContext>(({ context }) => {
-    return context.prisma;
-  });
+export type FieldsMap = Record<string, boolean>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function transformFields(fields: Record<string, any>): FieldsMap {
+  return Object.fromEntries(
+    Object.entries(fields)
+      .filter(
+        ([key, value]) =>
+          !key.startsWith('__') && Object.keys(value).length === 0
+      )
+      .map(([key]) => [key, true])
+  );
+}
+
+export function Fields(): ParameterDecorator {
+  return createParamDecorator(({ info }) =>
+    transformFields(graphqlFields(info))
+  );
 }

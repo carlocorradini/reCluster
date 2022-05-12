@@ -31,13 +31,15 @@ import {
   Root
 } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
-import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
+import { Fields, FieldsMap, Prisma, RemoveNullArgs } from '@recluster/graphql';
+import { RequiredFieldError } from '@recluster/errors';
 import { Cpu, Node } from '../entities';
 import { AddNodeArgs, NodeArgs, NodesArgs } from '../args';
 
 @Resolver(Node)
 export class NodeResolver {
   @Query(() => [Node], { description: 'List of nodes' })
+  @RemoveNullArgs()
   async nodes(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
@@ -45,11 +47,11 @@ export class NodeResolver {
   ) {
     return prisma.node.findMany({
       select: fields,
-      take: args.take,
-      skip: args.skip,
       where: args.where,
       orderBy: args.orderBy,
-      cursor: { id: args.cursor }
+      cursor: args.cursor ? { id: args.cursor } : undefined,
+      take: args.take,
+      skip: args.skip
     });
   }
 
@@ -57,6 +59,7 @@ export class NodeResolver {
     nullable: true,
     description: 'Node matching the identifier'
   })
+  @RemoveNullArgs()
   async node(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
@@ -66,6 +69,7 @@ export class NodeResolver {
   }
 
   @Mutation(() => Node, { description: 'Add a new node' })
+  @RemoveNullArgs()
   async addNode(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
@@ -100,11 +104,11 @@ export class NodeResolver {
 
     // Create
     return prisma.node.create({
+      select: fields,
       data: {
         ...args.data,
         cpu: { connect: { vendor_family_model } }
-      },
-      select: fields
+      }
     });
   }
 
@@ -114,6 +118,9 @@ export class NodeResolver {
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient
   ) {
+    if (!node.cpuId)
+      throw new RequiredFieldError('cpuId', node.constructor.name);
+
     return prisma.cpu.findUnique({
       select: fields,
       where: { id: node.cpuId }

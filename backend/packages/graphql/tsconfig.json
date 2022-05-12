@@ -13,6 +13,12 @@
   "references": [
     {
       "path": "../configs"
+    },
+    {
+      "path": "../errors"
+    },
+    {
+      "path": "../utils"
     }
   ]
 }
