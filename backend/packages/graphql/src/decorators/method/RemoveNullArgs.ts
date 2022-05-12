@@ -28,8 +28,12 @@ import { NotNullableRecursive } from '@recluster/utils';
 function removeNullProps<T>(obj: T): NotNullableRecursive<T> {
   return Object.fromEntries(
     Object.entries(obj)
-      .filter(([, v]) => v != null)
-      .map(([k, v]) => [k, v === Object(v) ? removeNullProps(v) : v])
+      .filter(([, v]) => v !== null)
+      .map(([k, v]) => {
+        if (Array.isArray(v)) return [k, v.filter((av) => av !== null)];
+        if (typeof v === 'object') return [k, removeNullProps(v)];
+        return [k, v];
+      })
   ) as NotNullableRecursive<T>;
 }
 
