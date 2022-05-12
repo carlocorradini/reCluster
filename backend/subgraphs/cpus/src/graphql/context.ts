@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateNodeInput';
-export * from './OrderByNodeInput';
-export * from './WhereNodeInput';
+import { IContext } from '@recluster/configs';
+import { prisma } from '~/database';
+
+export const context: IContext = { prisma };

@@ -26,48 +26,15 @@ import { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
 import { SortOrder } from '@recluster/graphql';
 
-@InputType({ isAbstract: true, description: 'Cpu order by input' })
-export class CpuOrderByInput
-  implements Omit<Prisma.CpuOrderByWithRelationInput, 'nodes'>
+@InputType({ isAbstract: true, description: 'Node order by input' })
+export class OrderByNodeInput
+  implements Omit<Prisma.NodeOrderByWithRelationInput, 'cpu'>
 {
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu identifier' })
+  @Field(() => SortOrder, { nullable: true, description: 'Node identifier' })
   id?: SortOrder;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu architecture' })
-  architecture?: SortOrder;
-
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu flags' })
-  flags?: SortOrder;
-
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu cores' })
-  cores?: SortOrder;
-
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu vendor' })
-  vendor?: SortOrder;
-
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu family' })
-  family?: SortOrder;
-
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu model' })
-  model?: SortOrder;
-
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu name' })
-  name?: SortOrder;
-
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu L1d cache' })
-  cacheL1d?: SortOrder;
-
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu L1i cache' })
-  cacheL1i?: SortOrder;
-
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu L2 cache' })
-  cacheL2?: SortOrder;
-
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu L3 cache' })
-  cacheL3?: SortOrder;
-
   @Field(() => SortOrder, { nullable: true, description: 'Cpu identifier' })
-  vulnerabilities?: SortOrder;
+  cpuId?: SortOrder;
 
   @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
   createdAt?: SortOrder;

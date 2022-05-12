@@ -24,19 +24,19 @@
 
 import { ArgsType, Field } from 'type-graphql';
 import { PaginationArgs } from '@recluster/graphql';
-import { NodeWhereInput, NodeOrderByInput } from '../inputs';
+import { OrderByNodeInput, WhereNodeInput } from '../inputs';
 
 @ArgsType()
 export class NodesArgs extends PaginationArgs {
-  @Field(() => NodeWhereInput, {
+  @Field(() => WhereNodeInput, {
     nullable: true,
     description: 'Filter options'
   })
-  where?: NodeWhereInput;
+  where?: WhereNodeInput;
 
-  @Field(() => NodeOrderByInput, {
+  @Field(() => OrderByNodeInput, {
     nullable: true,
     description: 'Order options'
   })
-  orderBy?: NodeOrderByInput;
+  orderBy?: OrderByNodeInput;
 }

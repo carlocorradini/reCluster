@@ -22,7 +22,21 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateNodeInput';
-export * from './OrderByNodeInput';
-export * from './WhereNodeInput';
+import { ArgsType, Field } from 'type-graphql';
+import { PaginationArgs } from '@recluster/graphql';
+import { OrderByCpuInput, WhereCpuInput } from '../inputs';
+
+@ArgsType()
+export class CpusArgs extends PaginationArgs {
+  @Field(() => WhereCpuInput, {
+    nullable: true,
+    description: 'Filter options'
+  })
+  where?: WhereCpuInput;
+
+  @Field(() => OrderByCpuInput, {
+    nullable: true,
+    description: 'Order options'
+  })
+  orderBy?: OrderByCpuInput;
+}

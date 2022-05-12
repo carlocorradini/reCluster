@@ -23,6 +23,5 @@
  */
 
 export * from './CreateCpuInput';
-export * from './CreateNodeInput';
-export * from './OrderByNodeInput';
-export * from './WhereNodeInput';
+export * from './OrderByCpuInput';
+export * from './WhereCpuInput';

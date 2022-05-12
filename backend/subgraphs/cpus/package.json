@@ -1,7 +1,7 @@
 {
-  "name": "@recluster/subgraph-nodes",
+  "name": "@recluster/subgraph-cpus",
   "version": "0.0.1",
-  "description": "reCluster subgraph nodes",
+  "description": "reCluster subgraph cpus",
   "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
   "license": "MIT",
   "private": true,

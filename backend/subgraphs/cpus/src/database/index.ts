@@ -22,5 +22,4 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateNodeInput';
+export * from './prisma';

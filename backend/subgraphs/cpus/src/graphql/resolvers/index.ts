@@ -22,5 +22,6 @@
  * SOFTWARE.
  */
 
-export * from './CpuWhereInput';
-export * from './NodeWhereInput';
+export * from './CpuResolver';
+export * from './CpuReference';
+export * from './NodeCpuResolver';

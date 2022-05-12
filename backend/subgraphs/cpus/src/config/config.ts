@@ -22,7 +22,19 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateNodeInput';
-export * from './OrderByNodeInput';
-export * from './WhereNodeInput';
+import type { IConfig } from '@recluster/configs';
+import { env } from './env';
+
+export const config: IConfig = {
+  name: 'subgraph-cpus',
+  node: {
+    env: env.NODE_ENV
+  },
+  server: {
+    host: env.HOST,
+    port: env.PORT
+  },
+  database: {
+    url: env.DATABASE_URL
+  }
+};

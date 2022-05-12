@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-export * from './CpuResolver';
-export * from './CpuReference';
+export * from './CpuNodeResolver';
 export * from './NodeResolver';
 export * from './NodeReference';

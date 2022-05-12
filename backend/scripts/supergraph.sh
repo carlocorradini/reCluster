@@ -25,7 +25,7 @@
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Apollo Rover version
-readonly APOLLO_ROVER_VERSION="latest"
+readonly APOLLO_ROVER_VERSION=latest
 # Apollo Rover image
 readonly APOLLO_ROVER_IMAGE="recluster/router:$APOLLO_ROVER_VERSION"
 # Apollo Rover Dockerfile

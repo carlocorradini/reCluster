@@ -22,7 +22,16 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateNodeInput';
-export * from './OrderByNodeInput';
-export * from './WhereNodeInput';
+import { buildFederatedSchema } from '@recluster/helpers';
+import { Cpu, Node } from './entities';
+import { CpuResolver, NodeCpuResolver, resolveCpuReference } from './resolvers';
+
+export const schema = buildFederatedSchema(
+  {
+    resolvers: [CpuResolver, NodeCpuResolver],
+    orphanedTypes: [Cpu, Node]
+  },
+  {
+    Cpu: { __resolveReference: resolveCpuReference }
+  }
+);

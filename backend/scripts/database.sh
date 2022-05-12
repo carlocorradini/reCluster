@@ -25,15 +25,15 @@
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # PostgreSQL version
-readonly POSTGRESQL_VERSION="14.2"
+readonly POSTGRESQL_VERSION=14.2
 # PostgreSQL image
 readonly POSTGRESQL_IMAGE="docker.io/postgres:$POSTGRESQL_VERSION"
 # PostgreSQL user
-readonly POSTGRESQL_USER="recluster"
+readonly POSTGRESQL_USER=recluster
 # PostgreSQL password
-readonly POSTGRESQL_PASSWORD="password"
+readonly POSTGRESQL_PASSWORD=password
 # PostgreSQL database
-readonly POSTGRESQL_DATABASE="recluster"
+readonly POSTGRESQL_DATABASE=recluster
 
 # Commons
 source "$DIRNAME/../../scripts/__commons.sh"

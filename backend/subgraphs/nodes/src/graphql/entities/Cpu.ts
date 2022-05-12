@@ -23,66 +23,13 @@
  */
 
 import { GraphQLID } from 'graphql';
-import { Cpu as CpuPrisma, CpuArchitecture, CpuVendor } from '@prisma/client';
-import { Directive, Field, ObjectType, registerEnumType } from 'type-graphql';
-import {
-  GraphQLNonEmptyString,
-  GraphQLPositiveInt,
-  GraphQLTimestamp
-} from 'graphql-scalars';
+import { Directive, Field, ObjectType } from 'type-graphql';
 
-registerEnumType(CpuArchitecture, {
-  name: 'CpuArchitecture',
-  description: 'Cpu architecture'
-});
-
-registerEnumType(CpuVendor, { name: 'CpuVendor', description: 'Cpu vendor' });
-
-@ObjectType({ description: 'Cpu' })
+@ObjectType()
 @Directive(`@key(fields: "id")`)
-export class Cpu implements CpuPrisma {
-  @Field(() => GraphQLID, { description: 'Cpu identifier' })
+@Directive(`@extends`)
+export class Cpu {
+  @Field(() => GraphQLID)
+  @Directive(`@external`)
   id!: string;
-
-  @Field(() => CpuArchitecture, { description: 'Cpu architecture' })
-  architecture!: CpuArchitecture;
-
-  @Field(() => [GraphQLNonEmptyString], { description: 'Cpu flags' })
-  flags!: string[];
-
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu cores' })
-  cores!: number;
-
-  @Field(() => CpuVendor, { description: 'Cpu vendor' })
-  vendor!: CpuVendor;
-
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu family' })
-  family!: number;
-
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu model' })
-  model!: number;
-
-  @Field(() => GraphQLNonEmptyString, { description: 'Cpu name' })
-  name!: string;
-
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L1d cache' })
-  cacheL1d!: number;
-
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L1i cache' })
-  cacheL1i!: number;
-
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L2 cache' })
-  cacheL2!: number;
-
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L3 cache' })
-  cacheL3!: number;
-
-  @Field(() => [GraphQLNonEmptyString], { description: 'Cpu vulnerabilities' })
-  vulnerabilities!: string[];
-
-  @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
-  createdAt!: Date;
-
-  @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
-  updatedAt!: Date;
 }

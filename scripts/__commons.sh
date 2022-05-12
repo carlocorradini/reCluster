@@ -60,8 +60,8 @@ _log_print_message() {
   _log_level=$1
   shift
   _log_message=${*:-}
-  _log_name=""
-  _log_prefix=""
+  _log_name=
+  _log_prefix=
   _log_suffix="\033[0m"
 
   # Log level is enabled
@@ -69,31 +69,31 @@ _log_print_message() {
 
   case $_log_level in
     "$LOG_LEVEL_FATAL")
-      _log_name="FATAL"
+      _log_name=FATAL
       _log_prefix="\033[41;37m"
     ;;
     "$LOG_LEVEL_ERROR")
-      _log_name="ERROR"
+      _log_name=ERROR
       _log_prefix="\033[1;31m"
     ;;
     "$LOG_LEVEL_WARN")
-      _log_name="WARN"
+      _log_name=WARN
       _log_prefix="\033[1;33m"
     ;;
     "$LOG_LEVEL_INFO")
-      _log_name="INFO"
+      _log_name=INFO
       _log_prefix="\033[37m"
     ;;
     "$LOG_LEVEL_DEBUG")
-      _log_name="DEBUG"
+      _log_name=DEBUG
       _log_prefix="\033[1;34m"
     ;;
   esac
 
   # Color disable flag
   if [ "$LOG_DISABLE_COLOR" -eq 0 ]; then
-    _log_prefix=""
-    _log_suffix=""
+    _log_prefix=
+    _log_suffix=
   fi
 
   # Output to stdout
@@ -123,7 +123,7 @@ function assert_cmd() {
 
 # Check docker image
 function assert_docker_image() {
-  assert_tool docker
+  assert_cmd docker
 
   if [[ "$(docker images -q "$1" 2> /dev/null)" == "" ]]; then
     WARN "Docker image '$1' not found"
