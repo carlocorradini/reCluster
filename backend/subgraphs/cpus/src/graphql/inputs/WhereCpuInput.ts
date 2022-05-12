@@ -30,10 +30,10 @@ import {
   StringListFilter,
   TimestampFilter
 } from '@recluster/graphql';
-import { EnumCpuArchitectureFilter, EnumCpuVendorFilter } from '../../filters';
+import { EnumCpuArchitectureFilter, EnumCpuVendorFilter } from '../filters';
 
 @InputType({ isAbstract: true, description: 'Cpu where input' })
-export class CpuWhereInput
+export class WhereCpuInput
   implements Omit<Prisma.CpuWhereInput, 'AND' | 'OR' | 'NOT'>
 {
   @Field({ nullable: true, description: 'Cpu identifier' })

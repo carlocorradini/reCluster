@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateNodeInput';
-export * from './OrderByNodeInput';
-export * from './WhereNodeInput';
+import { cleanEnv } from 'envalid';
+import { env as envConfig } from '@recluster/configs';
+
+export const env = cleanEnv(process.env, { ...envConfig });

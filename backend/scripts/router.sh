@@ -25,7 +25,7 @@
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Apollo Router version
-readonly APOLLO_ROUTER_VERSION="v0.1.0-preview.6"
+readonly APOLLO_ROUTER_VERSION=v0.9.0-rc.0
 # Apollo Router image
 readonly APOLLO_ROUTER_IMAGE="ghcr.io/apollographql/router:$APOLLO_ROUTER_VERSION"
 # Apollo Router config
@@ -43,11 +43,10 @@ assert_cmd docker
 
 # Apollo Router
 INFO "Starting Apollo Router '$APOLLO_ROUTER_IMAGE': { config: '$APOLLO_ROUTER_CONFIG', supergraph: '$APOLLO_ROUTER_SUPERGRAPH' }"
-docker run \
-  -p 4000:4000 \
+docker run -p 4000:4000 \
   --mount "type=bind,source=$APOLLO_ROUTER_CONFIG,target=/dist/config/router.yaml" \
   --mount "type=bind,source=$APOLLO_ROUTER_SUPERGRAPH,target=/dist/config/supergraph.graphql" \
   --rm \
-  "$APOLLO_ROUTER_IMAGE" \
+  $APOLLO_ROUTER_IMAGE \
   --config config/router.yaml \
   --supergraph config/supergraph.graphql

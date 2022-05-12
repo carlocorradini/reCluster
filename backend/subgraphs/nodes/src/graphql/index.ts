@@ -24,7 +24,6 @@
 
 export * from './args';
 export * from './entities';
-export * from './filters';
 export * from './inputs';
 export * from './resolvers';
 export * from './context';

@@ -22,5 +22,48 @@
  * SOFTWARE.
  */
 
-export * from './CpuOrderByInput';
-export * from './NodeOrderByInput';
+import 'reflect-metadata';
+import 'dotenv/config';
+import { ApolloServer } from 'apollo-server';
+import { formatErrorApolloServer } from '@recluster/helpers';
+import { config } from './config';
+import { prisma } from './database';
+import { schema, context } from './graphql';
+import { logger } from './logger';
+
+const server = new ApolloServer({
+  schema,
+  context,
+  formatError: (error) => {
+    logger.error(`Server error: ${error}`);
+    return formatErrorApolloServer(error);
+  }
+});
+
+async function main() {
+  // Database
+  try {
+    await prisma.$connect();
+    logger.info(`Database connected`);
+  } catch (error) {
+    logger.fatal(`Database error: ${error}`);
+    throw error;
+  }
+
+  // Server
+  try {
+    const serverInfo = await server.listen({
+      port: config.server.port,
+      host: config.server.host
+    });
+    logger.info(`Server started at ${serverInfo.url}`);
+  } catch (error) {
+    logger.fatal(`Server error: ${error}`);
+    throw error;
+  }
+}
+
+main().catch((error) => {
+  logger.fatal(`Error starting subgraph: ${error}`);
+  throw error;
+});

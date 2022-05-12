@@ -1,60 +1,331 @@
-# MIT License
-#
-# Copyright (c) 2022-2022 Carlo Corradini
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 
 schema
-  @core(feature: "https://specs.apollo.dev/core/v0.2")
-  @core(feature: "https://specs.apollo.dev/join/v0.2", for: EXECUTION) {
+  @link(url: "https://specs.apollo.dev/link/v1.0")
+  @link(url: "https://specs.apollo.dev/join/v0.2", for: EXECUTION)
+{
   query: Query
+  mutation: Mutation
 }
 
-directive @core(
-  feature: String!
-  as: String
-  for: core__Purpose
-) repeatable on SCHEMA
-
-directive @join__field(
-  graph: join__Graph!
-  requires: join__FieldSet
-  provides: join__FieldSet
-  type: String
-  external: Boolean
-) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+directive @join__field(graph: join__Graph!, requires: join__FieldSet, provides: join__FieldSet, type: String, external: Boolean, override: String, usedOverridden: Boolean) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 directive @join__graph(name: String!, url: String!) on ENUM_VALUE
 
-directive @join__implements(
-  graph: join__Graph!
-  interface: String!
-) repeatable on OBJECT | INTERFACE
+directive @join__implements(graph: join__Graph!, interface: String!) repeatable on OBJECT | INTERFACE
 
-directive @join__type(
-  graph: join__Graph!
-  key: join__FieldSet
-  extension: Boolean! = false
-  resolvable: Boolean! = true
-) repeatable on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
+directive @join__type(graph: join__Graph!, key: join__FieldSet, extension: Boolean! = false, resolvable: Boolean! = true) repeatable on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
 
-enum core__Purpose {
+directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) repeatable on SCHEMA
+
+"""Cpu"""
+type Cpu
+  @join__type(graph: CPUS, key: "id")
+  @join__type(graph: NODES, key: "id", extension: true)
+{
+  """Cpu identifier"""
+  id: ID!
+
+  """Cpu architecture"""
+  architecture: CpuArchitecture! @join__field(graph: CPUS)
+
+  """Cpu flags"""
+  flags: [NonEmptyString!]! @join__field(graph: CPUS)
+
+  """Cpu cores"""
+  cores: PositiveInt! @join__field(graph: CPUS)
+
+  """Cpu vendor"""
+  vendor: CpuVendor! @join__field(graph: CPUS)
+
+  """Cpu family"""
+  family: PositiveInt! @join__field(graph: CPUS)
+
+  """Cpu model"""
+  model: PositiveInt! @join__field(graph: CPUS)
+
+  """Cpu name"""
+  name: NonEmptyString! @join__field(graph: CPUS)
+
+  """Cpu L1d cache"""
+  cacheL1d: PositiveInt! @join__field(graph: CPUS)
+
+  """Cpu L1i cache"""
+  cacheL1i: PositiveInt! @join__field(graph: CPUS)
+
+  """Cpu L2 cache"""
+  cacheL2: PositiveInt! @join__field(graph: CPUS)
+
+  """Cpu L3 cache"""
+  cacheL3: PositiveInt! @join__field(graph: CPUS)
+
+  """Cpu vulnerabilities"""
+  vulnerabilities: [NonEmptyString!]! @join__field(graph: CPUS)
+
+  """Creation timestamp"""
+  createdAt: Timestamp! @join__field(graph: CPUS)
+
+  """Update timestamp"""
+  updatedAt: Timestamp! @join__field(graph: CPUS)
+
+  """Nodes equipped Cpu"""
+  nodes(
+    """Skip data"""
+    skip: NonNegativeInt = 0
+
+    """Take data"""
+    take: Int = 8
+
+    """Data cursor"""
+    cursor: ID
+
+    """Filter options"""
+    where: NodeWhereInput
+
+    """Order options"""
+    orderBy: NodeOrderByInput
+  ): [Node!]! @join__field(graph: NODES)
+}
+
+"""Cpu architecture"""
+enum CpuArchitecture
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
+{
+  x86
+  x86_64
+}
+
+"""Cpu order by input"""
+input CpuOrderByInput
+  @join__type(graph: CPUS)
+{
+  """Cpu identifier"""
+  id: SortOrder
+
+  """Cpu architecture"""
+  architecture: SortOrder
+
+  """Cpu flags"""
+  flags: SortOrder
+
+  """Cpu cores"""
+  cores: SortOrder
+
+  """Cpu vendor"""
+  vendor: SortOrder
+
+  """Cpu family"""
+  family: SortOrder
+
+  """Cpu model"""
+  model: SortOrder
+
+  """Cpu name"""
+  name: SortOrder
+
+  """Cpu L1d cache"""
+  cacheL1d: SortOrder
+
+  """Cpu L1i cache"""
+  cacheL1i: SortOrder
+
+  """Cpu L2 cache"""
+  cacheL2: SortOrder
+
+  """Cpu L3 cache"""
+  cacheL3: SortOrder
+
+  """Cpu identifier"""
+  vulnerabilities: SortOrder
+
+  """Creation timestamp"""
+  createdAt: SortOrder
+
+  """Update timestamp"""
+  updatedAt: SortOrder
+}
+
+"""Cpu vendor"""
+enum CpuVendor
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
+{
+  AMD
+  INTEL
+}
+
+"""Cpu where input"""
+input CpuWhereInput
+  @join__type(graph: CPUS)
+{
+  """Cpu identifier"""
+  id: StringFilter
+
+  """Cpu architecture"""
+  architecture: EnumCpuArchitectureFilter
+
+  """Cpu flags"""
+  flags: StringListFilter
+
+  """Cpu cores"""
+  cores: IntFilter
+
+  """Cpu vendor"""
+  vendor: EnumCpuVendorFilter
+
+  """Cpu family"""
+  family: IntFilter
+
+  """Cpu model"""
+  model: IntFilter
+
+  """Cpu name"""
+  name: StringFilter
+
+  """Cpu L1d cache"""
+  cacheL1d: IntFilter
+
+  """Cpu L1i cache"""
+  cacheL1i: IntFilter
+
+  """Cpu L2 cache"""
+  cacheL2: IntFilter
+
+  """Cpu L3 cache"""
+  cacheL3: IntFilter
+
+  """Cpu vulnerabilities"""
+  vulnerabilities: StringListFilter
+
+  """Creation timestamp"""
+  createdAt: TimestampFilter
+
+  """Update timestamp"""
+  updatedAt: TimestampFilter
+}
+
+"""Create Cpu input"""
+input CreateCpuInput
+  @join__type(graph: NODES)
+{
+  """Cpu architecture"""
+  architecture: CpuArchitecture!
+
+  """Cpu flags"""
+  flags: [NonEmptyString!]!
+
+  """Cpu cores"""
+  cores: PositiveInt!
+
+  """Cpu vendor"""
+  vendor: CpuVendor!
+
+  """Cpu family"""
+  family: PositiveInt!
+
+  """Cpu model"""
+  model: PositiveInt!
+
+  """Cpu name"""
+  name: NonEmptyString!
+
+  """Cpu L1d cache"""
+  cacheL1d: PositiveInt!
+
+  """Cpu L1i cache"""
+  cacheL1i: PositiveInt!
+
+  """Cpu L2 cache"""
+  cacheL2: PositiveInt!
+
+  """Cpu L3 cache"""
+  cacheL3: PositiveInt!
+
+  """Cpu vulnerabilities"""
+  vulnerabilities: [NonEmptyString!]!
+}
+
+"""Create Node input"""
+input CreateNodeInput
+  @join__type(graph: NODES)
+{
+  """Node Cpu"""
+  cpu: CreateCpuInput!
+}
+
+"""Cpu architecture filter"""
+input EnumCpuArchitectureFilter
+  @join__type(graph: CPUS)
+{
+  """Cpu architecture equals"""
+  equals: CpuArchitecture
+
+  """Cpu architecture not equals"""
+  not: EnumCpuArchitectureFilter
+
+  """Cpu architecture exists in list"""
+  in: [CpuArchitecture!]
+
+  """Cpu architecture does not exists in list"""
+  notIn: [CpuArchitecture!]
+}
+
+"""Cpu vendor filter"""
+input EnumCpuVendorFilter
+  @join__type(graph: CPUS)
+{
+  """Cpu vendor equals"""
+  equals: CpuVendor
+
+  """Cpu vendor not equals"""
+  not: EnumCpuVendorFilter
+
+  """Cpu vendor exists in list"""
+  in: [CpuVendor!]
+
+  """Cpu vendor does not exists in list"""
+  notIn: [CpuVendor!]
+}
+
+"""Integer filter"""
+input IntFilter
+  @join__type(graph: CPUS)
+{
+  """Integer equals"""
+  equals: Int
+
+  """Integer not equals"""
+  not: Int
+
+  """Integer exists in list"""
+  in: [Int!]
+
+  """Integer does not exists in list"""
+  notIn: [Int!]
+
+  """Integer is less than"""
+  lt: Int
+
+  """Integer is less than or equal to"""
+  lte: Int
+
+  """Integer is greater than"""
+  gt: Int
+
+  """Integer is greater than or equal to"""
+  gte: Int
+}
+
+scalar join__FieldSet
+
+enum join__Graph {
+  CPUS @join__graph(name: "cpus", url: "http://192.168.0.25:8001")
+  NODES @join__graph(name: "nodes", url: "http://192.168.0.25:8000")
+}
+
+scalar link__Import
+
+enum link__Purpose {
   """
   `SECURITY` features provide metadata necessary to securely resolve fields.
   """
@@ -66,23 +337,291 @@ enum core__Purpose {
   EXECUTION
 }
 
-scalar join__FieldSet
-
-enum join__Graph {
-  NODES @join__graph(name: "nodes", url: "http://localhost:8000")
+type Mutation
+  @join__type(graph: NODES)
+{
+  """Create a new node"""
+  createNode(
+    """Node data"""
+    data: CreateNodeInput!
+  ): Node!
 }
 
-type Node @join__type(graph: NODES, key: "id") {
+"""Nested string filter"""
+input NestedStringFilter
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
+{
+  """String equals"""
+  equals: String
+
+  """String not equals"""
+  not: NestedStringFilter
+
+  """String exists in list"""
+  in: [String!]
+
+  """String does not exists in list"""
+  notIn: [String!]
+
+  """String is less than"""
+  lt: String
+
+  """String is less than or equal to"""
+  lte: String
+
+  """String is greater than"""
+  gt: String
+
+  """String is greater than or equal to"""
+  gte: String
+
+  """String contains"""
+  contains: String
+
+  """String starts with"""
+  startsWith: String
+
+  """String ends with"""
+  endsWith: String
+}
+
+"""Node"""
+type Node
+  @join__type(graph: CPUS, key: "id", extension: true)
+  @join__type(graph: NODES, key: "id")
+{
+  """Node identifier"""
   id: ID!
-  name: NonEmptyString!
+
+  """Node Cpu"""
+  cpu: Cpu!
+
+  """Cpu identifier"""
+  cpuId: ID! @join__field(graph: NODES)
+
+  """Creation timestamp"""
+  createdAt: Timestamp! @join__field(graph: NODES)
+
+  """Update timestamp"""
+  updatedAt: Timestamp! @join__field(graph: NODES)
+}
+
+"""Node order by input"""
+input NodeOrderByInput
+  @join__type(graph: NODES)
+{
+  """Node identifier"""
+  id: SortOrder
+
+  """Cpu identifier"""
+  cpuId: SortOrder
+
+  """Creation timestamp"""
+  createdAt: SortOrder
+
+  """Update timestamp"""
+  updatedAt: SortOrder
+}
+
+"""Node where input"""
+input NodeWhereInput
+  @join__type(graph: NODES)
+{
+  """Node identifier"""
+  id: StringFilter
+
+  """Cpu identifier"""
+  cpuId: StringFilter
+
+  """Creation timestamp"""
+  createdAt: TimestampFilter
+
+  """Update timestamp"""
+  updatedAt: TimestampFilter
+}
+
+"""A string that cannot be passed as an empty value"""
+scalar NonEmptyString
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
+
+"""Integers that will have a value of 0 or more."""
+scalar NonNegativeInt
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
+
+"""Integers that will have a value greater than 0."""
+scalar PositiveInt
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
+
+type Query
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
+{
+  """List of Cpus"""
+  cpus(
+    """Skip data"""
+    skip: NonNegativeInt = 0
+
+    """Take data"""
+    take: Int = 8
+
+    """Data cursor"""
+    cursor: ID
+
+    """Filter options"""
+    where: CpuWhereInput
+
+    """Order options"""
+    orderBy: CpuOrderByInput
+  ): [Cpu!]! @join__field(graph: CPUS)
+
+  """Cpu matching the identifier"""
+  cpu(
+    """Cpu identifier"""
+    id: ID!
+  ): Cpu @join__field(graph: CPUS)
+
+  """List of nodes"""
+  nodes(
+    """Skip data"""
+    skip: NonNegativeInt = 0
+
+    """Take data"""
+    take: Int = 8
+
+    """Data cursor"""
+    cursor: ID
+
+    """Filter options"""
+    where: NodeWhereInput
+
+    """Order options"""
+    orderBy: NodeOrderByInput
+  ): [Node!]! @join__field(graph: NODES)
+
+  """Node matching the identifier"""
+  node(
+    """Node identifier"""
+    id: ID!
+  ): Node @join__field(graph: NODES)
+}
+
+"""Sort order"""
+enum SortOrder
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
+{
+  ASC
+  DESC
+}
+
+"""String filter"""
+input StringFilter
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
+{
+  """String equals"""
+  equals: String
+
+  """String not equals"""
+  not: NestedStringFilter
+
+  """String exists in list"""
+  in: [String!]
+
+  """String does not exists in list"""
+  notIn: [String!]
+
+  """String is less than"""
+  lt: String
+
+  """String is less than or equal to"""
+  lte: String
+
+  """String is greater than"""
+  gt: String
+
+  """String is greater than or equal to"""
+  gte: String
+
+  """String contains"""
+  contains: String
+
+  """String starts with"""
+  startsWith: String
+
+  """String ends with"""
+  endsWith: String
+
+  """String sensitivity"""
+  mode: StringFilterCaseSensitivity
+}
+
+"""String filter case sensitivity"""
+enum StringFilterCaseSensitivity
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
+{
+  CASE_SENSITIVE
+  CASE_INSENSITIVE
+}
+
+"""String list filter"""
+input StringListFilter
+  @join__type(graph: CPUS)
+{
+  """String exists in the list"""
+  has: String
+
+  """Every string exists in the list"""
+  hasEvery: [String!]
+
+  """At least one string exists in the list"""
+  hasSome: [String!]
+
+  """List is empty"""
+  isEmpty: Boolean
+
+  """List matches the given string list exactly"""
+  equals: [String!]
 }
 
 """
-A string that cannot be passed as an empty value
+The javascript `Date` as integer. Type represents date and time as number of milliseconds from start of UNIX epoch.
 """
-scalar NonEmptyString @join__type(graph: NODES)
+scalar Timestamp
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
 
-type Query @join__type(graph: NODES) {
-  node(id: ID!): Node
-  nodes: [Node!]!
+"""Timestamp filter"""
+input TimestampFilter
+  @join__type(graph: CPUS)
+  @join__type(graph: NODES)
+{
+  """Timestamp equals"""
+  equals: Timestamp
+
+  """Timestamp not equals"""
+  not: Timestamp
+
+  """Timestamp exists in list"""
+  in: [Timestamp!]
+
+  """Timestamp does not exists in list"""
+  notIn: [Timestamp!]
+
+  """Timestamp is less than"""
+  lt: Timestamp
+
+  """Timestamp is less than or equal to"""
+  lte: Timestamp
+
+  """Timestamp is greater than"""
+  gt: Timestamp
+
+  """Timestamp is greater than or equal to"""
+  gte: Timestamp
 }

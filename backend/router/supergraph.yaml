@@ -27,3 +27,7 @@ subgraphs:
     routing_url: http://localhost:8000
     schema:
       subgraph_url: http://localhost:8000
+  cpus:
+    routing_url: http://localhost:8001
+    schema:
+      subgraph_url: http://localhost:8001

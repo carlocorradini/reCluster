@@ -22,7 +22,11 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateNodeInput';
-export * from './OrderByNodeInput';
-export * from './WhereNodeInput';
+import pino, { Logger, LoggerOptions } from 'pino';
+import { logger as loggerConfig } from '@recluster/configs';
+import { config } from '~/config';
+
+export const logger: Logger<LoggerOptions> = pino({
+  ...loggerConfig,
+  name: config.name
+});

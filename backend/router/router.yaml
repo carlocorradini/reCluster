@@ -22,3 +22,4 @@
 
 server:
   listen: 0.0.0.0:4000
+  endpoint: /graphql

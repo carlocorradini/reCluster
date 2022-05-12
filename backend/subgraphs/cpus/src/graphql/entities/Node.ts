@@ -22,21 +22,18 @@
  * SOFTWARE.
  */
 
-import { ArgsType, Field } from 'type-graphql';
-import { PaginationArgs } from '@recluster/graphql';
-import { CpuWhereInput, CpuOrderByInput } from '../inputs';
+import { GraphQLID } from 'graphql';
+import { Directive, Field, ObjectType } from 'type-graphql';
 
-@ArgsType()
-export class CpusArgs extends PaginationArgs {
-  @Field(() => CpuWhereInput, {
-    nullable: true,
-    description: 'Filter options'
-  })
-  where?: CpuWhereInput;
+@ObjectType()
+@Directive(`@key(fields: "id")`)
+@Directive(`@extends`)
+export class Node {
+  @Field(() => GraphQLID)
+  @Directive(`@external`)
+  id!: string;
 
-  @Field(() => CpuOrderByInput, {
-    nullable: true,
-    description: 'Order options'
-  })
-  orderBy?: CpuOrderByInput;
+  @Field(() => GraphQLID)
+  @Directive(`@external`)
+  cpuId!: string;
 }

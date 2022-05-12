@@ -25,19 +25,17 @@
 import { buildFederatedSchema } from '@recluster/helpers';
 import { Cpu, Node } from './entities';
 import {
-  CpuResolver,
+  CpuNodeResolver,
   NodeResolver,
-  resolveCpuReference,
   resolveNodeReference
 } from './resolvers';
 
 export const schema = buildFederatedSchema(
   {
-    resolvers: [CpuResolver, NodeResolver],
-    orphanedTypes: [Cpu, Node]
+    resolvers: [NodeResolver, CpuNodeResolver],
+    orphanedTypes: [Node, Cpu]
   },
   {
-    Cpu: { __resolveReference: resolveCpuReference },
     Node: { __resolveReference: resolveNodeReference }
   }
 );
