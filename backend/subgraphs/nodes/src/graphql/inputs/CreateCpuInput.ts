@@ -22,17 +22,10 @@
  * SOFTWARE.
  */
 
-import { Field, InputType, registerEnumType } from 'type-graphql';
+import { Field, InputType } from 'type-graphql';
 import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
-import { CpuArchitecture, CpuVendor } from '@prisma/client';
+import { CpuArchitecture, CpuVendor } from '@recluster/graphql';
 import { Cpu } from '../entities';
-
-registerEnumType(CpuArchitecture, {
-  name: 'CpuArchitecture',
-  description: 'Cpu architecture'
-});
-
-registerEnumType(CpuVendor, { name: 'CpuVendor', description: 'Cpu vendor' });
 
 @InputType({ description: 'Create Cpu input' })
 export class CreateCpuInput

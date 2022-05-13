@@ -28,7 +28,7 @@ import {
   GraphQLNonNegativeInt,
   GraphQLPositiveInt
 } from 'graphql-scalars';
-import { CpuArchitecture, CpuVendor } from '@prisma/client';
+import { CpuArchitecture, CpuVendor } from '@recluster/graphql';
 import { Cpu } from '../entities';
 
 @InputType({ description: 'Create Cpu input' })

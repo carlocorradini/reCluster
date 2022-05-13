@@ -22,27 +22,14 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { Prisma } from '@prisma/client';
-import { CpuVendor } from '@recluster/graphql';
+import { registerEnumType } from 'type-graphql';
 
-@InputType({ isAbstract: true, description: 'Cpu vendor filter' })
-export class EnumCpuVendorFilter implements Prisma.EnumCpuVendorFilter {
-  @Field(() => CpuVendor, { nullable: true, description: 'Cpu vendor equals' })
-  equals?: CpuVendor;
-
-  @Field({ nullable: true, description: 'Cpu vendor not equals' })
-  not?: EnumCpuVendorFilter;
-
-  @Field(() => [CpuVendor], {
-    nullable: true,
-    description: 'Cpu vendor exists in list'
-  })
-  in?: CpuVendor[];
-
-  @Field(() => [CpuVendor], {
-    nullable: true,
-    description: 'Cpu vendor does not exists in list'
-  })
-  notIn?: CpuVendor[];
+export enum CpuArchitecture {
+  x86 = 'x86',
+  x86_64 = 'x86_64'
 }
+
+registerEnumType(CpuArchitecture, {
+  name: 'CpuArchitecture',
+  description: 'Cpu architecture'
+});
