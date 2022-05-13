@@ -23,21 +23,15 @@
  */
 
 import { GraphQLID } from 'graphql';
-import { Cpu as CpuPrisma, CpuArchitecture, CpuVendor } from '@prisma/client';
-import { Directive, Field, ObjectType, registerEnumType } from 'type-graphql';
+import { Cpu as CpuPrisma } from '@prisma/client';
+import { Directive, Field, ObjectType } from 'type-graphql';
 import {
   GraphQLNonEmptyString,
   GraphQLNonNegativeInt,
   GraphQLPositiveInt,
   GraphQLTimestamp
 } from 'graphql-scalars';
-
-registerEnumType(CpuArchitecture, {
-  name: 'CpuArchitecture',
-  description: 'Cpu architecture'
-});
-
-registerEnumType(CpuVendor, { name: 'CpuVendor', description: 'Cpu vendor' });
+import { CpuArchitecture, CpuVendor } from '@recluster/graphql';
 
 @ObjectType({ description: 'Cpu' })
 @Directive(`@key(fields: "id")`)

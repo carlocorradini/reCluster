@@ -47,16 +47,28 @@ type Cpu
   name: NonEmptyString! @join__field(graph: CPUS)
 
   """Cpu L1d cache"""
-  cacheL1d: PositiveInt! @join__field(graph: CPUS)
+  cacheL1d(
+    """Digital conversion unit"""
+    unit: DigitalByteUnit = B
+  ): NonNegativeInt! @join__field(graph: CPUS)
 
   """Cpu L1i cache"""
-  cacheL1i: PositiveInt! @join__field(graph: CPUS)
+  cacheL1i(
+    """Digital conversion unit"""
+    unit: DigitalByteUnit = B
+  ): NonNegativeInt! @join__field(graph: CPUS)
 
   """Cpu L2 cache"""
-  cacheL2: PositiveInt! @join__field(graph: CPUS)
+  cacheL2(
+    """Digital conversion unit"""
+    unit: DigitalByteUnit = B
+  ): NonNegativeInt! @join__field(graph: CPUS)
 
   """Cpu L3 cache"""
-  cacheL3: PositiveInt! @join__field(graph: CPUS)
+  cacheL3(
+    """Digital conversion unit"""
+    unit: DigitalByteUnit = B
+  ): NonNegativeInt! @join__field(graph: CPUS)
 
   """Cpu vulnerabilities"""
   vulnerabilities: [NonEmptyString!]! @join__field(graph: CPUS)
@@ -151,6 +163,17 @@ input CreateNodeInput
 {
   """Node Cpu"""
   cpu: CreateCpuInput!
+}
+
+"""Digital Byte unit"""
+enum DigitalByteUnit
+  @join__type(graph: CPUS)
+{
+  B
+  KB
+  MB
+  GB
+  TB
 }
 
 """Cpu architecture filter"""

@@ -23,7 +23,8 @@
  */
 
 import { Field, InputType } from 'type-graphql';
-import { CpuArchitecture, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { CpuArchitecture } from '@recluster/graphql';
 
 @InputType({ isAbstract: true, description: 'Cpu architecture filter' })
 export class EnumCpuArchitectureFilter
