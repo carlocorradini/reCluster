@@ -24,14 +24,13 @@
 
 import { Args, Mutation, Query, Resolver } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
-import { Fields, FieldsMap, Prisma, RemoveNullArgs } from '@recluster/graphql';
+import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
 import { Node } from '../entities';
 import { CreateNodeArgs, NodeArgs, NodesArgs } from '../args';
 
 @Resolver(Node)
 export class NodeResolver {
   @Query(() => [Node], { description: 'List of nodes' })
-  @RemoveNullArgs()
   async nodes(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
@@ -51,7 +50,6 @@ export class NodeResolver {
     nullable: true,
     description: 'Node matching the identifier'
   })
-  @RemoveNullArgs()
   async node(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
@@ -64,7 +62,6 @@ export class NodeResolver {
   }
 
   @Mutation(() => Node, { description: 'Create a new node' })
-  @RemoveNullArgs()
   async createNode(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,

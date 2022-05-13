@@ -24,13 +24,12 @@
 
 import { Directive, FieldResolver, Resolver, Root } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
-import { Fields, FieldsMap, Prisma, RemoveNullArgs } from '@recluster/graphql';
+import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
 import { Node, Cpu } from '../entities';
 
 @Resolver(() => Node)
 export class NodeCpuResolver {
   @FieldResolver(() => Cpu, { description: 'Node Cpu' })
-  @RemoveNullArgs()
   @Directive(`@requires(fields: "cpuId")`)
   async cpu(
     @Root() node: Node,

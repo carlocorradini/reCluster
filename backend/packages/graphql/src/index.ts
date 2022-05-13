@@ -24,5 +24,7 @@
 
 export * from './args';
 export * from './decorators';
+export * from './enums';
 export * from './filters';
+export * from './middlewares';
 export * from './sortings';

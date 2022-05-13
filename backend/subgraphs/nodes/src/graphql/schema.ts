@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import { RemoveNullArgs } from '@recluster/graphql';
 import { buildFederatedSchema } from '@recluster/helpers';
 import { Cpu, Node } from './entities';
 import {
@@ -33,7 +34,8 @@ import {
 export const schema = buildFederatedSchema(
   {
     resolvers: [NodeResolver, CpuNodeResolver],
-    orphanedTypes: [Node, Cpu]
+    orphanedTypes: [Node, Cpu],
+    globalMiddlewares: [RemoveNullArgs]
   },
   {
     Node: { __resolveReference: resolveNodeReference }

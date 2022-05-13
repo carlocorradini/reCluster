@@ -24,14 +24,13 @@
 
 import { Args, Query, Resolver } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
-import { Fields, FieldsMap, Prisma, RemoveNullArgs } from '@recluster/graphql';
+import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
 import { Cpu } from '../entities';
 import { CpuArgs, CpusArgs } from '../args';
 
 @Resolver(Cpu)
 export class CpuResolver {
   @Query(() => [Cpu], { description: 'List of Cpus' })
-  @RemoveNullArgs()
   async cpus(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,
@@ -51,7 +50,6 @@ export class CpuResolver {
     nullable: true,
     description: 'Cpu matching the identifier'
   })
-  @RemoveNullArgs()
   async cpu(
     @Fields() fields: FieldsMap,
     @Prisma() prisma: PrismaClient,

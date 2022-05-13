@@ -27,6 +27,7 @@ import { Cpu as CpuPrisma, CpuArchitecture, CpuVendor } from '@prisma/client';
 import { Directive, Field, ObjectType, registerEnumType } from 'type-graphql';
 import {
   GraphQLNonEmptyString,
+  GraphQLNonNegativeInt,
   GraphQLPositiveInt,
   GraphQLTimestamp
 } from 'graphql-scalars';
@@ -65,16 +66,16 @@ export class Cpu implements CpuPrisma {
   @Field(() => GraphQLNonEmptyString, { description: 'Cpu name' })
   name!: string;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L1d cache' })
+  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L1d cache' })
   cacheL1d!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L1i cache' })
+  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L1i cache' })
   cacheL1i!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L2 cache' })
+  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L2 cache' })
   cacheL2!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L3 cache' })
+  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L3 cache' })
   cacheL3!: number;
 
   @Field(() => [GraphQLNonEmptyString], { description: 'Cpu vulnerabilities' })

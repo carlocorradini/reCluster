@@ -22,14 +22,21 @@
  * SOFTWARE.
  */
 
+import { RemoveNullArgs } from '@recluster/graphql';
 import { buildFederatedSchema } from '@recluster/helpers';
 import { Cpu, Node } from './entities';
-import { CpuResolver, NodeCpuResolver, resolveCpuReference } from './resolvers';
+import {
+  CpuCacheResolver,
+  CpuResolver,
+  NodeCpuResolver,
+  resolveCpuReference
+} from './resolvers';
 
 export const schema = buildFederatedSchema(
   {
-    resolvers: [CpuResolver, NodeCpuResolver],
-    orphanedTypes: [Cpu, Node]
+    resolvers: [CpuResolver, CpuCacheResolver, NodeCpuResolver],
+    orphanedTypes: [Cpu, Node],
+    globalMiddlewares: [RemoveNullArgs]
   },
   {
     Cpu: { __resolveReference: resolveCpuReference }
