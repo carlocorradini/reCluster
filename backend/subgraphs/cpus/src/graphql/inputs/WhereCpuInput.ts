@@ -34,7 +34,8 @@ import { EnumCpuArchitectureFilter, EnumCpuVendorFilter } from '../filters';
 
 @InputType({ isAbstract: true, description: 'Cpu where input' })
 export class WhereCpuInput
-  implements Omit<Prisma.CpuWhereInput, 'AND' | 'OR' | 'NOT'>
+  implements
+    Partial<Omit<Prisma.CpuWhereInput, 'AND' | 'OR' | 'NOT' | 'nodes'>>
 {
   @Field({ nullable: true, description: 'Cpu identifier' })
   id?: StringFilter;

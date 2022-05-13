@@ -23,11 +23,16 @@
  */
 
 import { ArgsType, Field } from 'type-graphql';
+import { Prisma } from '@prisma/client';
 import { PaginationArgs } from '@recluster/graphql';
+import { FindManyArgs } from '@recluster/utils';
 import { OrderByNodeInput, WhereNodeInput } from '../inputs';
 
 @ArgsType()
-export class NodesArgs extends PaginationArgs {
+export class NodesArgs
+  extends PaginationArgs
+  implements FindManyArgs<Prisma.NodeFindManyArgs>
+{
   @Field(() => WhereNodeInput, {
     nullable: true,
     description: 'Filter options'

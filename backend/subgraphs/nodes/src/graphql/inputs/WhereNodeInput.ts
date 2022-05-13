@@ -28,7 +28,7 @@ import { StringFilter, TimestampFilter } from '@recluster/graphql';
 
 @InputType({ isAbstract: true, description: 'Node where input' })
 export class WhereNodeInput
-  implements Omit<Prisma.NodeWhereInput, 'AND' | 'OR' | 'NOT' | 'cpu'>
+  implements Partial<Omit<Prisma.NodeWhereInput, 'AND' | 'OR' | 'NOT' | 'cpu'>>
 {
   @Field({ nullable: true, description: 'Node identifier' })
   id?: StringFilter;

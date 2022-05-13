@@ -22,6 +22,5 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
 export * from './OrderByCpuInput';
 export * from './WhereCpuInput';

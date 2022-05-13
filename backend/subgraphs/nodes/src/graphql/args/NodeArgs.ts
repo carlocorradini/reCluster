@@ -22,11 +22,12 @@
  * SOFTWARE.
  */
 
+import { Prisma } from '@prisma/client';
 import { GraphQLID } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
 
 @ArgsType()
-export class NodeArgs {
+export class NodeArgs implements Pick<Prisma.NodeWhereUniqueInput, 'id'> {
   @Field(() => GraphQLID, { description: 'Node identifier' })
   id!: string;
 }

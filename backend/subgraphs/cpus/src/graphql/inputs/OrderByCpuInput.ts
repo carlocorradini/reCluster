@@ -28,7 +28,7 @@ import { SortOrder } from '@recluster/graphql';
 
 @InputType({ isAbstract: true, description: 'Cpu order by input' })
 export class OrderByCpuInput
-  implements Omit<Prisma.CpuOrderByWithRelationInput, 'nodes'>
+  implements Partial<Omit<Prisma.CpuOrderByWithRelationInput, 'nodes'>>
 {
   @Field(() => SortOrder, { nullable: true, description: 'Cpu identifier' })
   id?: SortOrder;
