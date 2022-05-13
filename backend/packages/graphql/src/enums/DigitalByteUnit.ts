@@ -22,31 +22,17 @@
  * SOFTWARE.
  */
 
-import { createMethodDecorator } from 'type-graphql';
-import { NotNullableRecursive } from '@recluster/utils';
+import { registerEnumType } from 'type-graphql';
 
-function removeNullProps<T>(obj: T): NotNullableRecursive<T> {
-  return Object.fromEntries(
-    Object.entries(obj)
-      .filter(([, v]) => v !== null)
-      .map(([k, v]) => {
-        // Array
-        if (Array.isArray(v)) return [k, v.filter((av) => av !== null)];
-        // Date
-        if (v instanceof Date) return [k, v];
-        // Object
-        if (typeof v === 'object') return [k, removeNullProps(v)];
-
-        // Primitive
-        return [k, v];
-      })
-  ) as NotNullableRecursive<T>;
+export enum DigitalByteUnit {
+  B = 'B',
+  KB = 'KB',
+  MB = 'MB',
+  GB = 'GB',
+  TB = 'TB'
 }
 
-export function RemoveNullArgs() {
-  return createMethodDecorator((action, next) => {
-    // eslint-disable-next-line no-param-reassign
-    action.args = removeNullProps(action.args);
-    return next();
-  });
-}
+registerEnumType(DigitalByteUnit, {
+  name: 'DigitalByteUnit',
+  description: 'Digital Byte unit'
+});

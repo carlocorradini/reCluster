@@ -23,5 +23,6 @@
  */
 
 export * from './CpuResolver';
+export * from './CpuCacheResolver';
 export * from './resolveCpuReference';
 export * from './NodeCpuResolver';

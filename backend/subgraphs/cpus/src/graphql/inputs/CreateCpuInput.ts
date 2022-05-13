@@ -23,7 +23,11 @@
  */
 
 import { Field, InputType } from 'type-graphql';
-import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
+import {
+  GraphQLNonEmptyString,
+  GraphQLNonNegativeInt,
+  GraphQLPositiveInt
+} from 'graphql-scalars';
 import { CpuArchitecture, CpuVendor } from '@prisma/client';
 import { Cpu } from '../entities';
 
@@ -52,16 +56,16 @@ export class CreateCpuInput
   @Field(() => GraphQLNonEmptyString, { description: 'Cpu name' })
   name!: string;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L1d cache' })
+  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L1d cache' })
   cacheL1d!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L1i cache' })
+  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L1i cache' })
   cacheL1i!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L2 cache' })
+  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L2 cache' })
   cacheL2!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu L3 cache' })
+  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L3 cache' })
   cacheL3!: number;
 
   @Field(() => [GraphQLNonEmptyString], { description: 'Cpu vulnerabilities' })

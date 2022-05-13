@@ -22,29 +22,31 @@
  * SOFTWARE.
  */
 
-import { Args, Directive, FieldResolver, Resolver, Root } from 'type-graphql';
-import { PrismaClient } from '@prisma/client';
-import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
-import { Cpu, Node } from '../entities';
-import { NodesArgs } from '../args';
+import { MiddlewareInterface, NextFn, ResolverData } from 'type-graphql';
+import { NotNullableRecursive } from '@recluster/utils';
 
-@Resolver(Cpu)
-export class CpuNodeResolver {
-  @FieldResolver(() => [Node], { description: 'Nodes equipped Cpu' })
-  @Directive(`@requires(fields: "id")`)
-  async nodes(
-    @Root() cpu: Cpu,
-    @Fields() fields: FieldsMap,
-    @Prisma() prisma: PrismaClient,
-    @Args() args: NodesArgs
-  ) {
-    return prisma.node.findMany({
-      select: fields,
-      where: { ...args.where, cpuId: cpu.id },
-      orderBy: args.orderBy,
-      cursor: args.cursor ? { id: args.cursor } : undefined,
-      take: args.take,
-      skip: args.skip
-    });
+function removeNullProps<T>(obj: T): NotNullableRecursive<T> {
+  return Object.fromEntries(
+    Object.entries(obj)
+      .filter(([, v]) => v !== null)
+      .map(([k, v]) => {
+        // Array
+        if (Array.isArray(v)) return [k, v.filter((av) => av !== null)];
+        // Date
+        if (v instanceof Date) return [k, v];
+        // Object
+        if (typeof v === 'object') return [k, removeNullProps(v)];
+
+        // Primitive
+        return [k, v];
+      })
+  ) as NotNullableRecursive<T>;
+}
+
+export class RemoveNullArgs implements MiddlewareInterface {
+  use(action: ResolverData, next: NextFn) {
+    // eslint-disable-next-line no-param-reassign
+    action.args = removeNullProps(action.args);
+    return next();
   }
 }
