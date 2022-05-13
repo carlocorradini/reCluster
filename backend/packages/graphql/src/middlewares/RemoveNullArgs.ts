@@ -23,9 +23,9 @@
  */
 
 import { MiddlewareInterface, NextFn, ResolverData } from 'type-graphql';
-import { NotNullableRecursive } from '@recluster/utils';
+import { NonNullableRecursive } from '@recluster/utils';
 
-function removeNullProps<T>(obj: T): NotNullableRecursive<T> {
+function removeNullProps<T>(obj: T): NonNullableRecursive<T> {
   return Object.fromEntries(
     Object.entries(obj)
       .filter(([, v]) => v !== null)
@@ -40,7 +40,7 @@ function removeNullProps<T>(obj: T): NotNullableRecursive<T> {
         // Primitive
         return [k, v];
       })
-  ) as NotNullableRecursive<T>;
+  ) as NonNullableRecursive<T>;
 }
 
 export class RemoveNullArgs implements MiddlewareInterface {

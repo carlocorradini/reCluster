@@ -70,18 +70,23 @@ export type Nullable<T> = { [P in keyof T]: T[P] | null };
 export type NullableRecursive<T> = ExpandRecursively<Nullable<T>>;
 
 /**
- * Properties of T can not be null
- */
-export type NotNullable<T> = {
-  [K in keyof T]: Exclude<NotNullable<T[K]>, null>;
-};
-
-/**
  * Properties and nested properties of T can not be null
  */
-export type NotNullableRecursive<T> = ExpandRecursively<NotNullable<T>>;
+export type NonNullableRecursive<T> = ExpandRecursively<NonNullable<T>>;
 
 /**
  * Optional properties of T can be null
  */
 export type NullableOptional<T> = PickRequired<T> & Nullable<PickOptional<T>>;
+
+/**
+ * Properties and nested properties of T are optional
+ */
+export type PartialRecursive<T> = ExpandRecursively<Partial<T>>;
+
+/**
+ * Find many args of T
+ */
+export type FindManyArgs<T> = Omit<T, 'select' | 'include' | 'distinct'> & {
+  cursor?: string;
+};

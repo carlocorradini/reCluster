@@ -22,11 +22,17 @@
  * SOFTWARE.
  */
 
+import { Prisma } from '@prisma/client';
+import { PickRequired } from '@recluster/utils';
 import { Field, InputType } from 'type-graphql';
 import { CreateCpuInput } from './CreateCpuInput';
 
+type ICreateNodeInput = PickRequired<Prisma.NodeCreateInput> & {
+  cpu: CreateCpuInput;
+};
+
 @InputType({ description: 'Create Node input' })
-export class CreateNodeInput {
+export class CreateNodeInput implements ICreateNodeInput {
   @Field(() => CreateCpuInput, { description: 'Node Cpu' })
   cpu!: CreateCpuInput;
 }

@@ -23,14 +23,20 @@
  */
 
 import { Field, InputType } from 'type-graphql';
+import { Prisma } from '@prisma/client';
 import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
 import { CpuArchitecture, CpuVendor } from '@recluster/graphql';
-import { Cpu } from '../entities';
+import { PickRequired } from '@recluster/utils';
+
+type ICreateCpuInput = PickRequired<
+  Prisma.CpuCreateWithoutNodesInput & {
+    flags: string[];
+    vulnerabilities: string[];
+  }
+>;
 
 @InputType({ description: 'Create Cpu input' })
-export class CreateCpuInput
-  implements Required<Omit<Cpu, 'id' | 'createdAt' | 'updatedAt'>>
-{
+export class CreateCpuInput implements ICreateCpuInput {
   @Field(() => CpuArchitecture, { description: 'Cpu architecture' })
   architecture!: CpuArchitecture;
 

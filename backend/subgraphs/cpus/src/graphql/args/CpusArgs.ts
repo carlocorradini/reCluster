@@ -23,11 +23,16 @@
  */
 
 import { ArgsType, Field } from 'type-graphql';
+import { Prisma } from '@prisma/client';
 import { PaginationArgs } from '@recluster/graphql';
+import { FindManyArgs } from '@recluster/utils';
 import { OrderByCpuInput, WhereCpuInput } from '../inputs';
 
 @ArgsType()
-export class CpusArgs extends PaginationArgs {
+export class CpusArgs
+  extends PaginationArgs
+  implements FindManyArgs<Prisma.CpuFindManyArgs>
+{
   @Field(() => WhereCpuInput, {
     nullable: true,
     description: 'Filter options'

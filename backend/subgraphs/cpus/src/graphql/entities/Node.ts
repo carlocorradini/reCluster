@@ -24,13 +24,13 @@
 
 import { GraphQLID } from 'graphql';
 import { Directive, Field, ObjectType } from 'type-graphql';
+import { Node as NodePrisma } from '@prisma/client';
 
 @ObjectType()
+// TODO @Directive(`@key(fields: "id", resolvable: false)`) when type-graphql supports GraphQL v16
 @Directive(`@key(fields: "id")`)
-@Directive(`@extends`)
-export class Node {
+export class Node implements Pick<NodePrisma, 'id' | 'cpuId'> {
   @Field(() => GraphQLID)
-  @Directive(`@external`)
   id!: string;
 
   @Field(() => GraphQLID)

@@ -22,11 +22,12 @@
  * SOFTWARE.
  */
 
+import { Prisma } from '@prisma/client';
 import { ArgsType, Field } from 'type-graphql';
 import { CreateNodeInput } from '../inputs';
 
 @ArgsType()
-export class CreateNodeArgs {
+export class CreateNodeArgs implements Pick<Prisma.NodeCreateArgs, 'data'> {
   @Field({ description: 'Node data' })
   data!: CreateNodeInput;
 }
