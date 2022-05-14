@@ -23,6 +23,6 @@
  */
 
 import { IContext } from '@recluster/configs';
-import { prisma } from '~/database';
+import { prisma } from '../database';
 
 export const context: IContext = { prisma };
