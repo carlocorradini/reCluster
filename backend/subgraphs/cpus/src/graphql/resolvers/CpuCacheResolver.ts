@@ -22,7 +22,13 @@
  * SOFTWARE.
  */
 
-import { Arg, FieldResolver, Resolver, Root } from 'type-graphql';
+import {
+  Arg,
+  FieldResolver,
+  Resolver,
+  ResolverInterface,
+  Root
+} from 'type-graphql';
 import { GraphQLNonNegativeInt } from 'graphql-scalars';
 import configMeasurements, { digital } from 'convert-units';
 import { DigitalByteUnit } from '@recluster/graphql';
@@ -39,7 +45,7 @@ function cacheConverter(value: number, toUnit?: DigitalByteUnit) {
 }
 
 @Resolver(Cpu)
-export class CpuCacheResolver {
+export class CpuCacheResolver implements ResolverInterface<Cpu> {
   @FieldResolver(() => GraphQLNonNegativeInt)
   cacheL1d(
     @Root() cpu: Cpu,
