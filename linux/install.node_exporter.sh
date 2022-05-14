@@ -1,0 +1,1 @@
+../dependencies/installer/node_exporter/install.sh

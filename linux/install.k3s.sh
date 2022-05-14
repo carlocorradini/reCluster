@@ -1,0 +1,1 @@
+../dependencies/installer/k3s/install.sh
