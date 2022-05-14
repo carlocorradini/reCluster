@@ -348,27 +348,35 @@ read_cpu_info() {
                   | . + {"family": (."CPU family" | tonumber)}
                   | . + {"model": (.Model | tonumber)}
                   | . + {"name": ."Model name"}
-                  | . + {"cache": {}}
-                  | .cache += {"l1d": (."L1d cache" | split(" ") | .[0] + " " + .[1])}
-                  | .cache += {"l1i": (."L1i cache" | split(" ") | .[0] + " " + .[1])}
-                  | .cache += {"l2": (."L2 cache" | split(" ") | .[0] + " " + .[1])}
-                  | .cache += {"l3": (."L3 cache" | split(" ") | .[0] + " " + .[1])}
-                  | {architecture, flags, cores, vendor, family, model, name, cache, vulnerabilities}
+                  | . + {"cacheL1d": (."L1d cache" | split(" ") | .[0] + " " + .[1])}
+                  | . + {"cacheL1i": (."L1i cache" | split(" ") | .[0] + " " + .[1])}
+                  | . + {"cacheL2": (."L2 cache" | split(" ") | .[0] + " " + .[1])}
+                  | . + {"cacheL3": (."L3 cache" | split(" ") | .[0] + " " + .[1])}
+                  | {architecture, flags, cores, vendor, family, model, name, vulnerabilities, cacheL1d, cacheL1i, cacheL2, cacheL3}
                 ')
 
-  # Convert cache to bytes
-  _l1d_cache=$(echo "$_cpu_info" | jq --raw-output '.cache.l1d' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
-  _l1i_cache=$(echo "$_cpu_info" | jq --raw-output '.cache.l1i' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
-  _l2_cache=$(echo "$_cpu_info" | jq --raw-output '.cache.l2' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
-  _l3_cache=$(echo "$_cpu_info" | jq --raw-output '.cache.l3' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  # Convert vendor
+  _vendor="$(echo "$_cpu_info" | jq --raw-output '.vendor')"
+  case $_vendor in
+    AuthenticAMD) _vendor=AMD ;;
+    GenuineIntel) _vendor=INTEL ;;
+    *) FATAL "CPU vendor '$_vendor' is not supported" ;;
+  esac
 
-  # Update cache
+  # Convert cache to bytes
+  _cache_l1d=$(echo "$_cpu_info" | jq --raw-output '.cacheL1d' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _cache_l1i=$(echo "$_cpu_info" | jq --raw-output '.cacheL1i' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _cache_l2=$(echo "$_cpu_info" | jq --raw-output '.cacheL2' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _cache_l3=$(echo "$_cpu_info" | jq --raw-output '.cacheL3' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+
+  # Update
   _cpu_info=$(echo "$_cpu_info" \
-            | jq --arg l1d "$_l1d_cache" --arg l1i "$_l1i_cache" --arg l2 "$_l2_cache" --arg l3 "$_l3_cache" '
-                .cache.l1d = ($l1d | tonumber)
-                | .cache.l1i = ($l1i | tonumber)
-                | .cache.l2 = ($l2 | tonumber)
-                | .cache.l3 = ($l3 | tonumber)
+            | jq --arg vendor "$_vendor" --arg cachel1d "$_cache_l1d" --arg cachel1i "$_cache_l1i" --arg cachel2 "$_cache_l2" --arg cachel3 "$_cache_l3" '
+                .vendor = $vendor
+                | .cacheL1d = ($cachel1d | tonumber)
+                | .cacheL1i = ($cachel1i | tonumber)
+                | .cacheL2 = ($cachel2 | tonumber)
+                | .cacheL3 = ($cachel3 | tonumber)
               ')
 
   # Update node facts
@@ -906,8 +914,8 @@ NODE_FACTS={}
   parse_args "$@"
   verify_system
   setup_system
-  install_k3s
-  install_node_exporter
+  #install_k3s
+  #stall_node_exporter
   read_system_info
   run_benchmarks
 }
