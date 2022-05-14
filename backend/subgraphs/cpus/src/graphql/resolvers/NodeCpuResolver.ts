@@ -22,15 +22,14 @@
  * SOFTWARE.
  */
 
-import { Directive, FieldResolver, Resolver, Root } from 'type-graphql';
+import { FieldResolver, Resolver, Root } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
 import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
 import { Node, Cpu } from '../entities';
 
 @Resolver(() => Node)
 export class NodeCpuResolver {
-  @FieldResolver(() => Cpu, { description: 'Node Cpu' })
-  @Directive(`@requires(fields: "cpuId")`)
+  @FieldResolver(() => Cpu)
   async cpu(
     @Root() node: Node,
     @Fields() fields: FieldsMap,

@@ -25,6 +25,7 @@
 import { GraphQLID } from 'graphql';
 import { Directive, Field, ObjectType } from 'type-graphql';
 import { Cpu as CpuPrisma } from '@prisma/client';
+import { Node } from './Node';
 
 @ObjectType()
 // TODO @Directive(`@key(fields: "id", resolvable: false)`) when type-graphql supports GraphQL v16
@@ -32,4 +33,8 @@ import { Cpu as CpuPrisma } from '@prisma/client';
 export class Cpu implements Pick<CpuPrisma, 'id'> {
   @Field(() => GraphQLID)
   id!: string;
+
+  @Field(() => [Node], { description: 'Nodes equipped Cpu' })
+  @Directive(`@requires(fields: "id")`)
+  nodes?: Node[];
 }
