@@ -25,6 +25,7 @@
 import { GraphQLID } from 'graphql';
 import { Directive, Field, ObjectType } from 'type-graphql';
 import { Node as NodePrisma } from '@prisma/client';
+import { Cpu } from './Cpu';
 
 @ObjectType()
 // TODO @Directive(`@key(fields: "id", resolvable: false)`) when type-graphql supports GraphQL v16
@@ -36,4 +37,8 @@ export class Node implements Pick<NodePrisma, 'id' | 'cpuId'> {
   @Field(() => GraphQLID)
   @Directive(`@external`)
   cpuId!: string;
+
+  @Field(() => Cpu, { description: 'Node Cpu' })
+  @Directive(`@requires(fields: "cpuId")`)
+  cpu?: Cpu;
 }

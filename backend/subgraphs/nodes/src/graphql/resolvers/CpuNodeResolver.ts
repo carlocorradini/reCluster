@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Args, Directive, FieldResolver, Resolver, Root } from 'type-graphql';
+import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
 import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
 import { Cpu, Node } from '../entities';
@@ -30,8 +30,7 @@ import { NodesArgs } from '../args';
 
 @Resolver(Cpu)
 export class CpuNodeResolver {
-  @FieldResolver(() => [Node], { description: 'Nodes equipped Cpu' })
-  @Directive(`@requires(fields: "id")`)
+  @FieldResolver(() => [Node])
   async nodes(
     @Root() cpu: Cpu,
     @Fields() fields: FieldsMap,
