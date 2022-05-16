@@ -1,0 +1,48 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "useGitignore": true,
+  "import": [
+    "@cspell/dict-bash/cspell-ext.json",
+    "@cspell/dict-node/cspell-ext.json",
+    "@cspell/dict-npm/cspell-ext.json",
+    "@cspell/dict-typescript/cspell-ext.json"
+  ],
+  "ignorePaths": [
+    "**/build/",
+    "**/coverage/",
+    "**/node_modules/",
+    "linux/",
+    "**/Dockerfile",
+    "**/Dockerfile.*",
+    "**/package-lock.json",
+    "**/*.graphql",
+    "license.json"
+  ],
+  "words": [
+    "apollographql",
+    "carlocorradini",
+    "codepaths",
+    "codeql",
+    "commitlint",
+    "corradini",
+    "cpus",
+    "cuid",
+    "datasource",
+    "datasources",
+    "envalid",
+    "FUNCNAME",
+    "graphqlid",
+    "Middlewares",
+    "pino",
+    "recluster",
+    "respawn",
+    "sortings",
+    "supergraph",
+    "Timestamptz",
+    "tsbuildinfo",
+    "tsdoc",
+    "typedi",
+    "upsert"
+  ]
+}

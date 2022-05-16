@@ -1,0 +1,20 @@
+{
+  "name": "@recluster/configs",
+  "version": "0.0.1",
+  "description": "reCluster configs",
+  "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "peerDependencies": {
+    "@prisma/client": "^3.14.0",
+    "envalid": "^7.3.1",
+    "pino": "^7.10.0"
+  },
+  "devDependencies": {
+    "@prisma/client": "^3.14.0",
+    "envalid": "^7.3.1",
+    "pino": "^7.10.0"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "name": "recluster",
+  "version": "0.0.1",
+  "description": "reCluster is an architecture for a data centre that actively reduces its impact and minimizes its resource utilization",
+  "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "homepage": "https://github.com/carlocorradini/reCluster#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carlocorradini/reCluster.git"
+  },
+  "bugs": {
+    "url": "https://github.com/carlocorradini/reCluster/issues"
+  },
+  "scripts": {
+    "check": "npx npm-run-all --npm-path npm --serial check:* && cd backend && npm run check",
+    "check:format": "npx prettier --check .",
+    "check:license": "npx license-check-and-add check -f license.json",
+    "check:markdown": "npx markdownlint \"**/*.md\"",
+    "check:spell": "npx cspell lint --config cspell.json --no-progress --show-context \"**\"",
+    "fix": "npx npm-run-all --npm-path npm --serial fix:* && cd backend && npm run fix",
+    "fix:format": "npx prettier --write .",
+    "fix:license": "npx license-check-and-add add -f license.json",
+    "fix:markdown": "npx markdownlint --fix \"**/*.md\"",
+    "postinstall": "cd backend && npm ci",
+    "prepare": "npx husky install"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^16.3.0",
+    "@commitlint/config-conventional": "^16.2.1",
+    "@cspell/dict-bash": "^2.0.2",
+    "@cspell/dict-node": "^2.0.0",
+    "@cspell/dict-npm": "^2.0.2",
+    "@cspell/dict-typescript": "^2.0.0",
+    "@cspell/eslint-plugin": "^5.19.7",
+    "cspell": "^5.19.7",
+    "husky": "^8.0.1",
+    "license-check-and-add": "^4.0.5",
+    "lint-staged": "^12.4.0",
+    "markdownlint-cli": "^0.31.1",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.6.2"
+  }
+}
