@@ -25,7 +25,7 @@
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Git directory
-GIT_DIR=$(readlink -f "$DIRNAME/..")
+GIT_DIR=$(readlink -f "$DIRNAME/../.git")
 readonly GIT_DIR
 
 # Commons
