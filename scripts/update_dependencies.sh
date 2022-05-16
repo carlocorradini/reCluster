@@ -24,6 +24,9 @@
 # Current directory
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
+# Git directory
+GIT_DIR=$(readlink -f "$DIRNAME/..")
+readonly GIT_DIR
 
 # Commons
 source "$DIRNAME/__commons.sh"
@@ -56,7 +59,7 @@ for dependencies in ${!dependencies@}; do
 
   INFO "Updating '$_name'"
   DEBUG "Updating '$_name' located in '$_path' from '$_url' in branch '$_branch'"
-  git subtree pull --prefix "$_path" "$_url" "$_branch" --squash
+  git --git-dir="$GIT_DIR" subtree pull --prefix "$_path" "$_url" "$_branch" --squash
 done
 
 INFO "Successfully updated '${!dependencies#}' dependencies"
