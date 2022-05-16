@@ -1,0 +1,10 @@
+[submodule "k3s"]
+	path = dependencies/k3s
+	url = https://github.com/k3s-io/k3s.git
+	branch = master
+	shallow = true
+[submodule "node_exporter_installer"]
+	path = dependencies/node_exporter_installer
+	url = https://github.com/carlocorradini/node_exporter_installer.git
+	branch = main
+	shallow = true
