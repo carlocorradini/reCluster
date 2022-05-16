@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!-- HTML Comments can be left in place or removed. -->
 <!-- Please see our contributing guide at https://github.com/k3s-io/k3s/blob/master/CONTRIBUTING.md for guidance on opening pull requests -->
 
@@ -29,3 +30,6 @@ If the PR requires additional action from users switching to the new release, in
 #### Further Comments ####
 
 <!-- If this is a relatively large or complex change, kick off the discussion by explaining why you chose the solution you did and what alternatives you considered, etc... -->
+=======
+<!-- Thanks for contributing! -->
+>>>>>>> 9e7f50dde6fb4e8a705b7890dab3d3fa76268af9

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Configuration for probot-stale - https://github.com/probot/stale
 
 # Number of days of inactivity before an Issue or Pull Request becomes stale
@@ -53,3 +54,16 @@ limitPerRun: 30
 
 # Limit to only `issues`
 only: issues
+=======
+daysUntilStale: 60
+daysUntilClose: 7
+exemptLabels:
+  - pinned
+  - security
+staleLabel: wontfix
+markComment: >
+  This issue has been automatically marked as stale because it has not had
+  recent activity. It will be closed if no further activity occurs. Thank you
+  for your contributions.
+closeComment: false
+>>>>>>> 9e7f50dde6fb4e8a705b7890dab3d3fa76268af9
