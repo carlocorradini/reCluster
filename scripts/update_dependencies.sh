@@ -32,6 +32,7 @@ readonly GIT_DIR
 source "$DIRNAME/__commons.sh"
 
 # k3s
+# shellcheck disable=2034
 declare -A dependencies0=(
   [name]=k3s
   [path]=dependencies/k3s
@@ -40,6 +41,7 @@ declare -A dependencies0=(
 )
 
 # node_exporter_installer
+# shellcheck disable=2034
 declare -A dependencies1=(
   [name]=node_exporter_installer
   [path]=dependencies/node_exporter_installer
