@@ -31,6 +31,9 @@ readonly GIT_DIR
 # Commons
 source "$DIRNAME/__commons.sh"
 
+# ================
+# DEPENDENCIES
+# ================
 # k3s
 # shellcheck disable=2034
 declare -A dependencies0=(
@@ -39,7 +42,6 @@ declare -A dependencies0=(
   [url]=https://github.com/k3s-io/k3s.git
   [branch]=master
 )
-
 # node_exporter_installer
 # shellcheck disable=2034
 declare -A dependencies1=(
@@ -48,10 +50,12 @@ declare -A dependencies1=(
   [url]=https://github.com/carlocorradini/node_exporter_installer.git
   [branch]=main
 )
-
 # Merge dependencies
 declare -n dependencies
 
+# ================
+# MAIN
+# ================
 # Update
 for dependencies in ${!dependencies@}; do
   _name=${dependencies[name]}
