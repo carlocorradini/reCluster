@@ -769,12 +769,12 @@ setup_system() {
 
 # Install K3s
 install_k3s() {
-  _k3s_installer="$TMP_DIR/k3s.installer.sh"
+  _k3s_install_sh="$TMP_DIR/install.k3s.sh"
 
   # Download installer
   spinner_start "Downloading K3s installer"
-  download "$_k3s_installer" https://get.k3s.io
-  chmod 755 "$_k3s_installer"
+  download "$_k3s_install_sh" https://get.k3s.io
+  chmod 755 "$_k3s_install_sh"
   spinner_stop
 
   # Install
@@ -782,7 +782,7 @@ install_k3s() {
   env \
     INSTALL_K3S_SKIP_START=true \
     INSTALL_K3S_VERSION="$K3S_VERSION" \
-    "$_k3s_installer" || FATAL "Error installing K3s $K3S_VERSION"
+    "$_k3s_install_sh" || FATAL "Error installing K3s $K3S_VERSION"
   spinner_stop
 
   # Success
@@ -791,12 +791,12 @@ install_k3s() {
 
 # Install Node exporter
 install_node_exporter() {
-  _node_exporter_installer="$TMP_DIR/node_exporter.installer.sh"
+  _node_exporter_install_sh="$TMP_DIR/install.node_exporter.sh"
 
   # Download installer
   spinner_start "Downloading Node exporter installer"
-  download "$_node_exporter_installer" https://raw.githubusercontent.com/carlocorradini/node_exporter_installer/main/install.sh
-  chmod 755 "$_node_exporter_installer"
+  download "$_node_exporter_install_sh" https://raw.githubusercontent.com/carlocorradini/node_exporter_installer/main/install.sh
+  chmod 755 "$_node_exporter_install_sh"
   spinner_stop
 
   # Install
@@ -804,7 +804,7 @@ install_node_exporter() {
   env \
     INSTALL_NODE_EXPORTER_SKIP_START=true \
     INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
-    "$_node_exporter_installer" || FATAL "Error installing Node exporter $NODE_EXPORTER_VERSION"
+    "$_node_exporter_install_sh" || FATAL "Error installing Node exporter $NODE_EXPORTER_VERSION"
   spinner_stop
 
   # Success
@@ -915,7 +915,7 @@ NODE_FACTS={}
   verify_system
   setup_system
   #install_k3s
-  #stall_node_exporter
+  #install_node_exporter
   read_system_info
   run_benchmarks
 }
