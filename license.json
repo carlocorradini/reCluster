@@ -36,6 +36,7 @@
     "**/build",
     "**/coverage",
     "**/mode_modules",
+    "dependencies/**/source",
     "backend/migrations",
     ".github",
     ".husky",
@@ -63,6 +64,8 @@
     "**/.prettierrc",
     "**/.shellcheckrc",
     "**/cspell.json",
-    "backend/docker/Dockerfile.rover"
+    "backend/docker/Dockerfile.rover",
+    "linux/install.k3s.sh",
+    "linux/install.node_exporter.sh"
   ]
 }

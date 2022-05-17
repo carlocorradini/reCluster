@@ -28,6 +28,9 @@
 **/docker-compose.yml
 **/docker-compose.*.yml
 
+# Dependencies
+dependencies/
+
 # Log files
 **/logs/
 **/*.log
