@@ -1,4 +1,6 @@
-#!/usr/bin/env sh
+#!/bin/sh
+set -e
+set -o noglob
 
 # Usage:
 #   curl ... | ENV_VAR=... sh -
@@ -6,574 +8,841 @@
 #   ENV_VAR=... ./install.sh
 #
 # Example:
-#   Installing Node exporter enabling only os collector:
-#     curl ... | INSTALL_NODE_EXPORTER="--collector.disable-defaults --collector.os" sh -
-#   Installing Node exporter enabling only os collector:
-#     curl ... | sh -s - --collector.disable-defaults --collector.os
+#   Installing a server without traefik:
+#     curl ... | INSTALL_K3S_EXEC="--disable=traefik" sh -
+#   Installing an agent to point at a server:
+#     curl ... | K3S_TOKEN=xxx K3S_URL=https://server-url:6443 sh -
 #
 # Environment variables:
-#   - INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD
-#     If set to true will not download Node exporter hash or binary
+#   - K3S_*
+#     Environment variables which begin with K3S_ will be preserved for the
+#     systemd service to use. Setting K3S_URL without explicitly setting
+#     a systemd exec command will default the command to "agent", and we
+#     enforce that K3S_TOKEN or K3S_CLUSTER_SECRET is also set.
 #
-#   - INSTALL_NODE_EXPORTER_FORCE_RESTART
-#     If set to true will always restart the Node exporter service
+#   - INSTALL_K3S_SKIP_DOWNLOAD
+#     If set to true will not download k3s hash or binary.
 #
-#   - INSTALL_NODE_EXPORTER_SKIP_ENABLE
-#     If set to true will not enable or start Node exporter service
+#   - INSTALL_K3S_FORCE_RESTART
+#     If set to true will always restart the K3s service
 #
-#   - INSTALL_NODE_EXPORTER_SKIP_START
-#     If set to true will not start Node exporter service
+#   - INSTALL_K3S_SYMLINK
+#     If set to 'skip' will not create symlinks, 'force' will overwrite,
+#     default will symlink if command does not exist in path.
 #
-#   - INSTALL_NODE_EXPORTER_SKIP_FIREWALL
-#     If set to true will not add iptables commands for firewall rules to the service
+#   - INSTALL_K3S_SKIP_ENABLE
+#     If set to true will not enable or start k3s service.
 #
-#   - INSTALL_NODE_EXPORTER_VERSION
-#     Version of Node exporter to download from GitHub
+#   - INSTALL_K3S_SKIP_START
+#     If set to true will not start k3s service.
 #
-#   - INSTALL_NODE_EXPORTER_BIN_DIR
-#     Directory to install Node exporter binary, and uninstall script to, or use
+#   - INSTALL_K3S_VERSION
+#     Version of k3s to download from github. Will attempt to download from the
+#     stable channel if not specified.
+#
+#   - INSTALL_K3S_COMMIT
+#     Commit of k3s to download from temporary cloud storage.
+#     * (for developer & QA use)
+#
+#   - INSTALL_K3S_BIN_DIR
+#     Directory to install k3s binary, links, and uninstall script to, or use
 #     /usr/local/bin as the default
 #
-#   - INSTALL_NODE_EXPORTER_SYSTEMD_DIR
-#     Directory to install systemd service files to, or use
+#   - INSTALL_K3S_BIN_DIR_READ_ONLY
+#     If set to true will not write files to INSTALL_K3S_BIN_DIR, forces
+#     setting INSTALL_K3S_SKIP_DOWNLOAD=true
+#
+#   - INSTALL_K3S_SYSTEMD_DIR
+#     Directory to install systemd service and environment files to, or use
 #     /etc/systemd/system as the default
 #
-#   - INSTALL_NODE_EXPORTER_EXEC or script arguments
-#     Command with flags to use for launching Node exporter service
+#   - INSTALL_K3S_EXEC or script arguments
+#     Command with flags to use for launching k3s in the systemd service, if
+#     the command is not specified will default to "agent" if K3S_URL is set
+#     or "server" if not. The final systemd command resolves to a combination
+#     of EXEC and script args ($@).
 #
 #     The following commands result in the same behavior:
-#       curl ... | INSTALL_NODE_EXPORTER_EXEC="--collector.disable-defaults --collector.os" sh -s -
-#       curl ... | INSTALL_NODE_EXPORTER_EXEC="--collector.disable-defaults" sh -s - --collector.os
-#       curl ... | sh -s - --collector.disable-defaults --collector.os
+#       curl ... | INSTALL_K3S_EXEC="--disable=traefik" sh -s -
+#       curl ... | INSTALL_K3S_EXEC="server --disable=traefik" sh -s -
+#       curl ... | INSTALL_K3S_EXEC="server" sh -s - --disable=traefik
+#       curl ... | sh -s - server --disable=traefik
+#       curl ... | sh -s - --disable=traefik
+#
+#   - INSTALL_K3S_NAME
+#     Name of systemd service to create, will default from the k3s exec command
+#     if not specified. If specified the name will be prefixed with 'k3s-'.
+#
+#   - INSTALL_K3S_TYPE
+#     Type of systemd service to create, will default from the k3s exec command
+#     if not specified.
+#
+#   - INSTALL_K3S_SELINUX_WARN
+#     If set to true will continue if k3s-selinux policy is not found.
+#
+#   - INSTALL_K3S_SKIP_SELINUX_RPM
+#     If set to true will skip automatic installation of the k3s RPM.
+#
+#   - INSTALL_K3S_CHANNEL_URL
+#     Channel URL for fetching k3s download URL.
+#     Defaults to 'https://update.k3s.io/v1-release/channels'.
+#
+#   - INSTALL_K3S_CHANNEL
+#     Channel to use for fetching k3s download URL.
+#     Defaults to 'stable'.
 #
 
-# Fail on error
-set -o errexit
-# Disable wildcard character expansion
-set -o noglob
+GITHUB_URL=https://github.com/k3s-io/k3s/releases
+STORAGE_URL=https://storage.googleapis.com/k3s-ci-builds
+DOWNLOADER=
 
-# ================
-# CONFIGURATION
-# ================
-# GitHub release URL
-GITHUB_URL=https://github.com/prometheus/node_exporter/releases
-# GitHub API URL
-GITHUB_API_URL=https://api.github.com/repos/prometheus/node_exporter/releases/latest
-
-# ================
-# LOGGER
-# ================
-# Fatal log message
-fatal() {
-  printf '[FATAL] %s\n' "$@" >&2
-  exit 1
+# --- helper functions for logs ---
+info()
+{
+    echo '[INFO] ' "$@"
+}
+warn()
+{
+    echo '[WARN] ' "$@" >&2
+}
+fatal()
+{
+    echo '[ERROR] ' "$@" >&2
+    exit 1
 }
 
-# Info log message
-info() {
-  printf '[INFO ] %s\n' "$@"
-}
-
-# ================
-# FUNCTIONS
-# ================
-# Add quotes to command arguments
-quote() {
-  for arg in "$@"; do
-    printf '%s\n' "$arg" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/'/"
-  done
-}
-
-# Add indentation and trailing slash to quoted args
-quote_indent() {
-  printf ' \\\n'
-  for _arg in "$@"; do
-    printf '\t%s \\\n' "$(quote "$_arg")"
-  done
-}
-
-# Escape most punctuation characters, except quotes, forward slash, and space
-escape() {
-  printf '%s' "$@" | sed -e 's/\([][!#$%&()*;<=>?\_`{|}]\)/\\\1/g;'
-}
-
-# Escape double quotes
-escape_dq() {
-  printf '%s' "$@" | sed -e 's/"/\\"/g'
-}
-
-# Define needed environment variables
-setup_env() {
-  # Command args
-  case "$1" in
-    (-*|"")
-      _cmd_node_exporter=
-    ;;
-    # Command provided
-    (*)
-      _cmd_node_exporter=$1
-      shift
-    ;;
-  esac
-
-  CMD_NODE_EXPORTER_EXEC="$_cmd_node_exporter$(quote_indent "$@")"
-
-  # use sudo if not already root
-  SUDO=sudo
-  if [ "$(id -u)" -eq 0 ]; then
-    SUDO=
-  fi
-
-  # Use binary install directory if defined or create default
-  if [ -n "$INSTALL_NODE_EXPORTER_BIN_DIR" ]; then
-    BIN_DIR=$INSTALL_NODE_EXPORTER_BIN_DIR
-  else
-    # Use /usr/local/bin if root can write to it, otherwise use /opt/bin if it exists
-    BIN_DIR=/usr/local/bin
-    if ! $SUDO sh -c "touch $BIN_DIR/node_exporter-ro-test && rm -rf $BIN_DIR/node_exporter-ro-test"; then
-      if [ -d /opt/bin ]; then
-        BIN_DIR=/opt/bin
-      fi
-    fi
-  fi
-
-  # Set related files from system name
-  SERVICE_NODE_EXPORTER=node_exporter.service
-  UNINSTALL_NODE_EXPORTER_SH=$BIN_DIR/node_exporter.uninstall.sh
-  KILLALL_NODE_EXPORTER_SH=$BIN_DIR/node_exporter.killall.sh
-
-  # Extract port when address is specified or use default
-  if test "${CMD_NODE_EXPORTER_EXEC#*"--web.listen-address="}" != "$CMD_NODE_EXPORTER_EXEC"; then
-    NODE_EXPORTER_PORT=$(echo "$CMD_NODE_EXPORTER_EXEC" \
-      | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/ /g' \
-      | sed -e 's/.*--web.listen-address=\(.*\)[[:space:]].*/\1/' \
-      | sed 's/[^0-9]*//g')
-    info "Listening port '$NODE_EXPORTER_PORT'"
-  else
-    NODE_EXPORTER_PORT=9100
-  fi
-
-  # Use systemd directory if defined or create default
-  if [ -n "$INSTALL_NODE_EXPORTER_SYSTEMD_DIR" ]; then
-    SYSTEMD_DIR="$INSTALL_NODE_EXPORTER_SYSTEMD_DIR"
-  else
-    SYSTEMD_DIR=/etc/systemd/system
-  fi
-
-  # Use service or environment location depending on systemd/openrc
-  case $INIT_SYSTEM in
-    openrc)
-      $SUDO mkdir -p /etc/node_exporter
-      FILE_NODE_EXPORTER_SERVICE=/etc/init.d/node_exporter
-    ;;
-    systemd)
-      FILE_NODE_EXPORTER_SERVICE=$SYSTEMD_DIR/$SERVICE_NODE_EXPORTER
-    ;;
-    *) fatal "Unknown init system '$INIT_SYSTEM'" ;;
-  esac
-
-  # Get hash of config & exec for currently installed Node exporter
-  PRE_INSTALL_HASHES=$(get_installed_hashes)
-}
-
-# Verify init system
-verify_init_system() {
-  # OpenRC
-  if [ -x /sbin/openrc-run ]; then
-    INIT_SYSTEM=openrc
-    return
-  fi
-  # systemd
-  if [ -x /bin/systemctl ] || type systemctl > /dev/null 2>&1; then
-    INIT_SYSTEM=systemd
-    return
-  fi
-
-  # Not supported
-  fatal 'No supported init system found (OpenRC or systemd)'
-}
-
-# Verify architecture
-verify_arch() {
-  ARCH=$(uname -m)
-  case $ARCH in
-    amd64|x86_64) ARCH=amd64 ;;
-    arm64|aarch64) ARCH=arm64 ;;
-    armv5*) ARCH=armv5 ;;
-    armv6*) ARCH=armv6 ;;
-    armv7*) ARCH=armv7 ;;
-    mips) ARCH=mips ;;
-    mipsle) ARCH=mipsle ;;
-    mips64) ARCH=mips64 ;;
-    mips64le) ARCH=mips64le ;;
-    ppc64) ARCH=ppc64 ;;
-    ppc64le) ARCH=ppc64le ;;
-    s390x) ARCH=s390x ;;
-    i386) ARCH=386 ;;
-    # Not supported
-    *) fatal "Architecture '$ARCH' not supported" ;;
-  esac
-}
-# Verify Operating System
-verify_os() {
-  OS=$(uname -s)
-  case $OS in
-    Linux) OS=linux ;;
-    Darwin) OS=darwin ;;
-    NetBSD) OS=netbsd ;;
-    OpenBSD) OS=openbsd ;;
-    # Not supported
-    *) fatal "OS '$OS' not supported" ;;
-  esac
-}
-
-# Verify architecture and os are supported
-verify_arch_os() {
-  case $OS in
-    linux)
-      case $ARCH in
-        amd64|arm64|armv5|armv6|armv7|mips|mipsle|mips64|mips64le|ppc64|ppc64le|s390x|386) return ;;
-      esac
-    ;;
-    darwin)
-      case $ARCH in
-        amd64|arm64) return ;;
-      esac
-    ;;
-    netbsd)
-      case $ARCH in
-        386|amd64) return ;;
-      esac
-    ;;
-    openbsd)
-      case $ARCH in
-        amd64) return ;;
-      esac
-    ;;
-    # Not supported
-    *) fatal "OS '$OS' not supported" ;;
-  esac
-
-  # Not supported
-  fatal "Architecture '$ARCH' on OS '$OS' not supported";
-}
-
-# Verify command is installed
-verify_cmd() {
-  command -v "$1" >/dev/null 2>&1 || fatal "Command '$1' not found"
-}
-
-# Verify downloader command is installed
-verify_downloader_cmd() {
-  # Cycle downloader commands
-  for _cmd in "$@"; do
-    # Check if exists
-    if command -v "$_cmd" >/dev/null 2>&1; then
-      # Found
-      DOWNLOADER=$_cmd
-      return
-    fi
-  done
-
-  # Not found
-  fatal "Unable to find any downloader command in list '$*'"
-}
-
-# Verify system
+# --- fatal if no systemd or openrc ---
 verify_system() {
-  # Init system
-  verify_init_system
-  # Arch and OS
-  verify_arch
-  verify_os
-  verify_arch_os
-  # Commands
-  verify_cmd chmod
-  verify_cmd chown
-  verify_cmd grep
-  verify_cmd iptables
-  verify_cmd mktemp
-  verify_cmd rm
-  verify_cmd sed
-  verify_cmd sha256sum
-  verify_cmd tar
-  verify_cmd tee
-  # Downloader
-  verify_downloader_cmd curl wget
-}
-
-# Check if skip download environment variable set
-can_skip_download() {
-  if [ "$INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD" != true ]; then
-    return 1
-  fi
-}
-
-# Verify an executable Node exporter binary is installed
-verify_node_exporter_is_executable() {
-  if [ ! -x $BIN_DIR/node_exporter ]; then
-    fatal "Executable Node exporter binary not found at '$BIN_DIR/node_exporter'"
-  fi
-}
-
-# Create temporary directory and cleanup
-setup_tmp() {
-  TMP_DIR=$(mktemp -d -t node_exporter.XXXXXXXX)
-  TMP_HASH=$TMP_DIR/node_exporter.hash
-  TMP_ARCHIVE=$TMP_DIR/node_exporter.archive
-  TMP_BIN=$TMP_DIR/node_exporter.bin
-
-  cleanup() {
-    _exit_code=$?
-    set +o errexit
-    trap - EXIT
-    rm -rf "$TMP_DIR"
-    exit $_exit_code
-  }
-  trap cleanup INT EXIT
-}
-
-# Use provided version or obtain from latest release
-get_release_version() {
-  if [ -n "$INSTALL_NODE_EXPORTER_VERSION" ]; then
-    VERSION_NODE_EXPORTER=$INSTALL_NODE_EXPORTER_VERSION
-  else
-    info "Finding latest release"
-    case $DOWNLOADER in
-      curl) VERSION_NODE_EXPORTER=$(curl -L -f -s -S $GITHUB_API_URL) || fatal "Download '$GITHUB_API_URL' failed" ;;
-      wget) VERSION_NODE_EXPORTER=$(wget -q -O - $GITHUB_API_URL 2>&1) || fatal "Download '$GITHUB_API_URL' failed" ;;
-      *) fatal "Invalid downloader '$DOWNLOADER'" ;;
-    esac
-    VERSION_NODE_EXPORTER=$(echo "$VERSION_NODE_EXPORTER" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-  fi
-
-  info "Using $VERSION_NODE_EXPORTER as release"
-}
-
-# Download a file
-download() {
-  [ $# -eq 2 ] || fatal "Download requires exactly 2 arguments but '$#' found"
-
-  # Download
-  case $DOWNLOADER in
-    curl)
-      curl --fail --silent --location --output "$1" "$2" || fatal "Download '$2' failed"
-    ;;
-    wget)
-      wget --quiet --output-document="$1" "$2" || fatal "Download '$2' failed"
-    ;;
-    *)
-      fatal "Unknown downloader '$DOWNLOADER'"
-    ;;
-  esac
-}
-
-# Download hash
-download_hash() {
-  _hash_url=$GITHUB_URL/download/$VERSION_NODE_EXPORTER/sha256sums.txt
-
-  info "Downloading hash '$_hash_url'"
-  download "$TMP_HASH" "$_hash_url"
-  HASH_ARCHIVE_EXPECTED=$(grep " $RELEASE_ARCHIVE" "$TMP_HASH")
-  HASH_ARCHIVE_EXPECTED=${HASH_ARCHIVE_EXPECTED%%[[:blank:]]*}
-}
-
-# Download archive
-download_archive() {
-  _archive_url=$GITHUB_URL/download/$VERSION_NODE_EXPORTER/$RELEASE_ARCHIVE
-
-  info "Downloading archive '$_archive_url'"
-  download "$TMP_ARCHIVE" "$_archive_url"
-  HASH_ARCHIVE=$(sha256sum "$TMP_ARCHIVE")
-  HASH_ARCHIVE=${HASH_ARCHIVE%%[[:blank:]]*}
-}
-
-# Verify downloaded archive hash
-verify_archive() {
-  info "Verifying archive download '$TMP_ARCHIVE'"
-  if [ "$HASH_ARCHIVE_EXPECTED" != "$HASH_ARCHIVE" ]; then
-    fatal "Download sha256 does not match '$HASH_ARCHIVE_EXPECTED', got '$HASH_ARCHIVE'"
-  fi
-}
-
-# Extract archive
-extract_archive() {
-  info "Extracting archive '$TMP_ARCHIVE'"
-  tar xzf "$TMP_ARCHIVE" -C "$TMP_DIR" --strip-components 1 "$RELEASE_NAME/node_exporter" || fatal "Error extracting archive '$TMP_ARCHIVE'"
-  mv "$TMP_DIR/node_exporter" "$TMP_BIN"
-
-  info "Extracted binary '$TMP_BIN'"
-  HASH_BIN_EXPECTED=$(sha256sum "$TMP_BIN")
-  HASH_BIN_EXPECTED=${HASH_BIN_EXPECTED%%[[:blank:]]*}
-}
-
-# Check hash against installed version
-installed_hash_matches() {
-  if [ -x $BIN_DIR/node_exporter ]; then
-    _hash_bin_installed=$(sha256sum $BIN_DIR/node_exporter)
-    _hash_bin_installed=${_hash_bin_installed%%[[:blank:]]*}
-    if [ "$HASH_BIN_EXPECTED" = "$_hash_bin_installed" ]; then
-      return 0
+    if [ -x /sbin/openrc-run ]; then
+        HAS_OPENRC=true
+        return
     fi
-  fi
-  return 1
+    if [ -x /bin/systemctl ] || type systemctl > /dev/null 2>&1; then
+        HAS_SYSTEMD=true
+        return
+    fi
+    fatal 'Can not find systemd or openrc to use as a process supervisor for k3s'
 }
 
-# Setup permissions and move binary to system directory
+# --- add quotes to command arguments ---
+quote() {
+    for arg in "$@"; do
+        printf '%s\n' "$arg" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/'/"
+    done
+}
+
+# --- add indentation and trailing slash to quoted args ---
+quote_indent() {
+    printf ' \\\n'
+    for arg in "$@"; do
+        printf '\t%s \\\n' "$(quote "$arg")"
+    done
+}
+
+# --- escape most punctuation characters, except quotes, forward slash, and space ---
+escape() {
+    printf '%s' "$@" | sed -e 's/\([][!#$%&()*;<=>?\_`{|}]\)/\\\1/g;'
+}
+
+# --- escape double quotes ---
+escape_dq() {
+    printf '%s' "$@" | sed -e 's/"/\\"/g'
+}
+
+# --- ensures $K3S_URL is empty or begins with https://, exiting fatally otherwise ---
+verify_k3s_url() {
+    case "${K3S_URL}" in
+        "")
+            ;;
+        https://*)
+            ;;
+        *)
+            fatal "Only https:// URLs are supported for K3S_URL (have ${K3S_URL})"
+            ;;
+    esac
+}
+
+# --- define needed environment variables ---
+setup_env() {
+    # --- use command args if passed or create default ---
+    case "$1" in
+        # --- if we only have flags discover if command should be server or agent ---
+        (-*|"")
+            if [ -z "${K3S_URL}" ]; then
+                CMD_K3S=server
+            else
+                if [ -z "${K3S_TOKEN}" ] && [ -z "${K3S_TOKEN_FILE}" ] && [ -z "${K3S_CLUSTER_SECRET}" ]; then
+                    fatal "Defaulted k3s exec command to 'agent' because K3S_URL is defined, but K3S_TOKEN, K3S_TOKEN_FILE or K3S_CLUSTER_SECRET is not defined."
+                fi
+                CMD_K3S=agent
+            fi
+        ;;
+        # --- command is provided ---
+        (*)
+            CMD_K3S=$1
+            shift
+        ;;
+    esac
+
+    verify_k3s_url
+
+    CMD_K3S_EXEC="${CMD_K3S}$(quote_indent "$@")"
+
+    # --- use systemd name if defined or create default ---
+    if [ -n "${INSTALL_K3S_NAME}" ]; then
+        SYSTEM_NAME=k3s-${INSTALL_K3S_NAME}
+    else
+        if [ "${CMD_K3S}" = server ]; then
+            SYSTEM_NAME=k3s
+        else
+            SYSTEM_NAME=k3s-${CMD_K3S}
+        fi
+    fi
+
+    # --- check for invalid characters in system name ---
+    valid_chars=$(printf '%s' "${SYSTEM_NAME}" | sed -e 's/[][!#$%&()*;<=>?\_`{|}/[:space:]]/^/g;' )
+    if [ "${SYSTEM_NAME}" != "${valid_chars}"  ]; then
+        invalid_chars=$(printf '%s' "${valid_chars}" | sed -e 's/[^^]/ /g')
+        fatal "Invalid characters for system name:
+            ${SYSTEM_NAME}
+            ${invalid_chars}"
+    fi
+
+    # --- use sudo if we are not already root ---
+    SUDO=sudo
+    if [ "$(id -u)" -eq 0 ]; then
+        SUDO=
+    fi
+
+    # --- use systemd type if defined or create default ---
+    if [ -n "${INSTALL_K3S_TYPE}" ]; then
+        SYSTEMD_TYPE=${INSTALL_K3S_TYPE}
+    else
+        if [ "${CMD_K3S}" = server ]; then
+            SYSTEMD_TYPE="notify"
+        else
+            SYSTEMD_TYPE="exec"
+        fi
+    fi
+
+    # --- use binary install directory if defined or create default ---
+    if [ -n "${INSTALL_K3S_BIN_DIR}" ]; then
+        BIN_DIR=${INSTALL_K3S_BIN_DIR}
+    else
+        # --- use /usr/local/bin if root can write to it, otherwise use /opt/bin if it exists
+        BIN_DIR=/usr/local/bin
+        if ! $SUDO sh -c "touch ${BIN_DIR}/k3s-ro-test && rm -rf ${BIN_DIR}/k3s-ro-test"; then
+            if [ -d /opt/bin ]; then
+                BIN_DIR=/opt/bin
+            fi
+        fi
+    fi
+
+    # --- use systemd directory if defined or create default ---
+    if [ -n "${INSTALL_K3S_SYSTEMD_DIR}" ]; then
+        SYSTEMD_DIR="${INSTALL_K3S_SYSTEMD_DIR}"
+    else
+        SYSTEMD_DIR=/etc/systemd/system
+    fi
+
+    # --- set related files from system name ---
+    SERVICE_K3S=${SYSTEM_NAME}.service
+    UNINSTALL_K3S_SH=${UNINSTALL_K3S_SH:-${BIN_DIR}/${SYSTEM_NAME}-uninstall.sh}
+    KILLALL_K3S_SH=${KILLALL_K3S_SH:-${BIN_DIR}/k3s-killall.sh}
+
+    # --- use service or environment location depending on systemd/openrc ---
+    if [ "${HAS_SYSTEMD}" = true ]; then
+        FILE_K3S_SERVICE=${SYSTEMD_DIR}/${SERVICE_K3S}
+        FILE_K3S_ENV=${SYSTEMD_DIR}/${SERVICE_K3S}.env
+    elif [ "${HAS_OPENRC}" = true ]; then
+        $SUDO mkdir -p /etc/rancher/k3s
+        FILE_K3S_SERVICE=/etc/init.d/${SYSTEM_NAME}
+        FILE_K3S_ENV=/etc/rancher/k3s/${SYSTEM_NAME}.env
+    fi
+
+    # --- get hash of config & exec for currently installed k3s ---
+    PRE_INSTALL_HASHES=$(get_installed_hashes)
+
+    # --- if bin directory is read only skip download ---
+    if [ "${INSTALL_K3S_BIN_DIR_READ_ONLY}" = true ]; then
+        INSTALL_K3S_SKIP_DOWNLOAD=true
+    fi
+
+    # --- setup channel values
+    INSTALL_K3S_CHANNEL_URL=${INSTALL_K3S_CHANNEL_URL:-'https://update.k3s.io/v1-release/channels'}
+    INSTALL_K3S_CHANNEL=${INSTALL_K3S_CHANNEL:-'stable'}
+}
+
+# --- check if skip download environment variable set ---
+can_skip_download() {
+    if [ "${INSTALL_K3S_SKIP_DOWNLOAD}" != true ]; then
+        return 1
+    fi
+}
+
+# --- verify an executable k3s binary is installed ---
+verify_k3s_is_executable() {
+    if [ ! -x ${BIN_DIR}/k3s ]; then
+        fatal "Executable k3s binary not found at ${BIN_DIR}/k3s"
+    fi
+}
+
+# --- set arch and suffix, fatal if architecture not supported ---
+setup_verify_arch() {
+    if [ -z "$ARCH" ]; then
+        ARCH=$(uname -m)
+    fi
+    case $ARCH in
+        amd64)
+            ARCH=amd64
+            SUFFIX=
+            ;;
+        x86_64)
+            ARCH=amd64
+            SUFFIX=
+            ;;
+        arm64)
+            ARCH=arm64
+            SUFFIX=-${ARCH}
+            ;;
+        s390x)
+            ARCH=s390x
+            SUFFIX=-${ARCH}
+            ;;
+        aarch64)
+            ARCH=arm64
+            SUFFIX=-${ARCH}
+            ;;
+        arm*)
+            ARCH=arm
+            SUFFIX=-${ARCH}hf
+            ;;
+        *)
+            fatal "Unsupported architecture $ARCH"
+    esac
+}
+
+# --- verify existence of network downloader executable ---
+verify_downloader() {
+    # Return failure if it doesn't exist or is no executable
+    [ -x "$(command -v "$1")" ] || return 1
+
+    # Set verified executable as our downloader program and return success
+    DOWNLOADER=$1
+    return 0
+}
+
+# --- create temporary directory and cleanup when done ---
+setup_tmp() {
+    TMP_DIR=$(mktemp -d -t k3s-install.XXXXXXXXXX)
+    TMP_HASH=${TMP_DIR}/k3s.hash
+    TMP_BIN=${TMP_DIR}/k3s.bin
+    cleanup() {
+        code=$?
+        set +e
+        trap - EXIT
+        rm -rf "${TMP_DIR}"
+        exit $code
+    }
+    trap cleanup INT EXIT
+}
+
+# --- use desired k3s version if defined or find version from channel ---
+get_release_version() {
+    if [ -n "${INSTALL_K3S_COMMIT}" ]; then
+        VERSION_K3S="commit ${INSTALL_K3S_COMMIT}"
+    elif [ -n "${INSTALL_K3S_VERSION}" ]; then
+        VERSION_K3S=${INSTALL_K3S_VERSION}
+    else
+        info "Finding release for channel ${INSTALL_K3S_CHANNEL}"
+        version_url="${INSTALL_K3S_CHANNEL_URL}/${INSTALL_K3S_CHANNEL}"
+        case $DOWNLOADER in
+            curl)
+                VERSION_K3S=$(curl -w '%{url_effective}' -L -s -S "${version_url}" -o /dev/null | sed -e 's|.*/||')
+                ;;
+            wget)
+                VERSION_K3S=$(wget -SqO /dev/null "${version_url}" 2>&1 | grep -i Location | sed -e 's|.*/||')
+                ;;
+            *)
+                fatal "Incorrect downloader executable '$DOWNLOADER'"
+                ;;
+        esac
+    fi
+    info "Using ${VERSION_K3S} as release"
+}
+
+# --- download from github url ---
+download() {
+    [ $# -eq 2 ] || fatal 'download needs exactly 2 arguments'
+
+    case $DOWNLOADER in
+        curl)
+            curl -o "$1" -sfL "$2"
+            ;;
+        wget)
+            wget -qO "$1" "$2"
+            ;;
+        *)
+            fatal "Incorrect executable '$DOWNLOADER'"
+            ;;
+    esac
+
+    # Abort if download command failed
+    # shellcheck disable=2181
+    [ $? -eq 0 ] || fatal 'Download failed'
+}
+
+# --- download hash from github url ---
+download_hash() {
+    if [ -n "${INSTALL_K3S_COMMIT}" ]; then
+        HASH_URL=${STORAGE_URL}/k3s${SUFFIX}-${INSTALL_K3S_COMMIT}.sha256sum
+    else
+        HASH_URL=${GITHUB_URL}/download/${VERSION_K3S}/sha256sum-${ARCH}.txt
+    fi
+    info "Downloading hash ${HASH_URL}"
+    download "${TMP_HASH}" "${HASH_URL}"
+    HASH_EXPECTED=$(grep " k3s${SUFFIX}$" "${TMP_HASH}")
+    HASH_EXPECTED=${HASH_EXPECTED%%[[:blank:]]*}
+}
+
+# --- check hash against installed version ---
+installed_hash_matches() {
+    if [ -x ${BIN_DIR}/k3s ]; then
+        HASH_INSTALLED=$(sha256sum ${BIN_DIR}/k3s)
+        HASH_INSTALLED=${HASH_INSTALLED%%[[:blank:]]*}
+        if [ "${HASH_EXPECTED}" = "${HASH_INSTALLED}" ]; then
+            return
+        fi
+    fi
+    return 1
+}
+
+# --- download binary from github url ---
+download_binary() {
+    if [ -n "${INSTALL_K3S_COMMIT}" ]; then
+        BIN_URL=${STORAGE_URL}/k3s${SUFFIX}-${INSTALL_K3S_COMMIT}
+    else
+        BIN_URL=${GITHUB_URL}/download/${VERSION_K3S}/k3s${SUFFIX}
+    fi
+    info "Downloading binary ${BIN_URL}"
+    download "${TMP_BIN}" "${BIN_URL}"
+}
+
+# --- verify downloaded binary hash ---
+verify_binary() {
+    info "Verifying binary download"
+    HASH_BIN=$(sha256sum "${TMP_BIN}")
+    HASH_BIN=${HASH_BIN%%[[:blank:]]*}
+    if [ "${HASH_EXPECTED}" != "${HASH_BIN}" ]; then
+        fatal "Download sha256 does not match ${HASH_EXPECTED}, got ${HASH_BIN}"
+    fi
+}
+
+# --- setup permissions and move binary to system directory ---
 setup_binary() {
-  chmod 755 "$TMP_BIN"
-  info "Installing Node exporter to '$BIN_DIR/node_exporter'"
-  $SUDO chown root:root "$TMP_BIN"
-  $SUDO mv -f "$TMP_BIN" "$BIN_DIR/node_exporter"
+    chmod 755 "${TMP_BIN}"
+    info "Installing k3s to ${BIN_DIR}/k3s"
+    $SUDO chown root:root "${TMP_BIN}"
+    $SUDO mv -f "${TMP_BIN}" ${BIN_DIR}/k3s
 }
 
-# Download and verify
+# --- setup selinux policy ---
+setup_selinux() {
+    case ${INSTALL_K3S_CHANNEL} in
+        *testing)
+            rpm_channel=testing
+            ;;
+        *latest)
+            rpm_channel=latest
+            ;;
+        *)
+            rpm_channel=stable
+            ;;
+    esac
+
+    rpm_site="rpm.rancher.io"
+    if [ "${rpm_channel}" = "testing" ]; then
+        rpm_site="rpm-testing.rancher.io"
+    fi
+
+  # shellcheck disable=1091
+    [ -r /etc/os-release ] && . /etc/os-release
+    if [ "${ID_LIKE%%[ ]*}" = "suse" ]; then
+        rpm_target=sle
+        rpm_site_infix=microos
+        package_installer=zypper
+    elif [ "${VERSION_ID%%.*}" = "7" ]; then
+        rpm_target=el7
+        rpm_site_infix=centos/7
+        package_installer=yum
+    else
+        rpm_target=el8
+        rpm_site_infix=centos/8
+        package_installer=yum
+    fi
+
+    if [ "${package_installer}" = "yum" ] && [ -x /usr/bin/dnf ]; then
+        package_installer=dnf
+    fi
+
+    policy_hint="please install:
+    ${package_installer} install -y container-selinux
+    ${package_installer} install -y https://${rpm_site}/k3s/${rpm_channel}/common/${rpm_site_infix}/noarch/k3s-selinux-0.4-1.${rpm_target}.noarch.rpm
+"
+
+    if [ "$INSTALL_K3S_SKIP_SELINUX_RPM" = true ] || can_skip_download || [ ! -d /usr/share/selinux ]; then
+        info "Skipping installation of SELinux RPM"
+    elif  [ "${ID_LIKE:-}" != coreos ] && [ "${VARIANT_ID:-}" != coreos ]; then
+        install_selinux_rpm ${rpm_site} ${rpm_channel} ${rpm_target} ${rpm_site_infix}
+    fi
+
+    policy_error=fatal
+    if [ "$INSTALL_K3S_SELINUX_WARN" = true ] || [ "${ID_LIKE:-}" = coreos ] || [ "${VARIANT_ID:-}" = coreos ]; then
+        policy_error=warn
+    fi
+
+    if ! $SUDO chcon -u system_u -r object_r -t container_runtime_exec_t ${BIN_DIR}/k3s >/dev/null 2>&1; then
+        if $SUDO grep '^\s*SELINUX=enforcing' /etc/selinux/config >/dev/null 2>&1; then
+            $policy_error "Failed to apply container_runtime_exec_t to ${BIN_DIR}/k3s, ${policy_hint}"
+        fi
+    elif [ ! -f /usr/share/selinux/packages/k3s.pp ]; then
+        if [ -x /usr/sbin/transactional-update ]; then
+            warn "Please reboot your machine to activate the changes and avoid data loss."
+        else
+            $policy_error "Failed to find the k3s-selinux policy, ${policy_hint}"
+        fi
+    fi
+}
+
+install_selinux_rpm() {
+    if [ -r /etc/redhat-release ] || [ -r /etc/centos-release ] || [ -r /etc/oracle-release ] || [ "${ID_LIKE%%[ ]*}" = "suse" ]; then
+        repodir=/etc/yum.repos.d
+        if [ -d /etc/zypp/repos.d ]; then
+            repodir=/etc/zypp/repos.d
+        fi
+        set +o noglob
+        $SUDO rm -f ${repodir}/rancher-k3s-common*.repo
+        set -o noglob
+        if [ -r /etc/redhat-release ] && [ "${3}" = "el7" ]; then
+            $SUDO yum install -y yum-utils
+            $SUDO yum-config-manager --enable rhel-7-server-extras-rpms
+        fi
+        $SUDO tee ${repodir}/rancher-k3s-common.repo >/dev/null << EOF
+[rancher-k3s-common-${2}]
+name=Rancher K3s Common (${2})
+baseurl=https://${1}/k3s/${2}/common/${4}/noarch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=0
+gpgkey=https://${1}/public.key
+EOF
+        case ${3} in
+        sle)
+            rpm_installer="zypper --gpg-auto-import-keys"
+            if [ "${TRANSACTIONAL_UPDATE=false}" != "true" ] && [ -x /usr/sbin/transactional-update ]; then
+                rpm_installer="transactional-update --no-selfupdate -d run ${rpm_installer}"
+                : "${INSTALL_K3S_SKIP_START:=true}"
+            fi
+            ;;
+        *)
+            rpm_installer="yum"
+            ;;
+        esac
+        if [ "${rpm_installer}" = "yum" ] && [ -x /usr/bin/dnf ]; then
+            rpm_installer=dnf
+        fi
+        # shellcheck disable=SC2086
+        $SUDO ${rpm_installer} install -y "k3s-selinux"
+    fi
+    return
+}
+
+# --- download and verify k3s ---
 download_and_verify() {
-  if can_skip_download; then
-    info 'Skipping Node exporter download and verify'
-    verify_node_exporter_is_executable
-    return
-  fi
+    if can_skip_download; then
+       info 'Skipping k3s download and verify'
+       verify_k3s_is_executable
+       return
+    fi
 
-  setup_tmp
-  get_release_version
+    setup_verify_arch
+    verify_downloader curl || verify_downloader wget || fatal 'Can not find curl or wget for downloading files'
+    setup_tmp
+    get_release_version
+    download_hash
 
-  RELEASE_NAME=node_exporter-$(echo "$VERSION_NODE_EXPORTER" | sed 's/^v//').$OS-$ARCH
-  RELEASE_ARCHIVE=$RELEASE_NAME.tar.gz
+    if installed_hash_matches; then
+        info 'Skipping binary downloaded, installed k3s matches hash'
+        return
+    fi
 
-  download_hash
-  download_archive
-  verify_archive
-  extract_archive
-
-  if installed_hash_matches; then
-    info 'Skipping binary setup, installed Node exporter matches hash'
-    return
-  fi
-
-  setup_binary
+    download_binary
+    verify_binary
+    setup_binary
 }
 
-# Create killall script
+# --- add additional utility links ---
+create_symlinks() {
+    [ "${INSTALL_K3S_BIN_DIR_READ_ONLY}" = true ] && return
+    [ "${INSTALL_K3S_SYMLINK}" = skip ] && return
+
+    for cmd in kubectl crictl ctr; do
+        if [ ! -e ${BIN_DIR}/${cmd} ] || [ "${INSTALL_K3S_SYMLINK}" = force ]; then
+            which_cmd=$(command -v ${cmd} 2>/dev/null || true)
+            if [ -z "${which_cmd}" ] || [ "${INSTALL_K3S_SYMLINK}" = force ]; then
+                info "Creating ${BIN_DIR}/${cmd} symlink to k3s"
+                $SUDO ln -sf k3s ${BIN_DIR}/${cmd}
+            else
+                info "Skipping ${BIN_DIR}/${cmd} symlink to k3s, command exists in PATH at ${which_cmd}"
+            fi
+        else
+            info "Skipping ${BIN_DIR}/${cmd} symlink to k3s, already exists"
+        fi
+    done
+}
+
+# --- create killall script ---
 create_killall() {
-  info "Creating killall script '$KILLALL_NODE_EXPORTER_SH'"
-  $SUDO tee "$KILLALL_NODE_EXPORTER_SH" >/dev/null << \EOF
-#!/usr/bin/env sh
+    [ "${INSTALL_K3S_BIN_DIR_READ_ONLY}" = true ] && return
+    info "Creating killall script ${KILLALL_K3S_SH}"
+    $SUDO tee "${KILLALL_K3S_SH}" >/dev/null << \EOF
+#!/bin/sh
 [ $(id -u) -eq 0 ] || exec sudo $0 $@
+
+for bin in /var/lib/rancher/k3s/data/**/bin/; do
+    [ -d $bin ] && export PATH=$PATH:$bin:$bin/aux
+done
 
 set -x
 
-for service in /etc/systemd/system/node_exporter.service; do
-  [ -s $service ] && systemctl stop $(basename $service)
+for service in /etc/systemd/system/k3s*.service; do
+    [ -s $service ] && systemctl stop $(basename $service)
 done
 
-for service in /etc/init.d/node_exporter.service; do
-  [ -x $service ] && $service stop
+for service in /etc/init.d/k3s*; do
+    [ -x $service ] && $service stop
 done
+
+pschildren() {
+    ps -e -o ppid= -o pid= | \
+    sed -e 's/^\s*//g; s/\s\s*/\t/g;' | \
+    grep -w "^$1" | \
+    cut -f2
+}
+
+pstree() {
+    for pid in $@; do
+        echo $pid
+        for child in $(pschildren $pid); do
+            pstree $child
+        done
+    done
+}
+
+killtree() {
+    kill -9 $(
+        { set +x; } 2>/dev/null;
+        pstree $@;
+        set -x;
+    ) 2>/dev/null
+}
+
+getshims() {
+    ps -e -o pid= -o args= | sed -e 's/^ *//; s/\s\s*/\t/;' | grep -w 'k3s/data/[^/]*/bin/containerd-shim' | cut -f1
+}
+
+killtree $({ set +x; } 2>/dev/null; getshims; set -x)
 
 do_unmount_and_remove() {
-  set +x
-  while read -r _ path _; do
-    case "$path" in $1*) echo "$path" ;; esac
-  done < /proc/self/mounts | sort -r | xargs -r -t -n 1 sh -c 'umount "$0" && rm -rf "$0"'
-  set -x
-}
-do_unmount_and_remove '/run/node_exporter'
-EOF
-  $SUDO chmod 755 "$KILLALL_NODE_EXPORTER_SH"
-  $SUDO chown root:root "$KILLALL_NODE_EXPORTER_SH"
+    set +x
+    while read -r _ path _; do
+        case "$path" in $1*) echo "$path" ;; esac
+    done < /proc/self/mounts | sort -r | xargs -r -t -n 1 sh -c 'umount "$0" && rm -rf "$0"'
+    set -x
 }
 
-# Create uninstall script
+do_unmount_and_remove '/run/k3s'
+do_unmount_and_remove '/var/lib/rancher/k3s'
+do_unmount_and_remove '/var/lib/kubelet/pods'
+do_unmount_and_remove '/var/lib/kubelet/plugins'
+do_unmount_and_remove '/run/netns/cni-'
+
+# Remove CNI namespaces
+ip netns show 2>/dev/null | grep cni- | xargs -r -t -n 1 ip netns delete
+
+# Delete network interface(s) that match 'master cni0'
+ip link show 2>/dev/null | grep 'master cni0' | while read ignore iface ignore; do
+    iface=${iface%%@*}
+    [ -z "$iface" ] || ip link delete $iface
+done
+ip link delete cni0
+ip link delete flannel.1
+ip link delete flannel-v6.1
+rm -rf /var/lib/cni/
+iptables-save | grep -v KUBE- | grep -v CNI- | grep -v flannel | iptables-restore
+ip6tables-save | grep -v KUBE- | grep -v CNI- | grep -v flannel | ip6tables-restore
+EOF
+    $SUDO chmod 755 "${KILLALL_K3S_SH}"
+    $SUDO chown root:root "${KILLALL_K3S_SH}"
+}
+
+# --- create uninstall script ---
 create_uninstall() {
-  info "Creating uninstall script '$UNINSTALL_NODE_EXPORTER_SH'"
-  $SUDO tee "$UNINSTALL_NODE_EXPORTER_SH" >/dev/null << EOF
-#!/usr/bin/env sh
+    [ "${INSTALL_K3S_BIN_DIR_READ_ONLY}" = true ] && return
+    info "Creating uninstall script ${UNINSTALL_K3S_SH}"
+    $SUDO tee "${UNINSTALL_K3S_SH}"s >/dev/null << EOF
+#!/bin/sh
 set -x
 [ \$(id -u) -eq 0 ] || exec sudo \$0 \$@
 
-$KILLALL_NODE_EXPORTER_SH
+${KILLALL_K3S_SH}
 
 if command -v systemctl; then
-  systemctl disable node_exporter
-  systemctl reset-failed node_exporter
-  systemctl daemon-reload
+    systemctl disable ${SYSTEM_NAME}
+    systemctl reset-failed ${SYSTEM_NAME}
+    systemctl daemon-reload
 fi
 if command -v rc-update; then
-  rc-update delete node_exporter default
+    rc-update delete ${SYSTEM_NAME} default
 fi
 
-rm -f $FILE_NODE_EXPORTER_SERVICE
+rm -f ${FILE_K3S_SERVICE}
+rm -f ${FILE_K3S_ENV}
 
 remove_uninstall() {
-  rm -f $UNINSTALL_NODE_EXPORTER_SH
+    rm -f ${UNINSTALL_K3S_SH}
 }
 trap remove_uninstall EXIT
 
-rm -rf /etc/node_exporter
-rm -rf /run/node_exporter
-rm -f $BIN_DIR/node_exporter
-rm -f $KILLALL_NODE_EXPORTER_SH
+if (ls ${SYSTEMD_DIR}/k3s*.service || ls /etc/init.d/k3s*) >/dev/null 2>&1; then
+    set +x; echo 'Additional k3s services installed, skipping uninstall of k3s'; set -x
+    exit
+fi
+
+for cmd in kubectl crictl ctr; do
+    if [ -L ${BIN_DIR}/\$cmd ]; then
+        rm -f ${BIN_DIR}/\$cmd
+    fi
+done
+
+rm -rf /etc/rancher/k3s
+rm -rf /run/k3s
+rm -rf /run/flannel
+rm -rf /var/lib/rancher/k3s
+rm -rf /var/lib/kubelet
+rm -f ${BIN_DIR}/k3s
+rm -f ${KILLALL_K3S_SH}
+
+if type yum >/dev/null 2>&1; then
+    yum remove -y k3s-selinux
+    rm -f /etc/yum.repos.d/rancher-k3s-common*.repo
+elif type zypper >/dev/null 2>&1; then
+    uninstall_cmd="zypper remove -y k3s-selinux"
+    if [ "\${TRANSACTIONAL_UPDATE=false}" != "true" ] && [ -x /usr/sbin/transactional-update ]; then
+        uninstall_cmd="transactional-update --no-selfupdate -d run \$uninstall_cmd"
+    fi
+    \$uninstall_cmd
+    rm -f /etc/zypp/repos.d/rancher-k3s-common*.repo
+fi
 EOF
-  $SUDO chmod 755 "$UNINSTALL_NODE_EXPORTER_SH"
-  $SUDO chown root:root "$UNINSTALL_NODE_EXPORTER_SH"
+    $SUDO chmod 755 "${UNINSTALL_K3S_SH}"
+    $SUDO chown root:root "${UNINSTALL_K3S_SH}"
 }
 
-# Disable current service if loaded
+# --- disable current service if loaded --
 systemd_disable() {
-  $SUDO systemctl disable node_exporter >/dev/null 2>&1 || true
-  $SUDO rm -f /etc/systemd/system/$SERVICE_NODE_EXPORTER || true
+    $SUDO systemctl disable "${SYSTEM_NAME}" >/dev/null 2>&1 || true
+    $SUDO rm -f "/etc/systemd/system/${SERVICE_K3S}" || true
+    $SUDO rm -f "/etc/systemd/system/${SERVICE_K3S}.env" || true
 }
 
-# Write openrc service file
-create_openrc_service_file() {
-  LOG_FILE=/var/log/node_exporter.log
+# --- capture current env and create file containing k3s_ variables ---
+create_env_file() {
+    info "env: Creating environment file ${FILE_K3S_ENV}"
+    $SUDO touch "${FILE_K3S_ENV}"
+    $SUDO chmod 0600 "${FILE_K3S_ENV}"
+    sh -c export | while read -r x v; do echo "$v"; done | grep -E '^(K3S|CONTAINERD)_' | $SUDO tee "${FILE_K3S_ENV}" >/dev/null
+    # shellcheck disable=2034
+    sh -c export | while read -r x v; do echo "$v"; done | grep -Ei '^(NO|HTTP|HTTPS)_PROXY' | $SUDO tee -a "${FILE_K3S_ENV}" >/dev/null
+}
 
-  info "openrc: Creating service file '$FILE_NODE_EXPORTER_SERVICE'"
-  $SUDO tee "$FILE_NODE_EXPORTER_SERVICE" >/dev/null << EOF
+# --- write systemd service file ---
+create_systemd_service_file() {
+    info "systemd: Creating service file ${FILE_K3S_SERVICE}"
+    $SUDO tee "${FILE_K3S_SERVICE}" >/dev/null << EOF
+[Unit]
+Description=Lightweight Kubernetes
+Documentation=https://k3s.io
+Wants=network-online.target
+After=network-online.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=${SYSTEMD_TYPE}
+EnvironmentFile=-/etc/default/%N
+EnvironmentFile=-/etc/sysconfig/%N
+EnvironmentFile=-${FILE_K3S_ENV}
+KillMode=process
+Delegate=yes
+# Having non-zero Limit*s causes performance problems due to accounting overhead
+# in the kernel. We recommend using cgroups to do container-local accounting.
+LimitNOFILE=1048576
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+TimeoutStartSec=0
+Restart=always
+RestartSec=5s
+ExecStartPre=/bin/sh -xc '! /usr/bin/systemctl is-enabled --quiet nm-cloud-setup.service'
+ExecStartPre=-/sbin/modprobe br_netfilter
+ExecStartPre=-/sbin/modprobe overlay
+ExecStart=${BIN_DIR}/k3s \\
+    ${CMD_K3S_EXEC}
+
+EOF
+}
+
+# --- write openrc service file ---
+create_openrc_service_file() {
+    LOG_FILE=/var/log/${SYSTEM_NAME}.log
+
+    info "openrc: Creating service file ${FILE_K3S_SERVICE}"
+    $SUDO tee "${FILE_K3S_SERVICE}" >/dev/null << EOF
 #!/sbin/openrc-run
 
-description="Node exporter"
-
 depend() {
-  need net
-  need localmount
-  use dns
-  after firewall
+    after network-online
+    want cgroups
 }
-EOF
 
-  if [ "$INSTALL_NODE_EXPORTER_SKIP_FIREWALL" = true ]; then
-    $SUDO tee -a "$FILE_NODE_EXPORTER_SERVICE" >/dev/null << EOF
 start_pre() {
-  iptables -I INPUT 1 -p tcp --dport $NODE_EXPORTER_PORT -s 127.0.0.1 -j ACCEPT
-  iptables -I INPUT 3 -p tcp --dport $NODE_EXPORTER_PORT -j DROP
+    rm -f /tmp/k3s.*
 }
-EOF
-  fi
 
-  $SUDO tee -a "$FILE_NODE_EXPORTER_SERVICE" >/dev/null << EOF
 supervisor=supervise-daemon
-name=node_exporter
-command="$BIN_DIR/node_exporter"
-command_args="$(escape_dq "$CMD_NODE_EXPORTER_EXEC")
-    >>$LOG_FILE 2>&1"
+name=${SYSTEM_NAME}
+command="${BIN_DIR}/k3s"
+command_args="$(escape_dq "${CMD_K3S_EXEC}")
+    >>${LOG_FILE} 2>&1"
 
-output_log=$LOG_FILE
-error_log=$LOG_FILE
+output_log=${LOG_FILE}
+error_log=${LOG_FILE}
 
-pidfile="/var/run/node_exporter.pid"
+pidfile="/var/run/${SYSTEM_NAME}.pid"
 respawn_delay=5
 respawn_max=0
 
 set -o allexport
 if [ -f /etc/environment ]; then source /etc/environment; fi
+if [ -f ${FILE_K3S_ENV} ]; then source ${FILE_K3S_ENV}; fi
 set +o allexport
 EOF
-  $SUDO chmod 0755 $FILE_NODE_EXPORTER_SERVICE
+    $SUDO chmod 0755 "${FILE_K3S_SERVICE}"
 
-  $SUDO tee /etc/logrotate.d/node_exporter >/dev/null << EOF
-$LOG_FILE {
+    $SUDO tee "/etc/logrotate.d/${SYSTEM_NAME}" >/dev/null << EOF
+${LOG_FILE} {
 	missingok
 	notifempty
 	copytruncate
@@ -581,117 +850,80 @@ $LOG_FILE {
 EOF
 }
 
-# Write systemd service file
-create_systemd_service_file() {
-  info "systemd: Creating service file '$FILE_NODE_EXPORTER_SERVICE'"
-  $SUDO tee "$FILE_NODE_EXPORTER_SERVICE" >/dev/null << EOF
-[Unit]
-Description=Node exporter
-Documentation=https://github.com/prometheus/node_exporter
-After=local-fs.target network-online.target network.target
-Wants=local-fs.target network-online.target network.target
-
-[Install]
-WantedBy=multi-user.target
-
-[Service]
-Type=simple
-EnvironmentFile=-/etc/default/%N
-EnvironmentFile=-/etc/sysconfig/%N
-KillMode=process
-Delegate=yes
-LimitNPROC=infinity
-LimitCORE=infinity
-TasksMax=infinity
-TimeoutStartSec=0
-Restart=always
-RestartSec=5s
-ExecStart=$BIN_DIR/node_exporter \\
-    $CMD_NODE_EXPORTER_EXEC
-EOF
-
-  if [ "$INSTALL_NODE_EXPORTER_SKIP_FIREWALL" = true ]; then
-    $SUDO tee -a "$FILE_NODE_EXPORTER_SERVICE" >/dev/null << EOF
-ExecStartPre=-iptables -I INPUT -p tcp --dport $NODE_EXPORTER_PORT -s 127.0.0.1 -j ACCEPT
-ExecStartPre=-iptables -I INPUT -p tcp --dport $NODE_EXPORTER_PORT -j DROP
-EOF
-  fi
-}
-
-# Write service file
+# --- write systemd or openrc service file ---
 create_service_file() {
-  case $INIT_SYSTEM in
-    openrc) create_openrc_service_file ;;
-    systemd) create_systemd_service_file ;;
-    *) fatal "Unknown init system '$INIT_SYSTEM'" ;;
-  esac
+    [ "${HAS_SYSTEMD}" = true ] && create_systemd_service_file
+    [ "${HAS_OPENRC}" = true ] && create_openrc_service_file
+    return 0
 }
 
-# Get hashes of the current Node exporter bin and service files
+# --- get hashes of the current k3s bin and service files
 get_installed_hashes() {
-  $SUDO sha256sum $BIN_DIR/node_exporter $FILE_NODE_EXPORTER_SERVICE 2>&1 || true
+    $SUDO sha256sum ${BIN_DIR}/k3s "${FILE_K3S_SERVICE}" "${FILE_K3S_ENV}" 2>&1 || true
 }
 
-# Enable systemd service
+# --- enable and start systemd service ---
 systemd_enable() {
-  info "systemd: Enabling node_exporter unit"
-  $SUDO systemctl enable $FILE_NODE_EXPORTER_SERVICE >/dev/null
-  $SUDO systemctl daemon-reload >/dev/null
+    info "systemd: Enabling ${SYSTEM_NAME} unit"
+    $SUDO systemctl enable "${FILE_K3S_SERVICE}" >/dev/null
+    $SUDO systemctl daemon-reload >/dev/null
 }
-# Start systemd service
+
 systemd_start() {
-  info "systemd: Starting node_exporter"
-  $SUDO systemctl restart node_exporter
+    info "systemd: Starting ${SYSTEM_NAME}"
+    $SUDO systemctl restart "${SYSTEM_NAME}"
 }
 
-# Enable openrc service
+# --- enable and start openrc service ---
 openrc_enable() {
-    info "openrc: Enabling node_exporter service for default runlevel"
-    $SUDO rc-update add node_exporter default >/dev/null
+    info "openrc: Enabling ${SYSTEM_NAME} service for default runlevel"
+    $SUDO rc-update add "${SYSTEM_NAME}" default >/dev/null
 }
-# Start openrc service
+
 openrc_start() {
-  info "openrc: Starting node_exporter"
-  $SUDO $FILE_NODE_EXPORTER_SERVICE restart
+    info "openrc: Starting ${SYSTEM_NAME}"
+    $SUDO "${FILE_K3S_SERVICE}" restart
 }
 
-# Startup service
+# --- startup systemd or openrc service ---
 service_enable_and_start() {
-  [ "$INSTALL_NODE_EXPORTER_SKIP_ENABLE" = true ] && return
-  case $INIT_SYSTEM in
-    openrc) openrc_enable ;;
-    systemd) systemd_enable ;;
-    *) fatal "Unknown init system '$INIT_SYSTEM'" ;;
-  esac
+    # shellcheck disable=2034
+    if [ -f "/proc/cgroups" ] && [ "$(grep memory /proc/cgroups | while read -r n n n enabled; do echo "$enabled"; done)" -eq 0 ]; then
+      info 'Failed to find memory cgroup, you may need to add "cgroup_memory=1 cgroup_enable=memory" to your linux cmdline (/boot/cmdline.txt on a Raspberry Pi)'
+    fi
 
-  [ "$INSTALL_NODE_EXPORTER_SKIP_START" = true ] && return
-  POST_INSTALL_HASHES=$(get_installed_hashes)
-  if [ "$PRE_INSTALL_HASHES" = "$POST_INSTALL_HASHES" ] && [ "$INSTALL_NODE_EXPORTER_FORCE_RESTART" != true ]; then
-    info 'No change detected so skipping service start'
-    return
-  fi
-  case $INIT_SYSTEM in
-    openrc) openrc_start ;;
-    systemd) systemd_start ;;
-    *) fatal "Unknown init system '$INIT_SYSTEM'" ;;
-  esac
+    [ "${INSTALL_K3S_SKIP_ENABLE}" = true ] && return
 
-  return 0
+    [ "${HAS_SYSTEMD}" = true ] && systemd_enable
+    [ "${HAS_OPENRC}" = true ] && openrc_enable
+
+    [ "${INSTALL_K3S_SKIP_START}" = true ] && return
+
+    POST_INSTALL_HASHES=$(get_installed_hashes)
+    if [ "${PRE_INSTALL_HASHES}" = "${POST_INSTALL_HASHES}" ] && [ "${INSTALL_K3S_FORCE_RESTART}" != true ]; then
+        info 'No change detected so skipping service start'
+        return
+    fi
+
+    [ "${HAS_SYSTEMD}" = true ] && systemd_start
+    [ "${HAS_OPENRC}" = true ] && openrc_start
+    return 0
 }
 
-# ================
-# MAIN
-# ================
-# Re-evaluate args to include env command
-eval set -- "$(escape "$INSTALL_NODE_EXPORTER_EXEC") $(quote "$@")"
-# Run
+# --- re-evaluate args to include env command ---
+eval set -- "$(escape "${INSTALL_K3S_EXEC}") $(quote "$@")"
+
+# --- run the install process --
 {
-  verify_system
-  setup_env "$@"
-  download_and_verify
-  create_killall
-  create_uninstall
-  systemd_disable
-  create_service_file
-  service_enable_and_start
+    verify_system
+    setup_env "$@"
+    download_and_verify
+    setup_selinux
+    create_symlinks
+    create_killall
+    create_uninstall
+    systemd_disable
+    create_env_file
+    create_service_file
+    service_enable_and_start
 }

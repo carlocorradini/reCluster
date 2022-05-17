@@ -38,18 +38,19 @@ source "$DIRNAME/__commons.sh"
 # shellcheck disable=2034
 declare -A dependencies0=(
   [name]=k3s
-  [path]=dependencies/k3s
+  [path]=dependencies/k3s/source
   [url]=https://github.com/k3s-io/k3s.git
-  [branch]=master
+  [ref]=master
 )
 # node_exporter_installer
 # shellcheck disable=2034
 declare -A dependencies1=(
   [name]=node_exporter_installer
-  [path]=dependencies/node_exporter_installer
+  [path]=dependencies/node_exporter_installer/source
   [url]=https://github.com/carlocorradini/node_exporter_installer.git
-  [branch]=main
+  [ref]=main
 )
+
 # Merge dependencies
 declare -n dependencies
 
@@ -61,11 +62,11 @@ for dependencies in ${!dependencies@}; do
   _name=${dependencies[name]}
   _path=${dependencies[path]}
   _url=${dependencies[url]}
-  _branch=${dependencies[branch]}
+  _ref=${dependencies[ref]}
 
   INFO "Updating '$_name'"
-  DEBUG "Updating '$_name' located in '$_path' from '$_url' in branch '$_branch'"
-  git --git-dir="$GIT_DIR" subtree pull --prefix "$_path" "$_url" "$_branch" --squash
+  DEBUG "Updating '$_name' located in '$_path' from '$_url' in branch '$_ref'"
+  git --git-dir="$GIT_DIR" subtree pull --prefix "$_path" "$_url" "$_ref" --squash
 done
 
 INFO "Successfully updated '${!dependencies#}' dependencies"

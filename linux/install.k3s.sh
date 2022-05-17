@@ -1,1 +1,1 @@
-../dependencies/k3s/install.sh
+../dependencies/k3s/source/install.sh
