@@ -1,9 +1,0 @@
-{
-  "recommendations": [
-    "DavidAnson.vscode-markdownlint",
-    "EditorConfig.EditorConfig",
-    "mads-hartmann.bash-ide-vscode",
-    "timonwong.shellcheck",
-    "usernamehw.errorlens"
-  ]
-}

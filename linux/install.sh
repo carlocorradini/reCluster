@@ -287,9 +287,8 @@ assert_cmd_feature() {
 downloader_cmd() {
   # Cycle downloader commands
   for _cmd in "$@"; do
-    # Check if exists
-    if command -v "$_cmd" >/dev/null 2>&1; then
-      # Found
+    # Check if exists and executable
+    if [ -x "$(command -v "$_cmd")" ]; then
       DOWNLOADER=$_cmd
       DEBUG "Downloader command '$DOWNLOADER' found at '$(command -v "$_cmd")'"
       return
@@ -302,7 +301,7 @@ downloader_cmd() {
 
 # Download a file
 # @param $1 Output location
-# @param $1 Download URL
+# @param $2 Download URL
 download() {
   [ $# -eq 2 ] || FATAL "Download requires exactly 2 arguments but '$#' found"
 
@@ -314,9 +313,7 @@ download() {
     wget)
       wget --quiet --output-document="$1" "$2" || fatal "Download '$2' failed"
     ;;
-    *)
-      FATAL "Unknown downloader '$DOWNLOADER'"
-    ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
 }
 
@@ -914,8 +911,8 @@ NODE_FACTS={}
   parse_args "$@"
   verify_system
   setup_system
-  #install_k3s
-  #install_node_exporter
+  install_k3s
+  install_node_exporter
   read_system_info
   run_benchmarks
 }

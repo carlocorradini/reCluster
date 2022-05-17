@@ -38,15 +38,15 @@ set -o noglob
 # LOGGER
 # ================
 # Fatal log level. Cause exit failure
-LOG_LEVEL_FATAL=100
+readonly LOG_LEVEL_FATAL=100
 # Error log level
-LOG_LEVEL_ERROR=200
+readonly LOG_LEVEL_ERROR=200
 # Warning log level
-LOG_LEVEL_WARN=300
+readonly LOG_LEVEL_WARN=300
 # Informational log level
-LOG_LEVEL_INFO=500
+readonly LOG_LEVEL_INFO=500
 # Debug log level
-LOG_LEVEL_DEBUG=600
+readonly LOG_LEVEL_DEBUG=600
 
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
@@ -56,48 +56,48 @@ LOG_DISABLE_COLOR=1
 # Print log message
 # @param $1 Log level
 # @param $2 Message
-_log_print_message() {
-  _log_level=$1
+function _log_print_message() {
+  local log_level=$1
   shift
-  _log_message=${*:-}
-  _log_name=
-  _log_prefix=
-  _log_suffix="\033[0m"
+  local log_message=${*:-}
+  local log_name
+  local log_prefix
+  local log_suffix="\033[0m"
 
   # Log level is enabled
-  if [ "$_log_level" -gt "$LOG_LEVEL" ]; then return; fi
+  if [ "$log_level" -gt "$LOG_LEVEL" ]; then return; fi
 
-  case $_log_level in
+  case $log_level in
     "$LOG_LEVEL_FATAL")
-      _log_name=FATAL
-      _log_prefix="\033[41;37m"
+      log_name=FATAL
+      log_prefix="\033[41;37m"
     ;;
     "$LOG_LEVEL_ERROR")
-      _log_name=ERROR
-      _log_prefix="\033[1;31m"
+      log_name=ERROR
+      log_prefix="\033[1;31m"
     ;;
     "$LOG_LEVEL_WARN")
-      _log_name=WARN
-      _log_prefix="\033[1;33m"
+      log_name=WARN
+      log_prefix="\033[1;33m"
     ;;
     "$LOG_LEVEL_INFO")
-      _log_name=INFO
-      _log_prefix="\033[37m"
+      log_name=INFO
+      log_prefix="\033[37m"
     ;;
     "$LOG_LEVEL_DEBUG")
-      _log_name=DEBUG
-      _log_prefix="\033[1;34m"
+      log_name=DEBUG
+      log_prefix="\033[1;34m"
     ;;
   esac
 
   # Color disable flag
   if [ "$LOG_DISABLE_COLOR" -eq 0 ]; then
-    _log_prefix=
-    _log_suffix=
+    log_prefix=
+    log_suffix=
   fi
 
   # Output to stdout
-  printf '%b[%-5s][%s:%d] %b%b\n' "$_log_prefix" "$_log_name" "${FUNCNAME[2]}" "${BASH_LINENO[1]}" "$_log_message" "$_log_suffix"
+  printf '%b[%-5s][%s:%d] %b%b\n' "$log_prefix" "$log_name" "${FUNCNAME[2]}" "${BASH_LINENO[1]}" "$log_message" "$log_suffix"
 }
 
 # Fatal log message
@@ -117,8 +117,27 @@ DEBUG() { _log_print_message ${LOG_LEVEL_DEBUG} "$@"; }
 # Assert command is installed
 # @param $1 Command name
 function assert_cmd() {
-  command -v "$1" >/dev/null 2>&1 || FATAL "Command '$1' not found"
+  [ -x "$(command -v "$1")" ] || FATAL "Command '$1' not found"
   DEBUG "Command '$1' found at '$(command -v "$1")'"
+}
+
+# Assert downloader (curl or wget) is installed
+function assert_downloader() {
+  [ -n "${DOWNLOADER+x}" ] && return;
+
+  # Check and set downloader
+  _assert_downloader() {
+    # Return failure if it doesn't exist or is no executable
+    [ -x "$(command -v "$1")" ] || return 1
+    # Set downloader program and return success
+    DOWNLOADER=$1
+    DEBUG "Downloader is '$DOWNLOADER'"
+    return 0
+  }
+
+  _assert_downloader curl \
+    || _assert_downloader wget \
+    || FATAL "Unable to find downloader 'curl' or 'wget'"
 }
 
 # Check docker image
@@ -137,4 +156,42 @@ function assert_docker_image() {
   else
     DEBUG "Docker image '$1' found"
   fi
+}
+
+# Download a file
+# @param $1 Output location
+# @param $2 Download URL
+download() {
+  [ $# -eq 2 ] || FATAL "Download requires exactly 2 arguments but '$#' found"
+  assert_downloader
+
+  # Download
+  DEBUG "Downloading '$2' into '$1'"
+  case $DOWNLOADER in
+    curl)
+      curl --fail --silent --location --output "$1" "$2" || FATAL "Download '$2' failed"
+    ;;
+    wget)
+      wget --quiet --output-document="$1" "$2" || FATAL "Download '$2' failed"
+    ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
+  esac
+}
+
+# Print downloaded content
+# @param $1 Download URL
+download_print() {
+  [ $# -eq 1 ] || FATAL "Download requires exactly 1 argument but '$#' found"
+  assert_downloader
+
+  # Download
+  case $DOWNLOADER in
+    curl)
+      curl --fail --silent --location --show-error "$1" || FATAL "Download '$1' failed"
+    ;;
+    wget)
+      wget --quiet ---output-document=- "$1" 2>&1 || FATAL "Download '$1' failed"
+    ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
+  esac
 }
