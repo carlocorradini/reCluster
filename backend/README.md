@@ -10,7 +10,7 @@ reCluster backend.
 
 ## Build
 
-```bash
+```console
 npm run build
 ```
 
@@ -32,13 +32,13 @@ npm run build
 
    Start:
 
-   ```bash
+   ```console
    scripts/database.sh
    ```
 
    Synchronize:
 
-   ```bash
+   ```console
    npm run db:migrate
    ```
 
@@ -46,19 +46,19 @@ npm run build
 
    - Nodes
 
-     ```bash
+     ```console
      npm run watch --workspace=subgraphs/nodes
      ```
 
    - Cpus
 
-     ```bash
+     ```console
      npm run watch --workspace=subgraphs/cpus
      ```
 
 1. Router
 
-   ```bash
+   ```console
    scripts/router.sh
    ```
 
@@ -69,7 +69,7 @@ npm run build
 
    - Manually
 
-     ```bash
+     ```console
      curl --request POST \
          --header 'content-type: application/json' \
          --url 'http://localhost:4000/graphql' \

@@ -23,20 +23,20 @@ local machine for development and testing purposes.
 
 1. Clone
 
-   ```bash
+   ```console
    git clone https://github.com/carlocorradini/reCluster.git
    cd reCluster
    ```
 
 1. Scripts Permissions
 
-   ```bash
+   ```console
    chmod -R +x scripts linux backend/scripts
    ```
 
 1. Install Dependencies
 
-   ```bash
+   ```console
    npm ci
    ```
 

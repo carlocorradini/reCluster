@@ -1,0 +1,28 @@
+[
+  {
+    "name": "k3s",
+    "url": "https://github.com/k3s-io/k3s",
+    "assets": {
+      "ignore": [
+        "e2e-passed-amd64-parallel.log",
+        "e2e-passed-amd64-serial.log",
+        "k3s",
+        "k3s-airgap-images-amd64.tar",
+        "k3s-airgap-images-amd64.tar.zst",
+        "k3s-airgap-images-arm.tar",
+        "k3s-airgap-images-arm.tar.zst",
+        "k3s-airgap-images-arm64.tar",
+        "k3s-airgap-images-arm64.tar.zst",
+        "k3s-airgap-images-s390x.tar",
+        "k3s-airgap-images-s390x.tar.zst",
+        "k3s-images.txt"
+      ]
+    },
+    "releases": ["latest", "v1.23.6+k3s1"]
+  },
+  {
+    "name": "node_exporter",
+    "url": "https://github.com/prometheus/node_exporter",
+    "releases": ["latest", "v1.3.1"]
+  }
+]

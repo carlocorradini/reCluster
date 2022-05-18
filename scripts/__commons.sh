@@ -138,6 +138,7 @@ function assert_downloader() {
   _assert_downloader curl \
     || _assert_downloader wget \
     || FATAL "Unable to find downloader 'curl' or 'wget'"
+  readonly DOWNLOADER
 }
 
 # Check docker image
