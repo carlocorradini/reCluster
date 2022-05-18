@@ -1,5 +1,4 @@
-#!/bin/sh
-# https://github.com/k3s-io/k3s
+#!/usr/bin/env sh
 
 set -e
 set -o noglob
