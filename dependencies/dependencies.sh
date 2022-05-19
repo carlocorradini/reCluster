@@ -193,14 +193,14 @@ sync_dep() {
     asset_url=$(jq --raw-output .url <<< "$asset")
     asset_output="$release_dir/$asset_name"
 
-    # Skip if force is false and asset already exists
+    # Skip if not force and asset already exists
     if [ "$SYNC_FORCE" = false ] && [ -f "$asset_output" ]; then
       DEBUG "Skipping '$name' release '$release' asset '$asset_name' already exists"
       continue
     fi
     # Skip if ignored
     if jq --exit-status '.assets.ignore' >/dev/null 2>&1 <<< "$config" \
-      && [ "$(jq --raw-output --arg asset "$asset_name" 'any(.assets.ignore[]; . == $asset)' <<< "$config")" = true ]; then
+      && [ "$(jq --raw-output --arg asset "$asset_name" 'any(.assets.ignore[]; ("^" + . + "$") as $ignore | $asset | test($ignore))' <<< "$config")" = true ]; then
       DEBUG "Skipping '$name' release '$release' asset '$asset_name' ignored"
       continue
     fi
