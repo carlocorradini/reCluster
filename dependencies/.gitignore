@@ -1,0 +1,5 @@
+*
+!/.gitignore
+!/dependencies.json
+!/dependencies.sh
+!/README.md

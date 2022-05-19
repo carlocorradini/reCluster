@@ -121,7 +121,7 @@ sync_deps_clean() {
           done <<< "$(dep_config "$name" | jq --compact-output '.releases[]')"
 
           # Skip if found
-          [ "$found" = true ] && continue;
+          if [ "$found" = true ]; then continue; fi
 
           # Remove directory
           INFO "Removing '$name' release directory '$rd_basename'"
@@ -135,7 +135,7 @@ sync_deps_clean() {
     done <<< "$(jq --compact-output '.[]' <<< "$DEPS")"
 
     # Skip if found
-    [ "$found" = true ] && continue;
+    if [ "$found" = true ]; then continue; fi
 
     # Remove directory
     INFO "Removing '$dd_basename' dependency directory"
@@ -303,5 +303,5 @@ sync_deps() {
   verify_system
   parse_args "$@"
   read_config
-  [ "$SYNC" = true ] && sync_deps
+  if [ "$SYNC" = true ]; then sync_deps; fi
 }
