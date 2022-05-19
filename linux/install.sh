@@ -33,7 +33,7 @@ cleanup() {
   # Remove temporary directory
   if [ -n "$TMP_DIR" ]; then rm -rf "$TMP_DIR"; fi
   # Reset cursor if spinner enabled and active
-  if [ "$SPINNER_DISABLE" -eq 1 ] && [ -n "$SPINNER_PID" ]; then
+  if [ "$SPINNER_ENABLE" = true ] && [ -n "$SPINNER_PID" ]; then
     # Restore cursor position
     tput rc
     # Cursor normal
@@ -98,7 +98,7 @@ _log_print_message() {
   esac
 
   # Color disable flag
-  if [ "$LOG_DISABLE_COLOR" -eq 0 ]; then
+  if [ "$LOG_COLOR_ENABLE" = false ]; then
     _log_prefix=
     _log_suffix=
   fi
@@ -186,8 +186,8 @@ _spinner() {
 spinner_start() {
   # Print message if present
   if [ -n "$1" ]; then  INFO "$1"; fi
-  if [ "$SPINNER_DISABLE" -eq 0 ]; then return; fi
-  if [ -n "$SPINNER_PID" ]; then FATAL "Spinner PID already defined"; fi
+  [ "$SPINNER_ENABLE" = false ] && return
+  [ -n "$SPINNER_PID" ] && FATAL "Spinner PID already defined"
 
   # Spawn spinner process
   _spinner "$1" &
@@ -197,8 +197,8 @@ spinner_start() {
 
 # Stop spinner
 spinner_stop() {
-  if [ "$SPINNER_DISABLE" -eq 0 ]; then return; fi
-  if [ -z "$SPINNER_PID" ]; then FATAL "Spinner PID undefined"; fi
+  [ "$SPINNER_ENABLE" = false ] && return
+  [ -z "$SPINNER_PID" ] && FATAL "Spinner PID undefined"
 
   # Send termination signal
   kill -s USR1 "$SPINNER_PID"
@@ -224,13 +224,15 @@ show_help() {
   esac
 
   cat << EOF
-Usage: install.sh [--bench-time <TIME>] [--disable-color] [--disable-spinner]
-                    [--help] [--k3s-version <VERSION>] [--log-level <LEVEL>]
-                    [--node-exporter-version <VERSION>] [--spinner <SPINNER>]
+Usage: install.sh [--airgap] [--bench-time <TIME>] [--disable-color] [--disable-spinner]
+                  [--help] [--k3s-version <VERSION>] [--log-level <LEVEL>]
+                  [--node_exporter-version <VERSION>] [--spinner <SPINNER>]
 
 reCluster installation script.
 
 Options:
+  --airgap                             Perform installation in Air-Gap environment
+
   --bench-time <TIME>                  Benchmark execution time in seconds
                                        Default: $BENCH_TIME
                                        Values:
@@ -256,7 +258,7 @@ Options:
                                          info     Informational level
                                          debug    Debug level
 
-  --node-exporter-version <VERSION>    Node exporter version
+  --node_exporter-version <VERSION>    Node exporter version
                                        Default: $NODE_EXPORTER_VERSION
 
   --spinner <SPINNER>                  Spinner symbols
@@ -616,6 +618,11 @@ parse_args() {
   # Parse
   while [ $# -gt 0 ]; do
     case $1 in
+      --airgap)
+        # Airgap environment
+        AIRGAP_ENV=true
+        shift
+      ;;
       --bench-time)
         # Benchmark time
         _parse_args_assert_value "$@"
@@ -627,12 +634,12 @@ parse_args() {
       ;;
       --disable-color)
         # Disable color
-        _disable_color=0
+        LOG_COLOR_ENABLE=false
         shift
       ;;
       --disable-spinner)
         # Disable spinner
-        _disable_spinner=0
+        SPINNER_ENABLE=false
         shift
       ;;
       --help)
@@ -663,7 +670,7 @@ parse_args() {
         shift
         shift
       ;;
-      --node-exporter-version)
+      --node_exporter-version)
         # Node exporter version
         _parse_args_assert_value "$@"
 
@@ -697,19 +704,15 @@ parse_args() {
   done
 
   # Benchmark time in seconds
-  if [ -n "$_bench_time" ]; then BENCH_TIME=$_bench_time; fi
-  # Disable log color
-  if [ -n "$_disable_color" ]; then LOG_DISABLE_COLOR=$_disable_color; fi
-  # Disable spinner
-  if [ -n "$_disable_spinner" ]; then SPINNER_DISABLE=$_disable_spinner; fi
+  [ -n "$_bench_time" ] && BENCH_TIME=$_bench_time
   # K3s version
-  if [ -n "$_k3s_version" ]; then K3S_VERSION=$_k3s_version; fi
+  [ -n "$_k3s_version" ] && K3S_VERSION=$_k3s_version
   # Log level
-  if [ -n "$_log_level" ]; then LOG_LEVEL=$_log_level; fi
+  [ -n "$_log_level" ] && LOG_LEVEL=$_log_level
   # Node exporter version
-  if [ -n "$_node_exporter_version" ]; then NODE_EXPORTER_VERSION=$_node_exporter_version; fi
+  [ -n "$_node_exporter_version" ] && NODE_EXPORTER_VERSION=$_node_exporter_version
   # Spinner
-  if [ -n "$_spinner" ]; then SPINNER_SYMBOLS=$_spinner; fi
+  [ -n "$_spinner" ] && SPINNER_SYMBOLS=$_spinner
 }
 
 # Verify system
@@ -736,7 +739,7 @@ verify_system() {
   assert_cmd xargs
 
   # Spinner enabled
-  if [ "$SPINNER_DISABLE" -eq 1 ]; then
+  if [ "$SPINNER_ENABLE" = true ]; then
     # Commands
     assert_cmd ps
     assert_cmd_feature ps -p "$$" -o ppid=
@@ -887,18 +890,22 @@ run_benchmarks() {
 # ================
 # CONFIGURATION
 # ================
+# Airgap environment flag
+AIRGAP_ENV=false
 # Benchmark time in seconds
 BENCH_TIME=16
+# Current directory
+DIRNAME=$(CDPATH=$(cd -- "$(dirname -- "$0")") && pwd)
 # K3s version
 K3S_VERSION=v1.23.6+k3s1
-# Log disable color flag
-LOG_DISABLE_COLOR=1
+# Log color flag
+LOG_COLOR_ENABLE=true
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
 # Node exporter version
 NODE_EXPORTER_VERSION=v1.3.1
-# Spinner disable flag
-SPINNER_DISABLE=1
+# Spinner flag
+SPINNER_ENABLE=true
 # Spinner symbols
 SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
 # Node facts
