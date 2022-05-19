@@ -45,6 +45,8 @@
     "**/*.env.*",
     "**/*.d.ts",
     "**/*.d.ts.map",
+    "**/*.tar",
+    "**/*.tar.gz",
     "**/.gitignore",
     "**/.gitmodules",
     "**/.commitlintrc",
@@ -65,6 +67,8 @@
     "**/cspell.json",
     "backend/docker/Dockerfile.rover",
     "linux/install.k3s.sh",
-    "linux/install.node_exporter.sh"
+    "linux/install.node_exporter.sh",
+    "dependencies/k3s",
+    "dependencies/node_exporter"
   ]
 }

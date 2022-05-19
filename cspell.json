@@ -36,6 +36,7 @@
     "funcname",
     "graphqlid",
     "middlewares",
+    "mipsle",
     "pino",
     "recluster",
     "respawn",
