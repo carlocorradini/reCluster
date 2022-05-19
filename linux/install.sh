@@ -72,7 +72,7 @@ _log_print_message() {
   _log_suffix="\033[0m"
 
   # Log level enabled
-  [ "$_log_level" -gt "$LOG_LEVEL" ] && return
+  if [ "$_log_level" -gt "$LOG_LEVEL" ]; then return; fi
 
   case $_log_level in
     "$LOG_LEVEL_FATAL")
@@ -186,8 +186,8 @@ _spinner() {
 spinner_start() {
   # Print message if present
   if [ -n "$1" ]; then  INFO "$1"; fi
-  [ "$SPINNER_ENABLE" = false ] && return
-  [ -n "$SPINNER_PID" ] && FATAL "Spinner PID already defined"
+  if [ "$SPINNER_ENABLE" = false ]; then return; fi
+  if [ -n "$SPINNER_PID" ]; then FATAL "Spinner PID already defined"; fi
 
   # Spawn spinner process
   _spinner "$1" &
@@ -197,8 +197,8 @@ spinner_start() {
 
 # Stop spinner
 spinner_stop() {
-  [ "$SPINNER_ENABLE" = false ] && return
-  [ -z "$SPINNER_PID" ] && FATAL "Spinner PID undefined"
+  if [ "$SPINNER_ENABLE" = false ]; then return; fi
+  if [ -z "$SPINNER_PID" ]; then FATAL "Spinner PID undefined"; fi
 
   # Send termination signal
   kill -s USR1 "$SPINNER_PID"
@@ -704,19 +704,31 @@ parse_args() {
   done
 
   # Benchmark time in seconds
-  [ -n "$_bench_time" ] && BENCH_TIME=$_bench_time
+  if [ -n "$_bench_time" ]; then BENCH_TIME=$_bench_time; fi
   # K3s version
-  [ -n "$_k3s_version" ] && K3S_VERSION=$_k3s_version
+  if [ -n "$_k3s_version" ]; then K3S_VERSION=$_k3s_version; fi
   # Log level
-  [ -n "$_log_level" ] && LOG_LEVEL=$_log_level
+  if [ -n "$_log_level" ]; then LOG_LEVEL=$_log_level; fi
   # Node exporter version
-  [ -n "$_node_exporter_version" ] && NODE_EXPORTER_VERSION=$_node_exporter_version
+  if [ -n "$_node_exporter_version" ]; then NODE_EXPORTER_VERSION=$_node_exporter_version; fi
   # Spinner
-  [ -n "$_spinner" ] && SPINNER_SYMBOLS=$_spinner
+  if [ -n "$_spinner" ]; then SPINNER_SYMBOLS=$_spinner; fi
 }
 
 # Verify system
 verify_system() {
+  # Architecture
+  ARCH=$(uname -m)
+  case $ARCH in
+    amd64|x86_64) ARCH=amd64 ;;
+    arm64|aarch64) ARCH=arm64 ;;
+    armv5*) ARCH=armv5 ;;
+    armv6*) ARCH=armv6 ;;
+    armv7*) ARCH=armv7 ;;
+    s390x) ARCH=s390x ;;
+    *) FATAL "Architecture '$ARCH' is not supported"
+  esac
+
   # Commands
   assert_cmd cp
   assert_cmd env
@@ -763,52 +775,158 @@ verify_system() {
 
 # Setup system
 setup_system() {
+  # Temporary directory
   TMP_DIR=$(mktemp --directory -t recluster.XXXXXXXX)
   DEBUG "Temporary directory '$TMP_DIR'"
+
+  # Airgap
+  if [ "$AIRGAP_ENV" = true ]; then
+    spinner_start "Preparing Air-Gap environment"
+
+    # Directories
+    _dep_dir="$DIRNAME/../dependencies"
+    _k3s_dep_dir="$_dep_dir/k3s/$K3S_VERSION"
+    _node_exporter_dep_dir="$_dep_dir/node_exporter/$NODE_EXPORTER_VERSION"
+
+    # Architecture
+    _k3s_bin_suffix=
+    _k3s_images_suffix=
+    case $ARCH in
+      amd64)
+        _k3s_bin_suffix=
+        _k3s_images_suffix=amd64
+      ;;
+      arm64)
+        _k3s_bin_suffix=-arm64
+        _k3s_images_suffix=arm64
+      ;;
+      arm*)
+        _k3s_bin_suffix=-armhf
+        _k3s_images_suffix=arm
+      ;;
+      s390x)
+        _k3s_bin_suffix=-s390x
+        _k3s_images_suffix=s390x
+      ;;
+      *) FATAL "Unknown architecture '$ARCH'" ;;
+    esac
+
+    # General
+    _k3s_airgap_images_name="k3s-airgap-images-$_k3s_images_suffix"
+    _node_exporter_release_name=node_exporter-$(echo "$NODE_EXPORTER_VERSION" | sed 's/^v//').linux-$ARCH
+
+    # Globals
+    AIRGAP_K3S_BIN="$TMP_DIR/k3s.bin"
+    AIRGAP_K3S_IMAGES="$TMP_DIR/$_k3s_airgap_images_name.tar.gz"
+    AIRGAP_NODE_EXPORTER_BIN="$TMP_DIR/node_exporter.bin"
+
+    # Resources
+    _k3s_dep_bin="$_k3s_dep_dir/k3s$_k3s_bin_suffix"
+    _k3s_dep_images_tar="$_k3s_dep_dir/$_k3s_airgap_images_name.tar.gz"
+    _node_exporter_dep_tar="$_node_exporter_dep_dir/$_node_exporter_release_name.tar.gz"
+
+    # Check directories
+    [ -d "$_k3s_dep_dir" ] || FATAL "K3s dependency directory '$_k3s_dep_dir' not found"
+    [ -d "$_node_exporter_dep_dir" ] || FATAL "Node exporter dependency directory '$_node_exporter_dep_dir' not found"
+    # Check resources
+    [ -f "$_k3s_dep_bin" ] || FATAL "K3s dependency binary '$_k3s_dep_bin' not found"
+    [ -f "$_k3s_dep_images_tar" ] || FATAL "K3s dependency images tar '$_k3s_dep_images_tar' not found"
+    [ -f "$_node_exporter_dep_tar" ] || FATAL "Node exporter dependency tar '$_node_exporter_dep_tar' not found"
+
+    # Extract Node exporter
+    DEBUG "Extracting Node exporter archive '$_node_exporter_dep_tar'"
+    tar xzf "$_node_exporter_dep_tar" -C "$TMP_DIR" --strip-components 1 "$_node_exporter_release_name/node_exporter" || FATAL "Error extracting Node exporter archive '$_node_exporter_dep_tar'"
+
+    # Move to temporary directory
+    cp "$_k3s_dep_bin" "$AIRGAP_K3S_BIN"
+    cp "$_k3s_dep_images_tar" "$AIRGAP_K3S_IMAGES"
+    mv "$TMP_DIR/node_exporter" "$AIRGAP_NODE_EXPORTER_BIN"
+
+    # Permissions
+    chmod 755 "$AIRGAP_K3S_BIN"
+    chmod 755 "$AIRGAP_NODE_EXPORTER_BIN"
+    $SUDO chown root:root "$AIRGAP_K3S_BIN"
+    $SUDO chown root:root "$AIRGAP_NODE_EXPORTER_BIN"
+
+    spinner_stop
+  fi
 }
 
 # Install K3s
 install_k3s() {
-  _k3s_install_sh="$TMP_DIR/install.k3s.sh"
+  _k3s_install_sh="install.k3s.sh"
 
-  # Download installer
-  spinner_start "Downloading K3s installer"
-  download "$_k3s_install_sh" https://get.k3s.io
-  chmod 755 "$_k3s_install_sh"
-  spinner_stop
+  # Check airgap environment
+  if [ "$AIRGAP_ENV" = true ]; then
+    # Airgap enabled
+    _k3s_install_sh="$DIRNAME/$_k3s_install_sh"
+    # Create directory
+    $SUDO mkdir -p /var/lib/rancher/k3s/agent/images/
+    # Move
+    $SUDO mv --force "$AIRGAP_K3S_BIN" /usr/local/bin/k3s
+    $SUDO mv --force "$AIRGAP_K3S_IMAGES" /var/lib/rancher/k3s/agent/images/
+  else
+    # Airgap disabled
+    _k3s_install_sh="$TMP_DIR/$_k3s_install_sh"
+    # Download installer
+    spinner_start "Downloading K3s installer"
+    download "$_k3s_install_sh" https://get.k3s.io
+    chmod 755 "$_k3s_install_sh"
+    spinner_stop
+  fi
+
+  # Checks
+  [ -f "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' not found"
+  [ -x "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' is not executable"
 
   # Install
-  spinner_start "Installing K3s $K3S_VERSION"
+  spinner_start "Installing K3s '$K3S_VERSION'"
   env \
     INSTALL_K3S_SKIP_START=true \
     INSTALL_K3S_VERSION="$K3S_VERSION" \
-    "$_k3s_install_sh" || FATAL "Error installing K3s $K3S_VERSION"
+    INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
+    "$_k3s_install_sh" || FATAL "Error installing K3s '$K3S_VERSION'"
   spinner_stop
 
   # Success
-  INFO "Successfully installed K3s $K3S_VERSION"
+  INFO "Successfully installed K3s '$K3S_VERSION'"
 }
 
 # Install Node exporter
 install_node_exporter() {
-  _node_exporter_install_sh="$TMP_DIR/install.node_exporter.sh"
+  _node_exporter_install_sh="install.node_exporter.sh"
 
-  # Download installer
-  spinner_start "Downloading Node exporter installer"
-  download "$_node_exporter_install_sh" https://raw.githubusercontent.com/carlocorradini/node_exporter_installer/main/install.sh
-  chmod 755 "$_node_exporter_install_sh"
-  spinner_stop
+  # Check airgap environment
+  if [ "$AIRGAP_ENV" = true ]; then
+    # Airgap enabled
+    _node_exporter_install_sh="$DIRNAME/$_node_exporter_install_sh"
+    # Move
+    $SUDO mv --force "$AIRGAP_NODE_EXPORTER_BIN" /usr/local/bin/node_exporter
+  else
+    # Airgap disabled
+    _node_exporter_install_sh="$TMP_DIR/$_node_exporter_install_sh"
+    # Download installer
+    spinner_start "Downloading Node exporter installer"
+    download "$_node_exporter_install_sh" https://raw.githubusercontent.com/carlocorradini/node_exporter_installer/main/install.sh
+    chmod 755 "$_node_exporter_install_sh"
+    spinner_stop
+  fi
+
+  # Checks
+  [ -f "$_node_exporter_install_sh" ] || FATAL "Node exporter installation script '$_node_exporter_install_sh' not found"
+  [ -x "$_node_exporter_install_sh" ] || FATAL "Node exporter installation script '$_node_exporter_install_sh' is not executable"
 
   # Install
-  spinner_start "Installing Node exporter $NODE_EXPORTER_VERSION"
+  spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
   env \
     INSTALL_NODE_EXPORTER_SKIP_START=true \
     INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
-    "$_node_exporter_install_sh" || FATAL "Error installing Node exporter $NODE_EXPORTER_VERSION"
+    INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
+    "$_node_exporter_install_sh" || FATAL "Error installing Node exporter '$NODE_EXPORTER_VERSION'"
   spinner_stop
 
   # Success
-  INFO "Successfully installed Node exporter $NODE_EXPORTER_VERSION"
+  INFO "Successfully installed Node exporter '$NODE_EXPORTER_VERSION'"
 }
 
 # Read system information
@@ -895,7 +1013,8 @@ AIRGAP_ENV=false
 # Benchmark time in seconds
 BENCH_TIME=16
 # Current directory
-DIRNAME=$(CDPATH=$(cd -- "$(dirname -- "$0")") && pwd)
+# shellcheck disable=SC1007
+DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # K3s version
 K3S_VERSION=v1.23.6+k3s1
 # Log color flag
