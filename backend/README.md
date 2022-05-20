@@ -26,7 +26,7 @@ npm run build
 
    - `subgraphs/nodes/.env.example`
 
-   - `subgraphs/cpus/.env.example`
+   - `subgraphs/nodes-res/.env.example`
 
 1. Database
 
@@ -53,7 +53,7 @@ npm run build
    - Cpus
 
      ```console
-     npm run watch --workspace=subgraphs/cpus
+     npm run watch --workspace=subgraphs/nodes-res
      ```
 
 1. Router

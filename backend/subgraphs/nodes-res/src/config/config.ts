@@ -26,7 +26,7 @@ import type { IConfig } from '@recluster/configs';
 import { env } from './env';
 
 export const config: IConfig = {
-  name: 'subgraph-cpus',
+  name: 'subgraph-nodes-res',
   node: {
     env: env.NODE_ENV
   },

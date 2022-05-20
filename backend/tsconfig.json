@@ -17,10 +17,10 @@
       "path": "packages/utils"
     },
     {
-      "path": "subgraphs/cpus"
+      "path": "subgraphs/nodes"
     },
     {
-      "path": "subgraphs/nodes"
+      "path": "subgraphs/nodes-res"
     }
   ]
 }
