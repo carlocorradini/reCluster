@@ -25,13 +25,16 @@
 import { GraphQLID } from 'graphql';
 import { Node as NodePrisma } from '@prisma/client';
 import { Directive, Field, ObjectType } from 'type-graphql';
-import { GraphQLTimestamp } from 'graphql-scalars';
+import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
 
 @ObjectType({ description: 'Node' })
 @Directive(`@key(fields: "id")`)
 export class Node implements NodePrisma {
   @Field(() => GraphQLID, { description: 'Node identifier' })
   id!: string;
+
+  @Field(() => GraphQLBigInt, { description: 'Node ram' })
+  ram!: bigint;
 
   @Field(() => GraphQLID, { description: 'Cpu identifier' })
   cpuId!: string;

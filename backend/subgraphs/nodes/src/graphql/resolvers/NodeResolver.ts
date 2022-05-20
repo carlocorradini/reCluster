@@ -22,11 +22,23 @@
  * SOFTWARE.
  */
 
-import { Args, Mutation, Query, Resolver } from 'type-graphql';
+import {
+  Arg,
+  Args,
+  FieldResolver,
+  Mutation,
+  Query,
+  Resolver,
+  Root
+} from 'type-graphql';
 import { PrismaClient } from '@prisma/client';
-import { Fields, FieldsMap, Prisma } from '@recluster/graphql';
+import { GraphQLBigInt } from 'graphql-scalars';
+import configMeasurements, { digital } from 'convert-units';
+import { Fields, FieldsMap, Prisma, DigitalByteUnit } from '@recluster/graphql';
 import { Node } from '../entities';
 import { CreateNodeArgs, NodeArgs, NodesArgs } from '../args';
+
+const convert = configMeasurements({ digital });
 
 @Resolver(Node)
 export class NodeResolver {
@@ -102,5 +114,22 @@ export class NodeResolver {
         cpu: { connect: { vendor_family_model } }
       }
     });
+  }
+
+  @FieldResolver(() => GraphQLBigInt)
+  ram(
+    @Root() node: Node,
+    @Arg('unit', () => DigitalByteUnit, {
+      defaultValue: DigitalByteUnit.B,
+      description: 'Digital conversion unit'
+    })
+    unit?: DigitalByteUnit
+  ) {
+    // FIXME BigInt conversion
+    return Math.round(
+      convert(Number(node.ram))
+        .from(DigitalByteUnit.B)
+        .to(unit ?? DigitalByteUnit.B)
+    );
   }
 }

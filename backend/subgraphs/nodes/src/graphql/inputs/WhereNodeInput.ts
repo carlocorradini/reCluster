@@ -24,7 +24,11 @@
 
 import { Field, InputType } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { StringFilter, TimestampFilter } from '@recluster/graphql';
+import {
+  StringFilter,
+  TimestampFilter,
+  BigIntFilter
+} from '@recluster/graphql';
 
 @InputType({ isAbstract: true, description: 'Node where input' })
 export class WhereNodeInput
@@ -32,6 +36,9 @@ export class WhereNodeInput
 {
   @Field({ nullable: true, description: 'Node identifier' })
   id?: StringFilter;
+
+  @Field({ nullable: true, description: 'Node ram' })
+  ram?: BigIntFilter;
 
   @Field({ nullable: true, description: 'Cpu identifier' })
   cpuId?: StringFilter;

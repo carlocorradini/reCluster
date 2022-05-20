@@ -22,26 +22,54 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
+import { GraphQLBigInt } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
-import { SortOrder } from '@recluster/graphql';
+import { Prisma } from '@prisma/client';
 
-@InputType({ isAbstract: true, description: 'Node order by input' })
-export class OrderByNodeInput
-  implements Partial<Omit<Prisma.NodeOrderByWithRelationInput, 'cpu'>>
-{
-  @Field(() => SortOrder, { nullable: true, description: 'Node identifier' })
-  id?: SortOrder;
+@InputType({ isAbstract: true, description: 'BigInt filter' })
+export class BigIntFilter implements Prisma.BigIntFilter {
+  @Field(() => GraphQLBigInt, { nullable: true, description: 'BigInt equals' })
+  equals?: bigint;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Node ram' })
-  ram?: SortOrder;
+  @Field(() => GraphQLBigInt, {
+    nullable: true,
+    description: 'BigInt not equals'
+  })
+  not?: BigIntFilter;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu identifier' })
-  cpuId?: SortOrder;
+  @Field(() => [GraphQLBigInt], {
+    nullable: true,
+    description: 'BigInt exists in list'
+  })
+  in?: bigint[];
 
-  @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
-  createdAt?: SortOrder;
+  @Field(() => [GraphQLBigInt], {
+    nullable: true,
+    description: 'BigInt does not exists in list'
+  })
+  notIn?: bigint[];
 
-  @Field(() => SortOrder, { nullable: true, description: 'Update timestamp' })
-  updatedAt?: SortOrder;
+  @Field(() => GraphQLBigInt, {
+    nullable: true,
+    description: 'BigInt is less than'
+  })
+  lt?: bigint;
+
+  @Field(() => GraphQLBigInt, {
+    nullable: true,
+    description: 'BigInt is less than or equal to'
+  })
+  lte?: bigint;
+
+  @Field(() => GraphQLBigInt, {
+    nullable: true,
+    description: 'BigInt is greater than'
+  })
+  gt?: bigint;
+
+  @Field(() => GraphQLBigInt, {
+    nullable: true,
+    description: 'BigInt is greater than or equal to'
+  })
+  gte?: bigint;
 }

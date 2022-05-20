@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+export * from './BigIntFilter';
 export * from './IntFilter';
 export * from './StringFilter';
 export * from './StringListFilter';

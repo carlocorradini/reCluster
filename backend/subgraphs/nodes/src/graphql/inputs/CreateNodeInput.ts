@@ -24,6 +24,7 @@
 
 import { Prisma } from '@prisma/client';
 import { PickRequired } from '@recluster/utils';
+import { GraphQLBigInt } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
 import { CreateCpuInput } from './CreateCpuInput';
 
@@ -33,6 +34,9 @@ type ICreateNodeInput = PickRequired<Prisma.NodeCreateInput> & {
 
 @InputType({ description: 'Create Node input' })
 export class CreateNodeInput implements ICreateNodeInput {
+  @Field(() => GraphQLBigInt, { description: 'Node ram' })
+  ram!: bigint;
+
   @Field(() => CreateCpuInput, { description: 'Node Cpu' })
   cpu!: CreateCpuInput;
 }
