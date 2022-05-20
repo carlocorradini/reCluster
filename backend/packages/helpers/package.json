@@ -9,7 +9,7 @@
   "types": "build/index.d.ts",
   "peerDependencies": {
     "@prisma/client": "^3.14.0",
-    "graphql": "^15.8.0",
+    "graphql": "^16.5.0",
     "type-graphql": "^1.1.1"
   },
   "//": "TODO Update @apollo/subgraph when type-graphql supports GraphQL v16",
@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@prisma/client": "^3.14.0",
-    "graphql": "^15.8.0",
+    "graphql": "^16.5.0",
     "type-graphql": "^1.1.1"
   }
 }
