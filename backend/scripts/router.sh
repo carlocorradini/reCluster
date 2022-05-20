@@ -28,6 +28,8 @@ readonly DIRNAME
 readonly APOLLO_ROUTER_VERSION=v0.9.0
 # Apollo Router image
 readonly APOLLO_ROUTER_IMAGE="ghcr.io/apollographql/router:$APOLLO_ROUTER_VERSION"
+# Apollo Router port
+readonly APOLLO_ROUTER_PORT=4000
 # Apollo Router config
 APOLLO_ROUTER_CONFIG=$(readlink -f "$DIRNAME/../router/router.yaml")
 readonly APOLLO_ROUTER_CONFIG
@@ -42,8 +44,8 @@ source "$DIRNAME/../../scripts/__commons.sh"
 assert_cmd docker
 
 # Apollo Router
-INFO "Starting Apollo Router '$APOLLO_ROUTER_IMAGE': { config: '$APOLLO_ROUTER_CONFIG', supergraph: '$APOLLO_ROUTER_SUPERGRAPH' }"
-docker run -p 4000:4000 \
+INFO "Starting Apollo Router '$APOLLO_ROUTER_IMAGE'"
+docker run -p "$APOLLO_ROUTER_PORT:4000" \
   --mount "type=bind,source=$APOLLO_ROUTER_CONFIG,target=/dist/config/router.yaml" \
   --mount "type=bind,source=$APOLLO_ROUTER_SUPERGRAPH,target=/dist/config/supergraph.graphql" \
   --rm \

@@ -21,34 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# ================
+# CONFIGURATION
+# ================
 # Current directory
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
-# PostgreSQL version
-readonly POSTGRESQL_VERSION=14.2
-# PostgreSQL image
-readonly POSTGRESQL_IMAGE="docker.io/postgres:$POSTGRESQL_VERSION"
-# PostgreSQL port
-readonly POSTGRESQL_PORT=5432
-# PostgreSQL user
-readonly POSTGRESQL_USER=recluster
-# PostgreSQL password
-readonly POSTGRESQL_PASSWORD=password
-# PostgreSQL database
-readonly POSTGRESQL_DATABASE=recluster
 
-# Commons
-source "$DIRNAME/../../scripts/__commons.sh"
-
-# Assert
-assert_cmd docker
-
-# PostgreSQL
-INFO "Starting PostgreSQL '$POSTGRESQL_IMAGE'"
-docker run \
-  -p "$POSTGRESQL_PORT:5432" \
-  -e POSTGRES_USER="$POSTGRESQL_USER" \
-  -e POSTGRES_PASSWORD="$POSTGRESQL_PASSWORD" \
-  -e POSTGRES_DB="$POSTGRESQL_DATABASE" \
-  --rm \
-  "$POSTGRESQL_IMAGE"
+# TODO
