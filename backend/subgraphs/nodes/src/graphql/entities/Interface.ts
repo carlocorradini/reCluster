@@ -22,36 +22,23 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { Prisma } from '@prisma/client';
-import {
-  StringFilter,
-  TimestampFilter,
-  BigIntFilter
-} from '@recluster/graphql';
+import { GraphQLID } from 'graphql';
+import { Directive, Field, ObjectType } from 'type-graphql';
+import { Interface as InterfacePrisma } from '@prisma/client';
+import { Node } from './Node';
 
-@InputType({ isAbstract: true, description: 'Node where input' })
-export class WhereNodeInput
-  implements
-    Partial<
-      Omit<
-        Prisma.NodeWhereInput,
-        'AND' | 'OR' | 'NOT' | 'cpu' | 'disks' | 'interfaces'
-      >
-    >
-{
-  @Field({ nullable: true, description: 'Node identifier' })
-  id?: StringFilter;
+@ObjectType()
+// TODO @Directive(`@key(fields: "id", resolvable: false)`) when type-graphql supports GraphQL v16
+@Directive(`@key(fields: "id")`)
+export class Interface implements Pick<InterfacePrisma, 'id' | 'nodeId'> {
+  @Field(() => GraphQLID)
+  id!: string;
 
-  @Field({ nullable: true, description: 'Node ram' })
-  ram?: BigIntFilter;
+  @Field(() => GraphQLID)
+  @Directive(`@external`)
+  nodeId!: string;
 
-  @Field({ nullable: true, description: 'Cpu identifier' })
-  cpuId?: StringFilter;
-
-  @Field({ nullable: true, description: 'Creation timestamp' })
-  createdAt?: TimestampFilter;
-
-  @Field({ nullable: true, description: 'Update timestamp' })
-  updatedAt?: TimestampFilter;
+  @Field(() => Node, { description: 'Interface node' })
+  @Directive(`@requires(fields: "nodeId")`)
+  node?: Node;
 }

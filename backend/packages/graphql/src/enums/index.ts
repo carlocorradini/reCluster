@@ -26,3 +26,4 @@ export * from './CpuArchitecture';
 export * from './CpuVendor';
 export * from './DigitalBitUnit';
 export * from './DigitalByteUnit';
+export * from './InterfaceWol';

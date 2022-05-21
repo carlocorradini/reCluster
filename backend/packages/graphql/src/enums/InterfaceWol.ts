@@ -22,36 +22,20 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { Prisma } from '@prisma/client';
-import {
-  StringFilter,
-  TimestampFilter,
-  BigIntFilter
-} from '@recluster/graphql';
+import { registerEnumType } from 'type-graphql';
 
-@InputType({ isAbstract: true, description: 'Node where input' })
-export class WhereNodeInput
-  implements
-    Partial<
-      Omit<
-        Prisma.NodeWhereInput,
-        'AND' | 'OR' | 'NOT' | 'cpu' | 'disks' | 'interfaces'
-      >
-    >
-{
-  @Field({ nullable: true, description: 'Node identifier' })
-  id?: StringFilter;
-
-  @Field({ nullable: true, description: 'Node ram' })
-  ram?: BigIntFilter;
-
-  @Field({ nullable: true, description: 'Cpu identifier' })
-  cpuId?: StringFilter;
-
-  @Field({ nullable: true, description: 'Creation timestamp' })
-  createdAt?: TimestampFilter;
-
-  @Field({ nullable: true, description: 'Update timestamp' })
-  updatedAt?: TimestampFilter;
+export enum InterfaceWol {
+  a = 'a',
+  b = 'b',
+  d = 'd',
+  g = 'g',
+  m = 'm',
+  p = 'p',
+  s = 's',
+  u = 'u'
 }
+
+registerEnumType(InterfaceWol, {
+  name: 'InterfaceWol',
+  description: 'Interface Wake On Lan flag'
+});

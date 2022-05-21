@@ -22,36 +22,31 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import {
-  StringFilter,
-  TimestampFilter,
-  BigIntFilter
-} from '@recluster/graphql';
+import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
+import { Field, InputType } from 'type-graphql';
+import { IsMACAddress } from 'class-validator';
+import { PickRequired } from '@recluster/utils';
+import { InterfaceWol } from '@recluster/graphql';
 
-@InputType({ isAbstract: true, description: 'Node where input' })
-export class WhereNodeInput
-  implements
-    Partial<
-      Omit<
-        Prisma.NodeWhereInput,
-        'AND' | 'OR' | 'NOT' | 'cpu' | 'disks' | 'interfaces'
-      >
-    >
-{
-  @Field({ nullable: true, description: 'Node identifier' })
-  id?: StringFilter;
+type ICreateInterfaceInput = PickRequired<
+  Prisma.InterfaceCreateWithoutNodeInput & {
+    wol: InterfaceWol[];
+  }
+>;
 
-  @Field({ nullable: true, description: 'Node ram' })
-  ram?: BigIntFilter;
+@InputType({ description: 'Create Interface input' })
+export class CreateInterfaceInput implements ICreateInterfaceInput {
+  @Field(() => GraphQLNonEmptyString, { description: 'Interface name' })
+  name!: string;
 
-  @Field({ nullable: true, description: 'Cpu identifier' })
-  cpuId?: StringFilter;
+  @Field(() => GraphQLNonEmptyString, { description: 'Interface MAC address' })
+  @IsMACAddress()
+  address!: string;
 
-  @Field({ nullable: true, description: 'Creation timestamp' })
-  createdAt?: TimestampFilter;
+  @Field(() => GraphQLPositiveInt, { description: 'Interface speed' })
+  speed!: number;
 
-  @Field({ nullable: true, description: 'Update timestamp' })
-  updatedAt?: TimestampFilter;
+  @Field(() => [InterfaceWol], { description: 'Interface Wake On Lan flags' })
+  wol!: InterfaceWol[];
 }

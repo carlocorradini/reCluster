@@ -31,10 +31,36 @@ datasource db {
 
 model Node {
   id        String   @id @default(cuid())
-  cpu       Cpu      @relation(fields: [cpuId], references: [id])
+  ram       BigInt
+  cpu       Cpu      @relation(fields: [cpuId], references: [id], map: "cpu_id")
   cpuId     String
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime @updatedAt @db.Timestamptz()
+
+  disks      Disk[]
+  interfaces Interface[]
+}
+
+model Disk {
+  id     String @id @default(cuid())
+  node   Node   @relation(fields: [nodeId], references: [id], map: "node_id")
+  nodeId String
+  name   String
+  size   BigInt
+
+  @@unique([nodeId, name])
+}
+
+model Interface {
+  id      String         @id @default(cuid())
+  node    Node           @relation(fields: [nodeId], references: [id], map: "node_id")
+  nodeId  String
+  name    String
+  address String
+  speed   Int
+  wol     InterfaceWol[]
+
+  @@unique([nodeId, name])
 }
 
 model Cpu {
@@ -57,6 +83,25 @@ model Cpu {
   nodes Node[]
 
   @@unique([vendor, family, model])
+}
+
+enum InterfaceWol {
+  // Wke on ARP
+  a
+  // Wake on broadcast messages
+  b
+  // Disable
+  d
+  // Wake on MagicPacket
+  g
+  // Wake on multicast messages
+  m
+  // Wake on PHY activity
+  p
+  // Enable SecureOn password for MagicPacket
+  s
+  // Wake on unicast messages
+  u
 }
 
 enum CpuArchitecture {

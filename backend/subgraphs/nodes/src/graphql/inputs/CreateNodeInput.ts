@@ -27,9 +27,13 @@ import { PickRequired } from '@recluster/utils';
 import { GraphQLBigInt } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
 import { CreateCpuInput } from './CreateCpuInput';
+import { CreateDiskInput } from './CreateDiskInput';
+import { CreateInterfaceInput } from './CreateInterfaceInput';
 
 type ICreateNodeInput = PickRequired<Prisma.NodeCreateInput> & {
   cpu: CreateCpuInput;
+  disks: CreateDiskInput[];
+  interfaces: CreateInterfaceInput[];
 };
 
 @InputType({ description: 'Create Node input' })
@@ -39,4 +43,10 @@ export class CreateNodeInput implements ICreateNodeInput {
 
   @Field(() => CreateCpuInput, { description: 'Node Cpu' })
   cpu!: CreateCpuInput;
+
+  @Field(() => [CreateDiskInput], { description: 'Node disks' })
+  disks!: CreateDiskInput[];
+
+  @Field(() => [CreateInterfaceInput], { description: 'Node interfaces' })
+  interfaces!: CreateInterfaceInput[];
 }

@@ -24,17 +24,24 @@
 
 import { RemoveNullArgs } from '@recluster/graphql';
 import { buildFederatedSchema } from '@recluster/helpers';
-import { Cpu, Node } from './entities';
+import { Cpu, Disk, Interface, Node } from './entities';
 import {
   CpuNodeResolver,
+  DiskNodeResolver,
+  InterfaceNodeResolver,
   NodeResolver,
   resolveNodeReference
 } from './resolvers';
 
 export const schema = buildFederatedSchema(
   {
-    resolvers: [NodeResolver, CpuNodeResolver],
-    orphanedTypes: [Node, Cpu],
+    resolvers: [
+      NodeResolver,
+      CpuNodeResolver,
+      DiskNodeResolver,
+      InterfaceNodeResolver
+    ],
+    orphanedTypes: [Node, Cpu, Disk, Interface],
     globalMiddlewares: [RemoveNullArgs]
   },
   {

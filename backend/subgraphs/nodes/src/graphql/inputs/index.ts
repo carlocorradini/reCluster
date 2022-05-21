@@ -23,6 +23,8 @@
  */
 
 export * from './CreateCpuInput';
+export * from './CreateDiskInput';
+export * from './CreateInterfaceInput';
 export * from './CreateNodeInput';
 export * from './OrderByNodeInput';
 export * from './WhereNodeInput';

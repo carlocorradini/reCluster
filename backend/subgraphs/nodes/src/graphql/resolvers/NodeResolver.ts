@@ -111,7 +111,11 @@ export class NodeResolver {
       select: fields,
       data: {
         ...args.data,
-        cpu: { connect: { vendor_family_model } }
+        cpu: { connect: { vendor_family_model } },
+        disks: { createMany: { data: args.data.disks, skipDuplicates: true } },
+        interfaces: {
+          createMany: { data: args.data.interfaces, skipDuplicates: true }
+        }
       }
     });
   }

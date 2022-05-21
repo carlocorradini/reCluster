@@ -23,5 +23,7 @@
  */
 
 export * from './CpuNodeResolver';
+export * from './DiskNodeResolver';
+export * from './InterfaceNodeResolver';
 export * from './NodeResolver';
 export * from './resolveNodeReference';
