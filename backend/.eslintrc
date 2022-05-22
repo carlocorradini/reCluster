@@ -11,9 +11,7 @@
   },
   "settings": {
     "import/parsers": {
-      "@typescript-eslint/parser": [
-        ".ts"
-      ]
+      "@typescript-eslint/parser": [".ts"]
     },
     "import/resolver": {
       "typescript": {
@@ -43,10 +41,7 @@
   "rules": {
     "prettier/prettier": "error",
     "tsdoc/syntax": "warn",
-    "license-header/header": [
-      "error",
-      "license.js"
-    ],
+    "license-header/header": ["error", "license.js"],
     "import/no-default-export": "error",
     "import/prefer-default-export": "off",
     "class-methods-use-this": "off"

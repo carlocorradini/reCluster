@@ -35,6 +35,7 @@
     "envalid",
     "funcname",
     "graphqlid",
+    "graphqlmac",
     "middlewares",
     "mipsle",
     "pino",
