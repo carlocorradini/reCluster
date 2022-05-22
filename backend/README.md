@@ -36,9 +36,9 @@ npm run build
 
 1. Server
 
-    ```console
-    npm run watch
-    ```
+   ```console
+   npm run watch
+   ```
 
 1. Execute Queries
 
@@ -49,14 +49,14 @@ npm run build
 
    TODO
 
-     ```console
-     curl --request POST \
-         --header 'content-type: application/json' \
-         --url 'http://localhost:8080/graphql' \
-         --data '{ "query": "mutation { addNode(node: { name: \"Test\" }) { id, name } }" }'
+   ```console
+   curl --request POST \
+       --header 'content-type: application/json' \
+       --url 'http://localhost:8080/graphql' \
+       --data '{ "query": "mutation { addNode(node: { name: \"Test\" }) { id, name } }" }'
 
-     curl --request POST \
-         --header 'content-type: application/json' \
-         --url 'http://localhost:8080/graphql' \
-         --data '{ "query": "{ nodes { id, name } }" }'
-     ```
+   curl --request POST \
+       --header 'content-type: application/json' \
+       --url 'http://localhost:8080/graphql' \
+       --data '{ "query": "{ nodes { id, name } }" }'
+   ```
