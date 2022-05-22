@@ -57,10 +57,11 @@ model Interface {
   nodeId  String
   name    String
   address String
-  speed   Int
+  speed   BigInt
   wol     InterfaceWol[]
 
   @@unique([nodeId, name])
+  @@unique([address])
 }
 
 model Cpu {
