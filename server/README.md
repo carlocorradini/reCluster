@@ -1,6 +1,6 @@
-# reCluster Backend
+# reCluster Server
 
-reCluster backend.
+reCluster server.
 
 ## Requirements
 

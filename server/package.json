@@ -1,7 +1,7 @@
 {
-  "name": "recluster-backend",
+  "name": "recluster-server",
   "version": "0.0.1",
-  "description": "reCluster backend",
+  "description": "reCluster server",
   "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
   "license": "MIT",
   "private": true,
@@ -13,7 +13,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/carlocorradini/reCluster.git",
-    "directory": "backend"
+    "directory": "server"
   },
   "bugs": {
     "url": "https://github.com/carlocorradini/reCluster/issues"

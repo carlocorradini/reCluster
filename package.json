@@ -14,16 +14,16 @@
     "url": "https://github.com/carlocorradini/reCluster/issues"
   },
   "scripts": {
-    "check": "npx npm-run-all --npm-path npm --serial check:* && cd backend && npm run check",
+    "check": "npx npm-run-all --npm-path npm --serial check:* && cd server && npm run check",
     "check:format": "npx prettier --check .",
     "check:license": "npx license-check-and-add check -f license.json",
     "check:markdown": "npx markdownlint \"**/*.md\"",
     "check:spell": "npx cspell lint --config cspell.json --no-progress --show-context \"**\"",
-    "fix": "npx npm-run-all --npm-path npm --serial fix:* && cd backend && npm run fix",
+    "fix": "npx npm-run-all --npm-path npm --serial fix:* && cd server && npm run fix",
     "fix:format": "npx prettier --write .",
     "fix:license": "npx license-check-and-add add -f license.json",
     "fix:markdown": "npx markdownlint --fix \"**/*.md\"",
-    "postinstall": "cd backend && npm ci",
+    "postinstall": "cd server && npm ci",
     "prepare": "npx husky install"
   },
   "devDependencies": {

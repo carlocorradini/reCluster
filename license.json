@@ -64,7 +64,7 @@
     "**/.prettierrc",
     "**/.shellcheckrc",
     "**/cspell.json",
-    "backend/migrations",
+    "server/migrations",
     "linux/install.k3s.sh",
     "linux/install.node_exporter.sh",
     "dependencies/k3s",
