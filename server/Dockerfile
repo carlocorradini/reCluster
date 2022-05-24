@@ -48,7 +48,7 @@ COPY schema.prisma .
 COPY src ./src
 
 # Install development dependencies
-RUN npm ci --development
+RUN npm ci --development --ignore-scripts
 
 # Generate prisma
 RUN npm run db:generate
