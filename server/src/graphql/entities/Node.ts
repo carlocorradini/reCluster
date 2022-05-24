@@ -35,7 +35,6 @@ export class Node implements NodePrisma {
   @Field(() => GraphQLBigInt, { description: 'Node ram' })
   ram!: bigint;
 
-  @Field(() => GraphQLID, { description: 'Cpu identifier' })
   cpuId!: string;
 
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })

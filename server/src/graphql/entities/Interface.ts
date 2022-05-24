@@ -52,7 +52,6 @@ export class Interface implements InterfacePrisma {
   @Field(() => GraphQLID, { description: 'Interface identifier' })
   id!: string;
 
-  @Field(() => GraphQLID, { description: 'Node identifier' })
   nodeId!: string;
 
   @Field(() => GraphQLNonEmptyString, { description: 'Interface name' })

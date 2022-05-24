@@ -32,7 +32,6 @@ export class Disk implements DiskPrisma {
   @Field(() => GraphQLID, { description: 'Disk identifier' })
   id!: string;
 
-  @Field(() => GraphQLID, { description: 'Node identifier' })
   nodeId!: string;
 
   @Field(() => GraphQLNonEmptyString, { description: 'Disk name' })
