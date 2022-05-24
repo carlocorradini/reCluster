@@ -23,14 +23,24 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { FieldResolver, Resolver, Root } from 'type-graphql';
+import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
 import { Prisma } from '../../decorators';
+import { PaginationArgs } from '../../args';
 import { Node, Interface } from '../../entities';
 
 @Resolver(() => Node)
 export class NodeInterfaceResolver {
   @FieldResolver(() => [Interface], { description: 'Node interfaces' })
-  async interfaces(@Root() node: Node, @Prisma() prisma: PrismaClient) {
-    return prisma.interface.findMany({ where: { nodeId: node.id } });
+  async interfaces(
+    @Root() node: Node,
+    @Prisma() prisma: PrismaClient,
+    @Args() args: PaginationArgs
+  ) {
+    return prisma.interface.findMany({
+      where: { nodeId: node.id },
+      cursor: args.cursor ? { id: args.cursor } : undefined,
+      take: args.take,
+      skip: args.skip
+    });
   }
 }

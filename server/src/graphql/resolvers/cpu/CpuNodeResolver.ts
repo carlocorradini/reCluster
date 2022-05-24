@@ -23,14 +23,24 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { FieldResolver, Resolver, Root } from 'type-graphql';
-import { Prisma } from '~graphql/decorators';
+import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
+import { Prisma } from '../../decorators';
+import { PaginationArgs } from '../../args';
 import { Cpu, Node } from '../../entities';
 
 @Resolver(() => Cpu)
 export class CpuNodeResolver {
   @FieldResolver(() => [Node], { description: 'CPU nodes' })
-  async nodes(@Root() cpu: Cpu, @Prisma() prisma: PrismaClient) {
-    return prisma.node.findMany({ where: { cpuId: cpu.id } });
+  async nodes(
+    @Root() cpu: Cpu,
+    @Prisma() prisma: PrismaClient,
+    @Args() args: PaginationArgs
+  ) {
+    return prisma.node.findMany({
+      where: { cpuId: cpu.id },
+      cursor: args.cursor ? { id: args.cursor } : undefined,
+      take: args.take,
+      skip: args.skip
+    });
   }
 }

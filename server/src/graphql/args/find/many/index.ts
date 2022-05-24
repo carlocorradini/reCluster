@@ -26,3 +26,4 @@ export * from './FindManyCpusArgs';
 export * from './FindManyDisksArgs';
 export * from './FindManyInterfacesArgs';
 export * from './FindManyNodesArgs';
+export * from './PaginationArgs';

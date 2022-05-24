@@ -24,7 +24,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { FieldResolver, Resolver, Root } from 'type-graphql';
-import { Prisma } from '~graphql/decorators';
+import { Prisma } from '../../decorators';
 import { Interface, Node } from '../../entities';
 
 @Resolver(() => Interface)

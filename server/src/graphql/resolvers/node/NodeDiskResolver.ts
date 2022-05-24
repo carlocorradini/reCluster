@@ -23,14 +23,24 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { FieldResolver, Resolver, Root } from 'type-graphql';
+import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
 import { Prisma } from '../../decorators';
+import { PaginationArgs } from '../../args';
 import { Node, Disk } from '../../entities';
 
 @Resolver(() => Node)
 export class NodeDiskResolver {
   @FieldResolver(() => [Disk], { description: 'Node disks' })
-  async disks(@Root() node: Node, @Prisma() prisma: PrismaClient) {
-    return prisma.disk.findMany({ where: { nodeId: node.id } });
+  async disks(
+    @Root() node: Node,
+    @Prisma() prisma: PrismaClient,
+    @Args() args: PaginationArgs
+  ) {
+    return prisma.disk.findMany({
+      where: { nodeId: node.id },
+      cursor: args.cursor ? { id: args.cursor } : undefined,
+      take: args.take,
+      skip: args.skip
+    });
   }
 }
