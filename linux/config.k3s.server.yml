@@ -21,3 +21,5 @@
 # SOFTWARE.
 
 ---
+token: "password"
+write-kubeconfig-mode: "0644"

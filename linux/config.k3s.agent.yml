@@ -21,3 +21,5 @@
 # SOFTWARE.
 
 ---
+server: "https://192.168.0.25:6443"
+token: "password"
