@@ -231,7 +231,7 @@ parse_args() {
       --help)
         # Display help message and exit
         show_help
-        exit 1
+        exit 0
       ;;
       --sync)
         # Synchronize
