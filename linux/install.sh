@@ -433,7 +433,7 @@ read_interfaces_info() {
     # Update interfaces
     _interfaces_info=$(echo "$_interfaces_info" \
                       | jq --arg iname "$_iname" --arg speed "$_speed" --arg wol "$_wol" '
-                          map(if .name == $iname then . + {"speed": $speed | tonumber, "wol": (if $wol == null or $wol == "" then null else $wol end)} else . end)
+                          map(if .name == $iname then . + {"speed": $speed | tonumber, "wol": ($wol | split(""))} else . end)
                         ')
   done << EOF
 $(echo "$_interfaces_info" | jq --compact-output '.[]')
