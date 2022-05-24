@@ -22,11 +22,16 @@
  * SOFTWARE.
  */
 
-import { Args, Query, Resolver } from 'type-graphql';
+import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { GraphQLBigInt } from 'graphql-scalars';
 import { PrismaClient } from '@prisma/client';
+import configMeasurements, { digital } from 'convert-units';
 import { Disk } from '../../entities';
 import { Prisma } from '../../decorators';
 import { FindUniqueDiskArgs, FindManyDisksArgs } from '../../args';
+import { DigitalByteUnit } from '../../enums';
+
+const convert = configMeasurements({ digital });
 
 @Resolver(Disk)
 export class DiskResolver {
@@ -47,5 +52,22 @@ export class DiskResolver {
   })
   async disk(@Prisma() prisma: PrismaClient, @Args() args: FindUniqueDiskArgs) {
     return prisma.disk.findUnique({ where: { id: args.id } });
+  }
+
+  @FieldResolver(() => GraphQLBigInt)
+  size(
+    @Root() disk: Disk,
+    @Arg('unit', () => DigitalByteUnit, {
+      defaultValue: DigitalByteUnit.B,
+      description: 'Digital conversion unit'
+    })
+    unit?: DigitalByteUnit
+  ) {
+    // FIXME BigInt conversion
+    return Math.round(
+      convert(Number(disk.size))
+        .from(DigitalByteUnit.B)
+        .to(unit ?? DigitalByteUnit.B)
+    );
   }
 }

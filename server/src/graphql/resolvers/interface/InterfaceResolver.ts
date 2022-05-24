@@ -22,11 +22,16 @@
  * SOFTWARE.
  */
 
-import { Args, Query, Resolver } from 'type-graphql';
+import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { GraphQLBigInt } from 'graphql-scalars';
 import { PrismaClient } from '@prisma/client';
+import configMeasurements, { digital } from 'convert-units';
 import { Interface } from '../../entities';
 import { Prisma } from '../../decorators';
 import { FindUniqueInterfaceArgs, FindManyInterfacesArgs } from '../../args';
+import { DigitalBitUnit } from '../../enums';
+
+const convert = configMeasurements({ digital });
 
 @Resolver(Interface)
 export class InterfaceResolver {
@@ -55,5 +60,22 @@ export class InterfaceResolver {
     return prisma.interface.findUnique({
       where: { id: args.id }
     });
+  }
+
+  @FieldResolver(() => GraphQLBigInt)
+  speed(
+    @Root() inf: Interface,
+    @Arg('unit', () => DigitalBitUnit, {
+      defaultValue: DigitalBitUnit.b,
+      description: 'Digital conversion unit'
+    })
+    unit?: DigitalBitUnit
+  ) {
+    // FIXME BigInt conversion
+    return Math.round(
+      convert(Number(inf.speed))
+        .from(DigitalBitUnit.b)
+        .to(unit ?? DigitalBitUnit.b)
+    );
   }
 }
