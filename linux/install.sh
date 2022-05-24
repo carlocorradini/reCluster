@@ -224,9 +224,11 @@ show_help() {
   esac
 
   cat << EOF
-Usage: install.sh [--airgap] [--bench-time <TIME>] [--disable-color] [--disable-spinner]
-                  [--help] [--k3s-config <PATH>] [--k3s-version <VERSION>] [--log-level <LEVEL>]
-                  [--node_exporter-version <VERSION>] [--recluster-config <PATH>] [--spinner <SPINNER>]
+Usage: install.sh --k3s-config <PATH> --recluster-config <PATH>
+                  [--airgap] [--bench-time <TIME>] [--disable-color]
+                  [--disable-spinner] [--help] [--k3s-version <VERSION>]
+                  [--log-level <LEVEL>] [--node_exporter-version <VERSION>]
+                  [--spinner <SPINNER>]
 
 reCluster installation script.
 
@@ -245,6 +247,7 @@ Options:
   --help                               Show this help message and exit
 
   --k3s-config <PATH>                  K3s configuration file path
+                                       Required
                                        Values:
                                          Any valid K3s configuration file path
 
@@ -266,6 +269,7 @@ Options:
                                        Default: $NODE_EXPORTER_VERSION
 
   --recluster-config <PATH>            reCluster configuration file path
+                                       Required
                                        Values:
                                          Any valid reCluster configuration file path
 
@@ -686,10 +690,17 @@ parse_args() {
     esac
   done
 
+  # Required
+  # K3s configuration file
+  if [ -n "$_k3s_config" ]; then K3S_CONFIG_FILE=$_k3s_config;
+  else FATAL "Argument '--k3s-config <PATH>' is required"; fi
+  # reCluster configuration file
+  if [ -n "$_recluster_config" ]; then RECLUSTER_CONFIG_FILE=$_recluster_config;
+  else FATAL "Argument '--recluster-config <PATH>' is required"; fi
+
+  # Optional
   # Benchmark time in seconds
   if [ -n "$_bench_time" ]; then BENCH_TIME=$_bench_time; fi
-  # K3s configuration file
-  if [ -n "$_k3s_config" ]; then K3S_CONFIG_FILE=$_k3s_config; fi
   # K3s version
   if [ -n "$_k3s_version" ]; then K3S_VERSION=$_k3s_version; fi
   # Log level
@@ -697,7 +708,6 @@ parse_args() {
   # Node exporter version
   if [ -n "$_node_exporter_version" ]; then NODE_EXPORTER_VERSION=$_node_exporter_version; fi
   # reCluster configuration file
-  if [ -n "$_recluster_config" ]; then RECLUSTER_CONFIG_FILE=$_recluster_config; fi
   # Spinner
   if [ -n "$_spinner" ]; then SPINNER_SYMBOLS=$_spinner; fi
 }
@@ -736,6 +746,7 @@ verify_system() {
   assert_cmd tr
   assert_cmd uname
   assert_cmd xargs
+  assert_cmd yq
 
   # Spinner enabled
   if [ "$SPINNER_ENABLE" = true ]; then
@@ -837,6 +848,16 @@ setup_system() {
 
     spinner_stop
   fi
+
+  # K3s configuration
+  [ -f "$K3S_CONFIG_FILE" ] || FATAL "K3s configuration file '$K3S_CONFIG_FILE' not found"
+  K3S_CONFIG=$(yq e --output-format=json '.' "$K3S_CONFIG_FILE") || FATAL "Error reading K3s configuration file '$K3S_CONFIG_FILE'"
+  DEBUG "K3s configuration:\n$(echo "$K3S_CONFIG" | jq .)"
+
+  # reCluster configuration
+  [ -f "$RECLUSTER_CONFIG_FILE" ] || FATAL "reCluster configuration file '$RECLUSTER_CONFIG_FILE' not found"
+  RECLUSTER_CONFIG=$(yq e --output-format=json '.' "$RECLUSTER_CONFIG_FILE") || FATAL "Error reading reCluster configuration file '$RECLUSTER_CONFIG_FILE'"
+  DEBUG "reCluster configuration:\n$(echo "$RECLUSTER_CONFIG" | jq .)"
 }
 
 # Install K3s
@@ -865,6 +886,11 @@ install_k3s() {
   # Checks
   [ -f "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' not found"
   [ -x "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' is not executable"
+
+  # Configuration
+  INFO "Copying K3s configuration file '$K3S_CONFIG_FILE' to '/etc/rancher/k3s/config.yml'"
+  $SUDO mkdir -p /etc/rancher/k3s/
+  $SUDO cp "$K3S_CONFIG_FILE" /etc/rancher/k3s/config.yml
 
   # Install
   spinner_start "Installing K3s '$K3S_VERSION'"
@@ -971,13 +997,12 @@ run_benchmarks() {
 node_registration() {
   spinner_start "Registering node"
 
-  _url=http://192.168.0.25:8080
+  _server_url=$(echo "$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires 'server: <URL>'"
   # shellcheck disable=SC2016
   _data='{ "query": "mutation ($data: CreateNodeInput!) { createNode(data: $data) { id } }", "variables": { "data": '"$(echo "$NODE_FACTS" | jq --compact-output .)"' } }'
   _response=
-  _node_id=
 
-  DEBUG "Sending node registration data '$_data' to '$_url'"
+  DEBUG "Sending node registration data '$_data' to '$_server_url'"
 
   # Send node registration request
   case $DOWNLOADER in
@@ -985,23 +1010,23 @@ node_registration() {
       _response=$(curl --fail --silent --location --show-error \
         --request POST \
         --header 'Content-Type: application/json' \
-        --url "$_url" \
-        --data "$_data") || FATAL "Error sending node registration request to '$_url'"
+        --url "$_server_url" \
+        --data "$_data") || FATAL "Error sending node registration request to '$_server_url'"
     ;;
     wget)
       _response=$(wget --quiet --output-document=- \
         --header='Content-Type: application/json' \
         --post-data="$_data" \
-        "$_url" 2>&1) || FATAL "Error sending node registration request to '$_url'"
+        "$_server_url" 2>&1) || FATAL "Error sending node registration request to '$_server_url'"
     ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
 
-  DEBUG "Received node registration response data '$_response' from '$_url'"
+  DEBUG "Received node registration response data '$_response' from '$_server_url'"
   spinner_stop
 
-  _node_id=$(echo "$_response" | jq --raw-output '.data.createNode.id')
-  INFO "Node registered with id '$_node_id'"
+  RECLUSTER_NODE_ID=$(echo "$_response" | jq --raw-output '.data.createNode.id')
+  INFO "Node successfully registered with id '$RECLUSTER_NODE_ID'"
 }
 
 # ================
