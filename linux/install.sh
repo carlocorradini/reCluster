@@ -767,7 +767,7 @@ setup_system() {
     spinner_start "Preparing Air-Gap environment"
 
     # Directories
-    _dep_dir="$DIRNAME/../dependencies"
+    _dep_dir="$DIRNAME/dependencies"
     _k3s_dep_dir="$_dep_dir/k3s/$K3S_VERSION"
     _node_exporter_dep_dir="$_dep_dir/node_exporter/$NODE_EXPORTER_VERSION"
 
