@@ -287,7 +287,7 @@ assert_cmd() {
 # @param $1 Command
 # @param $@ Command options
 assert_cmd_feature() {
-  "$@"> /dev/null 2>&1 || FATAL "Command '$1' is not fully featured, see https://command-not-found.com/$1 for update or installation"
+  "$@" > /dev/null 2>&1 || FATAL "Command '$1' is not fully featured, see https://command-not-found.com/$1 for update or installation"
 }
 
 # Assert a downloader command is installed
@@ -1005,8 +1005,10 @@ node_registration() {
     ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
-  DEBUG "Received node registration response data '$_response' from '$_server_url'"
   spinner_stop
+
+  DEBUG "Received node registration response data '$_response' from '$_server_url'"
+  echo "$_response" | jq --exit-status '.errors' > /dev/null 2>&1 || FATAL "Error registering node:\n$(echo "$_response" | jq .)"
 
   RECLUSTER_NODE_ID=$(echo "$_response" | jq --raw-output '.data.createNode.id')
   INFO "Node registered with id '$RECLUSTER_NODE_ID'"
