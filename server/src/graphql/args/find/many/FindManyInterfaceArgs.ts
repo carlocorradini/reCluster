@@ -22,4 +22,26 @@
  * SOFTWARE.
  */
 
-export * from './Prisma';
+import { ArgsType, Field } from 'type-graphql';
+import { Prisma } from '@prisma/client';
+import { FindManyArgs } from '~/utils';
+import { OrderByInterfaceInput, WhereInterfaceInput } from '../../../inputs';
+import { PaginationArgs } from './PaginationArgs';
+
+@ArgsType()
+export class FindManyInterfaceArgs
+  extends PaginationArgs
+  implements FindManyArgs<Prisma.InterfaceFindManyArgs>
+{
+  @Field(() => WhereInterfaceInput, {
+    nullable: true,
+    description: 'Filter options'
+  })
+  where?: WhereInterfaceInput;
+
+  @Field(() => OrderByInterfaceInput, {
+    nullable: true,
+    description: 'Order options'
+  })
+  orderBy?: OrderByInterfaceInput;
+}

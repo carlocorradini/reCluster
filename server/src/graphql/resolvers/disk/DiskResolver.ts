@@ -23,35 +23,33 @@
  */
 
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { Service, Inject } from 'typedi';
 import { GraphQLBigInt } from 'graphql-scalars';
-import { PrismaClient } from '@prisma/client';
 import configMeasurements, { digital } from 'convert-units';
-import { Disk } from '../../entities';
-import { Prisma } from '../../decorators';
-import { FindUniqueDiskArgs, FindManyDisksArgs } from '../../args';
+import { DiskService } from '~/services';
 import { DigitalByteUnit } from '../../enums';
+import { Disk } from '../../entities';
+import { FindUniqueDiskArgs, FindManyDiskArgs } from '../../args';
 
 const convert = configMeasurements({ digital });
 
 @Resolver(Disk)
+@Service()
 export class DiskResolver {
+  @Inject()
+  private readonly diskService!: DiskService;
+
   @Query(() => [Disk], { description: 'List of Disks' })
-  async disks(@Prisma() prisma: PrismaClient, @Args() args: FindManyDisksArgs) {
-    return prisma.disk.findMany({
-      where: args.where,
-      orderBy: args.orderBy,
-      cursor: args.cursor ? { id: args.cursor } : undefined,
-      take: args.take,
-      skip: args.skip
-    });
+  async disks(@Args() args: FindManyDiskArgs) {
+    return this.diskService.findMany(args);
   }
 
   @Query(() => Disk, {
     nullable: true,
     description: 'Disk matching the identifier'
   })
-  async disk(@Prisma() prisma: PrismaClient, @Args() args: FindUniqueDiskArgs) {
-    return prisma.disk.findUnique({ where: { id: args.id } });
+  async disk(@Args() args: FindUniqueDiskArgs) {
+    return this.diskService.findUnique({ ...args, where: { id: args.id } });
   }
 
   @FieldResolver(() => GraphQLBigInt)

@@ -23,13 +23,13 @@
  */
 
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { Service, Inject } from 'typedi';
 import { GraphQLNonNegativeInt } from 'graphql-scalars';
-import { PrismaClient } from '@prisma/client';
 import configMeasurements, { digital } from 'convert-units';
+import { CpuService } from '~/services';
 import { DigitalByteUnit } from '../../enums';
-import { Prisma } from '../../decorators';
 import { Cpu } from '../../entities';
-import { FindUniqueCpuArgs, FindManyCpusArgs } from '../../args';
+import { FindUniqueCpuArgs, FindManyCpuArgs } from '../../args';
 
 const convert = configMeasurements({ digital });
 
@@ -42,24 +42,22 @@ function cacheConverter(value: number, toUnit?: DigitalByteUnit) {
 }
 
 @Resolver(Cpu)
+@Service()
 export class CpuResolver {
+  @Inject()
+  private readonly cpuService!: CpuService;
+
   @Query(() => [Cpu], { description: 'List of Cpus' })
-  async cpus(@Prisma() prisma: PrismaClient, @Args() args: FindManyCpusArgs) {
-    return prisma.cpu.findMany({
-      where: args.where,
-      orderBy: args.orderBy,
-      cursor: args.cursor ? { id: args.cursor } : undefined,
-      take: args.take,
-      skip: args.skip
-    });
+  async cpus(@Args() args: FindManyCpuArgs) {
+    return this.cpuService.findMany(args);
   }
 
   @Query(() => Cpu, {
     nullable: true,
     description: 'Cpu matching the identifier'
   })
-  async cpu(@Prisma() prisma: PrismaClient, @Args() args: FindUniqueCpuArgs) {
-    return prisma.cpu.findUnique({ where: { id: args.id } });
+  async cpu(@Args() args: FindUniqueCpuArgs) {
+    return this.cpuService.findUnique({ ...args, where: { id: args.id } });
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)

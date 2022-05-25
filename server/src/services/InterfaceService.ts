@@ -22,26 +22,31 @@
  * SOFTWARE.
  */
 
-import { ArgsType, Field } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { FindManyArgs } from '~/utils';
-import { OrderByInterfaceInput, WhereInterfaceInput } from '../../../inputs';
-import { PaginationArgs } from './PaginationArgs';
+import { Service } from 'typedi';
+import { prisma } from '~/db';
+import { logger } from '~/logger';
 
-@ArgsType()
-export class FindManyInterfacesArgs
-  extends PaginationArgs
-  implements FindManyArgs<Prisma.InterfaceFindManyArgs>
-{
-  @Field(() => WhereInterfaceInput, {
-    nullable: true,
-    description: 'Filter options'
-  })
-  where?: WhereInterfaceInput;
+@Service()
+export class InterfaceService {
+  public async findMany(
+    args: Omit<Prisma.InterfaceFindManyArgs, 'cursor'> & { cursor?: string }
+  ) {
+    logger.info(`Interface service find many: ${JSON.stringify(args)}`);
 
-  @Field(() => OrderByInterfaceInput, {
-    nullable: true,
-    description: 'Order options'
-  })
-  orderBy?: OrderByInterfaceInput;
+    return prisma.interface.findMany({
+      ...args,
+      cursor: args.cursor ? { id: args.cursor } : undefined
+    });
+  }
+
+  public async findUnique(
+    args: Omit<Prisma.InterfaceFindUniqueArgs, 'where'> & {
+      where: { id: string };
+    }
+  ) {
+    logger.info(`Interface service find unique: ${JSON.stringify(args)}`);
+
+    return prisma.interface.findUnique(args);
+  }
 }

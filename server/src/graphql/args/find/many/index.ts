@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-export * from './FindManyCpusArgs';
-export * from './FindManyDisksArgs';
-export * from './FindManyInterfacesArgs';
-export * from './FindManyNodesArgs';
+export * from './FindManyCpuArgs';
+export * from './FindManyDiskArgs';
+export * from './FindManyInterfaceArgs';
+export * from './FindManyNodeArgs';
 export * from './PaginationArgs';

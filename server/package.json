@@ -72,6 +72,7 @@
     "json-bigint-patch": "^0.0.8",
     "pino": "^7.11.0",
     "reflect-metadata": "^0.1.13",
-    "type-graphql": "^1.1.1"
+    "type-graphql": "^1.1.1",
+    "typedi": "^0.10.0"
   }
 }

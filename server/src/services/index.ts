@@ -22,26 +22,7 @@
  * SOFTWARE.
  */
 
-import { ArgsType, Field } from 'type-graphql';
-import { Prisma } from '@prisma/client';
-import { FindManyArgs } from '~/utils';
-import { OrderByDiskInput, WhereDiskInput } from '../../../inputs';
-import { PaginationArgs } from './PaginationArgs';
-
-@ArgsType()
-export class FindManyDisksArgs
-  extends PaginationArgs
-  implements FindManyArgs<Prisma.DiskFindManyArgs>
-{
-  @Field(() => WhereDiskInput, {
-    nullable: true,
-    description: 'Filter options'
-  })
-  where?: WhereDiskInput;
-
-  @Field(() => OrderByDiskInput, {
-    nullable: true,
-    description: 'Order options'
-  })
-  orderBy?: OrderByDiskInput;
-}
+export * from './CpuService';
+export * from './DiskService';
+export * from './InterfaceService';
+export * from './NodeService';

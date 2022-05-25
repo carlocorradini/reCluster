@@ -22,11 +22,6 @@
  * SOFTWARE.
  */
 
-import type { PrismaClient } from '@prisma/client';
-import { prisma } from '~/db';
+export type Context = { [K in string | number | symbol]: never };
 
-export type Context = {
-  prisma: PrismaClient;
-};
-
-export const context: Context = { prisma };
+export const context: Context = {};

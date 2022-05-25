@@ -22,15 +22,19 @@
  * SOFTWARE.
  */
 
-import { PrismaClient } from '@prisma/client';
 import { FieldResolver, Resolver, Root } from 'type-graphql';
-import { Prisma } from '../../decorators';
+import { Inject, Service } from 'typedi';
+import { CpuService } from '~/services';
 import { Node, Cpu } from '../../entities';
 
 @Resolver(() => Node)
+@Service()
 export class NodeCpuResolver {
+  @Inject()
+  private readonly cpuService!: CpuService;
+
   @FieldResolver(() => Cpu, { description: 'Node CPU' })
-  async cpu(@Root() node: Node, @Prisma() prisma: PrismaClient) {
-    return prisma.cpu.findUnique({ where: { id: node.cpuId } });
+  async cpu(@Root() node: Node) {
+    return this.cpuService.findUnique({ where: { id: node.cpuId } });
   }
 }

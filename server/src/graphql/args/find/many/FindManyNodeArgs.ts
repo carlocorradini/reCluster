@@ -22,24 +22,26 @@
  * SOFTWARE.
  */
 
-import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
-import { Inject, Service } from 'typedi';
-import { DiskService } from '~/services';
-import { PaginationArgs } from '../../args';
-import { Node, Disk } from '../../entities';
+import { ArgsType, Field } from 'type-graphql';
+import { Prisma } from '@prisma/client';
+import { FindManyArgs } from '~/utils';
+import { OrderByNodeInput, WhereNodeInput } from '../../../inputs';
+import { PaginationArgs } from './PaginationArgs';
 
-@Resolver(() => Node)
-@Service()
-export class NodeDiskResolver {
-  @Inject()
-  private readonly diskService!: DiskService;
+@ArgsType()
+export class FindManyNodeArgs
+  extends PaginationArgs
+  implements FindManyArgs<Prisma.NodeFindManyArgs>
+{
+  @Field(() => WhereNodeInput, {
+    nullable: true,
+    description: 'Filter options'
+  })
+  where?: WhereNodeInput;
 
-  @FieldResolver(() => [Disk], { description: 'Node disks' })
-  async disks(@Root() node: Node, @Args() args: PaginationArgs) {
-    return this.diskService.findMany({
-      ...args,
-      where: { nodeId: node.id },
-      orderBy: { id: 'asc' }
-    });
-  }
+  @Field(() => OrderByNodeInput, {
+    nullable: true,
+    description: 'Order options'
+  })
+  orderBy?: OrderByNodeInput;
 }

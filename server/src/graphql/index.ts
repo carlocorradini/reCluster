@@ -23,7 +23,6 @@
  */
 
 export * from './args';
-export * from './decorators';
 export * from './entities';
 export * from './enums';
 export * from './inputs';

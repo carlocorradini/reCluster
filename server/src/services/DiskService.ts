@@ -22,26 +22,29 @@
  * SOFTWARE.
  */
 
-import { ArgsType, Field } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { FindManyArgs } from '~/utils';
-import { OrderByCpuInput, WhereCpuInput } from '../../../inputs';
-import { PaginationArgs } from './PaginationArgs';
+import { Service } from 'typedi';
+import { prisma } from '~/db';
+import { logger } from '~/logger';
 
-@ArgsType()
-export class FindManyCpusArgs
-  extends PaginationArgs
-  implements FindManyArgs<Prisma.CpuFindManyArgs>
-{
-  @Field(() => WhereCpuInput, {
-    nullable: true,
-    description: 'Filter options'
-  })
-  where?: WhereCpuInput;
+@Service()
+export class DiskService {
+  public async findMany(
+    args: Omit<Prisma.DiskFindManyArgs, 'cursor'> & { cursor?: string }
+  ) {
+    logger.info(`Disk service find many: ${JSON.stringify(args)}`);
 
-  @Field(() => OrderByCpuInput, {
-    nullable: true,
-    description: 'Order options'
-  })
-  orderBy?: OrderByCpuInput;
+    return prisma.disk.findMany({
+      ...args,
+      cursor: args.cursor ? { id: args.cursor } : undefined
+    });
+  }
+
+  public async findUnique(
+    args: Omit<Prisma.DiskFindUniqueArgs, 'where'> & { where: { id: string } }
+  ) {
+    logger.info(`Disk service find unique: ${JSON.stringify(args)}`);
+
+    return prisma.disk.findUnique(args);
+  }
 }

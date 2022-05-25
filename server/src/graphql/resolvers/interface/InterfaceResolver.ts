@@ -23,41 +23,34 @@
  */
 
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { Service, Inject } from 'typedi';
 import { GraphQLBigInt } from 'graphql-scalars';
-import { PrismaClient } from '@prisma/client';
 import configMeasurements, { digital } from 'convert-units';
-import { Interface } from '../../entities';
-import { Prisma } from '../../decorators';
-import { FindUniqueInterfaceArgs, FindManyInterfacesArgs } from '../../args';
+import { InterfaceService } from '~/services';
 import { DigitalBitUnit } from '../../enums';
+import { Interface } from '../../entities';
+import { FindUniqueInterfaceArgs, FindManyInterfaceArgs } from '../../args';
 
 const convert = configMeasurements({ digital });
 
 @Resolver(Interface)
+@Service()
 export class InterfaceResolver {
+  @Inject()
+  private readonly interfaceService!: InterfaceService;
+
   @Query(() => [Interface], { description: 'List of Interfaces' })
-  async interfaces(
-    @Prisma() prisma: PrismaClient,
-    @Args() args: FindManyInterfacesArgs
-  ) {
-    return prisma.interface.findMany({
-      where: args.where,
-      orderBy: args.orderBy,
-      cursor: args.cursor ? { id: args.cursor } : undefined,
-      take: args.take,
-      skip: args.skip
-    });
+  async interfaces(@Args() args: FindManyInterfaceArgs) {
+    return this.interfaceService.findMany(args);
   }
 
   @Query(() => Interface, {
     nullable: true,
     description: 'Interface matching the identifier'
   })
-  async interface(
-    @Prisma() prisma: PrismaClient,
-    @Args() args: FindUniqueInterfaceArgs
-  ) {
-    return prisma.interface.findUnique({
+  async interface(@Args() args: FindUniqueInterfaceArgs) {
+    return this.interfaceService.findUnique({
+      ...args,
       where: { id: args.id }
     });
   }

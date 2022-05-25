@@ -22,25 +22,24 @@
  * SOFTWARE.
  */
 
-import { PrismaClient } from '@prisma/client';
 import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
-import { Prisma } from '../../decorators';
+import { Inject, Service } from 'typedi';
+import { NodeService } from '~/services';
 import { PaginationArgs } from '../../args';
 import { Cpu, Node } from '../../entities';
 
 @Resolver(() => Cpu)
+@Service()
 export class CpuNodeResolver {
+  @Inject()
+  private readonly nodeService!: NodeService;
+
   @FieldResolver(() => [Node], { description: 'CPU nodes' })
-  async nodes(
-    @Root() cpu: Cpu,
-    @Prisma() prisma: PrismaClient,
-    @Args() args: PaginationArgs
-  ) {
-    return prisma.node.findMany({
+  async nodes(@Root() cpu: Cpu, @Args() args: PaginationArgs) {
+    return this.nodeService.findMany({
+      ...args,
       where: { cpuId: cpu.id },
-      cursor: args.cursor ? { id: args.cursor } : undefined,
-      take: args.take,
-      skip: args.skip
+      orderBy: { id: 'asc' }
     });
   }
 }

@@ -22,26 +22,29 @@
  * SOFTWARE.
  */
 
-import { ArgsType, Field } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { FindManyArgs } from '~/utils';
-import { OrderByNodeInput, WhereNodeInput } from '../../../inputs';
-import { PaginationArgs } from './PaginationArgs';
+import { Service } from 'typedi';
+import { prisma } from '~/db';
+import { logger } from '~/logger';
 
-@ArgsType()
-export class FindManyNodesArgs
-  extends PaginationArgs
-  implements FindManyArgs<Prisma.NodeFindManyArgs>
-{
-  @Field(() => WhereNodeInput, {
-    nullable: true,
-    description: 'Filter options'
-  })
-  where?: WhereNodeInput;
+@Service()
+export class CpuService {
+  public async findMany(
+    args: Omit<Prisma.CpuFindManyArgs, 'cursor'> & { cursor?: string }
+  ) {
+    logger.info(`Cpu service find many: ${JSON.stringify(args)}`);
 
-  @Field(() => OrderByNodeInput, {
-    nullable: true,
-    description: 'Order options'
-  })
-  orderBy?: OrderByNodeInput;
+    return prisma.cpu.findMany({
+      ...args,
+      cursor: args.cursor ? { id: args.cursor } : undefined
+    });
+  }
+
+  public async findUnique(
+    args: Omit<Prisma.CpuFindUniqueArgs, 'where'> & { where: { id: string } }
+  ) {
+    logger.info(`Cpu service find unique: ${JSON.stringify(args)}`);
+
+    return prisma.cpu.findUnique(args);
+  }
 }

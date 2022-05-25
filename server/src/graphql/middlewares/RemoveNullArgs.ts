@@ -23,6 +23,7 @@
  */
 
 import { MiddlewareInterface, NextFn, ResolverData } from 'type-graphql';
+import { Service } from 'typedi';
 import { NonNullableRecursive } from '~/utils';
 
 function removeNullProps<T>(obj: T): NonNullableRecursive<T> {
@@ -43,6 +44,7 @@ function removeNullProps<T>(obj: T): NonNullableRecursive<T> {
   ) as NonNullableRecursive<T>;
 }
 
+@Service()
 export class RemoveNullArgs implements MiddlewareInterface {
   use(action: ResolverData, next: NextFn) {
     // eslint-disable-next-line no-param-reassign

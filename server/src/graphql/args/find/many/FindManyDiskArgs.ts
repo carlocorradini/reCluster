@@ -22,13 +22,26 @@
  * SOFTWARE.
  */
 
-import { createParamDecorator } from 'type-graphql';
-import { DatabaseError } from '~/errors';
-import { Context } from '../context';
+import { ArgsType, Field } from 'type-graphql';
+import { Prisma } from '@prisma/client';
+import { FindManyArgs } from '~/utils';
+import { OrderByDiskInput, WhereDiskInput } from '../../../inputs';
+import { PaginationArgs } from './PaginationArgs';
 
-export function Prisma(): ParameterDecorator {
-  return createParamDecorator<Context>(({ context }) => {
-    if (!context.prisma) throw new DatabaseError();
-    return context.prisma;
-  });
+@ArgsType()
+export class FindManyDiskArgs
+  extends PaginationArgs
+  implements FindManyArgs<Prisma.DiskFindManyArgs>
+{
+  @Field(() => WhereDiskInput, {
+    nullable: true,
+    description: 'Filter options'
+  })
+  where?: WhereDiskInput;
+
+  @Field(() => OrderByDiskInput, {
+    nullable: true,
+    description: 'Order options'
+  })
+  orderBy?: OrderByDiskInput;
 }

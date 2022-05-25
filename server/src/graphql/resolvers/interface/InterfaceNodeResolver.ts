@@ -22,15 +22,19 @@
  * SOFTWARE.
  */
 
-import { PrismaClient } from '@prisma/client';
 import { FieldResolver, Resolver, Root } from 'type-graphql';
-import { Prisma } from '../../decorators';
+import { Inject, Service } from 'typedi';
+import { NodeService } from '~/services';
 import { Interface, Node } from '../../entities';
 
 @Resolver(() => Interface)
+@Service()
 export class InterfaceNodeResolver {
+  @Inject()
+  private readonly nodeService!: NodeService;
+
   @FieldResolver(() => Node, { description: 'Interface node' })
-  async node(@Root() inf: Interface, @Prisma() prisma: PrismaClient) {
-    return prisma.node.findUnique({ where: { id: inf.nodeId } });
+  async node(@Root() inf: Interface) {
+    return this.nodeService.findUnique({ where: { id: inf.nodeId } });
   }
 }
