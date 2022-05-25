@@ -1,7 +1,7 @@
 {
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "eslint.workingDirectories": ["backend"],
+  "eslint.workingDirectories": ["server"],
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
   }
