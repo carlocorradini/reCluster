@@ -1008,7 +1008,11 @@ node_registration() {
   spinner_stop
 
   DEBUG "Received node registration response data '$_response' from '$_server_url'"
-  echo "$_response" | jq --exit-status '.errors' > /dev/null 2>&1 || FATAL "Error registering node:\n$(echo "$_response" | jq .)"
+
+  # Check error response
+  if echo "$_response" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
+    FATAL "Error registering node:\n$(echo "$_response" | jq .)";
+  fi
 
   RECLUSTER_NODE_ID=$(echo "$_response" | jq --raw-output '.data.createNode.id')
   INFO "Node registered with id '$RECLUSTER_NODE_ID'"

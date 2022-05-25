@@ -31,6 +31,13 @@ import { prisma } from './db';
 import { schema, context } from './graphql';
 import { logger } from './logger';
 
+// FIXME BigInt toJSON prototype function hijack
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+// prettier-ignore
+// eslint-disable-next-line prettier/prettier, func-names
+BigInt.prototype.toJSON = function () { return this.toString(); };
+
 const server = new ApolloServer({
   schema,
   context,
