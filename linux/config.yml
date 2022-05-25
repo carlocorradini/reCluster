@@ -21,5 +21,14 @@
 # SOFTWARE.
 
 ---
-server: "https://192.168.0.25:6443"
-token: "password"
+k3s:
+  server: "https://192.168.0.25:6443"
+  token: "password"
+
+node_exporter:
+  collector:
+    disable-defaults: true
+    cpu: true
+
+recluster:
+  server: "http://192.168.0.25:8080"

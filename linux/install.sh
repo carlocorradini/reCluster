@@ -224,11 +224,10 @@ show_help() {
   esac
 
   cat << EOF
-Usage: install.sh --k3s-config <PATH> --recluster-config <PATH>
-                  [--airgap] [--bench-time <TIME>] [--disable-color]
-                  [--disable-spinner] [--help] [--k3s-version <VERSION>]
-                  [--log-level <LEVEL>] [--node_exporter-version <VERSION>]
-                  [--spinner <SPINNER>]
+Usage: install.sh [--airgap] [--bench-time <TIME>] [--config <PATH>]
+                  [--disable-color] [--disable-spinner] [--help]
+                  [--k3s-version <VERSION>] [--log-level <LEVEL>]
+                  [--node_exporter-version <VERSION>] [--spinner <SPINNER>]
 
 reCluster installation script.
 
@@ -240,16 +239,16 @@ Options:
                                        Values:
                                          Any positive number
 
+  --config <PATH>                      Configuration file path
+                                       Default: $CONFIG_FILE
+                                       Values:
+                                         Any valid configuration file path
+
   --disable-color                      Disable color
 
   --disable-spinner                    Disable spinner
 
   --help                               Show this help message and exit
-
-  --k3s-config <PATH>                  K3s configuration file path
-                                       Required
-                                       Values:
-                                         Any valid K3s configuration file path
 
   --k3s-version <VERSION>              K3s version
                                        Default: $K3S_VERSION
@@ -267,11 +266,6 @@ Options:
 
   --node_exporter-version <VERSION>    Node exporter version
                                        Default: $NODE_EXPORTER_VERSION
-
-  --recluster-config <PATH>            reCluster configuration file path
-                                       Required
-                                       Values:
-                                         Any valid reCluster configuration file path
 
   --spinner <SPINNER>                  Spinner symbols
                                        Default: propeller
@@ -603,6 +597,14 @@ parse_args() {
         shift
         shift
       ;;
+       --config)
+        # Configuration file
+        _parse_args_assert_value "$@"
+
+        _config=$2
+        shift
+        shift
+      ;;
       --disable-color)
         # Disable color
         LOG_COLOR_ENABLE=false
@@ -617,14 +619,6 @@ parse_args() {
         # Display help message and exit
         show_help
         exit 0
-      ;;
-      --k3s-config)
-        # K3s configuration file
-        _parse_args_assert_value "$@"
-
-        _k3s_config=$2
-        shift
-        shift
       ;;
       --k3s-version)
         # K3s version
@@ -657,14 +651,6 @@ parse_args() {
         shift
         shift
       ;;
-      --recluster-config)
-        # reCluster configuration file
-        _parse_args_assert_value "$@"
-
-        _recluster_config=$2
-        shift
-        shift
-      ;;
       --spinner)
         _parse_args_assert_value "$@"
 
@@ -690,24 +676,16 @@ parse_args() {
     esac
   done
 
-  # Required
-  # K3s configuration file
-  if [ -n "$_k3s_config" ]; then K3S_CONFIG_FILE=$_k3s_config;
-  else FATAL "Argument '--k3s-config <PATH>' is required"; fi
-  # reCluster configuration file
-  if [ -n "$_recluster_config" ]; then RECLUSTER_CONFIG_FILE=$_recluster_config;
-  else FATAL "Argument '--recluster-config <PATH>' is required"; fi
-
-  # Optional
   # Benchmark time in seconds
   if [ -n "$_bench_time" ]; then BENCH_TIME=$_bench_time; fi
+  # Configuration file
+  if [ -n "$_config" ]; then CONFIG_FILE=$_config; fi
   # K3s version
   if [ -n "$_k3s_version" ]; then K3S_VERSION=$_k3s_version; fi
   # Log level
   if [ -n "$_log_level" ]; then LOG_LEVEL=$_log_level; fi
   # Node exporter version
   if [ -n "$_node_exporter_version" ]; then NODE_EXPORTER_VERSION=$_node_exporter_version; fi
-  # reCluster configuration file
   # Spinner
   if [ -n "$_spinner" ]; then SPINNER_SYMBOLS=$_spinner; fi
 }
@@ -743,6 +721,7 @@ verify_system() {
   assert_cmd sudo
   assert_cmd sysbench
   assert_cmd tar
+  assert_cmd tee
   assert_cmd tr
   assert_cmd uname
   assert_cmd xargs
@@ -776,6 +755,12 @@ setup_system() {
   # Temporary directory
   TMP_DIR=$(mktemp --directory -t recluster.XXXXXXXX)
   DEBUG "Temporary directory '$TMP_DIR'"
+
+  # Configuration
+  INFO "Reading configuration file '$CONFIG_FILE'"
+  [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' not found"
+  CONFIG=$(yq e --output-format=json --no-colors '.' "$CONFIG_FILE") || FATAL "Error reading configuration file '$CONFIG_FILE'"
+  DEBUG "Configuration:\n$(echo "$CONFIG" | jq .)"
 
   # Airgap
   if [ "$AIRGAP_ENV" = true ]; then
@@ -848,31 +833,24 @@ setup_system() {
 
     spinner_stop
   fi
-
-  # K3s configuration
-  [ -f "$K3S_CONFIG_FILE" ] || FATAL "K3s configuration file '$K3S_CONFIG_FILE' not found"
-  K3S_CONFIG=$(yq e --output-format=json '.' "$K3S_CONFIG_FILE") || FATAL "Error reading K3s configuration file '$K3S_CONFIG_FILE'"
-  DEBUG "K3s configuration:\n$(echo "$K3S_CONFIG" | jq .)"
-
-  # reCluster configuration
-  [ -f "$RECLUSTER_CONFIG_FILE" ] || FATAL "reCluster configuration file '$RECLUSTER_CONFIG_FILE' not found"
-  RECLUSTER_CONFIG=$(yq e --output-format=json '.' "$RECLUSTER_CONFIG_FILE") || FATAL "Error reading reCluster configuration file '$RECLUSTER_CONFIG_FILE'"
-  DEBUG "reCluster configuration:\n$(echo "$RECLUSTER_CONFIG" | jq .)"
 }
 
 # Install K3s
 install_k3s() {
-  _k3s_install_sh="install.k3s.sh"
+  _k3s_install_sh=install.k3s.sh
+  _k3s_config_file=/etc/rancher/k3s/config.yml
+  _k3s_config=
 
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
     # Airgap enabled
     _k3s_install_sh="$DIRNAME/$_k3s_install_sh"
+    _k3s_airgap_images=/var/lib/rancher/k3s/agent/images
     # Create directory
-    $SUDO mkdir -p /var/lib/rancher/k3s/agent/images/
+    $SUDO mkdir -p "$_k3s_airgap_images"
     # Move
     $SUDO mv --force "$AIRGAP_K3S_BIN" /usr/local/bin/k3s
-    $SUDO mv --force "$AIRGAP_K3S_IMAGES" /var/lib/rancher/k3s/agent/images/
+    $SUDO mv --force "$AIRGAP_K3S_IMAGES" "$_k3s_airgap_images"
   else
     # Airgap disabled
     _k3s_install_sh="$TMP_DIR/$_k3s_install_sh"
@@ -888,9 +866,10 @@ install_k3s() {
   [ -x "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' is not executable"
 
   # Configuration
-  INFO "Copying K3s configuration file '$K3S_CONFIG_FILE' to '/etc/rancher/k3s/config.yml'"
-  $SUDO mkdir -p /etc/rancher/k3s/
-  $SUDO cp "$K3S_CONFIG_FILE" /etc/rancher/k3s/config.yml
+  _k3s_config=$(echo "$CONFIG" | jq '.k3s' | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
+  INFO "Copying K3s configuration to '$_k3s_config_file'"
+  $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
+  printf "%s" "$_k3s_config" | $SUDO tee "$_k3s_config_file" > /dev/null
 
   # Install
   spinner_start "Installing K3s '$K3S_VERSION'"
@@ -907,7 +886,8 @@ install_k3s() {
 
 # Install Node exporter
 install_node_exporter() {
-  _node_exporter_install_sh="install.node_exporter.sh"
+  _node_exporter_install_sh=install.node_exporter.sh
+  _node_exporter_config=
 
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
@@ -929,10 +909,15 @@ install_node_exporter() {
   [ -f "$_node_exporter_install_sh" ] || FATAL "Node exporter installation script '$_node_exporter_install_sh' not found"
   [ -x "$_node_exporter_install_sh" ] || FATAL "Node exporter installation script '$_node_exporter_install_sh' is not executable"
 
+  # Configuration
+  INFO "Copying Node exporter configuration"
+  _node_exporter_config=$(echo "$CONFIG" | jq --raw-output '.node_exporter.collector | to_entries | map(if .value == true then ("--collector."+.key) else ("--no-collector."+.key) end) | join(" ")') || FATAL "Error reading Node exporter configuration"
+
   # Install
   spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
   env \
     INSTALL_NODE_EXPORTER_SKIP_START=true \
+    INSTALL_NODE_EXPORTER_EXEC="$_node_exporter_config" \
     INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
     INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
     "$_node_exporter_install_sh" || FATAL "Error installing Node exporter '$NODE_EXPORTER_VERSION'"
@@ -995,16 +980,15 @@ run_benchmarks() {
 }
 
 node_registration() {
-  spinner_start "Registering node"
-
-  _server_url=$(echo "$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires 'server: <URL>'"
+  _server_url=$(echo "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires 'server: <URL>'"
   # shellcheck disable=SC2016
   _data='{ "query": "mutation ($data: CreateNodeInput!) { createNode(data: $data) { id } }", "variables": { "data": '"$(echo "$NODE_FACTS" | jq --compact-output .)"' } }'
   _response=
 
-  DEBUG "Sending node registration data '$_data' to '$_server_url'"
+  spinner_start "Registering node at '$_server_url'"
 
   # Send node registration request
+  DEBUG "Sending node registration data '$_data' to '$_server_url'"
   case $DOWNLOADER in
     curl)
       _response=$(curl --fail --silent --location --show-error \
@@ -1021,26 +1005,25 @@ node_registration() {
     ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
-
   DEBUG "Received node registration response data '$_response' from '$_server_url'"
   spinner_stop
 
   RECLUSTER_NODE_ID=$(echo "$_response" | jq --raw-output '.data.createNode.id')
-  INFO "Node successfully registered with id '$RECLUSTER_NODE_ID'"
+  INFO "Node registered with id '$RECLUSTER_NODE_ID'"
 }
 
 # ================
 # CONFIGURATION
 # ================
+# Current directory
+# shellcheck disable=SC1007
+DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # Airgap environment flag
 AIRGAP_ENV=false
 # Benchmark time in seconds
 BENCH_TIME=16
-# Current directory
-# shellcheck disable=SC1007
-DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-# K3s configuration file
-K3S_CONFIG_FILE=
+# Configuration file
+CONFIG_FILE="$DIRNAME/config.yml"
 # K3s version
 K3S_VERSION=v1.23.6+k3s1
 # Log color flag
@@ -1049,8 +1032,6 @@ LOG_COLOR_ENABLE=true
 LOG_LEVEL=$LOG_LEVEL_INFO
 # Node exporter version
 NODE_EXPORTER_VERSION=v1.3.1
-# reCluster configuration file
-RECLUSTER_CONFIG_FILE=
 # Spinner flag
 SPINNER_ENABLE=true
 # Spinner symbols
@@ -1065,8 +1046,8 @@ NODE_FACTS={}
   parse_args "$@"
   verify_system
   setup_system
-  #install_k3s
-  #install_node_exporter
+  install_k3s
+  install_node_exporter
   read_system_info
   run_benchmarks
   node_registration
