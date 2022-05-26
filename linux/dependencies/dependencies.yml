@@ -24,22 +24,14 @@
 k3s:
   url: https://github.com/k3s-io/k3s
   assets:
-    ignore:
-      - e2e-passed-amd64-parallel.log
-      - e2e-passed-amd64-serial.log
-      - k3s-airgap-images-amd64.tar
-      - k3s-airgap-images-amd64.tar.zst
-      - k3s-airgap-images-arm.tar
-      - k3s-airgap-images-arm.tar.zst
-      - k3s-airgap-images-arm64.tar
-      - k3s-airgap-images-arm64.tar.zst
-      - k3s-airgap-images-s390x.tar
-      - k3s-airgap-images-s390x.tar.zst
-      - k3s-images.txt
-      - sha256sum-amd64.txt
-      - sha256sum-arm.txt
-      - sha256sum-arm64.txt
-      - sha256sum-s390x.txt
+    - k3s
+    - k3s-arm64
+    - k3s-armhf
+    - k3s-s390x
+    - k3s-airgap-images-amd64.tar.gz
+    - k3s-airgap-images-arm64.tar.gz
+    - k3s-airgap-images-arm.tar.gz
+    - k3s-airgap-images-s390x.tar.gz
   releases:
     - latest
     - v1.23.6+k3s1
@@ -49,20 +41,12 @@ k3s:
 node_exporter:
   url: https://github.com/prometheus/node_exporter
   assets:
-    ignore:
-      - node_exporter-[0-9].[0-9].[0-9].darwin-amd64.tar.gz
-      - node_exporter-[0-9].[0-9].[0-9].darwin-arm64.tar.gz
-      - node_exporter-[0-9].[0-9].[0-9].linux-386.tar.gz
-      - node_exporter-[0-9].[0-9].[0-9].linux-mips.tar.gz
-      - node_exporter-[0-9].[0-9].[0-9].linux-mips64.tar.gz
-      - node_exporter-[0-9].[0-9].[0-9].linux-mips64le.tar.gz
-      - node_exporter-[0-9].[0-9].[0-9].linux-mipsle.tar.gz
-      - node_exporter-[0-9].[0-9].[0-9].linux-ppc64.tar.gz
-      - node_exporter-[0-9].[0-9].[0-9].linux-ppc64le.tar.gz
-      - node_exporter-[0-9].[0-9].[0-9].netbsd-386.tar.gz
-      - node_exporter-[0-9].[0-9].[0-9].netbsd-amd64.tar.gz
-      - node_exporter-[0-9].[0-9].[0-9].openbsd-amd64.tar.gz
-      - sha256sums.txt
+    - node_exporter-[0-9].[0-9].[0-9].linux-amd64.tar.gz
+    - node_exporter-[0-9].[0-9].[0-9].linux-arm64.tar.gz
+    - node_exporter-[0-9].[0-9].[0-9].linux-armv5.tar.gz
+    - node_exporter-[0-9].[0-9].[0-9].linux-armv6.tar.gz
+    - node_exporter-[0-9].[0-9].[0-9].linux-armv7.tar.gz
+    - node_exporter-[0-9].[0-9].[0-9].linux-s390x.tar.gz
   releases:
     - latest
     - v1.3.1

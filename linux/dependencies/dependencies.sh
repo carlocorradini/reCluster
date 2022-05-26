@@ -77,8 +77,10 @@ sync_deps_clean() {
   local -
   set +o noglob
 
+  # TODO Better names
   local dep_fd_basename
   local fd_basename
+  local ufd_basename
   local config
 
   # Clean dependency directories
@@ -96,8 +98,6 @@ sync_deps_clean() {
           rm -f "$dep_fd"
         ;;
       esac
-
-      continue
     elif [ -d "$dep_fd" ]; then
       # Check directories
       if ! jq --exit-status --arg dep "$dep_fd_basename" 'has($dep)' <<< "$DEPS" > /dev/null 2>&1; then
@@ -130,7 +130,21 @@ sync_deps_clean() {
             rm -rf "$fd"
             continue
           fi
-        else FATAL "Unknown type '$fd'"; fi
+
+          # Clean remaining
+          for ufd in "$DIRNAME/$dep_fd_basename/$fd_basename"/*; do
+            [ -f "$ufd" ] || [ -d "$ufd" ] || continue
+
+            ufd_basename=$(basename "$ufd")
+
+            if [ "$(jq --raw-output --arg asset "$ufd_basename" 'any(.assets[]; ("^" + . + "$") as $keep | $asset | test($keep))' <<< "$config")" = false ]; then
+              # Remove
+              INFO "Removing '$dep_fd_basename' release '$fd_basename' file/directory '$ufd_basename'"
+              rm -rf "$ufd"
+              continue
+            fi
+          done
+        fi
       done
     fi
   done
@@ -191,8 +205,7 @@ sync_dep_release() {
       continue
     fi
     # Skip if ignored
-    if jq --exit-status '.assets.ignore' >/dev/null 2>&1 <<< "$config" \
-      && [ "$(jq --raw-output --arg asset "$asset_name" 'any(.assets.ignore[]; ("^" + . + "$") as $ignore | $asset | test($ignore))' <<< "$config")" = true ]; then
+    if [ "$(jq --raw-output --arg asset "$asset_name" 'any(.assets[]; ("^" + . + "$") as $keep | $asset | test($keep))' <<< "$config")" = false ]; then
       DEBUG "Skipping '$name' release '$release' asset '$asset_name' ignored"
       continue
     fi
