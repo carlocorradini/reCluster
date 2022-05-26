@@ -995,14 +995,14 @@ run_benchmarks() {
 
 # Install K3s
 install_k3s() {
-  _k3s_install_sh=install.k3s.sh
+  _k3s_install_sh=
   _k3s_config_file=/etc/rancher/k3s/config.yml
   _k3s_config=
 
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
     # Airgap enabled
-    _k3s_install_sh="$DIRNAME/$_k3s_install_sh"
+    _k3s_install_sh="$DIRNAME/dependencies/k3s/install.sh"
     _k3s_airgap_images=/var/lib/rancher/k3s/agent/images
     # Create directory
     $SUDO mkdir -p "$_k3s_airgap_images"
@@ -1011,7 +1011,7 @@ install_k3s() {
     $SUDO mv --force "$AIRGAP_K3S_IMAGES" "$_k3s_airgap_images"
   else
     # Airgap disabled
-    _k3s_install_sh="$TMP_DIR/$_k3s_install_sh"
+    _k3s_install_sh="$TMP_DIR/install.k3s.sh"
     # Download installer
     spinner_start "Downloading K3s installer"
     download "$_k3s_install_sh" https://get.k3s.io
@@ -1045,18 +1045,18 @@ install_k3s() {
 
 # Install Node exporter
 install_node_exporter() {
-  _node_exporter_install_sh=install.node_exporter.sh
+  _node_exporter_install_sh=
   _node_exporter_config=
 
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
     # Airgap enabled
-    _node_exporter_install_sh="$DIRNAME/$_node_exporter_install_sh"
+    _node_exporter_install_sh="$DIRNAME/dependencies/node_exporter/install.sh"
     # Move
     $SUDO mv --force "$AIRGAP_NODE_EXPORTER_BIN" /usr/local/bin/node_exporter
   else
     # Airgap disabled
-    _node_exporter_install_sh="$TMP_DIR/$_node_exporter_install_sh"
+    _node_exporter_install_sh="$TMP_DIR/install.node_exporter.sh"
     # Download installer
     spinner_start "Downloading Node exporter installer"
     download "$_node_exporter_install_sh" https://raw.githubusercontent.com/carlocorradini/node_exporter_installer/main/install.sh
