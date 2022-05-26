@@ -77,105 +77,62 @@ sync_deps_clean() {
   local -
   set +o noglob
 
-  local name
-  local found
+  local dep_fd_basename
+  local fd_basename
   local config
-  local dd_basename
-  local rd_basename
-  local f_basename
 
   # Clean dependency directories
-  for dd in "$DIRNAME"/*/; do
-    # Skip if not directory
-    [ -d "$dd" ] || continue
+  for dep_fd in "$DIRNAME"/*; do
+    dep_fd_basename=$(basename "$dep_fd")
 
-    # Set found to false
-    found=false
-    # Dependency directory basename
-    dd_basename=$(basename "$dd")
+    if [ -f "$dep_fd" ]; then
+      # Check files
 
-    # Dependencies
-    while read -r dep; do
-      name=$(jq --raw-output '.key' <<< "$dep")
+      case $dep_fd_basename in
+        .gitignore|dependencies.sh|dependencies.yml|README.md) ;; # Keep
+        *)
+          # Remove dependency directory
+          INFO "Removing '$dep_fd_basename' file"
+          rm -f "$dep_fd"
+        ;;
+      esac
 
-      # Check if dependency exists
-      if [ "$dd_basename" = "$name" ]; then
-        config=$(dep_config "$name")
-
-        # Clean release directories
-        for rd in "$DIRNAME/$name"/*/; do
-          # Skip if not directory
-          [ -d "$rd" ] || continue
-
-          # Set found to false
-          found=false
-          # Release directory basename
-          rd_basename=$(basename "$rd")
-
-          # Releases
-          while read -r release; do
-            release=$(jq --raw-output '.' <<< "$release")
-
-            # Check if release exists
-            if [ "$rd_basename" = "$release" ]; then
-              # Found
-              found=true
-              break
-            fi
-          done <<< "$(jq --compact-output '.releases[]' <<< "$config")"
-
-          # Skip if found
-          if [ "$found" = true ]; then continue; fi
-
-          # Remove directory
-          INFO "Removing '$name' release directory '$rd_basename'"
-          rm -rf "$rd"
-        done
-
-        # Clean files
-        if jq --exit-status 'has("files")' <<< "$config" > /dev/null 2>&1; then
-          for f in "$DIRNAME/$name"/*; do
-            # Skip if not file
-            [ -f "$f" ] || continue
-
-            # Set found to false
-            found=false
-            # File basename
-            f_basename=$(basename "$f")
-
-            # Files
-            while read -r file; do
-              file=$(jq --raw-output '.key' <<< "$file")
-
-              # Check if file exists
-              if [ "$f_basename" = "$file" ]; then
-                # Found
-                found=true
-                break
-              fi
-            done <<< "$(jq --compact-output '.files | to_entries[]' <<< "$config")"
-
-            # Skip if found
-            if [ "$found" = true ]; then continue; fi
-
-            # Remove file
-            INFO "Removing '$name' file '$f_basename'"
-            rm -f "$f"
-          done
-        fi
-
-        # Found
-        found=true
-        break
+      continue
+    elif [ -d "$dep_fd" ]; then
+      # Check directories
+      if ! jq --exit-status --arg dep "$dep_fd_basename" 'has($dep)' <<< "$DEPS" > /dev/null 2>&1; then
+        # Remove dependency directory
+        INFO "Removing '$dep_fd_basename' dependency directory"
+        rm -rf "$dep_fd"
+        continue
       fi
-    done <<< "$(jq --compact-output 'to_entries[]' <<< "$DEPS")"
 
-    # Skip if found
-    if [ "$found" = true ]; then continue; fi
+      # Dependency configuration
+      config=$(dep_config "$dep_fd_basename")
 
-    # Remove directory
-    INFO "Removing '$dd_basename' dependency directory"
-    rm -rf "$dd"
+      # Clean dependency
+      for fd in "$DIRNAME/$dep_fd_basename"/*; do
+        fd_basename=$(basename "$fd")
+
+        if [ -f "$fd" ]; then
+          # Check file
+          if ! jq --exit-status --arg file "$fd_basename" '.files | has($file)' <<< "$config" > /dev/null 2>&1; then
+            # Remove file
+            INFO "Removing '$dep_fd_basename' file '$fd_basename'"
+            rm -f "$fd"
+            continue
+          fi
+        elif [ -d "$fd" ]; then
+          # Check release directory
+          if ! jq --exit-status --arg dir "$fd_basename" '.releases | any(. == $dir)' <<< "$config" > /dev/null 2>&1; then
+            # Remove release directory
+            INFO "Removing '$dep_fd_basename' release directory '$fd_basename'"
+            rm -rf "$fd"
+            continue
+          fi
+        else FATAL "Unknown type '$fd'"; fi
+      done
+    fi
   done
 }
 
