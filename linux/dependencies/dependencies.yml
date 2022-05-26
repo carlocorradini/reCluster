@@ -1,0 +1,66 @@
+# MIT License
+#
+# Copyright (c) 2022-2022 Carlo Corradini
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+---
+k3s:
+  url: https://github.com/k3s-io/k3s
+  assets:
+    ignore:
+      - e2e-passed-amd64-parallel.log
+      - e2e-passed-amd64-serial.log
+      - k3s-airgap-images-amd64.tar
+      - k3s-airgap-images-amd64.tar.zst
+      - k3s-airgap-images-arm.tar
+      - k3s-airgap-images-arm.tar.zst
+      - k3s-airgap-images-arm64.tar
+      - k3s-airgap-images-arm64.tar.zst
+      - k3s-airgap-images-s390x.tar
+      - k3s-airgap-images-s390x.tar.zst
+      - k3s-images.txt
+      - sha256sum-amd64.txt
+      - sha256sum-arm.txt
+      - sha256sum-arm64.txt
+      - sha256sum-s390x.txt
+  releases:
+    - latest
+    - v1.23.6+k3s1
+
+node_exporter:
+  url: https://github.com/prometheus/node_exporter
+  assets:
+    ignore:
+      - node_exporter-[0-9].[0-9].[0-9].darwin-amd64.tar.gz
+      - node_exporter-[0-9].[0-9].[0-9].darwin-arm64.tar.gz
+      - node_exporter-[0-9].[0-9].[0-9].linux-386.tar.gz
+      - node_exporter-[0-9].[0-9].[0-9].linux-mips.tar.gz
+      - node_exporter-[0-9].[0-9].[0-9].linux-mips64.tar.gz
+      - node_exporter-[0-9].[0-9].[0-9].linux-mips64le.tar.gz
+      - node_exporter-[0-9].[0-9].[0-9].linux-mipsle.tar.gz
+      - node_exporter-[0-9].[0-9].[0-9].linux-ppc64.tar.gz
+      - node_exporter-[0-9].[0-9].[0-9].linux-ppc64le.tar.gz
+      - node_exporter-[0-9].[0-9].[0-9].netbsd-386.tar.gz
+      - node_exporter-[0-9].[0-9].[0-9].netbsd-amd64.tar.gz
+      - node_exporter-[0-9].[0-9].[0-9].openbsd-amd64.tar.gz
+      - sha256sums.txt
+  releases:
+    - latest
+    - v1.3.1

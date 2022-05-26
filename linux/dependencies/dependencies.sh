@@ -28,7 +28,7 @@
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Dependencies configuration file
-DEPS_CONFIG_FILE="$DIRNAME/dependencies.json"
+DEPS_CONFIG_FILE="$DIRNAME/dependencies.yml"
 readonly DEPS_CONFIG_FILE
 # Dependencies configuration file content
 DEPS=
@@ -38,7 +38,7 @@ SYNC=false
 SYNC_FORCE=false
 
 # Commons
-source "$DIRNAME/../scripts/__commons.sh"
+source "$DIRNAME/../../scripts/__commons.sh"
 
 # ================
 # FUNCTIONS
@@ -62,14 +62,14 @@ EOF
 # Assert dependency $1 exists
 # @param $1 Dependency name
 assert_dep() {
-  [ "$(jq --raw-output --arg name "$1" 'any(.[]; .name == $name)' <<< "$DEPS")" = true ] || FATAL "Dependency '$1' does not exists"
+  jq --exit-status --arg name "$1" 'has($name)' <<< "$DEPS" > /dev/null 2>&1 || FATAL "Dependency '$1' does not exists"
 }
 
 # Return dependency configuration
 # @param $1 Dependency name
 dep_config() {
   assert_dep "$1"
-  jq --arg name "$1" '.[] | select(.name == $name)' <<< "$DEPS"
+  jq --arg name "$1" '.[$name]' <<< "$DEPS"
 }
 
 # Clean dependencies environment
@@ -94,7 +94,7 @@ sync_deps_clean() {
 
     # Dependencies
     while read -r dep; do
-      name=$(jq --raw-output '.name' <<< "$dep")
+      name=$(jq --raw-output '.key' <<< "$dep")
 
       # Check if dependency exists
       if [ "$dd_basename" = "$name" ]; then
@@ -132,7 +132,7 @@ sync_deps_clean() {
         found=true
         break
       fi
-    done <<< "$(jq --compact-output '.[]' <<< "$DEPS")"
+    done <<< "$(jq --compact-output 'to_entries[]' <<< "$DEPS")"
 
     # Skip if found
     if [ "$found" = true ]; then continue; fi
@@ -218,6 +218,7 @@ verify_system() {
   assert_cmd grep
   assert_cmd jq
   assert_cmd sed
+  assert_cmd yq
 
   assert_downloader
 }
@@ -264,10 +265,8 @@ read_config() {
   [ -f "$DEPS_CONFIG_FILE" ] || FATAL "Dependencies configuration file not found at '$DEPS_CONFIG_FILE'"
 
   # Read config file
-  DEPS=$(<"$DEPS_CONFIG_FILE")
-
-  # Check JSON
-  jq --exit-status . >/dev/null 2>&1 <<< "$DEPS" || FATAL "Configuration file contains invalid JSON"
+  DEPS=$(yq e --output-format=json --no-colors '.' "$DEPS_CONFIG_FILE") || FATAL "Configuration file '$DEPS_CONFIG_FILE' is invalid"
+  DEBUG "Configuration:\n$(jq '.' <<< "$DEPS")"
 }
 
 # Synchronize dependency
@@ -283,15 +282,15 @@ sync_deps() {
 
   # Dependencies
   while read -r dep; do
-    name=$(jq --raw-output '.name' <<< "$dep")
+    name=$(jq --raw-output '.key' <<< "$dep")
     INFO "Syncing '$name'"
     # Releases
     while read -r release; do
       release=$(jq --raw-output '.' <<< "$release")
       INFO "Syncing '$name' release '$release'"
       sync_dep "$name" "$release"
-    done <<< "$(jq --compact-output '.releases[]' <<< "$dep")"
-  done <<< "$(jq --compact-output '.[]' <<< "$DEPS")"
+    done <<< "$(jq --compact-output '.value.releases[]' <<< "$dep")"
+  done <<< "$(jq --compact-output 'to_entries[]' <<< "$DEPS")"
 
   INFO "Successfully synced '$num_deps' dependencies"
 }
