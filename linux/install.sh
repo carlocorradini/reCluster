@@ -284,27 +284,40 @@ assert_cmd() {
 }
 
 # Assert command features
-# @param $1 Command
+# @param $1 Command name
 # @param $@ Command options
 assert_cmd_feature() {
   "$@" > /dev/null 2>&1 || FATAL "Command '$1' is not fully featured, see https://command-not-found.com/$1 for update or installation"
 }
 
-# Assert a downloader command is installed
-# @param $@ Downloader commands list
-downloader_cmd() {
-  # Cycle downloader commands
-  for _cmd in "$@"; do
-    # Check if exists and executable
-    if [ -x "$(command -v "$_cmd")" ]; then
-      DOWNLOADER=$_cmd
-      DEBUG "Downloader command '$DOWNLOADER' found at '$(command -v "$_cmd")'"
-      return
-    fi
-  done
+# Assert init system
+assert_init_system() {
+  # OpenRC
+  if [ -x /sbin/openrc-run ]; then
+    INIT_SYSTEM=openrc
+    return
+  fi
 
-  # Not found
-  FATAL "Unable to find any downloader command in list '$*'"
+  # systemd
+  if [ -x /bin/systemctl ] || type systemctl > /dev/null 2>&1; then
+    INIT_SYSTEM=systemd
+    return
+  fi
+
+  # Not supported
+  FATAL "No supported init system 'OpenRC' or 'systemd' found"
+}
+
+# Verify network downloader executable
+# @param $1 Downloader command name
+verify_downloader() {
+  # Return failure if it doesn't exist or is no executable
+  [ -x "$(command -v "$1")" ] || return 1
+
+  # Set verified executable as our downloader program and return success
+  DOWNLOADER=$1
+  DEBUG "Downloader command '$DOWNLOADER' found at '$(command -v "$1")'"
+  return 0
 }
 
 # Download a file
@@ -568,6 +581,92 @@ run_io_bench() {
     \tWrite Random Mmap '$(echo "$_write_rand_mmap" | numfmt --to=si)b/s'"
 }
 
+node_registration() {
+  _server_url=$(echo "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires 'server: <URL>'"
+  # shellcheck disable=SC2016
+  _data='{ "query": "mutation ($data: CreateNodeInput!) { createNode(data: $data) { id } }", "variables": { "data": '"$(echo "$NODE_FACTS" | jq --compact-output .)"' } }'
+  _response=
+
+  INFO "Registering node at '$_server_url'"
+
+  # Send node registration request
+  DEBUG "Sending node registration data '$_data' to '$_server_url'"
+  case $DOWNLOADER in
+    curl)
+      _response=$(curl --fail --silent --location --show-error \
+        --request POST \
+        --header 'Content-Type: application/json' \
+        --url "$_server_url" \
+        --data "$_data") || FATAL "Error sending node registration request to '$_server_url'"
+    ;;
+    wget)
+      _response=$(wget --quiet --output-document=- \
+        --header='Content-Type: application/json' \
+        --post-data="$_data" \
+        "$_server_url" 2>&1) || FATAL "Error sending node registration request to '$_server_url'"
+    ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
+  esac
+  DEBUG "Received node registration response data '$_response' from '$_server_url'"
+
+  # Check error response
+  if echo "$_response" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
+    FATAL "Error registering node:\n$(echo "$_response" | jq .)";
+  fi
+
+  RECLUSTER_NODE_ID=$(echo "$_response" | jq --raw-output '.data.createNode.id')
+  INFO "Node registered with id '$RECLUSTER_NODE_ID'"
+}
+
+# reCluster service OpenRC
+recluster_service_openrc() {
+  _recluster_service_name=recluster
+  _recluster_service_file="/etc/init.d/$_recluster_service_name"
+
+  INFO "openrc: Creating reCluster service file '$_recluster_service_file'"
+  $SUDO tee "$_recluster_service_file" > /dev/null << EOF
+#!/sbin/openrc-run
+
+description="reCluster status"
+
+depend() {
+  after k3s-recluster
+}
+
+command="$1"
+command_args="--status TODO"
+EOF
+
+  $SUDO chmod 0755 $_recluster_service_file
+
+  INFO "openrc: Enabling reCluster service '$_recluster_service_name' for default runlevel"
+  $SUDO rc-update add "$_recluster_service_name" default >/dev/null
+}
+
+# recluster service systemd
+recluster_service_systemd() {
+  _recluster_service_name=recluster
+  _recluster_service_file="/etc/systemd/system/$_recluster_service_name.service"
+
+  INFO "systemd: Creating reCluster service file '$_recluster_service_file'"
+  $SUDO tee "$_recluster_service_file" > /dev/null << EOF
+[Unit]
+Description=reCluster status
+After=k3s-recluster.service
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=$1 --status TODO
+EOF
+
+  INFO "systemd: Enabling reCluster service '$_recluster_service_name' unit"
+  $SUDO systemctl enable "$_recluster_service_name" > /dev/null
+  $SUDO systemctl daemon-reload > /dev/null
+}
+
 ################################################################################################################################
 
 # Parse command line arguments
@@ -736,7 +835,14 @@ verify_system() {
   fi
 
   # Downloader command
-  downloader_cmd curl wget
+  verify_downloader curl || verify_downloader wget || FATAL "Unable to find 'curl' or 'wget' downloader command"
+
+  # Init system
+  assert_init_system
+
+  # reCluster directories
+  [ ! -d "$RECLUSTER_ETC_DIR" ] || FATAL "reCluster etc directory '$RECLUSTER_ETC_DIR' already exists"
+  [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "reCluster opt directory '$RECLUSTER_OPT_DIR' already exists"
 
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
@@ -835,98 +941,6 @@ setup_system() {
   fi
 }
 
-# Install K3s
-install_k3s() {
-  _k3s_install_sh=install.k3s.sh
-  _k3s_config_file=/etc/rancher/k3s/config.yml
-  _k3s_config=
-
-  # Check airgap environment
-  if [ "$AIRGAP_ENV" = true ]; then
-    # Airgap enabled
-    _k3s_install_sh="$DIRNAME/$_k3s_install_sh"
-    _k3s_airgap_images=/var/lib/rancher/k3s/agent/images
-    # Create directory
-    $SUDO mkdir -p "$_k3s_airgap_images"
-    # Move
-    $SUDO mv --force "$AIRGAP_K3S_BIN" /usr/local/bin/k3s
-    $SUDO mv --force "$AIRGAP_K3S_IMAGES" "$_k3s_airgap_images"
-  else
-    # Airgap disabled
-    _k3s_install_sh="$TMP_DIR/$_k3s_install_sh"
-    # Download installer
-    spinner_start "Downloading K3s installer"
-    download "$_k3s_install_sh" https://get.k3s.io
-    chmod 755 "$_k3s_install_sh"
-    spinner_stop
-  fi
-
-  # Checks
-  [ -f "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' not found"
-  [ -x "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' is not executable"
-
-  # Configuration
-  _k3s_config=$(echo "$CONFIG" | jq '.k3s' | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
-  INFO "Copying K3s configuration to '$_k3s_config_file'"
-  $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
-  printf "%s" "$_k3s_config" | $SUDO tee "$_k3s_config_file" > /dev/null
-
-  # Install
-  spinner_start "Installing K3s '$K3S_VERSION'"
-  env \
-    INSTALL_K3S_SKIP_START=true \
-    INSTALL_K3S_VERSION="$K3S_VERSION" \
-    INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
-    "$_k3s_install_sh" || FATAL "Error installing K3s '$K3S_VERSION'"
-  spinner_stop
-
-  # Success
-  INFO "Successfully installed K3s '$K3S_VERSION'"
-}
-
-# Install Node exporter
-install_node_exporter() {
-  _node_exporter_install_sh=install.node_exporter.sh
-  _node_exporter_config=
-
-  # Check airgap environment
-  if [ "$AIRGAP_ENV" = true ]; then
-    # Airgap enabled
-    _node_exporter_install_sh="$DIRNAME/$_node_exporter_install_sh"
-    # Move
-    $SUDO mv --force "$AIRGAP_NODE_EXPORTER_BIN" /usr/local/bin/node_exporter
-  else
-    # Airgap disabled
-    _node_exporter_install_sh="$TMP_DIR/$_node_exporter_install_sh"
-    # Download installer
-    spinner_start "Downloading Node exporter installer"
-    download "$_node_exporter_install_sh" https://raw.githubusercontent.com/carlocorradini/node_exporter_installer/main/install.sh
-    chmod 755 "$_node_exporter_install_sh"
-    spinner_stop
-  fi
-
-  # Checks
-  [ -f "$_node_exporter_install_sh" ] || FATAL "Node exporter installation script '$_node_exporter_install_sh' not found"
-  [ -x "$_node_exporter_install_sh" ] || FATAL "Node exporter installation script '$_node_exporter_install_sh' is not executable"
-
-  # Configuration
-  INFO "Copying Node exporter configuration"
-  _node_exporter_config=$(echo "$CONFIG" | jq --raw-output '.node_exporter.collector | to_entries | map(if .value == true then ("--collector."+.key) else ("--no-collector."+.key) end) | join(" ")') || FATAL "Error reading Node exporter configuration"
-
-  # Install
-  spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
-  env \
-    INSTALL_NODE_EXPORTER_SKIP_START=true \
-    INSTALL_NODE_EXPORTER_EXEC="$_node_exporter_config" \
-    INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
-    INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
-    "$_node_exporter_install_sh" || FATAL "Error installing Node exporter '$NODE_EXPORTER_VERSION'"
-  spinner_stop
-
-  # Success
-  INFO "Successfully installed Node exporter '$NODE_EXPORTER_VERSION'"
-}
-
 # Read system information
 read_system_info() {
   spinner_start "System Info"
@@ -979,43 +993,199 @@ run_benchmarks() {
   spinner_stop
 }
 
-node_registration() {
-  _server_url=$(echo "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires 'server: <URL>'"
-  # shellcheck disable=SC2016
-  _data='{ "query": "mutation ($data: CreateNodeInput!) { createNode(data: $data) { id } }", "variables": { "data": '"$(echo "$NODE_FACTS" | jq --compact-output .)"' } }'
-  _response=
+# Install K3s
+install_k3s() {
+  _k3s_install_sh=install.k3s.sh
+  _k3s_config_file=/etc/rancher/k3s/config.yml
+  _k3s_config=
 
-  spinner_start "Registering node at '$_server_url'"
-
-  # Send node registration request
-  DEBUG "Sending node registration data '$_data' to '$_server_url'"
-  case $DOWNLOADER in
-    curl)
-      _response=$(curl --fail --silent --location --show-error \
-        --request POST \
-        --header 'Content-Type: application/json' \
-        --url "$_server_url" \
-        --data "$_data") || FATAL "Error sending node registration request to '$_server_url'"
-    ;;
-    wget)
-      _response=$(wget --quiet --output-document=- \
-        --header='Content-Type: application/json' \
-        --post-data="$_data" \
-        "$_server_url" 2>&1) || FATAL "Error sending node registration request to '$_server_url'"
-    ;;
-    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
-  esac
-  spinner_stop
-
-  DEBUG "Received node registration response data '$_response' from '$_server_url'"
-
-  # Check error response
-  if echo "$_response" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
-    FATAL "Error registering node:\n$(echo "$_response" | jq .)";
+  # Check airgap environment
+  if [ "$AIRGAP_ENV" = true ]; then
+    # Airgap enabled
+    _k3s_install_sh="$DIRNAME/$_k3s_install_sh"
+    _k3s_airgap_images=/var/lib/rancher/k3s/agent/images
+    # Create directory
+    $SUDO mkdir -p "$_k3s_airgap_images"
+    # Move
+    $SUDO mv --force "$AIRGAP_K3S_BIN" /usr/local/bin/k3s
+    $SUDO mv --force "$AIRGAP_K3S_IMAGES" "$_k3s_airgap_images"
+  else
+    # Airgap disabled
+    _k3s_install_sh="$TMP_DIR/$_k3s_install_sh"
+    # Download installer
+    spinner_start "Downloading K3s installer"
+    download "$_k3s_install_sh" https://get.k3s.io
+    chmod 755 "$_k3s_install_sh"
+    spinner_stop
   fi
 
-  RECLUSTER_NODE_ID=$(echo "$_response" | jq --raw-output '.data.createNode.id')
-  INFO "Node registered with id '$RECLUSTER_NODE_ID'"
+  # Checks
+  [ -f "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' not found"
+  [ -x "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' is not executable"
+
+  # Configuration
+  _k3s_config=$(echo "$CONFIG" | jq '.k3s' | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
+  INFO "Copying K3s configuration to '$_k3s_config_file'"
+  $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
+  printf "%s" "$_k3s_config" | $SUDO tee "$_k3s_config_file" > /dev/null
+
+  # Install
+  spinner_start "Installing K3s '$K3S_VERSION'"
+  env \
+    INSTALL_K3S_SKIP_START=true \
+    INSTALL_K3S_NAME=recluster \
+    INSTALL_K3S_VERSION="$K3S_VERSION" \
+    INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
+    "$_k3s_install_sh" || FATAL "Error installing K3s '$K3S_VERSION'"
+  spinner_stop
+
+  # Success
+  INFO "Successfully installed K3s '$K3S_VERSION'"
+}
+
+# Install Node exporter
+install_node_exporter() {
+  _node_exporter_install_sh=install.node_exporter.sh
+  _node_exporter_config=
+
+  # Check airgap environment
+  if [ "$AIRGAP_ENV" = true ]; then
+    # Airgap enabled
+    _node_exporter_install_sh="$DIRNAME/$_node_exporter_install_sh"
+    # Move
+    $SUDO mv --force "$AIRGAP_NODE_EXPORTER_BIN" /usr/local/bin/node_exporter
+  else
+    # Airgap disabled
+    _node_exporter_install_sh="$TMP_DIR/$_node_exporter_install_sh"
+    # Download installer
+    spinner_start "Downloading Node exporter installer"
+    download "$_node_exporter_install_sh" https://raw.githubusercontent.com/carlocorradini/node_exporter_installer/main/install.sh
+    chmod 755 "$_node_exporter_install_sh"
+    spinner_stop
+  fi
+
+  # Checks
+  [ -f "$_node_exporter_install_sh" ] || FATAL "Node exporter installation script '$_node_exporter_install_sh' not found"
+  [ -x "$_node_exporter_install_sh" ] || FATAL "Node exporter installation script '$_node_exporter_install_sh' is not executable"
+
+  # Configuration
+  INFO "Copying Node exporter configuration"
+  _node_exporter_config=$(echo "$CONFIG" | jq --raw-output '.node_exporter.collector | to_entries | map(if .value == true then ("--collector."+.key) else ("--no-collector."+.key) end) | join(" ")') || FATAL "Error reading Node exporter configuration"
+
+  # Install
+  spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
+  env \
+    INSTALL_NODE_EXPORTER_SKIP_START=true \
+    INSTALL_NODE_EXPORTER_EXEC="$_node_exporter_config" \
+    INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
+    INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
+    "$_node_exporter_install_sh" || FATAL "Error installing Node exporter '$NODE_EXPORTER_VERSION'"
+  spinner_stop
+
+  # Success
+  INFO "Successfully installed Node exporter '$NODE_EXPORTER_VERSION'"
+}
+
+# Install reCluster
+install_recluster() {
+  _recluster_node_id=
+  _recluster_config_file="$RECLUSTER_ETC_DIR/config.yml"
+  _recluster_config=
+  _recluster_status_sh="$RECLUSTER_OPT_DIR/status.sh"
+
+  spinner_start "Installing reCluster"
+
+  # Directories
+  $SUDO mkdir -p "$RECLUSTER_ETC_DIR"
+  $SUDO mkdir -p "$RECLUSTER_OPT_DIR"
+
+  # Node registration
+  node_registration
+  _recluster_node_id=RECLUSTER_NODE_ID
+
+  # Configuration
+  _recluster_config=$(echo "$CONFIG" \
+                      | jq --arg id "$_recluster_node_id" '
+                          .recluster
+                          | .id = $id
+                        ' \
+                      | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading reCluster configuration"
+  INFO "Copying reCluster configuration to '$_recluster_config_file'"
+  $SUDO mkdir -p "$(dirname "$_recluster_config_file")"
+  printf "%s" "$_recluster_config" | $SUDO tee "$_recluster_config_file" > /dev/null
+
+  # Bootstrap script
+  $SUDO tee "$_recluster_status_sh" > /dev/null << EOF
+#!/usr/bin/env sh
+
+# Fail on error
+set -o errexit
+# Disable wildcard character expansion
+set -o noglob
+
+# ================
+# LOGGER
+# ================
+# Fatal log message
+FATAL() {
+  printf '[FATAL] %s\n' "\$@" >&2
+  exit 1
+}
+# Info log message
+INFO() {
+  printf '[INFO ] %s\n' "\$@"
+}
+
+# ================
+# FUNCTIONS
+# ================
+read_config() {
+  INFO "Reading configuration file '$_recluster_config_file'"
+  [ -f "$_recluster_config_file" ] || FATAL "Configuration file '$_recluster_config_file' not found"
+  CONFIG=$(yq e --output-format=json --no-colors '.' "$_recluster_config_file") || FATAL "Error reading configuration file '$_recluster_config_file'"
+}
+
+update_status() {
+  INFO "Updating status '\$1'"
+}
+
+# ================
+# CONFIGURATION
+# ================
+CONFIG=
+DOWNLOADER=$DOWNLOADER
+
+# ================
+# MAIN
+# ================
+{
+  read_config
+  update_status "\$1"
+}
+EOF
+
+  # Init service
+  case $INIT_SYSTEM in
+    openrc) recluster_service_openrc "$_recluster_status_sh" ;;
+    systemd) recluster_service_systemd "$_recluster_status_sh" ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
+
+  spinner_stop
+  # Success
+  INFO "Successfully installed reCluster"
+}
+
+start() {
+  case $INIT_SYSTEM in
+    openrc)
+      $SUDO rc-service k3s-recluster start
+    ;;
+    systemd)
+      $SUDO systemctl start k3s-recluster
+    ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
 }
 
 # ================
@@ -1038,6 +1208,10 @@ LOG_COLOR_ENABLE=true
 LOG_LEVEL=$LOG_LEVEL_INFO
 # Node exporter version
 NODE_EXPORTER_VERSION=v1.3.1
+# reCluster etc directory
+RECLUSTER_ETC_DIR=/etc/recluster
+# reCluster opt directory
+RECLUSTER_OPT_DIR=/opt/recluster
 # Spinner flag
 SPINNER_ENABLE=true
 # Spinner symbols
@@ -1052,9 +1226,10 @@ NODE_FACTS={}
   parse_args "$@"
   verify_system
   setup_system
-  install_k3s
-  install_node_exporter
   read_system_info
   run_benchmarks
-  node_registration
+  install_k3s
+  install_node_exporter
+  install_recluster
+  start
 }
