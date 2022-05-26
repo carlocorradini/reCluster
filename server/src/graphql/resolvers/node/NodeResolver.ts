@@ -33,8 +33,8 @@ import {
 } from 'type-graphql';
 import { Service, Inject } from 'typedi';
 import { GraphQLBigInt } from 'graphql-scalars';
-import configMeasurements, { digital } from 'convert-units';
 import { NodeService } from '~/services';
+import { byteConverter } from '~/utils';
 import { DigitalByteUnit } from '../../enums';
 import { Node } from '../../entities';
 import {
@@ -42,8 +42,6 @@ import {
   FindUniqueNodeArgs,
   FindManyNodeArgs
 } from '../../args';
-
-const convert = configMeasurements({ digital });
 
 @Resolver(Node)
 @Service()
@@ -78,11 +76,6 @@ export class NodeResolver {
     })
     unit?: DigitalByteUnit
   ) {
-    // FIXME BigInt conversion
-    return Math.round(
-      convert(Number(node.ram))
-        .from(DigitalByteUnit.B)
-        .to(unit ?? DigitalByteUnit.B)
-    );
+    return byteConverter({ value: node.ram, to: unit });
   }
 }

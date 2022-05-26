@@ -25,13 +25,11 @@
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { Service, Inject } from 'typedi';
 import { GraphQLBigInt } from 'graphql-scalars';
-import configMeasurements, { digital } from 'convert-units';
 import { InterfaceService } from '~/services';
+import { bitConverter } from '~/utils';
 import { DigitalBitUnit } from '../../enums';
 import { Interface } from '../../entities';
 import { FindUniqueInterfaceArgs, FindManyInterfaceArgs } from '../../args';
-
-const convert = configMeasurements({ digital });
 
 @Resolver(Interface)
 @Service()
@@ -64,11 +62,6 @@ export class InterfaceResolver {
     })
     unit?: DigitalBitUnit
   ) {
-    // FIXME BigInt conversion
-    return Math.round(
-      convert(Number(inf.speed))
-        .from(DigitalBitUnit.b)
-        .to(unit ?? DigitalBitUnit.b)
-    );
+    return bitConverter({ value: inf.speed, to: unit });
   }
 }

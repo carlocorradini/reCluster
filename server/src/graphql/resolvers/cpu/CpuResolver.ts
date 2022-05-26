@@ -25,21 +25,11 @@
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { Service, Inject } from 'typedi';
 import { GraphQLNonNegativeInt } from 'graphql-scalars';
-import configMeasurements, { digital } from 'convert-units';
 import { CpuService } from '~/services';
+import { byteConverter } from '~/utils';
 import { DigitalByteUnit } from '../../enums';
 import { Cpu } from '../../entities';
 import { FindUniqueCpuArgs, FindManyCpuArgs } from '../../args';
-
-const convert = configMeasurements({ digital });
-
-function cacheConverter(value: number, toUnit?: DigitalByteUnit) {
-  return Math.round(
-    convert(value)
-      .from(DigitalByteUnit.B)
-      .to(toUnit ?? DigitalByteUnit.B)
-  );
-}
 
 @Resolver(Cpu)
 @Service()
@@ -69,7 +59,7 @@ export class CpuResolver {
     })
     unit?: DigitalByteUnit
   ) {
-    return cacheConverter(cpu.cacheL1d, unit);
+    return byteConverter({ value: cpu.cacheL1d, to: unit });
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
@@ -81,7 +71,7 @@ export class CpuResolver {
     })
     unit?: DigitalByteUnit
   ) {
-    return cacheConverter(cpu.cacheL1i, unit);
+    return byteConverter({ value: cpu.cacheL1i, to: unit });
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
@@ -93,7 +83,7 @@ export class CpuResolver {
     })
     unit?: DigitalByteUnit
   ) {
-    return cacheConverter(cpu.cacheL2, unit);
+    return byteConverter({ value: cpu.cacheL2, to: unit });
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
@@ -105,6 +95,6 @@ export class CpuResolver {
     })
     unit?: DigitalByteUnit
   ) {
-    return cacheConverter(cpu.cacheL3, unit);
+    return byteConverter({ value: cpu.cacheL3, to: unit });
   }
 }

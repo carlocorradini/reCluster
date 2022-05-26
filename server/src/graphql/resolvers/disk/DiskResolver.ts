@@ -25,13 +25,11 @@
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { Service, Inject } from 'typedi';
 import { GraphQLBigInt } from 'graphql-scalars';
-import configMeasurements, { digital } from 'convert-units';
 import { DiskService } from '~/services';
+import { byteConverter } from '~/utils';
 import { DigitalByteUnit } from '../../enums';
 import { Disk } from '../../entities';
 import { FindUniqueDiskArgs, FindManyDiskArgs } from '../../args';
-
-const convert = configMeasurements({ digital });
 
 @Resolver(Disk)
 @Service()
@@ -61,11 +59,6 @@ export class DiskResolver {
     })
     unit?: DigitalByteUnit
   ) {
-    // FIXME BigInt conversion
-    return Math.round(
-      convert(Number(disk.size))
-        .from(DigitalByteUnit.B)
-        .to(unit ?? DigitalByteUnit.B)
-    );
+    return byteConverter({ value: disk.size, to: unit });
   }
 }

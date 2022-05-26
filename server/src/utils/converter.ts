@@ -22,46 +22,37 @@
  * SOFTWARE.
  */
 
-import 'reflect-metadata';
-import 'dotenv/config';
-import 'json-bigint-patch';
-import { ApolloServer } from 'apollo-server';
-import { formatErrorApolloServer } from './helpers';
-import { config } from './config';
-import { prisma } from './db';
-import { schema, context } from './graphql';
-import { logger } from './logger';
+import configMeasurements, { digital } from 'convert-units';
+import { DigitalByteUnit, DigitalBitUnit } from '~/graphql/enums';
 
-const server = new ApolloServer({
-  schema,
-  context,
-  formatError: formatErrorApolloServer
-});
+const convert = configMeasurements({ digital });
 
-async function main() {
-  // Database
-  try {
-    await prisma.$connect();
-    logger.info(`Database connected`);
-  } catch (error) {
-    logger.fatal(`Database error: ${error}`);
-    throw error;
-  }
+export type ByteConverter = {
+  value: number | bigint;
+  from?: DigitalByteUnit;
+  to?: DigitalByteUnit;
+};
 
-  // Server
-  try {
-    const serverInfo = await server.listen({
-      port: config.server.port,
-      host: config.server.host
-    });
-    logger.info(`Server started at ${serverInfo.url}`);
-  } catch (error) {
-    logger.fatal(`Server error: ${error}`);
-    throw error;
-  }
+export function byteConverter(args: ByteConverter) {
+  // FIXME BigInt conversion
+  return Math.floor(
+    convert(typeof args.value === 'number' ? args.value : Number(args.value))
+      .from(args.from ?? DigitalByteUnit.B)
+      .to(args.to ?? DigitalByteUnit.B)
+  );
 }
 
-main().catch((error) => {
-  logger.fatal(`Error starting server: ${error}`);
-  throw error;
-});
+export type BitConverter = {
+  value: number | bigint;
+  from?: DigitalBitUnit;
+  to?: DigitalBitUnit;
+};
+
+export function bitConverter(args: BitConverter) {
+  // FIXME BigInt conversion
+  return Math.floor(
+    convert(typeof args.value === 'number' ? args.value : Number(args.value))
+      .from(args.from ?? DigitalBitUnit.b)
+      .to(args.to ?? DigitalBitUnit.b)
+  );
+}
