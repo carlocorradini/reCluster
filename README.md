@@ -31,7 +31,7 @@ local machine for development and testing purposes.
 1. Scripts Permissions
 
    ```console
-   chmod -R +x scripts linux server/scripts
+   chmod -R +x scripts/*.sh linux/*sh server/scripts/*.sh
    ```
 
 1. Install Dependencies
