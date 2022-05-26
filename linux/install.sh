@@ -953,7 +953,7 @@ read_system_info() {
   # RAM info
   read_ram_info
   DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .ram)"
-  INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .ram.total | numfmt --to=iec-i)B'"
+  INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .ram | numfmt --to=iec-i)B'"
 
   # Disk(s) info
   read_disks_info
