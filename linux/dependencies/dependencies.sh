@@ -79,8 +79,10 @@ sync_deps_clean() {
 
   local name
   local found
+  local config
   local dd_basename
   local rd_basename
+  local f_basename
 
   # Clean dependency directories
   for dd in "$DIRNAME"/*/; do
@@ -98,6 +100,8 @@ sync_deps_clean() {
 
       # Check if dependency exists
       if [ "$dd_basename" = "$name" ]; then
+        config=$(dep_config "$name")
+
         # Clean release directories
         for rd in "$DIRNAME/$name"/*/; do
           # Skip if not directory
@@ -118,7 +122,7 @@ sync_deps_clean() {
               found=true
               break
             fi
-          done <<< "$(dep_config "$name" | jq --compact-output '.releases[]')"
+          done <<< "$(jq --compact-output '.releases[]' <<< "$config")"
 
           # Skip if found
           if [ "$found" = true ]; then continue; fi
@@ -127,6 +131,38 @@ sync_deps_clean() {
           INFO "Removing '$name' release directory '$rd_basename'"
           rm -rf "$rd"
         done
+
+        # Clean files
+        if jq --exit-status 'has("files")' <<< "$config" > /dev/null 2>&1; then
+          for f in "$DIRNAME/$name"/*; do
+            # Skip if not file
+            [ -f "$f" ] || continue
+
+            # Set found to false
+            found=false
+            # File basename
+            f_basename=$(basename "$f")
+
+            # Files
+            while read -r file; do
+              file=$(jq --raw-output '.key' <<< "$file")
+
+              # Check if file exists
+              if [ "$f_basename" = "$file" ]; then
+                # Found
+                found=true
+                break
+              fi
+            done <<< "$(jq --compact-output '.files | to_entries[]' <<< "$config")"
+
+            # Skip if found
+            if [ "$found" = true ]; then continue; fi
+
+            # Remove file
+            INFO "Removing '$name' file '$f_basename'"
+            rm -f "$f"
+          done
+        fi
 
         # Found
         found=true
@@ -143,12 +179,11 @@ sync_deps_clean() {
   done
 }
 
-# Synchronize dependency
+# Synchronize dependency release
 # @param $1 Name
 # @param $2 Release
-sync_dep() {
-  [ $# -eq 2 ] || FATAL "sync_dep requires exactly 2 arguments but '$#' found"
-  assert_dep "$1"
+sync_dep_release() {
+  [ $# -eq 2 ] || FATAL "sync_dep_release requires exactly 2 arguments but '$#' found"
 
   local config
   config=$(dep_config "$1")
@@ -185,16 +220,16 @@ sync_dep() {
   fi
 
   # Download assets
-  local asset_name
-  local asset_url
-  local asset_output
   while read -r asset; do
+    local asset_name
+    local asset_url
+    local asset_path
     asset_name=$(jq --raw-output .name <<< "$asset")
     asset_url=$(jq --raw-output .url <<< "$asset")
-    asset_output="$release_dir/$asset_name"
+    asset_path="$release_dir/$asset_name"
 
     # Skip if not force and asset already exists
-    if [ "$SYNC_FORCE" = false ] && [ -f "$asset_output" ]; then
+    if [ "$SYNC_FORCE" = false ] && [ -f "$asset_path" ]; then
       DEBUG "Skipping '$name' release '$release' asset '$asset_name' already exists"
       continue
     fi
@@ -206,9 +241,62 @@ sync_dep() {
     fi
 
     # Download
-    INFO "Downloading '$name' release '$release' asset '$asset_name' into '$asset_output'"
-    download "$asset_output" "$asset_url"
+    INFO "Downloading '$name' release '$release' asset '$asset_name' into '$asset_path'"
+    download "$asset_path" "$asset_url"
   done <<< "$(jq --compact-output '.[]' <<< "$assets")"
+}
+
+# Synchronize dependency
+# @param $1 Name
+sync_dep_files() {
+  [ $# -eq 1 ] || FATAL "sync_dep_files requires exactly 1 arguments but '$#' found"
+
+  local config
+  config=$(dep_config "$1")
+  local name=$1
+
+  # Files
+  while read -r file; do
+    local file_name
+    local file_url
+    local file_path
+    file_name=$(jq --raw-output '.key' <<< "$file")
+    file_url=$(jq --raw-output '.value' <<< "$file")
+    file_path="$(readlink -f "$DIRNAME")/$name/$file_name"
+
+    # Skip if not force and file already exists
+    if [ "$SYNC_FORCE" = false ] && [ -f "$file_path" ]; then
+      DEBUG "Skipping '$name' file '$file_name' already exists"
+      continue
+    fi
+
+    # Download
+    INFO "Downloading '$name' file '$file_name' from '$file_url' into '$file_path'"
+    download "$file_path" "$file_url"
+  done <<< "$(jq --compact-output '.files | to_entries[]' <<< "$config")"
+}
+
+# Synchronize dependency
+# @param $1 Name
+sync_dep() {
+  [ $# -eq 1 ] || FATAL "sync_dep requires exactly 1 arguments but '$#' found"
+
+  local config
+  config=$(dep_config "$1")
+  local name=$1
+
+  # Releases
+  while read -r release; do
+    release=$(jq --raw-output '.' <<< "$release")
+    INFO "Syncing '$name' release '$release'"
+    sync_dep_release "$name" "$release"
+  done <<< "$(jq --compact-output '.releases[]' <<< "$config")"
+
+  # Files
+  if jq --exit-status 'has("files")' <<< "$config" > /dev/null 2>&1; then
+    INFO "Syncing '$name' files"
+    sync_dep_files "$name"
+  fi
 }
 
 ################################################################################################################################
@@ -279,17 +367,11 @@ sync_deps() {
 
   # Clean environment
   sync_deps_clean
-
   # Dependencies
   while read -r dep; do
     name=$(jq --raw-output '.key' <<< "$dep")
     INFO "Syncing '$name'"
-    # Releases
-    while read -r release; do
-      release=$(jq --raw-output '.' <<< "$release")
-      INFO "Syncing '$name' release '$release'"
-      sync_dep "$name" "$release"
-    done <<< "$(jq --compact-output '.value.releases[]' <<< "$dep")"
+    sync_dep "$name"
   done <<< "$(jq --compact-output 'to_entries[]' <<< "$DEPS")"
 
   INFO "Successfully synced '$num_deps' dependencies"
