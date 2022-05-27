@@ -24,16 +24,15 @@
 profile_recluster() {
   profile_standard
   title="reCluster"
-  desc="reCluster Alpine"
-  arch="x86_64"
-	apkovl="genapkovl-recluster.sh"
-  syslinux_serial="0 115200"
-  apks="$apks jq util-linux"
-  for _kf in $kernel_flavors; do
-      apks="$apks linux-$_kf"
-      for _ka in $kernel_addons; do
-          apks="$apks $_ka-$_kf"
-      done
-  done
-  apks="$apks linux-firmware"
+  desc="reCluster Alpine Linux"
+  arch="x86_64 aarch64 armv7 s390x"
+  apks="$apks coreutils ethtool iproute2 jq ncurses procps sudo sysbench util-linux yq"
+  local _k _a
+	for _k in $kernel_flavors; do
+		apks="$apks linux-$_k"
+		for _a in $kernel_addons; do
+			apks="$apks $_a-$_k"
+		done
+	done
+	apks="$apks linux-firmware"
 }

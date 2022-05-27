@@ -65,8 +65,6 @@
     "**/.shellcheckrc",
     "**/cspell.json",
     "server/migrations",
-    "linux/install.k3s.sh",
-    "linux/install.node_exporter.sh",
     "dependencies/k3s",
     "dependencies/node_exporter"
   ]

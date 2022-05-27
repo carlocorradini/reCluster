@@ -21,6 +21,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# ================
+# CONFIGURATION
+# ================
 # Current directory
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
@@ -43,6 +46,9 @@ source "$DIRNAME/../../scripts/__commons.sh"
 # Assert
 assert_cmd docker
 
+# ================
+# MAIN
+# ================
 # PostgreSQL
 INFO "Starting PostgreSQL '$POSTGRESQL_IMAGE'"
 docker run \

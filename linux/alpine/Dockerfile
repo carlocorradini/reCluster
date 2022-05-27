@@ -20,8 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FROM alpine:3.15
+# ================
+# CONFIGURATION
+# ================
+# Alpine Linux version
+ARG ALPINE_VERSION=3.16
 
+FROM alpine:${ALPINE_VERSION}
+
+# Install Required tools
 RUN apk add --no-cache \
   alpine-sdk \
   build-base \
@@ -34,23 +41,30 @@ RUN apk add --no-cache \
   squashfs-tools \
   sudo
 
+# Install EFI tools
 RUN apk add --no-cache \
   mtools \
   dosfstools \
   grub-efi
 
+# Create user build of group abuild
 RUN adduser \
   --disabled-password \
   --home /home/build \
   --ingroup abuild \
   build
 
+# Give administrative access to abuild group
 RUN echo "%abuild ALL=(ALL) ALL" > /etc/sudoers.d/abuild
 
-RUN apk update
-
+# Create signing keys
 RUN abuild-keygen -n --install --append
 
+# Clone aports repository
 RUN git clone --depth=1 https://gitlab.alpinelinux.org/alpine/aports.git /home/build/aports
 
+# Update apk index
+RUN apk update
+
+# Bootstrap
 ENTRYPOINT [ "/bin/sh" ]

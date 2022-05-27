@@ -21,33 +21,111 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# ================
+# CONFIGURATION
+# ================
 # Current directory
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
-# Alpine version
-readonly ALPINE_VERSION=v3.15
+# Alpine Linux version
+readonly ALPINE_VERSION=3.16
+# reCluster Alpine Linux image
+readonly RECLUSTER_ALPINE_IMAGE="recluster-alpine:$ALPINE_VERSION"
+# reCluster Alpine Linux Dockerfile
+readonly RECLUSTER_ALPINE_DOCKERFILE="$DIRNAME/Dockerfile"
 # mkimage profile
 MKIMAGE_PROFILE=$(readlink -f "$DIRNAME/mkimg.recluster.sh")
 readonly MKIMAGE_PROFILE
 # mkimage iso directory
 MKIMAGE_ISO_DIR=$(readlink -f "$DIRNAME/iso")
 readonly MKIMAGE_ISO_DIR
-# genapkovl
-GENAPKOVL=$(readlink -f "$DIRNAME/genapkovl-recluster.sh")
-readonly GENAPKOVL
+# mkimage architectures
+MKIMAGE_ARCHS=("x86_64")
+# Container identifier
+CONTAINER=
 
-if [ -d  "$MKIMAGE_ISO_DIR" ]; then
-  rm -rf "$MKIMAGE_ISO_DIR"
-fi
-mkdir "$MKIMAGE_ISO_DIR"
+# Commons
+source "$DIRNAME/../../scripts/__commons.sh"
 
-CONTAINER=$(docker run --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/mkimg.recluster.sh" --volume "$GENAPKOVL:/home/build/aports/scripts/genapkovl-recluster.sh" --volume "$MKIMAGE_ISO_DIR:/home/build/iso" --detach --interactive --tty recluster/alpine:latest)
-readonly CONTAINER
+# Assert
+assert_cmd docker
+assert_docker_image "$RECLUSTER_ALPINE_IMAGE" "$RECLUSTER_ALPINE_DOCKERFILE"
 
-docker exec "$CONTAINER" chmod +x /home/build/aports/scripts/mkimg.recluster.sh /home/build/aports/scripts/genapkovl-recluster.sh
+# Cleanup
+cleanup() {
+  # Exit code
+  _exit_code=$?
 
-docker exec "$CONTAINER" /home/build/aports/scripts/mkimage.sh --tag "$ALPINE_VERSION" --outdir /home/build/iso --arch x86_64 --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/main" --repository "http://dl-cdn.alpinelinux.org/alpine/$ALPINE_VERSION/community" --profile recluster
+  # Docker container
+  if [ -n "$CONTAINER" ]; then
+    docker stop "$CONTAINER"
+    docker rm "$CONTAINER"
+  fi
 
-docker stop "$CONTAINER"
+	exit "$_exit_code"
+}
 
-docker rm "$CONTAINER"
+# Trap
+trap cleanup INT QUIT TERM EXIT
+
+# ================
+# FUNCTIONS
+# ================
+# ISO directory
+function iso_dir() {
+  if [ -d  "$MKIMAGE_ISO_DIR" ]; then
+    WARN "Removing ISO directory '$MKIMAGE_ISO_DIR'"
+    rm -rf "$MKIMAGE_ISO_DIR"
+  else
+    INFO "Creating ISO directory '$MKIMAGE_ISO_DIR'"
+    mkdir "$MKIMAGE_ISO_DIR"
+  fi
+}
+
+# Prepare reCluster container
+function prepare_container() {
+  local profile_file_name
+  profile_file_name=$(basename "$MKIMAGE_PROFILE")
+
+  # Start container
+  CONTAINER=$(docker run \
+                --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/$profile_file_name" \
+                --volume "$MKIMAGE_ISO_DIR:/home/build/iso" \
+                --detach \
+                --interactive \
+                --tty \
+                "$RECLUSTER_ALPINE_IMAGE") || FATAL "Error starting Docker image '$RECLUSTER_ALPINE_IMAGE'"
+  readonly CONTAINER
+
+  # Script permission
+  docker exec "$CONTAINER" chmod +x "/home/build/aports/scripts/$profile_file_name"
+}
+
+# Build ISO image
+function builder() {
+  [ $# -eq 1 ] || FATAL "Builder requires exactly 1 arguments but '$#' found"
+
+  local profile_name
+  profile_name=$(basename "$MKIMAGE_PROFILE" | sed -E 's/.*mkimg\.(.*)\.sh.*/\1/')
+
+  INFO "Building '$profile_name' architecture '$arch'"
+
+  docker exec "$CONTAINER" \
+    /home/build/aports/scripts/mkimage.sh \
+    --tag "v$ALPINE_VERSION" \
+    --outdir /home/build/iso \
+    --arch "$1" \
+    --repository "http://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/main" \
+    --repository "http://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/community" \
+    --profile "$profile_name"
+}
+
+
+# ================
+# MAIN
+# ================
+{
+  iso_dir
+  prepare_container
+  for arch in "${MKIMAGE_ARCHS[@]}"; do builder "$arch"; done
+}
