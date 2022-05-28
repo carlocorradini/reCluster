@@ -1088,31 +1088,31 @@ install_node_exporter() {
 
 # Install reCluster
 install_recluster() {
-  _recluster_node_id=
+  # etc directory
   _recluster_config_file="$RECLUSTER_ETC_DIR/config.yml"
-  _recluster_config=
+  _recluster_id_file="$RECLUSTER_ETC_DIR/id"
+  # opt directory
   _recluster_status_sh="$RECLUSTER_OPT_DIR/status.sh"
 
   spinner_start "Installing reCluster"
 
   # Directories
+  DEBUG "Creating reCluster etc directory '$RECLUSTER_ETC_DIR'"
   $SUDO mkdir -p "$RECLUSTER_ETC_DIR"
+  DEBUG "Creating reCluster opt directory '$RECLUSTER_OPT_DIR'"
   $SUDO mkdir -p "$RECLUSTER_OPT_DIR"
+
+  # Configuration
+  _recluster_config=$(echo "$CONFIG" jq '.recluster' | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading reCluster configuration"
+  INFO "Writing reCluster configuration to '$_recluster_config_file'"
+  printf "%s" "$_recluster_config" | $SUDO tee "$_recluster_config_file" > /dev/null
 
   # Node registration
   node_registration
-  _recluster_node_id=RECLUSTER_NODE_ID
-
-  # Configuration
-  _recluster_config=$(echo "$CONFIG" \
-                      | jq --arg id "$_recluster_node_id" '
-                          .recluster
-                          | .id = $id
-                        ' \
-                      | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading reCluster configuration"
-  INFO "Copying reCluster configuration to '$_recluster_config_file'"
-  $SUDO mkdir -p "$(dirname "$_recluster_config_file")"
-  printf "%s" "$_recluster_config" | $SUDO tee "$_recluster_config_file" > /dev/null
+  printf "%s" "$RECLUSTER_NODE_ID" | $SUDO tee "$_recluster_id_file" > /dev/null
+  # TODO Node token
+  # INFO "Writing reCluster token '$RECLUSTER_NODE_TOKEN' to '$_recluster_token_file'"
+  # printf "%s" "$RECLUSTER_NODE_TOKEN" | $SUDO tee "$_recluster_token_file" > /dev/null
 
   # Bootstrap script
   $SUDO tee "$_recluster_status_sh" > /dev/null << EOF
@@ -1176,12 +1176,19 @@ EOF
   INFO "Successfully installed reCluster"
 }
 
-start() {
+# Start services
+start_services() {
   case $INIT_SYSTEM in
     openrc)
+      INFO "openrc: Starting Node exporter"
+      $SUDO rc-service node_exporter start || true
+      INFO "openrc: Starting K3s"
       $SUDO rc-service k3s-recluster start
     ;;
     systemd)
+      INFO "systemd: Starting Node exporter"
+      $SUDO systemtc start node_exporter || true
+      INFO "systemd: Starting K3s"
       $SUDO systemctl start k3s-recluster
     ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
@@ -1231,5 +1238,5 @@ NODE_FACTS={}
   install_k3s
   install_node_exporter
   install_recluster
-  start
+  start_services
 }

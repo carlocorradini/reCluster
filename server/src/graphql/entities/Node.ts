@@ -24,8 +24,19 @@
 
 import { GraphQLID } from 'graphql';
 import { Node as NodePrisma } from '@prisma/client';
-import { Field, ObjectType } from 'type-graphql';
+import { Field, ObjectType, registerEnumType } from 'type-graphql';
 import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
+
+export enum NodeStatus {
+  ACTIVE = 'ACTIVE',
+  ACTIVE_WORKING = 'ACTIVE_WORKING',
+  INACTIVE = 'INACTIVE',
+  ERROR = 'ERROR'
+}
+registerEnumType(NodeStatus, {
+  name: 'NodeStatus',
+  description: 'Node status'
+});
 
 @ObjectType({ description: 'Node' })
 export class Node implements NodePrisma {
@@ -36,6 +47,9 @@ export class Node implements NodePrisma {
   ram!: bigint;
 
   cpuId!: string;
+
+  @Field(() => NodeStatus, { description: 'Node status' })
+  status!: NodeStatus;
 
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
   createdAt!: Date;

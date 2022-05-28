@@ -12,6 +12,7 @@
     "**/build/",
     "**/coverage/",
     "**/node_modules/",
+    "server/prisma/",
     "linux/install.sh",
     "linux/alpine/mkimg.recluster.sh",
     "**/Dockerfile",

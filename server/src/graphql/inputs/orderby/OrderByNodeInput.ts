@@ -42,6 +42,9 @@ export class OrderByNodeInput
   @Field(() => SortOrder, { nullable: true, description: 'Cpu identifier' })
   cpuId?: SortOrder;
 
+  @Field(() => SortOrder, { nullable: true, description: 'Node status' })
+  status?: SortOrder;
+
   @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
   createdAt?: SortOrder;
 

@@ -22,11 +22,33 @@
  * SOFTWARE.
  */
 
-import { ArgsType, Field } from 'type-graphql';
-import { CreateNodeInput } from '../../inputs';
+import { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { NodeStatus } from '../../entities';
 
-@ArgsType()
-export class CreateNodeArgs {
-  @Field({ description: 'Node data' })
-  data!: CreateNodeInput;
+@InputType({
+  isAbstract: true,
+  description: 'Node status filter'
+})
+export class NodeStatusFilter implements Prisma.EnumNodeStatusFilter {
+  @Field(() => NodeStatus, {
+    nullable: true,
+    description: 'Node status equals'
+  })
+  equals?: NodeStatus;
+
+  @Field({ nullable: true, description: 'Node status not equals' })
+  not?: NodeStatusFilter;
+
+  @Field(() => [NodeStatus], {
+    nullable: true,
+    description: 'Node status exists in list'
+  })
+  in?: NodeStatus[];
+
+  @Field(() => [NodeStatus], {
+    nullable: true,
+    description: 'Node status does not exists in list'
+  })
+  notIn?: NodeStatus[];
 }

@@ -30,7 +30,7 @@ import { CreateCpuInput } from './CreateCpuInput';
 import { CreateDiskInput } from './CreateDiskInput';
 import { CreateInterfaceInput } from './CreateInterfaceInput';
 
-type ICreateNodeInput = PickRequired<Prisma.NodeCreateInput> & {
+type ICreateNodeInput = PickRequired<Omit<Prisma.NodeCreateInput, 'status'>> & {
   cpu: CreateCpuInput;
   disks: CreateDiskInput[];
   interfaces: CreateInterfaceInput[];

@@ -33,7 +33,6 @@ import {
 } from 'graphql-scalars';
 
 export enum CpuArchitecture {
-  x86 = 'x86',
   x86_64 = 'x86_64'
 }
 registerEnumType(CpuArchitecture, {

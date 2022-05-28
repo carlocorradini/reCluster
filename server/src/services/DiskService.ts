@@ -32,7 +32,7 @@ export class DiskService {
   public async findMany(
     args: Omit<Prisma.DiskFindManyArgs, 'cursor'> & { cursor?: string }
   ) {
-    logger.info(`Disk service find many: ${JSON.stringify(args)}`);
+    logger.debug(`Disk service find many: ${JSON.stringify(args)}`);
 
     return prisma.disk.findMany({
       ...args,
@@ -43,7 +43,7 @@ export class DiskService {
   public async findUnique(
     args: Omit<Prisma.DiskFindUniqueArgs, 'where'> & { where: { id: string } }
   ) {
-    logger.info(`Disk service find unique: ${JSON.stringify(args)}`);
+    logger.debug(`Disk service find unique: ${JSON.stringify(args)}`);
 
     return prisma.disk.findUnique(args);
   }

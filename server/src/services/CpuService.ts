@@ -32,7 +32,7 @@ export class CpuService {
   public async findMany(
     args: Omit<Prisma.CpuFindManyArgs, 'cursor'> & { cursor?: string }
   ) {
-    logger.info(`Cpu service find many: ${JSON.stringify(args)}`);
+    logger.debug(`Cpu service find many: ${JSON.stringify(args)}`);
 
     return prisma.cpu.findMany({
       ...args,
@@ -43,7 +43,7 @@ export class CpuService {
   public async findUnique(
     args: Omit<Prisma.CpuFindUniqueArgs, 'where'> & { where: { id: string } }
   ) {
-    logger.info(`Cpu service find unique: ${JSON.stringify(args)}`);
+    logger.debug(`Cpu service find unique: ${JSON.stringify(args)}`);
 
     return prisma.cpu.findUnique(args);
   }

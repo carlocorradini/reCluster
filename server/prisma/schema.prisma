@@ -30,15 +30,23 @@ datasource db {
 }
 
 model Node {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   ram       BigInt
-  cpu       Cpu      @relation(fields: [cpuId], references: [id], map: "cpu_id")
+  cpu       Cpu        @relation(fields: [cpuId], references: [id], map: "cpu_id")
   cpuId     String
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @updatedAt @db.Timestamptz()
+  status    NodeStatus
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime   @updatedAt @db.Timestamptz()
 
   disks      Disk[]
   interfaces Interface[]
+}
+
+enum NodeStatus {
+  ACTIVE
+  ACTIVE_WORKING
+  INACTIVE
+  ERROR
 }
 
 model Disk {
@@ -64,6 +72,25 @@ model Interface {
   @@unique([address])
 }
 
+enum InterfaceWol {
+  // Wke on ARP
+  a
+  // Wake on broadcast messages
+  b
+  // Disable
+  d
+  // Wake on MagicPacket
+  g
+  // Wake on multicast messages
+  m
+  // Wake on PHY activity
+  p
+  // Enable SecureOn password for MagicPacket
+  s
+  // Wake on unicast messages
+  u
+}
+
 model Cpu {
   id              String          @id @default(cuid())
   architecture    CpuArchitecture
@@ -86,27 +113,7 @@ model Cpu {
   @@unique([vendor, family, model])
 }
 
-enum InterfaceWol {
-  // Wke on ARP
-  a
-  // Wake on broadcast messages
-  b
-  // Disable
-  d
-  // Wake on MagicPacket
-  g
-  // Wake on multicast messages
-  m
-  // Wake on PHY activity
-  p
-  // Enable SecureOn password for MagicPacket
-  s
-  // Wake on unicast messages
-  u
-}
-
 enum CpuArchitecture {
-  x86
   x86_64
 }
 

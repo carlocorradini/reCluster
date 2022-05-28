@@ -32,7 +32,7 @@ export class InterfaceService {
   public async findMany(
     args: Omit<Prisma.InterfaceFindManyArgs, 'cursor'> & { cursor?: string }
   ) {
-    logger.info(`Interface service find many: ${JSON.stringify(args)}`);
+    logger.debug(`Interface service find many: ${JSON.stringify(args)}`);
 
     return prisma.interface.findMany({
       ...args,
@@ -45,7 +45,7 @@ export class InterfaceService {
       where: { id: string };
     }
   ) {
-    logger.info(`Interface service find unique: ${JSON.stringify(args)}`);
+    logger.debug(`Interface service find unique: ${JSON.stringify(args)}`);
 
     return prisma.interface.findUnique(args);
   }

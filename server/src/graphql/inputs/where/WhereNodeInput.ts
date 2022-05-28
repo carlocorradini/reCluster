@@ -24,7 +24,12 @@
 
 import { Field, InputType } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { StringFilter, TimestampFilter, BigIntFilter } from '../filters';
+import {
+  StringFilter,
+  TimestampFilter,
+  BigIntFilter,
+  NodeStatusFilter
+} from '../filters';
 
 @InputType({ isAbstract: true, description: 'Node where input' })
 export class WhereNodeInput
@@ -44,6 +49,9 @@ export class WhereNodeInput
 
   @Field({ nullable: true, description: 'Cpu identifier' })
   cpuId?: StringFilter;
+
+  @Field({ nullable: true, description: 'Node status' })
+  status?: NodeStatusFilter;
 
   @Field({ nullable: true, description: 'Creation timestamp' })
   createdAt?: TimestampFilter;

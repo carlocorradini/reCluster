@@ -24,6 +24,7 @@
 
 import { Prisma } from '@prisma/client';
 import { Service } from 'typedi';
+import { NodeStatus } from '~/graphql/entities';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
 
@@ -32,7 +33,7 @@ export class NodeService {
   public async findMany(
     args: Omit<Prisma.NodeFindManyArgs, 'cursor'> & { cursor?: string }
   ) {
-    logger.info(`Node service find many: ${JSON.stringify(args)}`);
+    logger.debug(`Node service find many: ${JSON.stringify(args)}`);
 
     return prisma.node.findMany({
       ...args,
@@ -43,14 +44,17 @@ export class NodeService {
   public async findUnique(
     args: Omit<Prisma.NodeFindUniqueArgs, 'where'> & { where: { id: string } }
   ) {
-    logger.info(`Node service find unique: ${JSON.stringify(args)}`);
+    logger.debug(`Node service find unique: ${JSON.stringify(args)}`);
 
     return prisma.node.findUnique(args);
   }
 
   public async create(
     args: Omit<Prisma.NodeCreateArgs, 'data'> & {
-      data: Omit<Prisma.NodeCreateInput, 'cpu' | 'disks' | 'interfaces'> & {
+      data: Omit<
+        Prisma.NodeCreateInput,
+        'cpu' | 'status' | 'disks' | 'interfaces'
+      > & {
         cpu: Omit<Prisma.CpuCreateWithoutNodesInput, 'vulnerabilities'> & {
           vulnerabilities: Prisma.Enumerable<string>;
         };
@@ -93,6 +97,7 @@ export class NodeService {
       ...args,
       data: {
         ...args.data,
+        status: NodeStatus.ACTIVE,
         cpu: { connect: { vendor_family_model } },
         disks: { createMany: { data: args.data.disks, skipDuplicates: true } },
         interfaces: {

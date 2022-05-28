@@ -80,6 +80,11 @@ export type NonNullableRecursive<T> = ExpandRecursively<NonNullable<T>>;
 export type NullableOptional<T> = PickRequired<T> & Nullable<PickOptional<T>>;
 
 /**
+ * Set properties K of T to optional
+ */
+export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
+/**
  * Properties and nested properties of T are optional
  */
 export type PartialRecursive<T> = ExpandRecursively<Partial<T>>;
