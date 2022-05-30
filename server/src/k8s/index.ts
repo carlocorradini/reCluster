@@ -22,26 +22,4 @@
  * SOFTWARE.
  */
 
-import { PrismaClient } from '@prisma/client';
-import pino from 'pino';
-
-const logger = pino({ level: 'debug', name: 'prisma-seed' });
-const prisma = new PrismaClient();
-
-async function main() {
-  logger.debug('Connecting database');
-  await prisma.$connect();
-
-  logger.info('Start seeding ...');
-  logger.info('Seeding finished');
-}
-
-main()
-  .catch((error) => {
-    logger.error(error);
-    throw error;
-  })
-  .finally(async () => {
-    logger.debug('Disconnecting database');
-    await prisma.$disconnect();
-  });
+export * from './NodeInformer';

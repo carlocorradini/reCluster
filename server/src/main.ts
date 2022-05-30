@@ -26,10 +26,13 @@ import 'reflect-metadata';
 import 'dotenv/config';
 import 'json-bigint-patch';
 import { ApolloServer } from 'apollo-server';
+import * as k8s from '@kubernetes/client-node';
+import Container from 'typedi';
 import { formatErrorApolloServer } from './helpers';
 import { config } from './config';
 import { prisma } from './db';
 import { schema, context } from './graphql';
+import { NodeInformer } from './k8s';
 import { logger } from './logger';
 
 const server = new ApolloServer({
@@ -39,6 +42,21 @@ const server = new ApolloServer({
 });
 
 async function main() {
+  // K8s
+  try {
+    const k8sConfig = new k8s.KubeConfig();
+    k8sConfig.loadFromDefault();
+    const k8sApi = k8sConfig.makeApiClient(k8s.CoreV1Api);
+
+    Container.set(k8s.KubeConfig, k8sConfig);
+    Container.set(k8s.CoreV1Api, k8sApi);
+    Container.get(NodeInformer);
+    logger.info('K8s configured');
+  } catch (error) {
+    logger.fatal(`K8s error: ${error}`);
+    throw error;
+  }
+
   // Database
   try {
     await prisma.$connect();
@@ -61,7 +79,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  logger.fatal(`Error starting server: ${error}`);
+main().catch((error: Error) => {
+  logger.fatal(`Error starting: ${error.message}`);
   throw error;
 });

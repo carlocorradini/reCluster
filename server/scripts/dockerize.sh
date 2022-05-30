@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -23,64 +24,24 @@
 # ================
 # CONFIGURATION
 # ================
-# Node.js version
-ARG NODEJS_VERSION=16
-# Working directory
-ARG WORKDIR=/usr/app
-# Port
-ARG PORT=80
+# Current directory
+DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly DIRNAME
+# reCluster server Dockerfile
+readonly RECLUSTER_SERVER_DOCKERFILE="$DIRNAME/../Dockerfile"
+# reCluster server version
+readonly RECLUSTER_SERVER_VERSION=latest
+# reCluster server image
+readonly RECLUSTER_SERVER_IMAGE="recluster:$RECLUSTER_SERVER_VERSION"
+
+# Commons
+source "$DIRNAME/../../scripts/__commons.sh"
+
+# Assert
+assert_cmd docker
 
 # ================
-# BUILDER
+# MAIN
 # ================
-FROM node:$NODEJS_VERSION-alpine AS builder
-
-# Working directory
-ARG WORKDIR
-WORKDIR $WORKDIR
-
-# Copy build files
-COPY package.json package-lock.json ./
-COPY .npmrc ./
-COPY tsconfig.json ./
-COPY prisma ./prisma
-# Copy source files
-COPY src ./src
-
-# Install development dependencies
-RUN npm ci --development --ignore-scripts
-
-# Generate prisma
-RUN npm run db:generate
-
-# Build
-RUN npm run build
-
-# ================
-# PRODUCTION
-# ================
-FROM node:$NODEJS_VERSION-alpine
-
-# Author
-LABEL org.opencontainers.image.authors="Carlo Corradini <carlo.corradini98@gmail.com>"
-
-# Working directory
-ARG WORKDIR
-WORKDIR $WORKDIR
-
-# Copy package.json and package-lock.json
-COPY --from=builder $WORKDIR/package.json $WORKDIR/package-lock.json ./
-# Copy build files
-COPY --from=builder $WORKDIR/build ./
-
-# Install production dependencies
-RUN npm ci --production --ignore-scripts
-
-# Copy prisma
-COPY --from=builder $WORKDIR/node_modules/.prisma $WORKDIR/node_modules/.prisma
-
-# Expose
-EXPOSE $PORT
-
-# Bootstrap
-CMD [ "node", "main.js" ]
+INFO "Building Docker image '$RECLUSTER_SERVER_IMAGE' using Dockerfile '$RECLUSTER_SERVER_DOCKERFILE'"
+docker build --rm -t "$RECLUSTER_SERVER_IMAGE" -f "$RECLUSTER_SERVER_DOCKERFILE" "$DIRNAME/.." || FATAL "Error building Docker image '$RECLUSTER_SERVER_IMAGE' using Dockerfile '$RECLUSTER_SERVER_DOCKERFILE'"

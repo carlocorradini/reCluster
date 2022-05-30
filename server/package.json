@@ -66,6 +66,7 @@
     "typescript-transform-paths": "^3.3.1"
   },
   "dependencies": {
+    "@kubernetes/client-node": "^0.16.3",
     "@prisma/client": "^3.14.0",
     "apollo-server": "^3.8.1",
     "apollo-server-errors": "^3.3.1",

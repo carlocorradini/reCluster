@@ -153,7 +153,7 @@ function assert_docker_image() {
     fi
 
     INFO "Building Docker image '$1' using Dockerfile '$2'"
-    docker build --rm -t "$1" -f "$2" "$__DIRNAME/.."
+    docker build --rm -t "$1" -f "$2" "$__DIRNAME/.." || FATAL "Error building Docker image '$1' using Dockerfile '$2'"
   else
     DEBUG "Docker image '$1' found"
   fi

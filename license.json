@@ -64,7 +64,7 @@
     "**/.prettierrc",
     "**/.shellcheckrc",
     "**/cspell.json",
-    "server/migrations",
+    "server/prisma/migrations",
     "dependencies/k3s",
     "dependencies/node_exporter"
   ]
