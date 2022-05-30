@@ -29,7 +29,7 @@
   "devDependencies": {
     "@commitlint/cli": "^17.0.1",
     "@commitlint/config-conventional": "^17.0.0",
-    "@cspell/dict-bash": "^2.0.2",
+    "@cspell/dict-bash": "^2.0.3",
     "@cspell/dict-node": "^2.0.0",
     "@cspell/dict-npm": "^2.0.5",
     "@cspell/dict-typescript": "^2.0.0",
