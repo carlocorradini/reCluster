@@ -26,14 +26,11 @@ import * as k8s from '@kubernetes/client-node';
 import { Inject, Service } from 'typedi';
 import { NodeService } from '~/services';
 import { logger } from '~/logger';
+import { kubeconfig } from './kubeconfig';
 
 @Service()
 export class NodeInformer {
   public static readonly RESTART_TIME_MS = 500;
-
-  private readonly api!: k8s.CoreV1Api;
-
-  private readonly config!: k8s.KubeConfig;
 
   @Inject()
   private readonly nodeService!: NodeService;
@@ -41,12 +38,12 @@ export class NodeInformer {
   private readonly informer: k8s.Informer<k8s.V1Node>;
 
   public constructor() {
-    this.config = new k8s.KubeConfig();
-    this.config.loadFromDefault();
-    this.api = this.config.makeApiClient(k8s.CoreV1Api);
-    this.informer = k8s.makeInformer(this.config, '/api/v1/nodes', () =>
-      this.api.listNode()
+    const api = kubeconfig.makeApiClient(k8s.CoreV1Api);
+
+    this.informer = k8s.makeInformer(kubeconfig, '/api/v1/nodes', () =>
+      api.listNode()
     );
+
     this.informer.on(k8s.ADD, this.onAdd);
     this.informer.on(k8s.UPDATE, this.onUpdate);
     this.informer.on(k8s.DELETE, this.onDelete);
@@ -54,14 +51,32 @@ export class NodeInformer {
     this.informer.on(k8s.ERROR, this.onError as k8s.ObjectCallback<k8s.V1Node>);
   }
 
+  private restart() {
+    logger.debug(
+      `Restarting Node informer after ${NodeInformer.RESTART_TIME_MS} ms`
+    );
+
+    setTimeout(() => {
+      logger.info('Restarting Node informer');
+      this.start();
+    }, NodeInformer.RESTART_TIME_MS);
+  }
+
   public async start() {
-    logger.info('Starting Node informer');
-    await this.informer.start();
+    try {
+      logger.info('Starting Node informer');
+      await this.informer.start();
+      logger.info('Node informer started');
+    } catch (error) {
+      logger.error(`Error starting Node informer: ${error}`);
+      this.restart();
+    }
   }
 
   public async stop() {
     logger.info('Stopping Node informer');
     await this.informer.stop();
+    logger.info('Node informer stopped');
   }
 
   private onAdd(node: k8s.V1Node) {
@@ -82,13 +97,6 @@ export class NodeInformer {
 
   private onError(error: Error) {
     logger.error(`Node informer error: ${error.message}`);
-    logger.debug(
-      `Restarting Node informer after ${NodeInformer.RESTART_TIME_MS} ms`
-    );
-
-    setTimeout(() => {
-      logger.info('Restarting Node informer');
-      this.start();
-    }, NodeInformer.RESTART_TIME_MS);
+    this.restart();
   }
 }

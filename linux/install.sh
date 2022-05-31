@@ -961,7 +961,6 @@ install_k3s() {
   _k3s_kind=
   _k3s_config_file=/etc/rancher/k3s/config.yml
   _k3s_config=
-  _k3s_skip_start=
 
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
@@ -997,17 +996,11 @@ install_k3s() {
   $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
   printf "%s" "$_k3s_config" | $SUDO tee "$_k3s_config_file" > /dev/null
 
-  # Skip start
-  case $INIT_CLUSTER in
-    true) _k3s_skip_start=false ;;
-    false) _k3s_skip_start=true ;;
-  esac
-
   # Install
   spinner_start "Installing K3s '$K3S_VERSION'"
   env \
     INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
-    INSTALL_K3S_SKIP_START="$_k3s_skip_start" \
+    INSTALL_K3S_SKIP_START=true \
     INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
     INSTALL_K3S_VERSION="$K3S_VERSION" \
     INSTALL_K3S_NAME=recluster \
@@ -1023,7 +1016,6 @@ install_k3s() {
 install_node_exporter() {
   _node_exporter_install_sh=
   _node_exporter_config=
-  _node_exporter_skip_start=
 
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
@@ -1049,17 +1041,11 @@ install_node_exporter() {
   INFO "Writing Node exporter configuration"
   _node_exporter_config=$(echo "$CONFIG" | jq --raw-output '.node_exporter.collector | to_entries | map(if .value == true then ("--collector."+.key) else ("--no-collector."+.key) end) | join(" ")') || FATAL "Error reading Node exporter configuration"
 
-  # Skip start
-  case $INIT_CLUSTER in
-    true) _node_expporter_skip_start=false ;;
-    false) _node_exporter_skip_start=true ;;
-  esac
-
   # Install
   spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
   env \
     INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
-    INSTALL_NODE_EXPORTER_SKIP_START="$_node_exporter_skip_start" \
+    INSTALL_NODE_EXPORTER_SKIP_START=true \
     INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
     INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
     INSTALL_NODE_EXPORTER_EXEC="$_node_exporter_config" \
@@ -1070,22 +1056,63 @@ install_node_exporter() {
   INFO "Successfully installed Node exporter '$NODE_EXPORTER_VERSION'"
 }
 
-# Install reCluster
-install_recluster() {
-  # Wait server configuration if cluster initialization
-  if [ "$INIT_CLUSTER" = true ]; then
-    WARN "Configure reCluster server kubeconfig:"
-    $SUDO cat /etc/rancher/k3s/k3s.yaml
-    WARN "Press [ENTER] to continue..."
-    read -r _
+# Cluster initialization
+cluster_init() {
+  [ "$INIT_CLUSTER" = true ] || return
+
+  _sleep_time=3
+  _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
+  _kubeconfig_file=~/.kube/config
+
+  INFO "Cluster initialization"
+
+  # Start and stop K3s service to generate initial configuration
+  case $INIT_SYSTEM in
+    openrc)
+      INFO "openrc: Starting K3s service"
+      $SUDO rc-service k3s-recluster start
+      DEBUG "Sleeping '$_sleep_time'"
+      sleep "$_sleep_time"
+      INFO "openrc: Stopping K3s service"
+      $SUDO rc-service k3s-recluster stop
+    ;;
+    systemd)
+      INFO "systemd: Starting K3s service"
+      $SUDO systemctl start k3s-recluster
+      DEBUG "Sleeping '$_sleep_time'"
+      sleep "$_sleep_time"
+      INFO "systemd: Stopping K3s service"
+      $SUDO systemctl stop k3s-recluster
+    ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
+
+  # Copy kubeconfig
+  if [ -f "$_kubeconfig_file" ]; then
+    WARN "kubeconfig '$_kubeconfig_file' already exists, skipping copying to '$_kubeconfig_file'"
+  else
+    INFO "Copying K3s kubeconfig from '$_k3s_kubeconfig_file' to '$_kubeconfig_file'"
+    mkdir "$(dirname "$_kubeconfig_file")"
+    $SUDO cp "$_k3s_kubeconfig_file" "$_kubeconfig_file"
+    chmod 0644 "$_kubeconfig_file"
   fi
 
-  # etc files
+  # Read kubeconfig
+  INFO "kubeconfig:"
+  yq e --prettyPrint '.' "$_kubeconfig_file"
+
+  # TODO Start reCluster server
+}
+
+# Install reCluster
+install_recluster() {
+  # Files
+  _k3s_config_file=/etc/rancher/k3s/config.yml
   _recluster_config_file="$RECLUSTER_ETC_DIR/config.yml"
   _recluster_id_file="$RECLUSTER_ETC_DIR/id"
-  # opt files
   _recluster_bootstrap_sh="$RECLUSTER_OPT_DIR/bootstrap.sh"
-
+  # Configuration
+  _recluster_node_label_id="recluster.org/id="
   _recluster_bootstrap_service_name=recluster-bootstrap
 
   spinner_start "Installing reCluster"
@@ -1104,9 +1131,16 @@ install_recluster() {
   # Node registration
   node_registration
   printf "%s" "$RECLUSTER_NODE_ID" | $SUDO tee "$_recluster_id_file" > /dev/null
+  _recluster_node_label_id="${_recluster_node_label_id}${RECLUSTER_NODE_ID}"
   # TODO Node token
   # INFO "Writing reCluster token '$RECLUSTER_NODE_TOKEN' to '$_recluster_token_file'"
   # printf "%s" "$RECLUSTER_NODE_TOKEN" | $SUDO tee "$_recluster_token_file" > /dev/null
+
+  # Node label reCluster id
+  INFO "Updating K3s configuration '$_k3s_config_file' adding 'node-label: - $_recluster_node_label_id'"
+  env \
+    node_label="$_recluster_node_label_id" \
+    yq e '.node-label += [env(node_label)]' -i "$_k3s_config_file"
 
   # Bootstrap script
   $SUDO tee "$_recluster_bootstrap_sh" > /dev/null << EOF
@@ -1218,6 +1252,10 @@ RECLUSTER_CONFIG=
   start_services
 }
 EOF
+
+  # Bootstrap script permissions
+  $SUDO chmod 755 "$_recluster_bootstrap_sh"
+  $SUDO chown root:root "$_recluster_bootstrap_sh"
 
   # Bootstrap service
   case $INIT_SYSTEM in
@@ -1334,9 +1372,10 @@ NODE_FACTS={}
   verify_system
   setup_system
   read_system_info
-  #run_benchmarks
+  run_benchmarks
   install_k3s
   install_node_exporter
+  cluster_init
   install_recluster
   start_services
 }

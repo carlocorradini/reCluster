@@ -22,5 +22,6 @@
  * SOFTWARE.
  */
 
-export * from './kubeconfig';
-export * from './NodeInformer';
+import * as k8s from '@kubernetes/client-node';
+
+export const kubeconfig = new k8s.KubeConfig();

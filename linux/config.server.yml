@@ -19,18 +19,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
----
 k3s:
-  kind: "server"
-  token: "password"
+  kind: server
+  token: password
   cluster-init: true
-  write-kubeconfig-mode: 644
 
 node_exporter:
   collector:
     disable-defaults: true
     cpu: true
-
 recluster:
-  server: "http://192.168.0.25:8080"
+  server: http://192.168.0.25:8080

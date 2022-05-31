@@ -31,7 +31,7 @@ import { formatErrorApolloServer } from './helpers';
 import { config } from './config';
 import { prisma } from './db';
 import { schema, context } from './graphql';
-import { NodeInformer } from './k8s';
+import { kubeconfig, NodeInformer } from './k8s';
 import { logger } from './logger';
 
 const server = new ApolloServer({
@@ -43,7 +43,11 @@ const server = new ApolloServer({
 async function main() {
   // K8s
   try {
-    Container.get(NodeInformer).start();
+    kubeconfig.loadFromDefault();
+    if (kubeconfig.getCurrentCluster() === null)
+      throw new Error('kubeconfig has no active cluster');
+    const nodeInformer = Container.get(NodeInformer);
+    nodeInformer.start();
     logger.info('K8s configured');
   } catch (error) {
     logger.fatal(`K8s error: ${error}`);

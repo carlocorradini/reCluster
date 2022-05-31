@@ -23,7 +23,7 @@ NODES = [
 $script = <<-SCRIPT
 echo "Installing required packages"
 
-apk add \
+apk add --update \
   coreutils \
   ethtool \
   iproute2 \
