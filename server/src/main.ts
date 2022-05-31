@@ -26,7 +26,6 @@ import 'reflect-metadata';
 import 'dotenv/config';
 import 'json-bigint-patch';
 import { ApolloServer } from 'apollo-server';
-import * as k8s from '@kubernetes/client-node';
 import Container from 'typedi';
 import { formatErrorApolloServer } from './helpers';
 import { config } from './config';
@@ -44,12 +43,6 @@ const server = new ApolloServer({
 async function main() {
   // K8s
   try {
-    const k8sConfig = new k8s.KubeConfig();
-    k8sConfig.loadFromDefault();
-    const k8sApi = k8sConfig.makeApiClient(k8s.CoreV1Api);
-
-    Container.set(k8s.KubeConfig, k8sConfig);
-    Container.set(k8s.CoreV1Api, k8sApi);
     Container.get(NodeInformer).start();
     logger.info('K8s configured');
   } catch (error) {
