@@ -1135,13 +1135,13 @@ INFO() {
 # ================
 read_config() {
   INFO "Reading configuration file '$_recluster_config_file'"
-  [ -f "$_recluster_config_file" ] || FATAL "Configuration file '$_recluster_config_file' not found"
-  CONFIG=$(yq e --output-format=json --no-colors '.' "$_recluster_config_file") || FATAL "Error reading configuration file '$_recluster_config_file'"
+  [ -f $_recluster_config_file ] || FATAL "Configuration file '$_recluster_config_file' not found"
+  RECLUSTER_CONFIG=\$(yq e --output-format=json --no-colors '.' $_recluster_config_file) || FATAL "Error reading configuration file '$_recluster_config_file'"
 }
 
 update_status() {
   _status=ACTIVE
-  _server_url=$(echo "\$CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires 'server: <URL>'"
+  _server_url=\$(echo "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires 'server: <URL>'"
   # shellcheck disable=SC2016
   _data='{ "query": "mutation (\$data: UpdateNodeInput!) { updateNode(data: \$data) { id } }", "variables": { "data": { "status": "'"\$_status"'" } } }'
   _response=
@@ -1152,28 +1152,29 @@ update_status() {
 EOF
   case $DOWNLOADER in
     curl)
-      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
-  _response=$(curl --fail --silent --location --show-error \
-    --request POST \
-    --header 'Content-Type: application/json' \
-    --url "\$_server_url" \
+      tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+  _response=\$(curl --fail --silent --location --show-error \\
+    --request POST \\
+    --header 'Content-Type: application/json' \\
+    --url "\$_server_url" \\
     --data "\$_data") || FATAL "Error sending update node status request to '\$_server_url'"
 EOF
     ;;
     wget)
-    $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
-  _response=$(wget --quiet --output-document=- \
-    --header='Content-Type: application/json' \
-    --post-data="\$_data" \
+    tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+  _response=\$(wget --quiet --output-document=- \\
+    --header='Content-Type: application/json' \\
+    --post-data="\$_data" \\
     "\$_server_url" 2>&1) || FATAL "Error sending update node status request to '\$_server_url'"
 EOF
     ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
-  $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+
+  tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
   # Check error response
   if echo "\$_response" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
-    FATAL "Error updating node status:\n$(echo "\$_response" | jq .)";
+    FATAL "Error updating node status:\n\$(echo "\$_response" | jq .)";
   fi
 
   INFO "Node status '\$_status' updated"
@@ -1183,7 +1184,7 @@ start_services() {
 EOF
   case $INIT_SYSTEM in
     openrc)
-      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+      tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
   INFO "Starting Node exporter"
   rc-service node_exporter start || true
   INFO "Starting K3s"
@@ -1191,7 +1192,7 @@ EOF
 EOF
     ;;
     systemd)
-      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+      tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
   INFO "Starting Node exporter"
   systemtc start node_exporter || true
   INFO "Starting K3s"
@@ -1200,13 +1201,13 @@ EOF
     ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
-  $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+  tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
 }
 
 # ================
 # CONFIGURATION
 # ================
-CONFIG=
+RECLUSTER_CONFIG=
 
 # ================
 # MAIN
