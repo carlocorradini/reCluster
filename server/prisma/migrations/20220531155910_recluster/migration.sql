@@ -12,10 +12,10 @@ CREATE TYPE "CpuVendor" AS ENUM ('AMD', 'INTEL');
 
 -- CreateTable
 CREATE TABLE "Node" (
-    "id" TEXT NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "ram" BIGINT NOT NULL,
-    "cpuId" TEXT NOT NULL,
-    "status" "NodeStatus" NOT NULL,
+    "cpuId" UUID NOT NULL,
+    "status" "NodeStatus" NOT NULL DEFAULT E'ACTIVE',
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ NOT NULL,
 
@@ -24,8 +24,8 @@ CREATE TABLE "Node" (
 
 -- CreateTable
 CREATE TABLE "Disk" (
-    "id" TEXT NOT NULL,
-    "nodeId" TEXT NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "nodeId" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "size" BIGINT NOT NULL,
 
@@ -34,8 +34,8 @@ CREATE TABLE "Disk" (
 
 -- CreateTable
 CREATE TABLE "Interface" (
-    "id" TEXT NOT NULL,
-    "nodeId" TEXT NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "nodeId" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "address" TEXT NOT NULL,
     "speed" BIGINT NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE "Interface" (
 
 -- CreateTable
 CREATE TABLE "Cpu" (
-    "id" TEXT NOT NULL,
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "architecture" "CpuArchitecture" NOT NULL,
     "flags" TEXT[],
     "cores" SMALLINT NOT NULL,

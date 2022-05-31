@@ -30,10 +30,10 @@ datasource db {
 }
 
 model Node {
-  id        String     @id @default(cuid())
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   ram       BigInt
   cpu       Cpu        @relation(fields: [cpuId], references: [id], map: "cpu_id")
-  cpuId     String
+  cpuId     String     @db.Uuid
   status    NodeStatus @default(ACTIVE)
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime   @updatedAt @db.Timestamptz()
@@ -50,9 +50,9 @@ enum NodeStatus {
 }
 
 model Disk {
-  id     String @id @default(cuid())
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   node   Node   @relation(fields: [nodeId], references: [id], map: "node_id")
-  nodeId String
+  nodeId String @db.Uuid
   name   String
   size   BigInt
 
@@ -60,9 +60,9 @@ model Disk {
 }
 
 model Interface {
-  id      String         @id @default(cuid())
+  id      String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   node    Node           @relation(fields: [nodeId], references: [id], map: "node_id")
-  nodeId  String
+  nodeId  String         @db.Uuid
   name    String
   address String
   speed   BigInt
@@ -92,7 +92,7 @@ enum InterfaceWol {
 }
 
 model Cpu {
-  id              String          @id @default(cuid())
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   architecture    CpuArchitecture
   flags           String[]
   cores           Int             @db.SmallInt

@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Node" ALTER COLUMN "status" SET DEFAULT E'ACTIVE';
