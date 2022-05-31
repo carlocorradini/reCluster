@@ -1,5 +1,6 @@
 {
   "recommendations": [
+    "bbenoist.vagrant",
     "DavidAnson.vscode-markdownlint",
     "dbaeumer.vscode-eslint",
     "EditorConfig.EditorConfig",

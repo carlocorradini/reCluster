@@ -22,8 +22,4 @@
  * SOFTWARE.
  */
 
-export * from './create';
-export * from './filters';
-export * from './orderby';
-export * from './update';
-export * from './where';
+export * from './UpdateNodeArgs';

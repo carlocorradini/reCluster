@@ -24,7 +24,6 @@
 
 import { Prisma } from '@prisma/client';
 import { Service } from 'typedi';
-import { NodeStatus } from '~/graphql/entities';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
 
@@ -97,7 +96,6 @@ export class NodeService {
       ...args,
       data: {
         ...args.data,
-        status: NodeStatus.ACTIVE,
         cpu: { connect: { vendor_family_model } },
         disks: { createMany: { data: args.data.disks, skipDuplicates: true } },
         interfaces: {
@@ -105,5 +103,11 @@ export class NodeService {
         }
       }
     });
+  }
+
+  public async update(id: string, args: Omit<Prisma.NodeUpdateArgs, 'where'>) {
+    logger.info(`Node service update: ${JSON.stringify(args)}`);
+
+    return prisma.node.update({ ...args, where: { id } });
   }
 }

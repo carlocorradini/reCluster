@@ -223,10 +223,13 @@ show_help() {
     "$LOG_LEVEL_DEBUG") _log_level=debug ;;
   esac
 
+  # Config file name
+  _config_file=$(basename "$CONFIG_FILE")
+
   cat << EOF
 Usage: install.sh [--airgap] [--bench-time <TIME>] [--config <PATH>]
                   [--disable-color] [--disable-spinner] [--help]
-                  [--k3s-version <VERSION>] [--log-level <LEVEL>]
+                  [--init-cluster] [--k3s-version <VERSION>] [--log-level <LEVEL>]
                   [--node_exporter-version <VERSION>] [--spinner <SPINNER>]
 
 reCluster installation script.
@@ -240,7 +243,7 @@ Options:
                                          Any positive number
 
   --config <PATH>                      Configuration file path
-                                       Default: $CONFIG_FILE
+                                       Default: $_config_file
                                        Values:
                                          Any valid configuration file path
 
@@ -249,6 +252,9 @@ Options:
   --disable-spinner                    Disable spinner
 
   --help                               Show this help message and exit
+
+  --init-cluster                       Initialize cluster components and logic.
+                                       Enable only when bootstrapping for the first time.
 
   --k3s-version <VERSION>              K3s version
                                        Default: $K3S_VERSION
@@ -618,55 +624,6 @@ node_registration() {
   INFO "Node registered with id '$RECLUSTER_NODE_ID'"
 }
 
-# reCluster service OpenRC
-recluster_service_openrc() {
-  _recluster_service_name=recluster
-  _recluster_service_file="/etc/init.d/$_recluster_service_name"
-
-  INFO "openrc: Creating reCluster service file '$_recluster_service_file'"
-  $SUDO tee "$_recluster_service_file" > /dev/null << EOF
-#!/sbin/openrc-run
-
-description="reCluster status"
-
-depend() {
-  after k3s-recluster
-}
-
-command="$1"
-command_args="--status TODO"
-EOF
-
-  $SUDO chmod 0755 $_recluster_service_file
-
-  INFO "openrc: Enabling reCluster service '$_recluster_service_name' for default runlevel"
-  $SUDO rc-update add "$_recluster_service_name" default >/dev/null
-}
-
-# recluster service systemd
-recluster_service_systemd() {
-  _recluster_service_name=recluster
-  _recluster_service_file="/etc/systemd/system/$_recluster_service_name.service"
-
-  INFO "systemd: Creating reCluster service file '$_recluster_service_file'"
-  $SUDO tee "$_recluster_service_file" > /dev/null << EOF
-[Unit]
-Description=reCluster status
-After=k3s-recluster.service
-
-[Install]
-WantedBy=multi-user.target
-
-[Service]
-Type=oneshot
-ExecStart=$1 --status TODO
-EOF
-
-  INFO "systemd: Enabling reCluster service '$_recluster_service_name' unit"
-  $SUDO systemctl enable "$_recluster_service_name" > /dev/null
-  $SUDO systemctl daemon-reload > /dev/null
-}
-
 ################################################################################################################################
 
 # Parse command line arguments
@@ -696,7 +653,7 @@ parse_args() {
         shift
         shift
       ;;
-       --config)
+      --config)
         # Configuration file
         _parse_args_assert_value "$@"
 
@@ -718,6 +675,11 @@ parse_args() {
         # Display help message and exit
         show_help
         exit 0
+      ;;
+      --init-cluster)
+        # Initialize cluster
+        INIT_CLUSTER=true
+        shift
       ;;
       --k3s-version)
         # K3s version
@@ -996,8 +958,10 @@ run_benchmarks() {
 # Install K3s
 install_k3s() {
   _k3s_install_sh=
+  _k3s_kind=
   _k3s_config_file=/etc/rancher/k3s/config.yml
   _k3s_config=
+  _k3s_skip_start=
 
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
@@ -1023,19 +987,31 @@ install_k3s() {
   [ -f "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' not found"
   [ -x "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' is not executable"
 
+  # Kind
+  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind: <server|agent>'"
+  [ "server" = "$_k3s_kind" ] || [ "agent" = "$_k3s_kind" ] || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
+
   # Configuration
-  _k3s_config=$(echo "$CONFIG" | jq '.k3s' | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
-  INFO "Copying K3s configuration to '$_k3s_config_file'"
+  _k3s_config=$(echo "$CONFIG" | jq '.k3s | del[.kind]' | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
+  INFO "Writing K3s configuration to '$_k3s_config_file'"
   $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
   printf "%s" "$_k3s_config" | $SUDO tee "$_k3s_config_file" > /dev/null
+
+  # Skip start
+  case $INIT_CLUSTER in
+    true) _k3s_skip_start=false ;;
+    false) _k3s_skip_start=true ;;
+  esac
 
   # Install
   spinner_start "Installing K3s '$K3S_VERSION'"
   env \
-    INSTALL_K3S_SKIP_START=true \
-    INSTALL_K3S_NAME=recluster \
-    INSTALL_K3S_VERSION="$K3S_VERSION" \
+    INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
+    INSTALL_K3S_SKIP_START="$_k3s_skip_start" \
     INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
+    INSTALL_K3S_VERSION="$K3S_VERSION" \
+    INSTALL_K3S_NAME=recluster \
+    INSTALL_K3S_EXEC="$_k3s_kind" \
     "$_k3s_install_sh" || FATAL "Error installing K3s '$K3S_VERSION'"
   spinner_stop
 
@@ -1047,6 +1023,7 @@ install_k3s() {
 install_node_exporter() {
   _node_exporter_install_sh=
   _node_exporter_config=
+  _node_exporter_skip_start=
 
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
@@ -1069,16 +1046,23 @@ install_node_exporter() {
   [ -x "$_node_exporter_install_sh" ] || FATAL "Node exporter installation script '$_node_exporter_install_sh' is not executable"
 
   # Configuration
-  INFO "Copying Node exporter configuration"
+  INFO "Writing Node exporter configuration"
   _node_exporter_config=$(echo "$CONFIG" | jq --raw-output '.node_exporter.collector | to_entries | map(if .value == true then ("--collector."+.key) else ("--no-collector."+.key) end) | join(" ")') || FATAL "Error reading Node exporter configuration"
+
+  # Skip start
+  case $INIT_CLUSTER in
+    true) _node_expporter_skip_start=false ;;
+    false) _node_exporter_skip_start=true ;;
+  esac
 
   # Install
   spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
   env \
-    INSTALL_NODE_EXPORTER_SKIP_START=true \
-    INSTALL_NODE_EXPORTER_EXEC="$_node_exporter_config" \
-    INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
+    INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
+    INSTALL_NODE_EXPORTER_SKIP_START="$_node_exporter_skip_start" \
     INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
+    INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
+    INSTALL_NODE_EXPORTER_EXEC="$_node_exporter_config" \
     "$_node_exporter_install_sh" || FATAL "Error installing Node exporter '$NODE_EXPORTER_VERSION'"
   spinner_stop
 
@@ -1088,11 +1072,21 @@ install_node_exporter() {
 
 # Install reCluster
 install_recluster() {
-  # etc directory
+  # Wait server configuration if cluster initialization
+  if [ "$INIT_CLUSTER" = true ]; then
+    WARN "Configure reCluster server kubeconfig:"
+    $SUDO cat /etc/rancher/k3s/k3s.yaml
+    WARN "Press [ENTER] to continue..."
+    read -r _
+  fi
+
+  # etc files
   _recluster_config_file="$RECLUSTER_ETC_DIR/config.yml"
   _recluster_id_file="$RECLUSTER_ETC_DIR/id"
-  # opt directory
-  _recluster_status_sh="$RECLUSTER_OPT_DIR/status.sh"
+  # opt files
+  _recluster_bootstrap_sh="$RECLUSTER_OPT_DIR/bootstrap.sh"
+
+  _recluster_bootstrap_service_name=recluster-bootstrap
 
   spinner_start "Installing reCluster"
 
@@ -1103,7 +1097,7 @@ install_recluster() {
   $SUDO mkdir -p "$RECLUSTER_OPT_DIR"
 
   # Configuration
-  _recluster_config=$(echo "$CONFIG" jq '.recluster' | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading reCluster configuration"
+  _recluster_config=$(echo "$CONFIG" | jq '.recluster' | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading reCluster configuration"
   INFO "Writing reCluster configuration to '$_recluster_config_file'"
   printf "%s" "$_recluster_config" | $SUDO tee "$_recluster_config_file" > /dev/null
 
@@ -1115,7 +1109,7 @@ install_recluster() {
   # printf "%s" "$RECLUSTER_NODE_TOKEN" | $SUDO tee "$_recluster_token_file" > /dev/null
 
   # Bootstrap script
-  $SUDO tee "$_recluster_status_sh" > /dev/null << EOF
+  $SUDO tee "$_recluster_bootstrap_sh" > /dev/null << EOF
 #!/usr/bin/env sh
 
 # Fail on error
@@ -1146,28 +1140,131 @@ read_config() {
 }
 
 update_status() {
-  INFO "Updating status '\$1'"
+  _status=ACTIVE
+  _server_url=$(echo "\$CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires 'server: <URL>'"
+  # shellcheck disable=SC2016
+  _data='{ "query": "mutation (\$data: UpdateNodeInput!) { updateNode(data: \$data) { id } }", "variables": { "data": { "status": "'"\$_status"'" } } }'
+  _response=
+
+  INFO "Updating node status '\$_status' at '\$_server_url'"
+
+  # Send update request
+EOF
+  case $DOWNLOADER in
+    curl)
+      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+  _response=$(curl --fail --silent --location --show-error \
+    --request POST \
+    --header 'Content-Type: application/json' \
+    --url "\$_server_url" \
+    --data "\$_data") || FATAL "Error sending update node status request to '\$_server_url'"
+EOF
+    ;;
+    wget)
+    $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+  _response=$(wget --quiet --output-document=- \
+    --header='Content-Type: application/json' \
+    --post-data="\$_data" \
+    "\$_server_url" 2>&1) || FATAL "Error sending update node status request to '\$_server_url'"
+EOF
+    ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
+  esac
+  $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+  # Check error response
+  if echo "\$_response" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
+    FATAL "Error updating node status:\n$(echo "\$_response" | jq .)";
+  fi
+
+  INFO "Node status '\$_status' updated"
+}
+
+start_services() {
+EOF
+  case $INIT_SYSTEM in
+    openrc)
+      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+  INFO "Starting Node exporter"
+  rc-service node_exporter start || true
+  INFO "Starting K3s"
+  rc-service k3s-recluster start
+EOF
+    ;;
+    systemd)
+      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+  INFO "Starting Node exporter"
+  systemtc start node_exporter || true
+  INFO "Starting K3s"
+  systemctl start k3s-recluster
+EOF
+    ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
+  $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
 }
 
 # ================
 # CONFIGURATION
 # ================
 CONFIG=
-DOWNLOADER=$DOWNLOADER
 
 # ================
 # MAIN
 # ================
 {
   read_config
-  update_status "\$1"
+  update_status
+  start_services
 }
 EOF
 
-  # Init service
+  # Bootstrap service
   case $INIT_SYSTEM in
-    openrc) recluster_service_openrc "$_recluster_status_sh" ;;
-    systemd) recluster_service_systemd "$_recluster_status_sh" ;;
+    openrc)
+      _recluster_bootstrap_service_file="/etc/init.d/$_recluster_bootstrap_service_name"
+
+      INFO "openrc: Creating reCluster bootstrap service file '$_recluster_bootstrap_service_file'"
+      $SUDO tee "$_recluster_bootstrap_service_file" > /dev/null << EOF
+#!/sbin/openrc-run
+
+description="reCluster bootstrap"
+
+depend() {
+  need net
+  use dns
+  after firewall
+}
+
+command="$_recluster_bootstrap_sh"
+EOF
+
+      $SUDO chmod 0755 $_recluster_bootstrap_service_file
+
+      INFO "openrc: Enabling reCluster bootstrap service '$_recluster_bootstrap_service_name' for default runlevel"
+      $SUDO rc-update add "$_recluster_bootstrap_service_name" default >/dev/null
+    ;;
+    systemd)
+      _recluster_bootstrap_service_file="/etc/systemd/system/$_recluster_bootstrap_service_name.service"
+
+      INFO "systemd: Creating reCluster bootstrap service file '$_recluster_bootstrap_service_file'"
+      $SUDO tee "$_recluster_bootstrap_service_file" > /dev/null << EOF
+[Unit]
+Description=reCluster bootstrap
+After=network-online.target network.target
+Wants=network-online.target network.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=$_recluster_bootstrap_sh
+EOF
+
+      INFO "systemd: Enabling reCluster bootstrap service '$_recluster_bootstrap_service_name' unit"
+      $SUDO systemctl enable "$_recluster_bootstrap_service_name" > /dev/null
+      $SUDO systemctl daemon-reload > /dev/null
+    ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
@@ -1207,6 +1304,8 @@ AIRGAP_ENV=false
 BENCH_TIME=16
 # Configuration file
 CONFIG_FILE="$DIRNAME/config.yml"
+# Initialize cluster
+INIT_CLUSTER=false
 # K3s version
 K3S_VERSION=v1.23.6+k3s1
 # Log color flag

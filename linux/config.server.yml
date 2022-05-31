@@ -22,8 +22,10 @@
 
 ---
 k3s:
-  server: 'https://192.168.0.25:6443'
-  token: 'password'
+  kind: "server"
+  token: "password"
+  cluster-init: true
+  write-kubeconfig-mode: 644
 
 node_exporter:
   collector:
@@ -31,4 +33,4 @@ node_exporter:
     cpu: true
 
 recluster:
-  server: 'http://192.168.0.25:8080'
+  server: "http://192.168.0.25:8080"

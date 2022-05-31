@@ -22,8 +22,16 @@
  * SOFTWARE.
  */
 
-export * from './create';
-export * from './filters';
-export * from './orderby';
-export * from './update';
-export * from './where';
+import { Prisma } from '@prisma/client';
+import { GraphQLID } from 'graphql';
+import { ArgsType, Field } from 'type-graphql';
+import { UpdateNodeInput } from '../../inputs';
+
+@ArgsType()
+export class UpdateNodeArgs implements Pick<Prisma.NodeUpdateArgs, 'data'> {
+  @Field(() => GraphQLID, { description: 'Node identifier' })
+  id!: string;
+
+  @Field({ description: 'Node data' })
+  data!: UpdateNodeInput;
+}

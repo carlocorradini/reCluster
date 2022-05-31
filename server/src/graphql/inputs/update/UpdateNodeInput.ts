@@ -22,8 +22,14 @@
  * SOFTWARE.
  */
 
-export * from './create';
-export * from './filters';
-export * from './orderby';
-export * from './update';
-export * from './where';
+import { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { NodeStatus } from '../../entities';
+
+type IUpdateNodeInput = Pick<Prisma.NodeUpdateInput, 'status'>;
+
+@InputType({ description: 'Update Node input' })
+export class UpdateNodeInput implements IUpdateNodeInput {
+  @Field(() => NodeStatus, { nullable: true, description: 'Node status' })
+  status?: NodeStatus;
+}

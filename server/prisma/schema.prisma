@@ -34,7 +34,7 @@ model Node {
   ram       BigInt
   cpu       Cpu        @relation(fields: [cpuId], references: [id], map: "cpu_id")
   cpuId     String
-  status    NodeStatus
+  status    NodeStatus @default(ACTIVE)
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime   @updatedAt @db.Timestamptz()
 
