@@ -992,7 +992,7 @@ install_k3s() {
   [ "server" = "$_k3s_kind" ] || [ "agent" = "$_k3s_kind" ] || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
 
   # Configuration
-  _k3s_config=$(echo "$CONFIG" | jq '.k3s | del[.kind]' | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
+  _k3s_config=$(echo "$CONFIG" | jq --exit-status '.k3s | del(.kind)' | yq e --exit-status --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
   INFO "Writing K3s configuration to '$_k3s_config_file'"
   $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
   printf "%s" "$_k3s_config" | $SUDO tee "$_k3s_config_file" > /dev/null
@@ -1333,7 +1333,7 @@ NODE_FACTS={}
   verify_system
   setup_system
   read_system_info
-  run_benchmarks
+  #run_benchmarks
   install_k3s
   install_node_exporter
   install_recluster

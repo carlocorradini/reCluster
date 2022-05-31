@@ -31,10 +31,8 @@ import { logger } from '~/logger';
 export class NodeInformer {
   public static readonly RESTART_TIME_MS = 500;
 
-  @Inject()
   private readonly api!: k8s.CoreV1Api;
 
-  @Inject()
   private readonly config!: k8s.KubeConfig;
 
   @Inject()
@@ -43,25 +41,27 @@ export class NodeInformer {
   private readonly informer: k8s.Informer<k8s.V1Node>;
 
   public constructor() {
+    this.config = new k8s.KubeConfig();
+    this.config.loadFromDefault();
+    this.api = this.config.makeApiClient(k8s.CoreV1Api);
     this.informer = k8s.makeInformer(this.config, '/api/v1/nodes', () =>
       this.api.listNode()
     );
     this.informer.on(k8s.ADD, this.onAdd);
     this.informer.on(k8s.UPDATE, this.onUpdate);
-    this.informer.on(k8s.CHANGE, this.onChange);
     this.informer.on(k8s.DELETE, this.onDelete);
     this.informer.on(k8s.CONNECT, this.onConnect);
     this.informer.on(k8s.ERROR, this.onError as k8s.ObjectCallback<k8s.V1Node>);
   }
 
-  public start() {
+  public async start() {
     logger.info('Starting Node informer');
-    this.informer.start();
+    await this.informer.start();
   }
 
-  public stop() {
+  public async stop() {
     logger.info('Stopping Node informer');
-    this.informer.stop();
+    await this.informer.stop();
   }
 
   private onAdd(node: k8s.V1Node) {
@@ -70,10 +70,6 @@ export class NodeInformer {
 
   private onUpdate(node: k8s.V1Node) {
     logger.debug(`Node updated: ${JSON.stringify(node)}`);
-  }
-
-  private onChange(node: k8s.V1Node) {
-    logger.debug(`Node changed: ${JSON.stringify(node)}`);
   }
 
   private onDelete(node: k8s.V1Node) {

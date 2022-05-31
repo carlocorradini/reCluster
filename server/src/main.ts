@@ -50,7 +50,7 @@ async function main() {
 
     Container.set(k8s.KubeConfig, k8sConfig);
     Container.set(k8s.CoreV1Api, k8sApi);
-    Container.get(NodeInformer);
+    Container.get(NodeInformer).start();
     logger.info('K8s configured');
   } catch (error) {
     logger.fatal(`K8s error: ${error}`);
