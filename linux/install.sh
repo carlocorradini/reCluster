@@ -1099,9 +1099,11 @@ cluster_init() {
 
   # Read kubeconfig
   INFO "kubeconfig:"
-  yq e --prettyPrint '.' "$_kubeconfig_file"
+  $SUDO yq e --prettyPrint '.' "$_kubeconfig_file"
 
   # TODO Start reCluster server
+  DEBUG "Sleeping '$_sleep_time'"
+  sleep "$_sleep_time"
 }
 
 # Install reCluster
@@ -1138,7 +1140,7 @@ install_recluster() {
 
   # Node label reCluster id
   INFO "Updating K3s configuration '$_k3s_config_file' adding 'node-label: - $_recluster_node_label_id'"
-  env \
+  $SUDO env \
     node_label="$_recluster_node_label_id" \
     yq e '.node-label += [env(node_label)]' -i "$_k3s_config_file"
 
@@ -1186,7 +1188,7 @@ update_status() {
 EOF
   case $DOWNLOADER in
     curl)
-      tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
   _response=\$(curl --fail --silent --location --show-error \\
     --request POST \\
     --header 'Content-Type: application/json' \\
@@ -1195,7 +1197,7 @@ EOF
 EOF
     ;;
     wget)
-    tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
   _response=\$(wget --quiet --output-document=- \\
     --header='Content-Type: application/json' \\
     --post-data="\$_data" \\
@@ -1205,7 +1207,7 @@ EOF
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
 
-  tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+  $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
   # Check error response
   if echo "\$_response" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
     FATAL "Error updating node status:\n\$(echo "\$_response" | jq .)";
@@ -1218,7 +1220,7 @@ start_services() {
 EOF
   case $INIT_SYSTEM in
     openrc)
-      tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
   INFO "Starting Node exporter"
   rc-service node_exporter start || true
   INFO "Starting K3s"
@@ -1226,7 +1228,7 @@ EOF
 EOF
     ;;
     systemd)
-      tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
   INFO "Starting Node exporter"
   systemtc start node_exporter || true
   INFO "Starting K3s"
@@ -1235,7 +1237,8 @@ EOF
     ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
-  tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
+
+  $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
 }
 
 # ================
