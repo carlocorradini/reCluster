@@ -1094,7 +1094,7 @@ cluster_init() {
     INFO "Copying K3s kubeconfig from '$_k3s_kubeconfig_file' to '$_kubeconfig_file'"
     mkdir "$(dirname "$_kubeconfig_file")"
     $SUDO cp "$_k3s_kubeconfig_file" "$_kubeconfig_file"
-    chmod 0644 "$_kubeconfig_file"
+    $SUDO chmod 0644 "$_kubeconfig_file"
   fi
 
   # Read kubeconfig
