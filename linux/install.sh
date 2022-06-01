@@ -1060,7 +1060,7 @@ install_node_exporter() {
 cluster_init() {
   [ "$INIT_CLUSTER" = true ] || return
 
-  _sleep_time=3
+  _sleep_time=4
   _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
   _kubeconfig_file=~/.kube/config
 
@@ -1112,7 +1112,7 @@ install_recluster() {
   _recluster_id_file="$RECLUSTER_ETC_DIR/id"
   _recluster_bootstrap_sh="$RECLUSTER_OPT_DIR/bootstrap.sh"
   # Configuration
-  _recluster_node_label_id="recluster.org/id="
+  _recluster_node_label_id="recluster.io/id="
   _recluster_bootstrap_service_name=recluster-bootstrap
 
   spinner_start "Installing reCluster"

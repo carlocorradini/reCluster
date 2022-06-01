@@ -30,7 +30,7 @@ import { kubeconfig } from './kubeconfig';
 
 @Service()
 export class NodeInformer {
-  public static readonly RESTART_TIME_MS = 500;
+  public static readonly RESTART_TIME_MS = 1000;
 
   @Inject()
   private readonly nodeService!: NodeService;
