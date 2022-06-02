@@ -959,7 +959,7 @@ run_benchmarks() {
 install_k3s() {
   _k3s_install_sh=
   _k3s_kind=
-  _k3s_config_file=/etc/rancher/k3s/config.yml
+  _k3s_config_file=/etc/rancher/k3s/config.yaml
   _k3s_config=
 
   # Check airgap environment
@@ -1060,7 +1060,7 @@ install_node_exporter() {
 cluster_init() {
   [ "$INIT_CLUSTER" = true ] || return
 
-  _sleep_time=4
+  _sleep_time=8
   _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
   _kubeconfig_file=~/.kube/config
 
@@ -1109,8 +1109,8 @@ cluster_init() {
 # Install reCluster
 install_recluster() {
   # Files
-  _k3s_config_file=/etc/rancher/k3s/config.yml
-  _recluster_config_file="$RECLUSTER_ETC_DIR/config.yml"
+  _k3s_config_file=/etc/rancher/k3s/config.yaml
+  _recluster_config_file="$RECLUSTER_ETC_DIR/config.yaml"
   _recluster_id_file="$RECLUSTER_ETC_DIR/id"
   _recluster_bootstrap_sh="$RECLUSTER_OPT_DIR/bootstrap.sh"
   # Configuration
@@ -1345,7 +1345,7 @@ AIRGAP_ENV=false
 # Benchmark time in seconds
 BENCH_TIME=16
 # Configuration file
-CONFIG_FILE="$DIRNAME/config.yml"
+CONFIG_FILE="$DIRNAME/config.yaml"
 # Initialize cluster
 INIT_CLUSTER=false
 # K3s version
