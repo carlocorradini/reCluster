@@ -19,7 +19,8 @@
     "**/Dockerfile.*",
     "**/package-lock.json",
     "**/*.graphql",
-    "license.json"
+    "license.json",
+    "Vagrantfile"
   ],
   "words": [
     "airgap",
@@ -42,6 +43,8 @@
     "funcname",
     "graphqlid",
     "graphqlmac",
+    "kubeconfig",
+    "kubernetes",
     "middlewares",
     "mipsle",
     "mkimg",
@@ -56,6 +59,7 @@
     "tsbuildinfo",
     "tsdoc",
     "typedi",
-    "upsert"
+    "upsert",
+    "xstate"
   ]
 }

@@ -22,9 +22,9 @@
 
 ---
 k3s:
-  kind: "agent"
-  server: "https://10.0.0.10:6443"
-  token: "password"
+  kind: 'agent'
+  server: 'https://10.0.0.10:6443'
+  token: 'password'
 
 node_exporter:
   collector:
@@ -32,4 +32,4 @@ node_exporter:
     cpu: true
 
 recluster:
-  server: "http://192.168.0.25:8080"
+  server: 'http://192.168.0.25:8080'

@@ -7,7 +7,7 @@
     "append": "*/\n"
   },
   "licenseFormats": {
-    "gitignore|npmignore|eslintignore|dockerignore|^Dockerfile|sh|py|graphql|yaml|yml": {
+    "gitignore|npmignore|eslintignore|dockerignore|^Dockerfile|sh|py|graphql|^Vagrantfile|yaml|yml": {
       "eachLine": {
         "prepend": "# "
       },
@@ -36,6 +36,7 @@
     "**/build",
     "**/coverage",
     "**/mode_modules",
+    "**/.vagrant",
     ".github",
     ".husky",
     ".vscode",
