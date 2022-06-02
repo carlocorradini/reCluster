@@ -29,8 +29,12 @@ import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
 
 export enum NodeStatus {
   ACTIVE = 'ACTIVE',
-  ACTIVE_WORKING = 'ACTIVE_WORKING',
+  ACTIVE_TO_WORKING = 'ACTIVE_TO_WORKING',
+  ACTIVE_TO_INACTIVE = 'ACTIVE_TO_INACTIVE',
+  WORKING = 'WORKING',
+  WORKING_TO_ACTIVE = 'WORKING_TO_ACTIVE',
   INACTIVE = 'INACTIVE',
+  INACTIVE_TO_ACTIVE = 'INACTIVE_TO_ACTIVE',
   ERROR = 'ERROR'
 }
 registerEnumType(NodeStatus, {

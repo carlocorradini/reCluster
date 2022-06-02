@@ -26,11 +26,19 @@ import * as k8s from '@kubernetes/client-node';
 import { Inject, Service } from 'typedi';
 import { NodeService } from '~/services';
 import { logger } from '~/logger';
+import { NodeStatus } from '~/graphql';
 import { kubeconfig } from './kubeconfig';
+
+type NodeInfo = {
+  id: string;
+  ready: boolean;
+};
 
 @Service()
 export class NodeInformer {
-  public static readonly RESTART_TIME_MS = 1000;
+  public static readonly RECLUSTER_IO_ID: string = 'recluster.io/id';
+
+  public static readonly RESTART_TIME_MS: number = 3000;
 
   @Inject()
   private readonly nodeService!: NodeService;
@@ -53,7 +61,7 @@ export class NodeInformer {
 
   private restart() {
     logger.debug(
-      `Restarting Node informer after ${NodeInformer.RESTART_TIME_MS} ms`
+      `Restarting Node informer in ${NodeInformer.RESTART_TIME_MS} ms`
     );
 
     setTimeout(() => {
@@ -80,15 +88,62 @@ export class NodeInformer {
   }
 
   private onAdd(node: k8s.V1Node) {
-    logger.debug(`Node added: ${JSON.stringify(node)}`);
+    logger.debug(`Node added in K8s: ${JSON.stringify(node)}`);
+
+    const nodeInfo = this.nodeInfo(node);
+    logger.info(`Node '${nodeInfo.id}' added in K8s`);
+
+    this.nodeService.update(nodeInfo.id, {
+      data: {
+        status: NodeStatus.ACTIVE_TO_WORKING
+      }
+    });
   }
 
-  private onUpdate(node: k8s.V1Node) {
-    logger.debug(`Node updated: ${JSON.stringify(node)}`);
+  private async onUpdate(node: k8s.V1Node) {
+    logger.debug(`Node updated in K8s: ${JSON.stringify(node)}`);
+
+    const nodeInfo = this.nodeInfo(node);
+    logger.info(
+      `Node '${nodeInfo.id}' updated in K8s: ${JSON.stringify(nodeInfo)}`
+    );
+
+    let status: NodeStatus = NodeStatus.ERROR;
+    const reClusterNode = await this.nodeService.findUnique({
+      select: { status: true },
+      where: { id: nodeInfo.id }
+    });
+
+    switch (reClusterNode?.status) {
+      case NodeStatus.ACTIVE_TO_WORKING: {
+        if (!nodeInfo.ready) return;
+        status = NodeStatus.WORKING;
+        break;
+      }
+      case NodeStatus.WORKING_TO_ACTIVE: {
+        if (nodeInfo.ready) return;
+        status = NodeStatus.ACTIVE;
+        break;
+      }
+      default: {
+        status = NodeStatus.ERROR;
+        break;
+      }
+    }
+
+    this.nodeService.update(nodeInfo.id, { data: { status } });
   }
 
   private onDelete(node: k8s.V1Node) {
-    logger.debug(`Node deleted: ${JSON.stringify(node)}`);
+    // TODO Fix status
+    logger.debug(`Node deleted in K8s: ${JSON.stringify(node)}`);
+
+    const nodeInfo = this.nodeInfo(node);
+    logger.info(`Node '${nodeInfo.id}' deleted in K8s`);
+
+    this.nodeService.update(nodeInfo.id, {
+      data: { status: NodeStatus.ACTIVE }
+    });
   }
 
   private onConnect() {
@@ -98,5 +153,20 @@ export class NodeInformer {
   private onError(error: Error) {
     logger.error(`Node informer error: ${error.message}`);
     this.restart();
+  }
+
+  private nodeInfo(node: k8s.V1Node): NodeInfo {
+    // TODO Better error
+    if (!node?.metadata?.labels?.[NodeInformer.RECLUSTER_IO_ID])
+      throw new Error(
+        `Label '${NodeInformer.RECLUSTER_IO_ID}' not found in K8s Node uid ${node?.metadata?.uid}`
+      );
+
+    return {
+      id: node?.metadata?.labels?.[NodeInformer.RECLUSTER_IO_ID],
+      ready:
+        node?.status?.conditions?.find((c) => c.type === 'Ready')?.status ===
+        'True'
+    };
   }
 }
