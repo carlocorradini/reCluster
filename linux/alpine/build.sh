@@ -36,6 +36,9 @@ readonly RECLUSTER_ALPINE_DOCKERFILE="$DIRNAME/Dockerfile"
 # mkimage profile
 MKIMAGE_PROFILE=$(readlink -f "$DIRNAME/mkimg.recluster.sh")
 readonly MKIMAGE_PROFILE
+# mkimage apkovl
+MKIMAGE_APKOVL=$(readlink -f "$DIRNAME/genapkovl-recluster.sh")
+readonly MKIMAGE_APKOVL
 # mkimage iso directory
 MKIMAGE_ISO_DIR=$(readlink -f "$DIRNAME/iso")
 readonly MKIMAGE_ISO_DIR
@@ -85,11 +88,14 @@ function iso_dir() {
 # Prepare reCluster container
 function prepare_container() {
   local profile_file_name
+  local apkovl_file_name
   profile_file_name=$(basename "$MKIMAGE_PROFILE")
+  apkovl_file_name=$(basename "$MKIMAGE_APKOVL")
 
   # Start container
   CONTAINER=$(docker run \
                 --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/$profile_file_name" \
+                --volume "$MKIMAGE_APKOVL:/home/build/aports/scripts/$apkovl_file_name" \
                 --volume "$MKIMAGE_ISO_DIR:/home/build/iso" \
                 --detach \
                 --interactive \

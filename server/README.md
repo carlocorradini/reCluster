@@ -47,16 +47,9 @@ npm run build
 
    - Manually
 
-   TODO
-
    ```console
    curl --request POST \
        --header 'content-type: application/json' \
        --url 'http://localhost:8080/graphql' \
-       --data '{ "query": "mutation { addNode(node: { name: \"Test\" }) { id, name } }" }'
-
-   curl --request POST \
-       --header 'content-type: application/json' \
-       --url 'http://localhost:8080/graphql' \
-       --data '{ "query": "{ nodes { id, name } }" }'
+       --data '{ "query": "{ nodes { id cpu { name } } }" }'
    ```

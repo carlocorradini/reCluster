@@ -32,7 +32,7 @@ readonly RECLUSTER_SERVER_DOCKERFILE="$DIRNAME/../Dockerfile"
 # reCluster server version
 readonly RECLUSTER_SERVER_VERSION=latest
 # reCluster server image
-readonly RECLUSTER_SERVER_IMAGE="recluster:$RECLUSTER_SERVER_VERSION"
+readonly RECLUSTER_SERVER_IMAGE="recluster-server:$RECLUSTER_SERVER_VERSION"
 
 # Commons
 source "$DIRNAME/../../scripts/__commons.sh"

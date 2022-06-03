@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "NodeStatus" AS ENUM ('ACTIVE', 'ACTIVE_WORKING', 'INACTIVE', 'ERROR');
+CREATE TYPE "NodeStatus" AS ENUM ('ACTIVE', 'ACTIVE_TO_WORKING', 'ACTIVE_TO_INACTIVE', 'WORKING', 'WORKING_TO_ACTIVE', 'INACTIVE', 'INACTIVE_TO_ACTIVE', 'ERROR');
 
 -- CreateEnum
 CREATE TYPE "InterfaceWol" AS ENUM ('a', 'b', 'd', 'g', 'm', 'p', 's', 'u');

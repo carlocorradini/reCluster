@@ -29,5 +29,6 @@ node_exporter:
   collector:
     disable-defaults: true
     cpu: true
+
 recluster:
-  server: http://192.168.0.25:8080
+  server: http://10.0.0.10:8080

@@ -24,7 +24,6 @@
 # vi: set ft=ruby :
 
 BOX = "generic/alpine316"
-BOX_VERSION = "4.0.0"
 VM_RAM = 1024
 VM_CPU = 1
 NODES = [
@@ -43,9 +42,8 @@ NODES = [
 ]
 
 $script = <<-SCRIPT
-echo "Installing required packages"
-
-apk add --update \
+# Packages
+apk add --update --no-cache \
   coreutils \
   ethtool \
   iproute2 \
@@ -58,22 +56,56 @@ apk add --update \
   yq
 SCRIPT
 
+$controller = <<-SCRIPT
+# Packages
+apk add --update --no-cache \
+  bash \
+  docker \
+  docker-compose \
+  nodejs \
+  npm
+
+# === Docker
+# User
+addgroup vagrant docker
+# Service
+rc-update add docker boot
+service docker start
+
+# Docker reCluster server
+/vagrant/server/scripts/dockerize.sh
+
+# npm dependencies
+npm --prefix /vagrant/server install --ignore-scripts
+SCRIPT
+
 Vagrant.configure("2") do |config|
   NODES.each do |node_config|
     config.vm.define node_config[:hostname] do |node|
       # Box
       node.vm.box = BOX
-      node.vm.box_version = BOX_VERSION
+
+      # Synced folder
+      config.vm.synced_folder "./", "/vagrant", type: "rsync",
+        rsync__auto: true,
+        rsync__exclude: ['.git/', './node_modules/', './server/node_modules/']
 
       # Network
       node.vm.hostname = node_config[:hostname]
       node.vm.network "private_network", ip: node_config[:ip]
-      if "controller".eql? node_config[:hostname] then
-        node.vm.network "forwarded_port", guest: 6443, host: 6443
-      end
 
       # Provision
       node.vm.provision "shell", inline: $script
+
+      # Controller configuration
+      if "controller".eql? node_config[:hostname] then
+        # Network
+        node.vm.network "forwarded_port", guest: 6443, host: 6443
+        node.vm.network "forwarded_port", guest: 8080, host: 8080
+
+        # Provision
+        node.vm.provision "shell", inline: $controller
+      end
 
       # Provider
       node.vm.provider "virtualbox" do |v|

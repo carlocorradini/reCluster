@@ -40,6 +40,23 @@ local machine for development and testing purposes.
    npm ci
    ```
 
+## Development
+
+1. Vagrant
+
+   ```console
+   vagrant up controller
+   ```
+
+1. reCluster Controller node
+
+    ```console
+    vagrant ssh controller 
+    /vagrant/server/scripts/database.sh &
+    npm --prefix /vagrant/server run db:migrate
+    /vagrant/linux/install.sh --bench-time 1 --log-level debug --config /vagrant/linux/config.server.yaml --init-cluster
+    ```
+
 ## License
 
 This project is licensed under the [MIT](https://opensource.org/licenses/MIT) License. \
