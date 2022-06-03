@@ -52,11 +52,14 @@ export class NodeInformer {
       api.listNode()
     );
 
-    this.informer.on(k8s.ADD, this.onAdd);
-    this.informer.on(k8s.UPDATE, this.onUpdate);
-    this.informer.on(k8s.DELETE, this.onDelete);
-    this.informer.on(k8s.CONNECT, this.onConnect);
-    this.informer.on(k8s.ERROR, this.onError as k8s.ObjectCallback<k8s.V1Node>);
+    this.informer.on(k8s.ADD, this.onAdd.bind(this));
+    this.informer.on(k8s.UPDATE, this.onUpdate.bind(this));
+    this.informer.on(k8s.DELETE, this.onDelete.bind(this));
+    this.informer.on(k8s.CONNECT, this.onConnect.bind(this));
+    this.informer.on(
+      k8s.ERROR,
+      this.onError.bind(this) as k8s.ObjectCallback<k8s.V1Node>
+    );
   }
 
   private restart() {
@@ -87,23 +90,48 @@ export class NodeInformer {
     logger.info('Node informer stopped');
   }
 
-  private onAdd(node: k8s.V1Node) {
+  private async onAdd(node: k8s.V1Node) {
     logger.debug(`Node added in K8s: ${JSON.stringify(node)}`);
 
-    const nodeInfo = this.nodeInfo(node);
+    const nodeInfo = this.readNodeInfo(node);
     logger.info(`Node '${nodeInfo.id}' added in K8s`);
 
-    this.nodeService.update(nodeInfo.id, {
-      data: {
-        status: NodeStatus.ACTIVE_TO_WORKING
-      }
+    let status: NodeStatus = NodeStatus.ERROR;
+    const reClusterNode = await this.nodeService.findUnique({
+      select: { status: true },
+      where: { id: nodeInfo.id },
+      rejectOnNotFound: true
     });
+
+    logger.debug(
+      `Node ${nodeInfo.id} current status: ${reClusterNode?.status}`
+    );
+
+    switch (reClusterNode?.status) {
+      case NodeStatus.ACTIVE: {
+        status = nodeInfo.ready
+          ? NodeStatus.WORKING
+          : NodeStatus.ACTIVE_TO_WORKING;
+        break;
+      }
+      case NodeStatus.WORKING: {
+        if (nodeInfo.ready) return;
+        status = NodeStatus.ERROR;
+        break;
+      }
+      default: {
+        status = NodeStatus.ERROR;
+        break;
+      }
+    }
+
+    this.nodeService.update(nodeInfo.id, { data: { status } });
   }
 
   private async onUpdate(node: k8s.V1Node) {
     logger.debug(`Node updated in K8s: ${JSON.stringify(node)}`);
 
-    const nodeInfo = this.nodeInfo(node);
+    const nodeInfo = this.readNodeInfo(node);
     logger.info(
       `Node '${nodeInfo.id}' updated in K8s: ${JSON.stringify(nodeInfo)}`
     );
@@ -111,8 +139,13 @@ export class NodeInformer {
     let status: NodeStatus = NodeStatus.ERROR;
     const reClusterNode = await this.nodeService.findUnique({
       select: { status: true },
-      where: { id: nodeInfo.id }
+      where: { id: nodeInfo.id },
+      rejectOnNotFound: true
     });
+
+    logger.debug(
+      `Node ${nodeInfo.id} current status: ${reClusterNode?.status}`
+    );
 
     switch (reClusterNode?.status) {
       case NodeStatus.ACTIVE_TO_WORKING: {
@@ -123,6 +156,11 @@ export class NodeInformer {
       case NodeStatus.WORKING_TO_ACTIVE: {
         if (nodeInfo.ready) return;
         status = NodeStatus.ACTIVE;
+        break;
+      }
+      case NodeStatus.WORKING: {
+        if (nodeInfo.ready) return;
+        status = NodeStatus.ERROR;
         break;
       }
       default: {
@@ -138,7 +176,7 @@ export class NodeInformer {
     // TODO Fix status
     logger.debug(`Node deleted in K8s: ${JSON.stringify(node)}`);
 
-    const nodeInfo = this.nodeInfo(node);
+    const nodeInfo = this.readNodeInfo(node);
     logger.info(`Node '${nodeInfo.id}' deleted in K8s`);
 
     this.nodeService.update(nodeInfo.id, {
@@ -155,7 +193,7 @@ export class NodeInformer {
     this.restart();
   }
 
-  private nodeInfo(node: k8s.V1Node): NodeInfo {
+  private readNodeInfo(node: k8s.V1Node): NodeInfo {
     // TODO Better error
     if (!node?.metadata?.labels?.[NodeInformer.RECLUSTER_IO_ID])
       throw new Error(

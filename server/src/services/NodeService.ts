@@ -124,7 +124,7 @@ export class NodeService {
       ).value;
 
       // TODO Better error
-      if (node?.status === nextStatus)
+      if (node?.status === nextStatus && node.status !== NodeStatus.ERROR)
         throw new Error(
           `Invalid node status transition from '${node.status}' to '${args.data.status}'`
         );

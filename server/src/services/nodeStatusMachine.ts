@@ -31,6 +31,7 @@ export const nodeStatusMachine = createMachine({
       on: {
         [NodeStatus.ACTIVE_TO_WORKING]: NodeStatus.ACTIVE_TO_WORKING,
         [NodeStatus.ACTIVE_TO_INACTIVE]: NodeStatus.ACTIVE_TO_INACTIVE,
+        [NodeStatus.WORKING]: NodeStatus.WORKING, // Missed K8s update
         [NodeStatus.ERROR]: NodeStatus.ERROR
       }
     },
@@ -78,7 +79,8 @@ export const nodeStatusMachine = createMachine({
         [NodeStatus.WORKING]: NodeStatus.WORKING,
         [NodeStatus.WORKING_TO_ACTIVE]: NodeStatus.WORKING_TO_ACTIVE,
         [NodeStatus.INACTIVE]: NodeStatus.INACTIVE,
-        [NodeStatus.INACTIVE_TO_ACTIVE]: NodeStatus.INACTIVE_TO_ACTIVE
+        [NodeStatus.INACTIVE_TO_ACTIVE]: NodeStatus.INACTIVE_TO_ACTIVE,
+        [NodeStatus.ERROR]: NodeStatus.ERROR
       }
     }
   }

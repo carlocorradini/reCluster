@@ -3,7 +3,7 @@
 [![ci](https://github.com/carlocorradini/reCluster/actions/workflows/ci.yml/badge.svg)](https://github.com/carlocorradini/reCluster/actions/workflows/ci.yml)
 [![codeql](https://github.com/carlocorradini/reCluster/actions/workflows/codeql.yml/badge.svg)](https://github.com/carlocorradini/reCluster/actions/workflows/codeql.yml)
 
-The reCluster is an architecture for a data center that actively reduces its impact and minimizes its resource utilization.
+reCluster is an architecture for a data center that actively reduces its impact and minimizes its resource utilization
 
 ## Members
 
@@ -11,15 +11,16 @@ The reCluster is an architecture for a data center that actively reduces its imp
 | :---: | :-------: | :--------------: | :--------: |
 | Carlo | Corradini | `carlocorradini` | **223811** |
 
-## Requirements
+## Development
+
+### Requirements
 
 - [Node.js](https://nodejs.org)
 - [npm](https://www.npmjs.com)
+- [Docker](https://www.docker.com)
+- [Vagrant](https://www.vagrantup.com)
 
-## Getting Started
-
-These instructions will get you a copy of the project up and running on your
-local machine for development and testing purposes.
+### Preparation
 
 1. Clone
 
@@ -28,34 +29,104 @@ local machine for development and testing purposes.
    cd reCluster
    ```
 
-1. Scripts Permissions
+1. Scripts permissions
 
    ```console
-   chmod -R +x scripts/*.sh linux/*sh server/scripts/*.sh
+   chmod -R u+x scripts/*.sh linux/*sh server/scripts/*.sh
    ```
 
-1. Install Dependencies
+1. Install dependencies
 
    ```console
    npm ci
    ```
 
-## Development
+## Simulate Cluster
 
-1. Vagrant
+> Simulate cluster with Vagrant
+>
+> Same procedures as in a real cluster except for Vagrant commands
+
+1. Start nodes
 
    ```console
-   vagrant up controller
+   vagrant up
    ```
 
-1. reCluster Controller node
+1. Controller node
 
-    ```console
-    vagrant ssh controller 
-    /vagrant/server/scripts/database.sh &
-    npm --prefix /vagrant/server run db:migrate
-    /vagrant/linux/install.sh --bench-time 1 --log-level debug --config /vagrant/linux/config.server.yaml --init-cluster
-    ```
+   > 3 terminals are required
+
+   ```console
+   vagrant ssh controller
+   ```
+
+   1. PostgreSQL database
+
+      1. Start
+
+         > Terminal 1
+
+         ```console
+         /vagrant/server/scripts/database.sh
+         ```
+
+      1. Synchronize
+
+         > Terminal 2
+
+         ```console
+         npm --prefix /vagrant/server run db:migrate
+         ```
+
+   1. Install script
+
+      > Terminal 2
+      >
+      > Wait until it is asked to start reCluster server and go to the next step
+
+      ```console
+      /vagrant/linux/install.sh \
+        --init-cluster \
+        --config /vagrant/linux/config.controller.yaml
+      ```
+
+   1. reCluster server
+
+      > Terminal 3
+
+      1. Build
+
+         ```console
+         npm --prefix /vagrant/server run build
+         ```
+
+      1. Start
+
+         ```console
+         env \
+           NODE_ENV=development \
+           PORT=8080 \
+           DATABASE_URL="postgresql://recluster:password@localhost:5432/recluster?schema=public" \
+           node /vagrant/server/build/main.js
+         ```
+
+1. Worker 0 node
+
+   ```console
+   vagrant ssh worker-0
+   ```
+
+   1. Install script
+
+      > Terminal 2
+      >
+      > Wait until it is asked to start reCluster server and go to the next step
+
+      ```console
+      /vagrant/linux/install.sh \
+        --config /vagrant/linux/config.worker.yaml
+      ```
 
 ## License
 

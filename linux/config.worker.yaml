@@ -24,7 +24,7 @@
 k3s:
   kind: "agent"
   server: "https://10.0.0.10:6443"
-  token: "password"
+  token: "" # Server token
 
 node_exporter:
   collector:

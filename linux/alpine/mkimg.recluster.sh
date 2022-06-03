@@ -30,6 +30,6 @@ profile_recluster() {
   arch="x86_64 aarch64 armv7 s390x"
   output_format="iso"
   kernel_addons="xtables-addons"
-  apks="$apks coreutils docker docker-compose ethtool iproute2 jq ncurses procps sudo sysbench util-linux yq"
+  apks="$apks coreutils docker docker-compose ethtool inotify-tools iproute2 jq ncurses procps sudo sysbench util-linux yq"
   apkovl="genapkovl-recluster.sh"
 }

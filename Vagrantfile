@@ -46,6 +46,7 @@ $script = <<-SCRIPT
 apk add --update --no-cache \
   coreutils \
   ethtool \
+  inotify-tools \
   iproute2 \
   jq \
   ncurses \
@@ -72,9 +73,6 @@ addgroup vagrant docker
 rc-update add docker boot
 service docker start
 
-# Docker reCluster server
-/vagrant/server/scripts/dockerize.sh
-
 # npm dependencies
 npm --prefix /vagrant/server install --ignore-scripts
 SCRIPT
@@ -99,10 +97,6 @@ Vagrant.configure("2") do |config|
 
       # Controller configuration
       if "controller".eql? node_config[:hostname] then
-        # Network
-        node.vm.network "forwarded_port", guest: 6443, host: 6443
-        node.vm.network "forwarded_port", guest: 8080, host: 8080
-
         # Provision
         node.vm.provision "shell", inline: $controller
       end

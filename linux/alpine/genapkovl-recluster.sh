@@ -53,6 +53,7 @@ coreutils
 docker
 docker-compose
 ethtool
+inotify-tools
 iproute2
 jq
 ncurses

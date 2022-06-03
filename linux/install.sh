@@ -766,12 +766,14 @@ verify_system() {
   esac
 
   # Commands
+  # TODO Check some command only when cluster init is 'true'
   assert_cmd cp
   assert_cmd env
   assert_cmd ethtool
   assert_cmd grep
   assert_cmd ip
   assert_cmd_feature ip -details -json link show
+  assert_cmd inotifywait
   assert_cmd jq
   assert_cmd lscpu
   assert_cmd lsblk
@@ -1058,29 +1060,41 @@ install_node_exporter() {
 
 # Cluster initialization
 cluster_init() {
-  [ "$INIT_CLUSTER" = true ] || return
+  [ "$INIT_CLUSTER" = true ] || return 0;
 
-  _sleep_time=8
+   INFO "Cluster initialization"
+
   _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
   _kubeconfig_file=~/.kube/config
 
-  INFO "Cluster initialization"
+  _wait_k3s_kubeconfig_file_creation() {
+    _k3s_kubeconfig_dir=$(dirname "$_k3s_kubeconfig_file")
+    _k3s_kubeconfig_file_name=$(basename "$_k3s_kubeconfig_file")
+
+    INFO "Waiting K3s kubeconfig file at '$_k3s_kubeconfig_file'"
+    inotifywait -e create,close_write,moved_to --format '%f' --quiet "$_k3s_kubeconfig_dir" --monitor \
+    | while IFS= read -r file; do
+        DEBUG "File '$file' notify at '$_k3s_kubeconfig_dir'"
+        if [ "$file" = "$_k3s_kubeconfig_file_name" ]; then
+          DEBUG "K3s kubeconfig file generated"
+          break;
+        fi;
+      done
+  }
 
   # Start and stop K3s service to generate initial configuration
   case $INIT_SYSTEM in
     openrc)
       INFO "openrc: Starting K3s service"
       $SUDO rc-service k3s-recluster start
-      DEBUG "Sleeping '$_sleep_time'"
-      sleep "$_sleep_time"
+      _wait_k3s_kubeconfig_file_creation
       INFO "openrc: Stopping K3s service"
       $SUDO rc-service k3s-recluster stop
     ;;
     systemd)
       INFO "systemd: Starting K3s service"
       $SUDO systemctl start k3s-recluster
-      DEBUG "Sleeping '$_sleep_time'"
-      sleep "$_sleep_time"
+      _wait_k3s_kubeconfig_file_creation
       INFO "systemd: Stopping K3s service"
       $SUDO systemctl stop k3s-recluster
     ;;
@@ -1091,19 +1105,25 @@ cluster_init() {
   if [ -f "$_kubeconfig_file" ]; then
     WARN "kubeconfig '$_kubeconfig_file' already exists, skipping copying to '$_kubeconfig_file'"
   else
+    _kubeconfig_dir=$(dirname "$_kubeconfig_file")
     INFO "Copying K3s kubeconfig from '$_k3s_kubeconfig_file' to '$_kubeconfig_file'"
-    mkdir "$(dirname "$_kubeconfig_file")"
+    [ -d "$_kubeconfig_dir" ] || mkdir "$_kubeconfig_dir"
     $SUDO cp "$_k3s_kubeconfig_file" "$_kubeconfig_file"
     $SUDO chmod 0644 "$_kubeconfig_file"
   fi
 
   # Read kubeconfig
-  INFO "kubeconfig:"
-  $SUDO yq e --prettyPrint '.' "$_kubeconfig_file"
+  WARN "kubeconfig:"
+  $SUDO yq e --prettyPrint '.' "$_k3s_kubeconfig_file"
 
-  # TODO Start reCluster server
-  DEBUG "Sleeping '$_sleep_time'"
-  sleep "$_sleep_time"
+  # TODO Server token
+
+  # reCluster server
+  # TODO Must be a service
+  # TODO Wait until server URL is reachable
+  WARN "Waiting you to start reCluster server"
+  WARN "Press [ENTER] to continue..."
+  read -r
 }
 
 # Install reCluster

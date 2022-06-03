@@ -1,12 +1,6 @@
 # reCluster Server
 
-reCluster server.
-
-## Requirements
-
-- [Node.js](https://nodejs.org)
-- [npm](https://www.npmjs.com)
-- [Docker](https://www.docker.com)
+reCluster server
 
 ## Build
 
@@ -16,9 +10,17 @@ npm run build
 
 ## Development
 
+### Requirements
+
+- [Node.js](https://nodejs.org)
+- [npm](https://www.npmjs.com)
+- [Docker](https://www.docker.com)
+
+### Preparation
+
 1. Environment
 
-   Copy & paste `.env.example` file, name it `.env` and edit it according to your configuration.
+   Copy & paste `.env.example` file, name it `.env` and edit it according to your configuration
 
 1. Database
 
@@ -43,7 +45,7 @@ npm run build
 1. Execute Queries
 
    - Apollo Sandbox \
-     Visit <http://localhost:8080> in your browser.
+     Visit <http://localhost:8080> in your browser
 
    - Manually
 
