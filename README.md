@@ -119,10 +119,6 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
    1. Install script
 
-      > Terminal 2
-      >
-      > Wait until it is asked to start reCluster server and go to the next step
-
       ```console
       /vagrant/linux/install.sh \
         --config /vagrant/linux/config.worker.yaml
