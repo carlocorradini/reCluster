@@ -67,7 +67,7 @@
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.16.3",
-    "@prisma/client": "^3.14.0",
+    "@prisma/client": "^3.15.0",
     "apollo-server": "^3.8.2",
     "apollo-server-errors": "^3.3.1",
     "class-validator": "^0.13.2",
