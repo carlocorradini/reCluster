@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.2",
-    "@commitlint/config-conventional": "^17.0.2",
+    "@commitlint/config-conventional": "^17.0.3",
     "@cspell/dict-bash": "^2.0.3",
     "@cspell/dict-node": "^3.0.1",
     "@cspell/dict-npm": "^3.0.1",
