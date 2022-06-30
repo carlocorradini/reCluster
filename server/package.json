@@ -54,7 +54,7 @@
     "eslint-import-resolver-typescript": "^3.1.1",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-license-header": "^0.6.0",
-    "eslint-plugin-prettier": "^4.1.0",
+    "eslint-plugin-prettier": "^4.2.0",
     "eslint-plugin-tsdoc": "^0.2.16",
     "pino-pretty": "^8.1.0",
     "prisma": "^4.0.0",
