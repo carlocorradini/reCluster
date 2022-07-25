@@ -375,7 +375,7 @@ download_print() {
 # Read power consumption in benchmark interval
 # @param $1 Benchmark PID
 read_power_consumption() {
-  [ $# -eq 1 ] || FATAL "Readi power consumption requires exactly 1 argument but '$#' found"
+  [ $# -eq 1 ] || FATAL "Read power consumption requires exactly 1 argument but '$#' found"
 
   _read_power_consumption() {
     # FIXME One line
@@ -861,6 +861,8 @@ verify_system() {
   assert_cmd lsblk
   assert_cmd mktemp
   assert_cmd numfmt
+  assert_cmd ps
+  assert_cmd_feature ps -p "$$" -o ppid=
   assert_cmd read
   assert_cmd sed
   assert_cmd sudo
@@ -875,8 +877,6 @@ verify_system() {
   # Spinner enabled
   if [ "$SPINNER_ENABLE" = true ]; then
     # Commands
-    assert_cmd ps
-    assert_cmd_feature ps -p "$$" -o ppid=
     assert_cmd tput
   fi
 
