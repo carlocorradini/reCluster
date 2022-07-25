@@ -227,15 +227,26 @@ show_help() {
   _config_file=$(basename "$CONFIG_FILE")
 
   cat << EOF
-Usage: install.sh [--airgap] [--bench-time <TIME>] [--config <PATH>]
-                  [--disable-color] [--disable-spinner] [--help]
-                  [--init-cluster] [--k3s-version <VERSION>] [--log-level <LEVEL>]
-                  [--node_exporter-version <VERSION>] [--spinner <SPINNER>]
+Usage: install.sh [--airgap] [--bench-device-api <URL>] [--bench-interval <TIME>]
+                  [--bench-time <TIME>] [--config <PATH>] [--disable-color]
+                  [--disable-spinner] [--help] [--init-cluster]
+                  [--k3s-version <VERSION>] [--log-level <LEVEL>] [--node_exporter-version <VERSION>]
+                  [--spinner <SPINNER>]
 
 reCluster installation script.
 
 Options:
   --airgap                             Perform installation in Air-Gap environment
+
+  --bench-device-api <URL>             Benchmark device api url
+                                       Default: $BENCH_DEVICE_API
+                                       Values:
+                                         Any valid api url
+
+  --bench-interval <TIME>              Benchmark read interval time in seconds
+                                       Default: $BENCH_INTERVAL
+                                       Values:
+                                         Any positive number
 
   --bench-time <TIME>                  Benchmark execution time in seconds
                                        Default: $BENCH_TIME
@@ -335,13 +346,64 @@ download() {
   # Download
   case $DOWNLOADER in
     curl)
-      curl --fail --silent --location --output "$1" "$2" || fatal "Download '$2' failed"
+      curl --fail --silent --location --output "$1" "$2" || FATAL "Download '$2' failed"
     ;;
     wget)
-      wget --quiet --output-document="$1" "$2" || fatal "Download '$2' failed"
+      wget --quiet --output-document="$1" "$2" || FATAL "Download '$2' failed"
     ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
+}
+
+# Print downloaded content
+# @param $1 Download URL
+download_print() {
+  [ $# -eq 1 ] || FATAL "Download requires exactly 1 argument but '$#' found"
+
+  # Download
+  case $DOWNLOADER in
+    curl)
+      curl --fail --silent --location --show-error "$1" || FATAL "Download '$1' failed"
+    ;;
+    wget)
+      wget --quiet ---output-document=- "$1" 2>&1 || FATAL "Download '$1' failed"
+    ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
+  esac
+}
+
+# Read power consumption in benchmark interval
+# @param $1 Benchmark PID
+read_power_consumption() {
+  [ $# -eq 1 ] || FATAL "Readi power consumption requires exactly 1 argument but '$#' found"
+
+  _read_power_consumption() {
+    # FIXME One line
+    _power=$(download_print "$BENCH_DEVICE_API" | jq --raw-output '.StatusSNS.ENERGY.Power')
+    echo "$_power"
+  }
+  _total_power_consumption=0
+  _num_reads=0
+
+  # https://unix.stackexchange.com/a/249036/458944
+  while
+    # Read current power consumption
+    _current_power_consumption=$(_read_power_consumption)
+    # Sum current with total power consumption
+    _total_power_consumption=$((_total_power_consumption+_current_power_consumption))
+
+    # Increase number of readings
+    _num_reads=$((_num_reads+1))
+    # Sleep
+    sleep "$BENCH_INTERVAL"
+
+    # Condition
+    ps -p "$1" > /dev/null;
+  do :; done
+
+  # Average power consumption
+  _average_power_consumption=$((_total_power_consumption/_num_reads))
+  echo "$_average_power_consumption"
 }
 
 # Check if parameter is a number
@@ -471,21 +533,20 @@ EOF
 # Execute CPU benchmark
 run_cpu_bench() {
   _run_cpu_bench() {
-    sysbench --time="$BENCH_TIME" --threads="$1" cpu run \
-                  | grep 'events per second' \
-                  | sed 's/events per second://g' \
-                  | sed 's/[[:space:]]*//g' \
-                  | xargs printf "%.0f"
+    sysbench --time="$BENCH_TIME" --threads="$1" cpu run > /dev/null
   }
 
   # Single-thread
-  _single_thread=$(_run_cpu_bench 1)
-  # Multi-thread
-  _multi_thread=$(_run_cpu_bench "$(grep -c ^processor /proc/cpuinfo)")
+  _run_cpu_bench 1 &
+  _single_thread=$(read_power_consumption "$!")
 
-  DEBUG "CPU bench:
-    \tSingle-thread '${_single_thread}events/s'
-    \tMulti-thread '${_multi_thread}events/s'"
+  # Multi-thread
+  _run_cpu_bench "$(grep -c ^processor /proc/cpuinfo)" &
+  _multi_thread=$(read_power_consumption "$!")
+
+  DEBUG "CPU power consumption:
+    \tSingle-thread '${_single_thread} W'
+    \tMulti-thread '${_multi_thread} W'"
 }
 
 # Execute RAM benchmark
@@ -644,6 +705,23 @@ parse_args() {
         AIRGAP_ENV=true
         shift
       ;;
+      --bench-device-api)
+        # Benchmark device api url
+        _parse_args_assert_value "$@"
+
+        _bench_device_api=$2
+        shift
+        shift
+      ;;
+      --bench-interval)
+        # Benchmark interval
+        _parse_args_assert_value "$@"
+        if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
+
+        _bench_interval=$2
+        shift
+        shift
+      ;;
       --bench-time)
         # Benchmark time
         _parse_args_assert_value "$@"
@@ -737,7 +815,11 @@ parse_args() {
     esac
   done
 
-  # Benchmark time in seconds
+  # Benchmark device api
+  if [ -n "$_bench_device_api" ]; then BENCH_DEVICE_API=$_bench_device_api; fi
+  # Benchmark interval
+  if [ -n "$_bench_interval" ]; then BENCH_INTERVAL=$_bench_interval; fi
+  # Benchmark time
   if [ -n "$_bench_time" ]; then BENCH_TIME=$_bench_time; fi
   # Configuration file
   if [ -n "$_config" ]; then CONFIG_FILE=$_config; fi
@@ -1362,6 +1444,10 @@ start_services() {
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # Airgap environment flag
 AIRGAP_ENV=false
+# Benchmark device api url
+BENCH_DEVICE_API="http://bench.local/cm?cmnd=status%2010"
+# Benchmark interval in seconds
+BENCH_INTERVAL=1
 # Benchmark time in seconds
 BENCH_TIME=16
 # Configuration file
