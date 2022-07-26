@@ -872,6 +872,7 @@ verify_system() {
   # Commands
   # TODO Check some command only when cluster init is 'true'
   assert_cmd cp
+  assert_cmd date
   assert_cmd env
   assert_cmd ethtool
   assert_cmd grep
@@ -883,8 +884,6 @@ verify_system() {
   assert_cmd lsblk
   assert_cmd mktemp
   assert_cmd numfmt
-  assert_cmd ps
-  assert_cmd_feature ps -p "$$" -o ppid=
   assert_cmd read
   assert_cmd sed
   assert_cmd sudo
@@ -899,6 +898,8 @@ verify_system() {
   # Spinner enabled
   if [ "$SPINNER_ENABLE" = true ]; then
     # Commands
+    assert_cmd ps
+    assert_cmd_feature ps -p "$$" -o ppid=
     assert_cmd tput
   fi
 
