@@ -31,14 +31,14 @@
     "@commitlint/config-conventional": "^17.0.3",
     "@cspell/dict-bash": "^2.0.4",
     "@cspell/dict-node": "^3.0.1",
-    "@cspell/dict-npm": "^3.0.1",
+    "@cspell/dict-npm": "^3.1.0",
     "@cspell/dict-typescript": "^2.0.1",
-    "@cspell/eslint-plugin": "^6.4.0",
-    "cspell": "^6.4.0",
+    "@cspell/eslint-plugin": "^6.4.1",
+    "cspell": "^6.4.1",
     "husky": "^8.0.1",
     "license-check-and-add": "^4.0.5",
     "lint-staged": "^13.0.3",
-    "markdownlint-cli": "^0.32.0",
+    "markdownlint-cli": "^0.32.1",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.7.1"
   }
