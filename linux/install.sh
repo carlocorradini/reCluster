@@ -401,9 +401,6 @@ read_power_consumption() {
     _current_power_consumption=$(_read_power_consumption)
     # Sum current with total power consumption
     _total_power_consumption=$((_total_power_consumption+_current_power_consumption))
-
-    >&2 echo "PC: $_current_power_consumption"
-
     # Increase number of readings
     _num_reads=$((_num_reads+1))
     # Sleep
