@@ -253,6 +253,11 @@ Options:
                                        Values:
                                          Any positive number
 
+  --bench-warmup <TIME>                Benchmark warmup time in seconds
+                                       Default: $BENCH_WARMUP
+                                       Values:
+                                         Any positive number
+
   --config <PATH>                      Configuration file path
                                        Default: $_config_file
                                        Values:
@@ -382,24 +387,33 @@ read_power_consumption() {
     _power=$(download_print "$BENCH_DEVICE_API" | jq --raw-output '.StatusSNS.ENERGY.Power')
     echo "$_power"
   }
+  _pid=$1
   _total_power_consumption=0
   _num_reads=0
+  _end=
 
-  # https://unix.stackexchange.com/a/249036/458944
-  while
+  # Warmup
+  sleep "$BENCH_WARMUP"
+
+  _end=$(date -ud "$BENCH_TIME second" +%s)
+  while [ "$(date -u +%s)" -le "$_end" ]; do
     # Read current power consumption
     _current_power_consumption=$(_read_power_consumption)
     # Sum current with total power consumption
     _total_power_consumption=$((_total_power_consumption+_current_power_consumption))
 
+    >&2 echo "PC: $_current_power_consumption"
+
     # Increase number of readings
     _num_reads=$((_num_reads+1))
     # Sleep
     sleep "$BENCH_INTERVAL"
+  done
 
-    # Condition
-    ps -p "$1" > /dev/null;
-  do :; done
+  # Terminate benchmark
+  kill -s HUP "$_pid"
+  # Wait may fail
+  wait "$_pid" || :
 
   # Average power consumption
   _average_power_consumption=$((_total_power_consumption/_num_reads))
@@ -731,6 +745,15 @@ parse_args() {
         shift
         shift
       ;;
+      --bench-warmup)
+        # Benchmark warmup time
+        _parse_args_assert_value "$@"
+        if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
+
+        _bench_warmup=$2
+        shift
+        shift
+      ;;
       --config)
         # Configuration file
         _parse_args_assert_value "$@"
@@ -821,6 +844,8 @@ parse_args() {
   if [ -n "$_bench_interval" ]; then BENCH_INTERVAL=$_bench_interval; fi
   # Benchmark time
   if [ -n "$_bench_time" ]; then BENCH_TIME=$_bench_time; fi
+  # Benchmark warmup time
+  if [ -n "$_bench_warmup" ]; then BENCH_WARMUP=$_bench_warmup; fi
   # Configuration file
   if [ -n "$_config" ]; then CONFIG_FILE=$_config; fi
   # K3s version
@@ -1449,7 +1474,9 @@ BENCH_DEVICE_API="http://bench.local/cm?cmnd=status%2010"
 # Benchmark interval in seconds
 BENCH_INTERVAL=1
 # Benchmark time in seconds
-BENCH_TIME=16
+BENCH_TIME=30
+# Benchmark warmup time in seconds
+BENCH_WARMUP=10
 # Configuration file
 CONFIG_FILE="$DIRNAME/config.yaml"
 # Initialize cluster
