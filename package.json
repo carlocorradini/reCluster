@@ -31,7 +31,7 @@
     "@commitlint/config-conventional": "^17.0.3",
     "@cspell/dict-bash": "^2.0.4",
     "@cspell/dict-node": "^3.0.1",
-    "@cspell/dict-npm": "^3.1.1",
+    "@cspell/dict-npm": "^3.1.2",
     "@cspell/dict-typescript": "^2.0.1",
     "@cspell/eslint-plugin": "^6.5.0",
     "cspell": "^6.5.0",
