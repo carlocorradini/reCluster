@@ -388,21 +388,18 @@ read_power_consumption() {
     echo "$_power"
   }
   _pid=$1
-  _total_power_consumption=0
-  _num_reads=0
-  _end=
+  _pcs="[]"
 
   # Warmup
   sleep "$BENCH_WARMUP"
 
+  # Execute
   _end=$(date -ud "$BENCH_TIME second" +%s)
   while [ "$(date -u +%s)" -le "$_end" ]; do
-    # Read current power consumption
-    _current_power_consumption=$(_read_power_consumption)
-    # Sum current with total power consumption
-    _total_power_consumption=$((_total_power_consumption+_current_power_consumption))
-    # Increase number of readings
-    _num_reads=$((_num_reads+1))
+    # Current power consumption
+    _pc=$(_read_power_consumption)
+    # Add to list
+    _pcs=$(echo "$_pcs" | jq --arg pc "$_pc" '. |= . + [$pc|tonumber]')
     # Sleep
     sleep "$BENCH_INTERVAL"
   done
@@ -412,9 +409,31 @@ read_power_consumption() {
   # Wait may fail
   wait "$_pid" || :
 
-  # Average power consumption
-  _average_power_consumption=$((_total_power_consumption/_num_reads))
-  echo "$_average_power_consumption"
+  # Check pcs length
+  [ "$(echo "$_pcs" | jq --raw-output 'length')" -ge 2 ] || FATAL "Not enough power consumption readings"
+
+  # Mean
+  _mean=$(echo "$_pcs" \
+          | jq --raw-output \
+              'add / length
+                | . + 0.5
+                | floor
+              '
+          )
+  # Standard deviation
+  _standard_deviation=$(echo "$_pcs" \
+                            | jq --raw-output \
+                                '(add / length) as $mean
+                                  | (map(. - $mean | . * .) | add) / (length - 1)
+                                  | sqrt
+                                '
+                        )
+
+  # Return
+  jq --null-input \
+    --arg mean "$_mean" \
+    --arg standard_deviation "$_standard_deviation" \
+    '{"mean": $mean, "standard_deviation": $standard_deviation}'
 }
 
 # Check if parameter is a number
@@ -892,10 +911,9 @@ verify_system() {
   assert_cmd tee
   assert_cmd tr
   assert_cmd uname
-  assert_cmd xargs
   assert_cmd yq
 
-  # Spinner enabled
+  # Spinner
   if [ "$SPINNER_ENABLE" = true ]; then
     # Commands
     assert_cmd ps
@@ -912,6 +930,8 @@ verify_system() {
   # reCluster directories
   [ ! -d "$RECLUSTER_ETC_DIR" ] || FATAL "reCluster etc directory '$RECLUSTER_ETC_DIR' already exists"
   [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "reCluster opt directory '$RECLUSTER_OPT_DIR' already exists"
+
+  # TODO Check BENCH_DEVICE_API is reachable
 
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
