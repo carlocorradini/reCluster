@@ -35,11 +35,9 @@ export type ByteConverter = {
 
 export function byteConverter(args: ByteConverter) {
   // FIXME BigInt conversion
-  return Math.floor(
-    convert(typeof args.value === 'number' ? args.value : Number(args.value))
-      .from(args.from ?? DigitalByteUnit.B)
-      .to(args.to ?? DigitalByteUnit.B)
-  );
+  convert(typeof args.value === 'number' ? args.value : Number(args.value))
+    .from(args.from ?? DigitalByteUnit.B)
+    .to(args.to ?? DigitalByteUnit.B);
 }
 
 export type BitConverter = {
@@ -50,9 +48,7 @@ export type BitConverter = {
 
 export function bitConverter(args: BitConverter) {
   // FIXME BigInt conversion
-  return Math.floor(
-    convert(typeof args.value === 'number' ? args.value : Number(args.value))
-      .from(args.from ?? DigitalBitUnit.b)
-      .to(args.to ?? DigitalBitUnit.b)
-  );
+  convert(typeof args.value === 'number' ? args.value : Number(args.value))
+    .from(args.from ?? DigitalBitUnit.b)
+    .to(args.to ?? DigitalBitUnit.b);
 }
