@@ -26,7 +26,9 @@ set -o errexit
 # Disable wildcard character expansion
 set -o noglob
 
-# Cleanup
+# ================
+# CLEANUP
+# ================
 cleanup() {
   # Exit code
   _exit_code=$?
@@ -64,47 +66,47 @@ LOG_LEVEL_DEBUG=600
 # @param $1 Log level
 # @param $2 Message
 _log_print_message() {
-  _log_level=$1
+  _log_level=${1:-LOG_LEVEL_FATAL}
   shift
+  _log_level_name=
   _log_message=${*:-}
-  _log_name=
   _log_prefix=
   _log_suffix="\033[0m"
 
-  # Log level enabled
+  # Check log level
   if [ "$_log_level" -gt "$LOG_LEVEL" ]; then return; fi
 
   case $_log_level in
     "$LOG_LEVEL_FATAL")
-      _log_name=FATAL
+      _log_level_name=FATAL
       _log_prefix="\033[41;37m"
     ;;
     "$LOG_LEVEL_ERROR")
-      _log_name=ERROR
+      _log_level_name=ERROR
       _log_prefix="\033[1;31m"
     ;;
     "$LOG_LEVEL_WARN")
-      _log_name=WARN
+      _log_level_name=WARN
       _log_prefix="\033[1;33m"
     ;;
     "$LOG_LEVEL_INFO")
-      _log_name=INFO
+      _log_level_name=INFO
       _log_prefix="\033[37m"
     ;;
     "$LOG_LEVEL_DEBUG")
-      _log_name=DEBUG
+      _log_level_name=DEBUG
       _log_prefix="\033[1;34m"
     ;;
   esac
 
-  # Color disable flag
+  # Check color flag
   if [ "$LOG_COLOR_ENABLE" = false ]; then
     _log_prefix=
     _log_suffix=
   fi
 
-  # Output to stdout
-  printf '%b[%-5s] %b%b\n' "$_log_prefix" "$_log_name" "$_log_message" "$_log_suffix"
+  # Log
+  printf '%b[%-5s] %b%b\n' "$_log_prefix" "$_log_level_name" "$_log_message" "$_log_suffix"
 }
 
 # Fatal log message
@@ -125,7 +127,6 @@ DEBUG() { _log_print_message ${LOG_LEVEL_DEBUG} "$@"; }
 SPINNER_PID=
 # Spinner symbol time in seconds
 SPINNER_TIME=.1
-
 # Spinner symbols dots
 SPINNER_SYMBOLS_DOTS="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
 # Spinner symbols greyscale
@@ -136,9 +137,9 @@ SPINNER_SYMBOLS_PROPELLER="/ - \\ |"
 # Spinner logic
 _spinner() {
   # Termination flag
-  _terminate=1
+  _terminate=false
   # Termination signal
-  trap '_terminate=0' USR1
+  trap '_terminate=true' USR1
   # Message
   _spinner_message="${1:-"Loading..."}"
 
@@ -150,19 +151,19 @@ _spinner() {
       # Save cursor position
       tput sc
       # Symbol and message
-      env printf "%s %s" "$s" "$_spinner_message"
+      printf "%s %s" "$s" "$_spinner_message"
       # Restore cursor position
       tput rc
 
       # Terminate
-      if [ $_terminate -eq 0 ]; then
+      if [ "$_terminate" = true ]; then
         # Clear line from position to end
         tput el
         break 2
       fi
 
       # Animation time
-      env sleep "$SPINNER_TIME"
+      sleep "$SPINNER_TIME"
 
       # Check parent still alive
       # Parent PID
@@ -170,7 +171,7 @@ _spinner() {
       if [ -n "$_spinner_ppid" ]; then
         # shellcheck disable=SC2086
         _spinner_parentup=$(ps --no-headers $_spinner_ppid)
-        if [ -z "$_spinner_parentup" ]; then  break 2; fi
+        if [ -z "$_spinner_parentup" ]; then break 2; fi
       fi
     done
   done
@@ -185,9 +186,9 @@ _spinner() {
 # shellcheck disable=SC2120
 spinner_start() {
   # Print message if present
-  if [ -n "$1" ]; then  INFO "$1"; fi
+  if [ -n "$1" ]; then INFO "$1"; fi
   if [ "$SPINNER_ENABLE" = false ]; then return; fi
-  if [ -n "$SPINNER_PID" ]; then FATAL "Spinner PID already defined"; fi
+  if [ -n "$SPINNER_PID" ]; then FATAL "Spinner PID ($SPINNER_PID) already defined"; fi
 
   # Spawn spinner process
   _spinner "$1" &
@@ -198,7 +199,7 @@ spinner_start() {
 # Stop spinner
 spinner_stop() {
   if [ "$SPINNER_ENABLE" = false ]; then return; fi
-  if [ -z "$SPINNER_PID" ]; then FATAL "Spinner PID undefined"; fi
+  if [ -z "$SPINNER_PID" ]; then FATAL "Spinner PID is undefined"; fi
 
   # Send termination signal
   kill -s USR1 "$SPINNER_PID"
@@ -213,18 +214,18 @@ spinner_stop() {
 # ================
 # Show help message
 show_help() {
-  # Log level string
-  _log_level=
+  # Log level name
+  _log_level_name=
   case $LOG_LEVEL in
-    "$LOG_LEVEL_FATAL") _log_level=fatal ;;
-    "$LOG_LEVEL_ERROR") _log_level=error ;;
-    "$LOG_LEVEL_WARN") _log_level=warn ;;
-    "$LOG_LEVEL_INFO") _log_level=info ;;
-    "$LOG_LEVEL_DEBUG") _log_level=debug ;;
+    "$LOG_LEVEL_FATAL") _log_level_name=fatal ;;
+    "$LOG_LEVEL_ERROR") _log_level_name=error ;;
+    "$LOG_LEVEL_WARN") _log_level_name=warn ;;
+    "$LOG_LEVEL_INFO") _log_level_name=info ;;
+    "$LOG_LEVEL_DEBUG") _log_level_name=debug ;;
   esac
 
   # Config file name
-  _config_file=$(basename "$CONFIG_FILE")
+  _config_file_name=$(basename "$CONFIG_FILE")
 
   cat << EOF
 Usage: install.sh [--airgap] [--bench-device-api <URL>] [--bench-interval <TIME>]
@@ -259,7 +260,7 @@ Options:
                                          Any positive number
 
   --config <PATH>                      Configuration file path
-                                       Default: $_config_file
+                                       Default: $_config_file_name
                                        Values:
                                          Any valid configuration file path
 
@@ -278,7 +279,7 @@ Options:
                                          Any K3s version released
 
   --log-level <LEVEL>                  Logger level
-                                       Default: $_log_level
+                                       Default: $_log_level_name
                                        Values:
                                          fatal    Fatal level
                                          error    Error level
@@ -305,73 +306,93 @@ assert_cmd() {
   DEBUG "Command '$1' found at '$(command -v "$1")'"
 }
 
-# Assert command features
-# @param $1 Command name
-# @param $@ Command options
-assert_cmd_feature() {
-  "$@" > /dev/null 2>&1 || FATAL "Command '$1' is not fully featured, see https://command-not-found.com/$1 for update or installation"
-}
-
 # Assert init system
 assert_init_system() {
-  # OpenRC
   if [ -x /sbin/openrc-run ]; then
+    # OpenRC
     INIT_SYSTEM=openrc
-    return
-  fi
-
-  # systemd
-  if [ -x /bin/systemctl ] || type systemctl > /dev/null 2>&1; then
+  elif [ -x /bin/systemctl ] || type systemctl > /dev/null 2>&1; then
+    # systemd
     INIT_SYSTEM=systemd
-    return
   fi
 
-  # Not supported
-  FATAL "No supported init system 'OpenRC' or 'systemd' found"
+  # Init system check
+  if [ -n "$INIT_SYSTEM" ]; then
+    # Supported
+    DEBUG "Init system is '$INIT_SYSTEM'"
+  else
+    # Not supported
+    FATAL "No supported init system found: 'OpenRC' or 'systemd'"
+  fi
 }
 
-# Verify network downloader executable
-# @param $1 Downloader command name
-verify_downloader() {
-  # Return failure if it doesn't exist or is no executable
-  [ -x "$(command -v "$1")" ] || return 1
+# Assert executable downloader
+assert_downloader() {
+  _assert_downloader() {
+    # Return failure if it doesn't exist or is no executable
+    [ -x "$(command -v "$1")" ] || return 1
 
-  # Set verified executable as our downloader program and return success
-  DOWNLOADER=$1
-  DEBUG "Downloader command '$DOWNLOADER' found at '$(command -v "$1")'"
-  return 0
+    # Set downloader
+    DOWNLOADER=$1
+    return 0
+  }
+
+  # Downloader command
+  _assert_downloader curl \
+    || _assert_downloader wget \
+    || FATAL "No executable downloader found: 'curl' or 'wget'"
+  DEBUG "Downloader '$DOWNLOADER' found at '$(command -v "$DOWNLOADER")'"
+}
+
+# Assert URL address is reachable
+# @param $1 URL address
+assert_url_reachability() {
+  DEBUG "Testing URL address '$1' reachability"
+
+  case $DOWNLOADER in
+    curl)
+      curl --fail --silent --show-error "$1" || FATAL "URL address '$1' is unreachable"
+    ;;
+    wget)
+      curl --quiet --spider "$1" || FATAL "URL address '$1' is unreachable"
+    ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
+  esac
 }
 
 # Download a file
 # @param $1 Output location
 # @param $2 Download URL
 download() {
-  [ $# -eq 2 ] || FATAL "Download requires exactly 2 arguments but '$#' found"
+  [ $# -eq 2 ] || FATAL "Download requires exactly 2 arguments but $# found"
+  DEBUG "Downloading file '$2' to '$1'"
 
   # Download
   case $DOWNLOADER in
     curl)
-      curl --fail --silent --location --output "$1" "$2" || FATAL "Download '$2' failed"
+      curl --fail --silent --location --output "$1" "$2" || FATAL "Download file '$2' failed"
     ;;
     wget)
-      wget --quiet --output-document="$1" "$2" || FATAL "Download '$2' failed"
+      wget --quiet --output-document="$1" "$2" || FATAL "Download file '$2' failed"
     ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
+
+  DEBUG "Successfully downloaded file '$2' to '$1'"
 }
 
 # Print downloaded content
 # @param $1 Download URL
 download_print() {
-  [ $# -eq 1 ] || FATAL "Download requires exactly 1 argument but '$#' found"
+  [ $# -eq 1 ] || FATAL "Download print requires exactly 1 argument but $# found"
 
   # Download
   case $DOWNLOADER in
     curl)
-      curl --fail --silent --location --show-error "$1" || FATAL "Download '$1' failed"
+      curl --fail --silent --location --show-error "$1" || FATAL "Download print '$1' failed"
     ;;
     wget)
-      wget --quiet ---output-document=- "$1" 2>&1 || FATAL "Download '$1' failed"
+      wget --quiet ---output-document=- "$1" 2>&1 || FATAL "Download print '$1' failed"
     ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
@@ -380,12 +401,10 @@ download_print() {
 # Read power consumption in benchmark interval
 # @param $1 Benchmark PID
 read_power_consumption() {
-  [ $# -eq 1 ] || FATAL "Read power consumption requires exactly 1 argument but '$#' found"
+  [ $# -eq 1 ] || FATAL "Read power consumption requires exactly 1 argument but $# found"
 
   _read_power_consumption() {
-    # FIXME One line
-    _power=$(download_print "$BENCH_DEVICE_API" | jq --raw-output '.StatusSNS.ENERGY.Power')
-    echo "$_power"
+    download_print "$BENCH_DEVICE_API" | jq --raw-output '.StatusSNS.ENERGY.Power'
   }
   _pid=$1
   _pcs="[]"
@@ -398,7 +417,8 @@ read_power_consumption() {
   while [ "$(date -u +%s)" -le "$_end" ]; do
     # Current power consumption
     _pc=$(_read_power_consumption)
-    # Add to list
+    DEBUG "Reading current power consumption: '$_pcs'"
+    # Add current power consumption to list
     _pcs=$(echo "$_pcs" | jq --arg pc "$_pc" '. |= . + [$pc|tonumber]')
     # Sleep
     sleep "$BENCH_INTERVAL"
@@ -412,7 +432,7 @@ read_power_consumption() {
   # Check pcs length
   [ "$(echo "$_pcs" | jq --raw-output 'length')" -ge 2 ] || FATAL "Not enough power consumption readings"
 
-  # Mean
+  # Calculate mean
   _mean=$(echo "$_pcs" \
           | jq --raw-output \
               'add / length
@@ -420,7 +440,9 @@ read_power_consumption() {
                 | floor
               '
           )
-  # Standard deviation
+  DEBUG "PC mean: '$_mean'"
+
+  # Calculate standard deviation
   _standard_deviation=$(echo "$_pcs" \
                             | jq --raw-output \
                                 '(add / length) as $mean
@@ -428,17 +450,22 @@ read_power_consumption() {
                                   | sqrt
                                 '
                         )
+  DEBUG "PC standard deviation: '$_standard_deviation'"
 
   # Return
-  jq --null-input \
-    --arg mean "$_mean" \
-    --arg standard_deviation "$_standard_deviation" \
-    '{"mean": $mean, "standard_deviation": $standard_deviation}'
+  RETVAL=$(jq --null-input \
+            --arg mean "$_mean" \
+            --arg standard_deviation "$_standard_deviation" \
+            '{
+               "mean": $mean,
+               "standardDeviation": $standard_deviation
+            }'
+          )
 }
 
-# Check if parameter is a number
+# Check if parameter is an integer number
 # @param $1 Parameter
-is_number() {
+is_number_integer() {
   if [ -z "$1" ]; then return 1; fi
   case $1 in
     ''|*[!0-9]*) return 1 ;;
@@ -476,7 +503,7 @@ read_cpu_info() {
   case $_vendor in
     AuthenticAMD) _vendor=AMD ;;
     GenuineIntel) _vendor=INTEL ;;
-    *) FATAL "CPU vendor '$_vendor' is not supported" ;;
+    *) FATAL "CPU vendor '$_vendor' not supported" ;;
   esac
 
   # Convert cache to bytes
@@ -487,13 +514,20 @@ read_cpu_info() {
 
   # Update
   _cpu_info=$(echo "$_cpu_info" \
-            | jq --arg vendor "$_vendor" --arg cachel1d "$_cache_l1d" --arg cachel1i "$_cache_l1i" --arg cachel2 "$_cache_l2" --arg cachel3 "$_cache_l3" '
-                .vendor = $vendor
-                | .cacheL1d = ($cachel1d | tonumber)
-                | .cacheL1i = ($cachel1i | tonumber)
-                | .cacheL2 = ($cachel2 | tonumber)
-                | .cacheL3 = ($cachel3 | tonumber)
-              ')
+              | jq \
+                  --arg vendor "$_vendor" \
+                  --arg cachel1d "$_cache_l1d" \
+                  --arg cachel1i "$_cache_l1i" \
+                  --arg cachel2 "$_cache_l2" \
+                  --arg cachel3 "$_cache_l3" \
+                  '
+                    .vendor = $vendor
+                    | .cacheL1d = ($cachel1d | tonumber)
+                    | .cacheL1i = ($cachel1i | tonumber)
+                    | .cacheL2 = ($cachel2 | tonumber)
+                    | .cacheL3 = ($cachel3 | tonumber)
+                  '
+            )
 
   # Update node facts
   NODE_FACTS=$(echo "$NODE_FACTS" \
@@ -517,11 +551,12 @@ read_ram_info() {
 # Read Disk(s) information
 read_disks_info() {
   _disks_info=$(lsblk --bytes --json \
-              | jq '
-                  .blockdevices
-                  | map(select(.type == "disk"))
-                  | map({name, size})
-                ')
+                | jq '
+                   .blockdevices
+                    | map(select(.type == "disk"))
+                    | map({name, size})
+                  '
+                )
 
   # Update node facts
   NODE_FACTS=$(echo "$NODE_FACTS" \
@@ -548,9 +583,12 @@ read_interfaces_info() {
 
     # Update interfaces
     _interfaces_info=$(echo "$_interfaces_info" \
-                      | jq --arg iname "$_iname" --arg speed "$_speed" --arg wol "$_wol" '
-                          map(if .name == $iname then . + {"speed": $speed | tonumber, "wol": ($wol | split(""))} else . end)
-                        ')
+                      | jq \
+                          --arg iname "$_iname" \
+                          --arg speed "$_speed" \
+                          --arg wol "$_wol" \
+                          'map(if .name == $iname then . + {"speed": $speed | tonumber, "wol": ($wol | split(""))} else . end)'
+                      )
   done << EOF
 $(echo "$_interfaces_info" | jq --compact-output '.[]')
 EOF
@@ -563,49 +601,80 @@ EOF
 # Execute CPU benchmark
 run_cpu_bench() {
   _run_cpu_bench() {
-    sysbench --time="$BENCH_TIME" --threads="$1" cpu run > /dev/null
+    sysbench --time="$BENCH_TIME" --threads="$1" cpu run > /dev/null &
+    read_power_consumption "$!"
   }
+  _threads="$(grep -c ^processor /proc/cpuinfo)"
 
   # Single-thread
-  _run_cpu_bench 1 &
-  _single_thread=$(read_power_consumption "$!")
+  DEBUG "Running CPU benchmark: single-thread (1)"
+  _run_cpu_bench 1
+  _single_thread=RETVAL
 
   # Multi-thread
-  _run_cpu_bench "$(grep -c ^processor /proc/cpuinfo)" &
-  _multi_thread=$(read_power_consumption "$!")
+  DEBUG "Running CPU benchmark: multi-thread ($_threads)"
+  _run_cpu_bench "$_threads"
+  _multi_thread=RETVAL
 
-  DEBUG "CPU power consumption:
-    \tSingle-thread '${_single_thread} W'
-    \tMulti-thread '${_multi_thread} W'"
+  # Update node facts
+  NODE_FACTS=$(echo "$NODE_FACTS" \
+              | jq \
+                  --argjson singlethread "$_single_thread" \
+                  --argjson multithread "$_multi_thread" \
+                  '
+                    .cpu.benchmark = {
+                      "singleThread": $singlethread,
+                      "multiThread": $multiThread
+                    }
+                  '
+                )
 }
 
 # Execute RAM benchmark
 run_ram_bench() {
   _run_ram_bench() {
-    _ram_output=$(sysbench --time="$BENCH_TIME" --memory-oper="$1" --memory-access-mode="$2" memory run \
-                | grep 'transferred' \
-                | sed 's/.*(\(.*\))/\1/' \
-                | sed 's/B.*//' \
-                | sed 's/[[:space:]]*//g' \
-                | numfmt --from=iec-i)
-    echo $((_ram_output*8))
+    sysbench --time="$BENCH_TIME" --memory-oper="$1" --memory-access-mode="$2" memory run > /dev/null &
+    read_power_consumption "$!"
   }
 
   # Read sequential
-  _read_seq=$(_run_ram_bench read seq)
+  DEBUG "Running RAM benchmark: read sequential"
+  _run_ram_bench read seq
+  _read_seq=RETVAL
   # Read random
-  _read_rand=$(_run_ram_bench read rnd)
+  DEBUG "Running RAM benchmark: read random"
+  _run_ram_bench read rnd
+  _read_rand=RETVAL
 
   # Write sequential
-  _write_seq=$(_run_ram_bench write seq)
+  DEBUG "Running RAM benchmark: write sequential"
+  _run_ram_bench write seq
+  _write_seq=RETVAL
   # Write random
-  _write_rand=$(_run_ram_bench write rnd)
+  DEBUG "Running RAM benchmark: write random"
+  _run_ram_bench write rnd
+  _write_rand=RETVAL
 
-  DEBUG "RAM bench:
-    \tRead Sequential '$(echo "$_read_seq" | numfmt --to=si)b/s'
-    \tRead Random '$(echo "$_read_rand" | numfmt --to=si)b/s'
-    \tWrite Sequential '$(echo "$_write_seq" | numfmt --to=si)b/s'
-    \tWrite Random '$(echo "$_read_rand" | numfmt --to=si)b/s'"
+  # Update node facts
+  NODE_FACTS=$(echo "$NODE_FACTS" \
+              | jq \
+                  --argjson readseq "$_read_seq" \
+                  --argjson readrand "$_read_rand" \
+                  --argjson writeseq "$_write_seq" \
+                  --argjson writerand "$_write_rand" \
+                  '
+                    .ram.benchmark = {
+                      "read": {
+                        "sequential": $readseq,
+                        "random": $readrand
+                      },
+                      "write": {
+                        "sequential": $writeseq,
+                        "random": $writerand
+                      }
+                    }
+                  '
+                )
 }
 
 # Execute IO benchmark
@@ -618,17 +687,14 @@ run_io_bench() {
       write) _io_opt=written ;;
     esac
 
-    _io_output=$(sysbench --time="$BENCH_TIME" --file-test-mode="$2" --file-io-mode="$3" fileio run | grep "$_io_opt, ")
-    _io_throughput_value=$(echo "$_io_output" | sed 's/^.*: //' | sed 's/[[:space:]]*//g')
-    _io_throughput_unit=$(echo "$_io_output" | sed 's/.*,\(.*\)B\/s.*/\1/' | sed 's/[[:space:]]*//g')
-
-    _io_throughput=$(printf "%s%s\n" "$_io_throughput_value" "$_io_throughput_unit" | numfmt --from=iec-i)
-    echo $((_io_throughput*8))
+    sysbench --time="$BENCH_TIME" --file-test-mode="$2" --file-io-mode="$3" fileio run > /dev/null &
+    read_power_consumption "$!"
   }
 
-  # TODO Perform benchmark per disk
+  # TODO Benchmark per disk
 
   # Prepare sysbench IO
+  DEBUG "Preparing IO benchmark"
   sysbench fileio cleanup > /dev/null
   sysbench fileio prepare > /dev/null
 
@@ -636,29 +702,21 @@ run_io_bench() {
   _read_seq_sync=$(_run_io_bench read seqrd sync)
   # Read sequential asynchronous
   _read_seq_async=$(_run_io_bench read seqrd async)
-  # Read sequential mmap
-  _read_seq_mmap=$(_run_io_bench read seqrd mmap)
 
   # Read random synchronous
   _read_rand_sync=$(_run_io_bench read rndrd sync)
   # Read random asynchronous
   _read_rand_async=$(_run_io_bench read rndrd async)
-  # Read random mmap
-  _read_rand_mmap=$(_run_io_bench read rndrd mmap)
 
   # Write sequential synchronous
   _write_seq_sync=$(_run_io_bench write seqwr sync)
   # Write sequential asynchronous
   _write_seq_async=$(_run_io_bench write seqwr async)
-  # Write sequential mmap
-  _write_seq_mmap=$(_run_io_bench write seqwr mmap)
 
   # Write random synchronous
   _write_rand_sync=$(_run_io_bench write rndwr sync)
   # Write random asynchronous
   _write_rand_async=$(_run_io_bench write rndwr async)
-  # Write random mmap
-  _write_rand_mmap=$(_run_io_bench write rndwr mmap)
 
   # Clean sysbench IO
   sysbench fileio cleanup > /dev/null
@@ -666,18 +724,15 @@ run_io_bench() {
   DEBUG "IO bench:
     \tRead Sequential Sync '$(echo "$_read_seq_sync" | numfmt --to=si)b/s'
     \tRead Sequential Async '$(echo "$_read_seq_async" | numfmt --to=si)b/s'
-    \tRead Sequential Mmap '$(echo "$_read_seq_mmap" | numfmt --to=si)b/s'
     \tRead Random Sync '$(echo "$_read_rand_sync" | numfmt --to=si)b/s'
     \tRead Random Async '$(echo "$_read_rand_async" | numfmt --to=si)b/s'
-    \tRead Random Mmap '$(echo "$_read_rand_mmap" | numfmt --to=si)b/s'
     \tWrite Sequential Sync '$(echo "$_write_seq_sync" | numfmt --to=si)b/s'
     \tWrite Sequential Async '$(echo "$_write_seq_async" | numfmt --to=si)b/s'
-    \tWrite Sequential Mmap '$(echo "$_write_seq_mmap" | numfmt --to=si)b/s'
     \tWrite Random Sync '$(echo "$_write_rand_sync" | numfmt --to=si)b/s'
-    \tWrite Random Async '$(echo "$_write_rand_async" | numfmt --to=si)b/s'
-    \tWrite Random Mmap '$(echo "$_write_rand_mmap" | numfmt --to=si)b/s'"
+    \tWrite Random Async '$(echo "$_write_rand_async" | numfmt --to=si)b/s'"
 }
 
+# Register current node
 node_registration() {
   _server_url=$(echo "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires 'server: <URL>'"
   # shellcheck disable=SC2016
@@ -723,6 +778,9 @@ parse_args() {
   _parse_args_assert_value() {
     if [ -z "$2" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
   }
+  _parse_args_assert_positive_number_integer() {
+    if ! is_number_integer "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
+  }
   _parse_args_invalid_value() {
     FATAL "Value '$2' of argument '$1' is invalid"
   }
@@ -746,7 +804,7 @@ parse_args() {
       --bench-interval)
         # Benchmark interval
         _parse_args_assert_value "$@"
-        if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
+        _parse_args_assert_positive_number_integer "$1" "$2"
 
         _bench_interval=$2
         shift
@@ -755,7 +813,7 @@ parse_args() {
       --bench-time)
         # Benchmark time
         _parse_args_assert_value "$@"
-        if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
+        _parse_args_assert_positive_number_integer "$1" "$2"
 
         _bench_time=$2
         shift
@@ -764,7 +822,7 @@ parse_args() {
       --bench-warmup)
         # Benchmark warmup time
         _parse_args_assert_value "$@"
-        if ! is_number "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
+        _parse_args_assert_positive_number_integer "$1" "$2"
 
         _bench_warmup=$2
         shift
@@ -892,11 +950,9 @@ verify_system() {
   # TODO Check some command only when cluster init is 'true'
   assert_cmd cp
   assert_cmd date
-  assert_cmd env
   assert_cmd ethtool
   assert_cmd grep
   assert_cmd ip
-  assert_cmd_feature ip -details -json link show
   assert_cmd inotifywait
   assert_cmd jq
   assert_cmd lscpu
@@ -917,28 +973,28 @@ verify_system() {
   if [ "$SPINNER_ENABLE" = true ]; then
     # Commands
     assert_cmd ps
-    assert_cmd_feature ps -p "$$" -o ppid=
     assert_cmd tput
   fi
-
-  # Downloader command
-  verify_downloader curl || verify_downloader wget || FATAL "Unable to find 'curl' or 'wget' downloader command"
 
   # Init system
   assert_init_system
 
-  # reCluster directories
+  # Downloader command
+  assert_downloader
+
+  # Check BENCH_DEVICE_API reachability
+  assert_url_reachability "$BENCH_DEVICE_API"
+
+  # Directories
   [ ! -d "$RECLUSTER_ETC_DIR" ] || FATAL "reCluster etc directory '$RECLUSTER_ETC_DIR' already exists"
   [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "reCluster opt directory '$RECLUSTER_OPT_DIR' already exists"
 
-  # TODO Check BENCH_DEVICE_API is reachable
-
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
-    INFO "Already running as 'root'"
+    WARN "Already running as 'root'"
     SUDO=
   else
-    INFO "Requesting 'root' privileges"
+    WARN "Requesting 'root' privileges"
     SUDO=sudo
     $SUDO --reset-timestamp
     $SUDO true || FATAL "Failed to obtain 'root' privileges"
@@ -1032,7 +1088,7 @@ setup_system() {
 
 # Read system information
 read_system_info() {
-  spinner_start "System Info"
+  spinner_start "Reading system information"
 
   # CPU info
   read_cpu_info
@@ -1067,19 +1123,23 @@ EOF
 # Execute benchmarks
 run_benchmarks() {
   # CPU bench
-  spinner_start "CPU benchmarks"
+  spinner_start "CPU benchmark"
   run_cpu_bench
   spinner_stop
+  DEBUG "CPU benchmark:\n$(echo "$NODE_FACTS" | jq .cpu.benchmark)"
 
   # RAM bench
-  spinner_start "RAM benchmarks"
+  spinner_start "RAM benchmark"
   run_ram_bench
   spinner_stop
+  DEBUG "RAM benchmark:\n$(echo "$NODE_FACTS" | jq .ram.benchmark)"
 
   # IO bench
-  spinner_start "IO benchmarks"
+  spinner_start "IO benchmark"
   run_io_bench
   spinner_stop
+  # TODO IO benchmark
+  # DEBUG "IO benchmark:\n$(echo "$NODE_FACTS" | jq .io.benchmark)"
 }
 
 # Install K3s
@@ -1125,14 +1185,15 @@ install_k3s() {
 
   # Install
   spinner_start "Installing K3s '$K3S_VERSION'"
-  env \
-    INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
-    INSTALL_K3S_SKIP_START=true \
-    INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
-    INSTALL_K3S_VERSION="$K3S_VERSION" \
-    INSTALL_K3S_NAME=recluster \
-    INSTALL_K3S_EXEC="$_k3s_kind" \
-    "$_k3s_install_sh" || FATAL "Error installing K3s '$K3S_VERSION'"
+
+  INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
+  INSTALL_K3S_SKIP_START=true \
+  INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
+  INSTALL_K3S_VERSION="$K3S_VERSION" \
+  INSTALL_K3S_NAME=recluster \
+  INSTALL_K3S_EXEC="$_k3s_kind" \
+  "$_k3s_install_sh" || FATAL "Error installing K3s '$K3S_VERSION'"
+
   spinner_stop
 
   # Success
@@ -1170,13 +1231,14 @@ install_node_exporter() {
 
   # Install
   spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
-  env \
-    INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
-    INSTALL_NODE_EXPORTER_SKIP_START=true \
-    INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
-    INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
-    INSTALL_NODE_EXPORTER_EXEC="$_node_exporter_config" \
-    "$_node_exporter_install_sh" || FATAL "Error installing Node exporter '$NODE_EXPORTER_VERSION'"
+
+  INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
+  INSTALL_NODE_EXPORTER_SKIP_START=true \
+  INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
+  INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
+  INSTALL_NODE_EXPORTER_EXEC="$_node_exporter_config" \
+  "$_node_exporter_install_sh" || FATAL "Error installing Node exporter '$NODE_EXPORTER_VERSION'"
+
   spinner_stop
 
   # Success
@@ -1265,9 +1327,9 @@ install_recluster() {
   spinner_start "Installing reCluster"
 
   # Directories
-  DEBUG "Creating reCluster etc directory '$RECLUSTER_ETC_DIR'"
+  INFO "Creating reCluster etc directory '$RECLUSTER_ETC_DIR'"
   $SUDO mkdir -p "$RECLUSTER_ETC_DIR"
-  DEBUG "Creating reCluster opt directory '$RECLUSTER_OPT_DIR'"
+  INFO "Creating reCluster opt directory '$RECLUSTER_OPT_DIR'"
   $SUDO mkdir -p "$RECLUSTER_OPT_DIR"
 
   # Configuration
@@ -1284,8 +1346,8 @@ install_recluster() {
   # printf "%s" "$RECLUSTER_NODE_TOKEN" | $SUDO tee "$_recluster_token_file" > /dev/null
 
   # Node label reCluster id
-  INFO "Updating K3s configuration '$_k3s_config_file' adding 'node-label: - $_recluster_node_label_id'"
-  $SUDO env \
+  DEBUG "Updating K3s configuration '$_k3s_config_file' adding 'node-label: - $_recluster_node_label_id'"
+  $SUDO \
     node_label="$_recluster_node_label_id" \
     yq e '.node-label += [env(node_label)]' -i "$_k3s_config_file"
 
@@ -1516,7 +1578,7 @@ SPINNER_ENABLE=true
 # Spinner symbols
 SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
 # Node facts
-NODE_FACTS={}
+NODE_FACTS="{}"
 
 # ================
 # MAIN
