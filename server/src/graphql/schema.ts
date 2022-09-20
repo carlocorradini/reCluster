@@ -24,7 +24,6 @@
 
 import { buildSchemaSync } from 'type-graphql';
 import { Container } from 'typedi';
-import { RemoveNullArgs } from './middlewares';
 import {
   CpuNodeResolver,
   CpuResolver,
@@ -40,7 +39,6 @@ import {
 
 export const schema = buildSchemaSync({
   container: Container,
-  globalMiddlewares: [RemoveNullArgs],
   resolvers: [
     CpuResolver,
     CpuNodeResolver,
