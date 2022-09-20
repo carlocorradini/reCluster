@@ -27,6 +27,12 @@ set -o errexit
 set -o noglob
 
 # ================
+# GLOBALS
+# ================
+# Return value
+RETVAL=
+
+# ================
 # CLEANUP
 # ================
 cleanup() {
@@ -141,7 +147,7 @@ _spinner() {
   # Termination signal
   trap '_terminate=true' USR1
   # Message
-  _spinner_message="${1:-"Loading..."}"
+  _spinner_message=${1:-"Loading..."}
 
   while :; do
     # Cursor invisible
@@ -499,7 +505,7 @@ read_cpu_info() {
                 ')
 
   # Convert vendor
-  _vendor="$(echo "$_cpu_info" | jq --raw-output '.vendor')"
+  _vendor=$(echo "$_cpu_info" | jq --raw-output '.vendor')
   case $_vendor in
     AuthenticAMD) _vendor=AMD ;;
     GenuineIntel) _vendor=INTEL ;;
@@ -604,17 +610,17 @@ run_cpu_bench() {
     sysbench --time="$BENCH_TIME" --threads="$1" cpu run > /dev/null &
     read_power_consumption "$!"
   }
-  _threads="$(grep -c ^processor /proc/cpuinfo)"
+  _threads=$(grep -c ^processor /proc/cpuinfo)
 
   # Single-thread
   DEBUG "Running CPU benchmark: single-thread (1)"
   _run_cpu_bench 1
-  _single_thread=RETVAL
+  _single_thread=$RETVAL
 
   # Multi-thread
   DEBUG "Running CPU benchmark: multi-thread ($_threads)"
   _run_cpu_bench "$_threads"
-  _multi_thread=RETVAL
+  _multi_thread=$RETVAL
 
   # Update node facts
   NODE_FACTS=$(echo "$NODE_FACTS" \
@@ -640,20 +646,20 @@ run_ram_bench() {
   # Read sequential
   DEBUG "Running RAM benchmark: read sequential"
   _run_ram_bench read seq
-  _read_seq=RETVAL
+  _read_seq=$RETVAL
   # Read random
   DEBUG "Running RAM benchmark: read random"
   _run_ram_bench read rnd
-  _read_rand=RETVAL
+  _read_rand=$RETVAL
 
   # Write sequential
   DEBUG "Running RAM benchmark: write sequential"
   _run_ram_bench write seq
-  _write_seq=RETVAL
+  _write_seq=$RETVAL
   # Write random
   DEBUG "Running RAM benchmark: write random"
   _run_ram_bench write rnd
-  _write_rand=RETVAL
+  _write_rand=$RETVAL
 
   # Update node facts
   NODE_FACTS=$(echo "$NODE_FACTS" \
