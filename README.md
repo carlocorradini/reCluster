@@ -38,7 +38,7 @@ reCluster is an architecture for a data center that actively reduces its impact 
 1. Install dependencies
 
    ```console
-   npm ci
+   npm ci && npm ci --prefix server
    ```
 
 ## Simulate Cluster
