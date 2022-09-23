@@ -51,7 +51,7 @@ npm run build
 
    ```console
    curl --request POST \
-       --header 'content-type: application/json' \
-       --url 'http://localhost:8080/graphql' \
-       --data '{ "query": "{ nodes { id cpu { name } } }" }'
+     --header 'content-type: application/json' \
+     --url 'http://localhost:8080/graphql' \
+     --data '{ "query": "{ nodes { id cpu { name } } }" }'
    ```
