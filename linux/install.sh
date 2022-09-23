@@ -360,10 +360,10 @@ assert_url_reachability() {
 
   case $DOWNLOADER in
     curl)
-      curl --fail --silent --show-error "$1" || FATAL "URL address '$1' is unreachable"
+      curl --fail --silent --show-error "$1" > /dev/null || FATAL "URL address '$1' is unreachable"
       ;;
     wget)
-      curl --quiet --spider "$1" || FATAL "URL address '$1' is unreachable"
+      wget --quiet --spider "$1" 2>&1 || FATAL "URL address '$1' is unreachable"
       ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
