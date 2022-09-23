@@ -426,7 +426,7 @@ read_power_consumption() {
   while [ "$(date -u +%s)" -le "$_end" ]; do
     # Current power consumption
     _pc=$(_read_power_consumption)
-    DEBUG "Reading current power consumption: '$_pcs'"
+    DEBUG "Reading power consumption: ${_pc}W"
     # Add current power consumption to list
     _pcs=$(echo "$_pcs" | jq --arg pc "$_pc" '. |= . + [$pc|tonumber]')
     # Sleep
@@ -434,6 +434,7 @@ read_power_consumption() {
   done
 
   # Terminate benchmark
+  DEBUG "Terminating benchmark process PID $_pid"
   kill -s HUP "$_pid"
   # Wait may fail
   wait "$_pid" || :
@@ -450,7 +451,7 @@ read_power_consumption() {
           | floor
         '
   )
-  DEBUG "PC mean: '$_mean'"
+  DEBUG "PC mean: $_mean"
 
   # Calculate standard deviation
   _standard_deviation=$(
@@ -461,7 +462,7 @@ read_power_consumption() {
           | sqrt
         '
   )
-  DEBUG "PC standard deviation: '$_standard_deviation'"
+  DEBUG "PC standard deviation: $_standard_deviation"
 
   # Return
   RETVAL=$(
@@ -544,13 +545,15 @@ read_cpu_info() {
   )
 
   # Update node facts
-  NODE_FACTS=$(echo "$NODE_FACTS" \
-    | jq --argjson cpuinfo "$_cpu_info" '.cpu = $cpuinfo')
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq --argjson cpuinfo "$_cpu_info" '.cpu = $cpuinfo'
+  )
 }
 
 # Read RAM information
 read_ram_info() {
-  _ram_info=$(
+  _ram_size=$(
     grep MemTotal /proc/meminfo \
       | sed 's/MemTotal://g' \
       | sed 's/[[:space:]]*//g' \
@@ -559,9 +562,18 @@ read_ram_info() {
       | numfmt --from iec
   )
 
+  _ram_info=$(
+    jq --null-input --arg size "$_ram_size" \
+      '{
+        "size": ($size | tonumber)
+      }'
+  )
+
   # Update node facts
-  NODE_FACTS=$(echo "$NODE_FACTS" \
-    | jq --arg raminfo "$_ram_info" '.ram = ($raminfo | tonumber)')
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq --argjson raminfo "$_ram_info" '.ram = $raminfo'
+  )
 }
 
 # Read Disk(s) information
@@ -576,8 +588,10 @@ read_disks_info() {
   )
 
   # Update node facts
-  NODE_FACTS=$(echo "$NODE_FACTS" \
-    | jq --argjson disksinfo "$_disks_info" '.disks = $disksinfo')
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq --argjson disksinfo "$_disks_info" '.disks = $disksinfo'
+  )
 }
 
 # Read Interface(s) information
@@ -614,14 +628,16 @@ $(echo "$_interfaces_info" | jq --compact-output '.[]')
 EOF
 
   # Update node facts
-  NODE_FACTS=$(echo "$NODE_FACTS" \
-    | jq --argjson interfacesinfo "$_interfaces_info" '.interfaces = $interfacesinfo')
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq --argjson interfacesinfo "$_interfaces_info" '.interfaces = $interfacesinfo'
+  )
 }
 
 # Execute CPU benchmark
 run_cpu_bench() {
   _run_cpu_bench() {
-    sysbench --time="$BENCH_TIME" --threads="$1" cpu run > /dev/null &
+    sysbench --time=0 --threads="$1" cpu run > /dev/null &
     read_power_consumption "$!"
   }
   _threads=$(grep -c ^processor /proc/cpuinfo)
@@ -644,7 +660,7 @@ run_cpu_bench() {
         --argjson multithread "$_multi_thread" \
         '.cpu.benchmark = {
             "singleThread": $singlethread,
-            "multiThread": $multiThread
+            "multiThread": $multithread
           }
         '
   )
@@ -653,7 +669,7 @@ run_cpu_bench() {
 # Execute RAM benchmark
 run_ram_bench() {
   _run_ram_bench() {
-    sysbench --time="$BENCH_TIME" --memory-oper="$1" --memory-access-mode="$2" memory run > /dev/null &
+    sysbench --time=0 --memory-oper="$1" --memory-access-mode="$2" memory run > /dev/null &
     read_power_consumption "$!"
   }
 
@@ -707,7 +723,7 @@ run_io_bench() {
       write) _io_opt=written ;;
     esac
 
-    sysbench --time="$BENCH_TIME" --file-test-mode="$2" --file-io-mode="$3" fileio run > /dev/null &
+    sysbench --time=0 --file-test-mode="$2" --file-io-mode="$3" fileio run > /dev/null &
     read_power_consumption "$!"
   }
 
@@ -1025,7 +1041,7 @@ verify_system() {
 setup_system() {
   # Temporary directory
   TMP_DIR=$(mktemp --directory -t recluster.XXXXXXXX)
-  DEBUG "Temporary directory '$TMP_DIR'"
+  DEBUG "Created temporary directory '$TMP_DIR'"
 
   # Configuration
   INFO "Reading configuration file '$CONFIG_FILE'"
@@ -1118,7 +1134,7 @@ read_system_info() {
   # RAM info
   read_ram_info
   DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .ram)"
-  INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .ram | numfmt --to=iec-i)B'"
+  INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .ram.size | numfmt --to=iec-i)B'"
 
   # Disk(s) info
   read_disks_info
@@ -1156,7 +1172,7 @@ run_benchmarks() {
 
   # IO bench
   spinner_start "IO benchmark"
-  run_io_bench
+  # FIXME run_io_bench
   spinner_stop
   # TODO IO benchmark
   # DEBUG "IO benchmark:\n$(echo "$NODE_FACTS" | jq .io.benchmark)"
