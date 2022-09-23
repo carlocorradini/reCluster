@@ -30,7 +30,7 @@ readonly DIRNAME
 # reCluster server Dockerfile
 readonly RECLUSTER_SERVER_DOCKERFILE="$DIRNAME/../Dockerfile"
 # reCluster server version
-readonly RECLUSTER_SERVER_VERSION=latest
+readonly RECLUSTER_SERVER_VERSION="latest"
 # reCluster server image
 readonly RECLUSTER_SERVER_IMAGE="recluster-server:$RECLUSTER_SERVER_VERSION"
 
@@ -43,5 +43,7 @@ assert_cmd docker
 # ================
 # MAIN
 # ================
-INFO "Building Docker image '$RECLUSTER_SERVER_IMAGE' using Dockerfile '$RECLUSTER_SERVER_DOCKERFILE'"
-docker build --rm -t "$RECLUSTER_SERVER_IMAGE" -f "$RECLUSTER_SERVER_DOCKERFILE" "$DIRNAME/.." || FATAL "Error building Docker image '$RECLUSTER_SERVER_IMAGE' using Dockerfile '$RECLUSTER_SERVER_DOCKERFILE'"
+{
+  INFO "Building Docker image '$RECLUSTER_SERVER_IMAGE' using Dockerfile '$RECLUSTER_SERVER_DOCKERFILE'"
+  docker build --rm -t "$RECLUSTER_SERVER_IMAGE" -f "$RECLUSTER_SERVER_DOCKERFILE" "$DIRNAME/.."
+}
