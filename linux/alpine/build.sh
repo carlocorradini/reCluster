@@ -65,7 +65,7 @@ cleanup() {
     docker rm "$CONTAINER"
   fi
 
-	exit "$_exit_code"
+  exit "$_exit_code"
 }
 
 # Trap
@@ -76,7 +76,7 @@ trap cleanup INT QUIT TERM EXIT
 # ================
 # ISO directory
 function iso_dir() {
-  if [ -d  "$MKIMAGE_ISO_DIR" ]; then
+  if [ -d "$MKIMAGE_ISO_DIR" ]; then
     WARN "Removing ISO directory '$MKIMAGE_ISO_DIR'"
     rm -rf "$MKIMAGE_ISO_DIR"
   else
@@ -93,14 +93,16 @@ function prepare_container() {
   apkovl_file_name=$(basename "$MKIMAGE_APKOVL")
 
   # Start container
-  CONTAINER=$(docker run \
-                --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/$profile_file_name" \
-                --volume "$MKIMAGE_APKOVL:/home/build/aports/scripts/$apkovl_file_name" \
-                --volume "$MKIMAGE_ISO_DIR:/home/build/iso" \
-                --detach \
-                --interactive \
-                --tty \
-                "$RECLUSTER_ALPINE_IMAGE") || FATAL "Error starting Docker image '$RECLUSTER_ALPINE_IMAGE'"
+  CONTAINER=$(
+    docker run \
+      --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/$profile_file_name" \
+      --volume "$MKIMAGE_APKOVL:/home/build/aports/scripts/$apkovl_file_name" \
+      --volume "$MKIMAGE_ISO_DIR:/home/build/iso" \
+      --detach \
+      --interactive \
+      --tty \
+      "$RECLUSTER_ALPINE_IMAGE"
+  )
   readonly CONTAINER
 
   # Script permission
@@ -125,7 +127,6 @@ function builder() {
     --repository "http://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/community" \
     --profile "$profile_name"
 }
-
 
 # ================
 # MAIN

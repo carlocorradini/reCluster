@@ -91,12 +91,14 @@ sync_deps_clean() {
       # Check files
 
       case $dep_fd_basename in
-        .gitignore|dependencies.sh|dependencies.yml|README.md) ;; # Keep
+        .gitignore | dependencies.sh | dependencies.yml | README.md)
+          # Keep
+          ;;
         *)
           # Remove dependency directory
           INFO "Removing '$dep_fd_basename' file"
           rm -f "$dep_fd"
-        ;;
+          ;;
       esac
     elif [ -d "$dep_fd" ]; then
       # Check directories
@@ -291,28 +293,28 @@ parse_args() {
         # Display help message and exit
         show_help
         exit 0
-      ;;
+        ;;
       --sync)
         # Synchronize
         SYNC=true
         shift
-      ;;
+        ;;
       --sync-force)
         # Synchronize force
         SYNC=true
         SYNC_FORCE=true
         shift
-      ;;
+        ;;
       -*)
         # Unknown argument
         WARN "Unknown argument '$1' is ignored"
         shift
-      ;;
+        ;;
       *)
         # No argument
         WARN "Skipping argument '$1'"
         shift
-      ;;
+        ;;
     esac
   done
 }

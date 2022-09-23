@@ -28,26 +28,26 @@ set -o noglob
 
 HOSTNAME="$1"
 if [ -z "$HOSTNAME" ]; then
-	echo "Usage: $0 <hostname>"
-	exit 1
+  echo "Usage: $0 <hostname>"
+  exit 1
 fi
 
 cleanup() {
-	rm -rf "$tmp"
+  rm -rf "$tmp"
 }
 
 makefile() {
-	OWNER="$1"
-	PERMS="$2"
-	FILENAME="$3"
-	cat > "$FILENAME"
-	chown "$OWNER" "$FILENAME"
-	chmod "$PERMS" "$FILENAME"
+  OWNER="$1"
+  PERMS="$2"
+  FILENAME="$3"
+  cat > "$FILENAME"
+  chown "$OWNER" "$FILENAME"
+  chmod "$PERMS" "$FILENAME"
 }
 
 rc_add() {
-	mkdir -p "$tmp"/etc/runlevels/"$2"
-	ln -sf /etc/init.d/"$1" "$tmp"/etc/runlevels/"$2"/"$1"
+  mkdir -p "$tmp"/etc/runlevels/"$2"
+  ln -sf /etc/init.d/"$1" "$tmp"/etc/runlevels/"$2"/"$1"
 }
 
 tmp="$(mktemp -d)"

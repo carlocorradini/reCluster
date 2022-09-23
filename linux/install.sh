@@ -48,7 +48,7 @@ cleanup() {
     tput cnorm
   fi
 
-	exit "$_exit_code"
+  exit "$_exit_code"
 }
 
 # Trap
@@ -86,23 +86,23 @@ _log_print_message() {
     "$LOG_LEVEL_FATAL")
       _log_level_name=FATAL
       _log_prefix="\033[41;37m"
-    ;;
+      ;;
     "$LOG_LEVEL_ERROR")
       _log_level_name=ERROR
       _log_prefix="\033[1;31m"
-    ;;
+      ;;
     "$LOG_LEVEL_WARN")
       _log_level_name=WARN
       _log_prefix="\033[1;33m"
-    ;;
+      ;;
     "$LOG_LEVEL_INFO")
       _log_level_name=INFO
       _log_prefix="\033[37m"
-    ;;
+      ;;
     "$LOG_LEVEL_DEBUG")
       _log_level_name=DEBUG
       _log_prefix="\033[1;34m"
-    ;;
+      ;;
   esac
 
   # Check color flag
@@ -116,7 +116,10 @@ _log_print_message() {
 }
 
 # Fatal log message
-FATAL() { _log_print_message ${LOG_LEVEL_FATAL} "$@" >&2; exit 1; }
+FATAL() {
+  _log_print_message ${LOG_LEVEL_FATAL} "$@" >&2
+  exit 1
+}
 # Error log message
 ERROR() { _log_print_message ${LOG_LEVEL_ERROR} "$@" >&2; }
 # Warning log message
@@ -308,7 +311,7 @@ EOF
 # Assert command is installed
 # @param $1 Command name
 assert_cmd() {
-  command -v "$1" >/dev/null 2>&1 || FATAL "Command '$1' not found"
+  command -v "$1" > /dev/null 2>&1 || FATAL "Command '$1' not found"
   DEBUG "Command '$1' found at '$(command -v "$1")'"
 }
 
@@ -358,10 +361,10 @@ assert_url_reachability() {
   case $DOWNLOADER in
     curl)
       curl --fail --silent --show-error "$1" || FATAL "URL address '$1' is unreachable"
-    ;;
+      ;;
     wget)
       curl --quiet --spider "$1" || FATAL "URL address '$1' is unreachable"
-    ;;
+      ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
 }
@@ -377,10 +380,10 @@ download() {
   case $DOWNLOADER in
     curl)
       curl --fail --silent --location --output "$1" "$2" || FATAL "Download file '$2' failed"
-    ;;
+      ;;
     wget)
       wget --quiet --output-document="$1" "$2" || FATAL "Download file '$2' failed"
-    ;;
+      ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
 
@@ -396,10 +399,10 @@ download_print() {
   case $DOWNLOADER in
     curl)
       curl --fail --silent --location --show-error "$1" || FATAL "Download print '$1' failed"
-    ;;
+      ;;
     wget)
       wget --quiet ---output-document=- "$1" 2>&1 || FATAL "Download print '$1' failed"
-    ;;
+      ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
 }
@@ -439,34 +442,37 @@ read_power_consumption() {
   [ "$(echo "$_pcs" | jq --raw-output 'length')" -ge 2 ] || FATAL "Not enough power consumption readings"
 
   # Calculate mean
-  _mean=$(echo "$_pcs" \
-          | jq --raw-output \
-              'add / length
-                | . + 0.5
-                | floor
-              '
-          )
+  _mean=$(
+    echo "$_pcs" \
+      | jq --raw-output \
+        'add / length
+          | . + 0.5
+          | floor
+        '
+  )
   DEBUG "PC mean: '$_mean'"
 
   # Calculate standard deviation
-  _standard_deviation=$(echo "$_pcs" \
-                            | jq --raw-output \
-                                '(add / length) as $mean
-                                  | (map(. - $mean | . * .) | add) / (length - 1)
-                                  | sqrt
-                                '
-                        )
+  _standard_deviation=$(
+    echo "$_pcs" \
+      | jq --raw-output \
+        '(add / length) as $mean
+          | (map(. - $mean | . * .) | add) / (length - 1)
+          | sqrt
+        '
+  )
   DEBUG "PC standard deviation: '$_standard_deviation'"
 
   # Return
-  RETVAL=$(jq --null-input \
-            --arg mean "$_mean" \
-            --arg standard_deviation "$_standard_deviation" \
-            '{
-               "mean": $mean,
-               "standardDeviation": $standard_deviation
-            }'
-          )
+  RETVAL=$(
+    jq --null-input \
+      --arg mean "$_mean" \
+      --arg standard_deviation "$_standard_deviation" \
+      '{
+        "mean": $mean,
+        "standardDeviation": $standard_deviation
+      }'
+  )
 }
 
 # Check if parameter is an integer number
@@ -474,35 +480,37 @@ read_power_consumption() {
 is_number_integer() {
   if [ -z "$1" ]; then return 1; fi
   case $1 in
-    ''|*[!0-9]*) return 1 ;;
+    '' | *[!0-9]*) return 1 ;;
     *) return 0 ;;
   esac
 }
 
 # Read CPU information
 read_cpu_info() {
-  _cpu_info=$(lscpu --json \
-              | jq '
-                  .lscpu
-                  | map({(.field): .data})
-                  | add
-                  | with_entries(if .key | endswith(":") then .key |= sub(":";"") else . end)
-                  | .Flags /= " "
-                  | .vulnerabilities = (to_entries | map(.key | select(startswith("Vulnerability "))[14:]))
-                  | with_entries(select(.key | startswith("Vulnerability ") | not))
-                  | . + {"architecture": .Architecture}
-                  | . + {"flags": .Flags}
-                  | . + {"cores": (."CPU(s)" | tonumber)}
-                  | . + {"vendor": ."Vendor ID"}
-                  | . + {"family": (."CPU family" | tonumber)}
-                  | . + {"model": (.Model | tonumber)}
-                  | . + {"name": ."Model name"}
-                  | . + {"cacheL1d": (."L1d cache" | split(" ") | .[0] + " " + .[1])}
-                  | . + {"cacheL1i": (."L1i cache" | split(" ") | .[0] + " " + .[1])}
-                  | . + {"cacheL2": (."L2 cache" | split(" ") | .[0] + " " + .[1])}
-                  | . + {"cacheL3": (."L3 cache" | split(" ") | .[0] + " " + .[1])}
-                  | {architecture, flags, cores, vendor, family, model, name, vulnerabilities, cacheL1d, cacheL1i, cacheL2, cacheL3}
-                ')
+  _cpu_info=$(
+    lscpu --json \
+      | jq \
+        '.lscpu
+          | map({(.field): .data})
+          | add
+          | with_entries(if .key | endswith(":") then .key |= sub(":";"") else . end)
+          | .Flags /= " "
+          | .vulnerabilities = (to_entries | map(.key | select(startswith("Vulnerability "))[14:]))
+          | with_entries(select(.key | startswith("Vulnerability ") | not))
+          | . + {"architecture": .Architecture}
+          | . + {"flags": .Flags}
+          | . + {"cores": (."CPU(s)" | tonumber)}
+          | . + {"vendor": ."Vendor ID"}
+          | . + {"family": (."CPU family" | tonumber)}
+          | . + {"model": (.Model | tonumber)}
+          | . + {"name": ."Model name"}
+          | . + {"cacheL1d": (."L1d cache" | split(" ") | .[0] + " " + .[1])}
+          | . + {"cacheL1i": (."L1i cache" | split(" ") | .[0] + " " + .[1])}
+          | . + {"cacheL2": (."L2 cache" | split(" ") | .[0] + " " + .[1])}
+          | . + {"cacheL3": (."L3 cache" | split(" ") | .[0] + " " + .[1])}
+          | {architecture, flags, cores, vendor, family, model, name, vulnerabilities, cacheL1d, cacheL1i, cacheL2, cacheL3}
+        '
+  )
 
   # Convert vendor
   _vendor=$(echo "$_cpu_info" | jq --raw-output '.vendor')
@@ -519,64 +527,69 @@ read_cpu_info() {
   _cache_l3=$(echo "$_cpu_info" | jq --raw-output '.cacheL3' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
 
   # Update
-  _cpu_info=$(echo "$_cpu_info" \
-              | jq \
-                  --arg vendor "$_vendor" \
-                  --arg cachel1d "$_cache_l1d" \
-                  --arg cachel1i "$_cache_l1i" \
-                  --arg cachel2 "$_cache_l2" \
-                  --arg cachel3 "$_cache_l3" \
-                  '
-                    .vendor = $vendor
-                    | .cacheL1d = ($cachel1d | tonumber)
-                    | .cacheL1i = ($cachel1i | tonumber)
-                    | .cacheL2 = ($cachel2 | tonumber)
-                    | .cacheL3 = ($cachel3 | tonumber)
-                  '
-            )
+  _cpu_info=$(
+    echo "$_cpu_info" \
+      | jq \
+        --arg vendor "$_vendor" \
+        --arg cachel1d "$_cache_l1d" \
+        --arg cachel1i "$_cache_l1i" \
+        --arg cachel2 "$_cache_l2" \
+        --arg cachel3 "$_cache_l3" \
+        '.vendor = $vendor
+          | .cacheL1d = ($cachel1d | tonumber)
+          | .cacheL1i = ($cachel1i | tonumber)
+          | .cacheL2 = ($cachel2 | tonumber)
+          | .cacheL3 = ($cachel3 | tonumber)
+        '
+  )
 
   # Update node facts
   NODE_FACTS=$(echo "$NODE_FACTS" \
-              | jq --argjson cpuinfo "$_cpu_info" '.cpu = $cpuinfo')
+    | jq --argjson cpuinfo "$_cpu_info" '.cpu = $cpuinfo')
 }
 
 # Read RAM information
 read_ram_info() {
-  _ram_info=$(grep MemTotal /proc/meminfo \
-              | sed 's/MemTotal://g' \
-              | sed 's/[[:space:]]*//g' \
-              | sed 's/B.*//' \
-              | tr '[:lower:]' '[:upper:]' \
-              | numfmt --from iec)
+  _ram_info=$(
+    grep MemTotal /proc/meminfo \
+      | sed 's/MemTotal://g' \
+      | sed 's/[[:space:]]*//g' \
+      | sed 's/B.*//' \
+      | tr '[:lower:]' '[:upper:]' \
+      | numfmt --from iec
+  )
 
   # Update node facts
   NODE_FACTS=$(echo "$NODE_FACTS" \
-              | jq --arg raminfo "$_ram_info" '.ram = ($raminfo | tonumber)')
+    | jq --arg raminfo "$_ram_info" '.ram = ($raminfo | tonumber)')
 }
 
 # Read Disk(s) information
 read_disks_info() {
-  _disks_info=$(lsblk --bytes --json \
-                | jq '
-                   .blockdevices
-                    | map(select(.type == "disk"))
-                    | map({name, size})
-                  '
-                )
+  _disks_info=$(
+    lsblk --bytes --json \
+      | jq \
+        '.blockdevices
+          | map(select(.type == "disk"))
+          | map({name, size})
+        '
+  )
 
   # Update node facts
   NODE_FACTS=$(echo "$NODE_FACTS" \
-              | jq --argjson disksinfo "$_disks_info" '.disks = $disksinfo')
+    | jq --argjson disksinfo "$_disks_info" '.disks = $disksinfo')
 }
 
 # Read Interface(s) information
 read_interfaces_info() {
-  _interfaces_info=$(ip -details -json link show \
-              | jq '
-                  map(if .linkinfo.info_kind // .link_type == "loopback" then empty else . end)
-                  | map(.name = .ifname)
-                  | map({address, name})
-                ')
+  _interfaces_info=$(
+    ip -details -json link show \
+      | jq \
+        'map(if .linkinfo.info_kind // .link_type == "loopback" then empty else . end)
+          | map(.name = .ifname)
+          | map({address, name})
+        '
+  )
 
   # Cycle interfaces to obtain additional information
   while read -r _interface; do
@@ -588,20 +601,21 @@ read_interfaces_info() {
     _wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')
 
     # Update interfaces
-    _interfaces_info=$(echo "$_interfaces_info" \
-                      | jq \
-                          --arg iname "$_iname" \
-                          --arg speed "$_speed" \
-                          --arg wol "$_wol" \
-                          'map(if .name == $iname then . + {"speed": $speed | tonumber, "wol": ($wol | split(""))} else . end)'
-                      )
+    _interfaces_info=$(
+      echo "$_interfaces_info" \
+        | jq \
+          --arg iname "$_iname" \
+          --arg speed "$_speed" \
+          --arg wol "$_wol" \
+          'map(if .name == $iname then . + {"speed": $speed | tonumber, "wol": ($wol | split(""))} else . end)'
+    )
   done << EOF
 $(echo "$_interfaces_info" | jq --compact-output '.[]')
 EOF
 
   # Update node facts
   NODE_FACTS=$(echo "$NODE_FACTS" \
-              | jq --argjson interfacesinfo "$_interfaces_info" '.interfaces = $interfacesinfo')
+    | jq --argjson interfacesinfo "$_interfaces_info" '.interfaces = $interfacesinfo')
 }
 
 # Execute CPU benchmark
@@ -623,17 +637,17 @@ run_cpu_bench() {
   _multi_thread=$RETVAL
 
   # Update node facts
-  NODE_FACTS=$(echo "$NODE_FACTS" \
-              | jq \
-                  --argjson singlethread "$_single_thread" \
-                  --argjson multithread "$_multi_thread" \
-                  '
-                    .cpu.benchmark = {
-                      "singleThread": $singlethread,
-                      "multiThread": $multiThread
-                    }
-                  '
-                )
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq \
+        --argjson singlethread "$_single_thread" \
+        --argjson multithread "$_multi_thread" \
+        '.cpu.benchmark = {
+            "singleThread": $singlethread,
+            "multiThread": $multiThread
+          }
+        '
+  )
 }
 
 # Execute RAM benchmark
@@ -662,25 +676,25 @@ run_ram_bench() {
   _write_rand=$RETVAL
 
   # Update node facts
-  NODE_FACTS=$(echo "$NODE_FACTS" \
-              | jq \
-                  --argjson readseq "$_read_seq" \
-                  --argjson readrand "$_read_rand" \
-                  --argjson writeseq "$_write_seq" \
-                  --argjson writerand "$_write_rand" \
-                  '
-                    .ram.benchmark = {
-                      "read": {
-                        "sequential": $readseq,
-                        "random": $readrand
-                      },
-                      "write": {
-                        "sequential": $writeseq,
-                        "random": $writerand
-                      }
-                    }
-                  '
-                )
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq \
+        --argjson readseq "$_read_seq" \
+        --argjson readrand "$_read_rand" \
+        --argjson writeseq "$_write_seq" \
+        --argjson writerand "$_write_rand" \
+        '.ram.benchmark = {
+            "read": {
+            "sequential": $readseq,
+            "random": $readrand
+          },
+          "write": {
+            "sequential": $writeseq,
+            "random": $writerand
+          }
+        }
+      '
+  )
 }
 
 # Execute IO benchmark
@@ -756,20 +770,20 @@ node_registration() {
         --header 'Content-Type: application/json' \
         --url "$_server_url" \
         --data "$_data") || FATAL "Error sending node registration request to '$_server_url'"
-    ;;
+      ;;
     wget)
       _response=$(wget --quiet --output-document=- \
         --header='Content-Type: application/json' \
         --post-data="$_data" \
         "$_server_url" 2>&1) || FATAL "Error sending node registration request to '$_server_url'"
-    ;;
+      ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
   DEBUG "Received node registration response data '$_response' from '$_server_url'"
 
   # Check error response
   if echo "$_response" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
-    FATAL "Error registering node:\n$(echo "$_response" | jq .)";
+    FATAL "Error registering node:\n$(echo "$_response" | jq .)"
   fi
 
   RECLUSTER_NODE_ID=$(echo "$_response" | jq --raw-output '.data.createNode.id')
@@ -798,7 +812,7 @@ parse_args() {
         # Airgap environment
         AIRGAP_ENV=true
         shift
-      ;;
+        ;;
       --bench-device-api)
         # Benchmark device api url
         _parse_args_assert_value "$@"
@@ -806,7 +820,7 @@ parse_args() {
         _bench_device_api=$2
         shift
         shift
-      ;;
+        ;;
       --bench-interval)
         # Benchmark interval
         _parse_args_assert_value "$@"
@@ -815,7 +829,7 @@ parse_args() {
         _bench_interval=$2
         shift
         shift
-      ;;
+        ;;
       --bench-time)
         # Benchmark time
         _parse_args_assert_value "$@"
@@ -824,7 +838,7 @@ parse_args() {
         _bench_time=$2
         shift
         shift
-      ;;
+        ;;
       --bench-warmup)
         # Benchmark warmup time
         _parse_args_assert_value "$@"
@@ -833,7 +847,7 @@ parse_args() {
         _bench_warmup=$2
         shift
         shift
-      ;;
+        ;;
       --config)
         # Configuration file
         _parse_args_assert_value "$@"
@@ -841,27 +855,27 @@ parse_args() {
         _config=$2
         shift
         shift
-      ;;
+        ;;
       --disable-color)
         # Disable color
         LOG_COLOR_ENABLE=false
         shift
-      ;;
+        ;;
       --disable-spinner)
         # Disable spinner
         SPINNER_ENABLE=false
         shift
-      ;;
+        ;;
       --help)
         # Display help message and exit
         show_help
         exit 0
-      ;;
+        ;;
       --init-cluster)
         # Initialize cluster
         INIT_CLUSTER=true
         shift
-      ;;
+        ;;
       --k3s-version)
         # K3s version
         _parse_args_assert_value "$@"
@@ -869,7 +883,7 @@ parse_args() {
         _k3s_version=$2
         shift
         shift
-      ;;
+        ;;
       --log-level)
         # Log level
         _parse_args_assert_value "$@"
@@ -880,11 +894,11 @@ parse_args() {
           warn) _log_level=$LOG_LEVEL_WARN ;;
           info) _log_level=$LOG_LEVEL_INFO ;;
           debug) _log_level=$LOG_LEVEL_DEBUG ;;
-          *) _parse_args_invalid_value "$1" "$2"
+          *) _parse_args_invalid_value "$1" "$2" ;;
         esac
         shift
         shift
-      ;;
+        ;;
       --node_exporter-version)
         # Node exporter version
         _parse_args_assert_value "$@"
@@ -892,7 +906,7 @@ parse_args() {
         _node_exporter_version=$2
         shift
         shift
-      ;;
+        ;;
       --spinner)
         _parse_args_assert_value "$@"
 
@@ -900,21 +914,21 @@ parse_args() {
           dots) _spinner=$SPINNER_SYMBOLS_DOTS ;;
           greyscale) _spinner=$SPINNER_SYMBOLS_GREYSCALE ;;
           propeller) _spinner=$SPINNER_SYMBOLS_PROPELLER ;;
-          *) _parse_args_invalid_value "$1" "$2"
+          *) _parse_args_invalid_value "$1" "$2" ;;
         esac
         shift
         shift
-      ;;
+        ;;
       -*)
         # Unknown argument
         WARN "Unknown argument '$1' is ignored"
         shift
-      ;;
+        ;;
       *)
         # No argument
         WARN "Skipping argument '$1'"
         shift
-      ;;
+        ;;
     esac
   done
 
@@ -943,13 +957,13 @@ verify_system() {
   # Architecture
   ARCH=$(uname -m)
   case $ARCH in
-    amd64|x86_64) ARCH=amd64 ;;
-    arm64|aarch64) ARCH=arm64 ;;
+    amd64 | x86_64) ARCH=amd64 ;;
+    arm64 | aarch64) ARCH=arm64 ;;
     armv5*) ARCH=armv5 ;;
     armv6*) ARCH=armv6 ;;
     armv7*) ARCH=armv7 ;;
     s390x) ARCH=s390x ;;
-    *) FATAL "Architecture '$ARCH' is not supported"
+    *) FATAL "Architecture '$ARCH' is not supported" ;;
   esac
 
   # Commands
@@ -1035,19 +1049,19 @@ setup_system() {
       amd64)
         _k3s_bin_suffix=
         _k3s_images_suffix=amd64
-      ;;
+        ;;
       arm64)
         _k3s_bin_suffix=-arm64
         _k3s_images_suffix=arm64
-      ;;
+        ;;
       arm*)
         _k3s_bin_suffix=-armhf
         _k3s_images_suffix=arm
-      ;;
+        ;;
       s390x)
         _k3s_bin_suffix=-s390x
         _k3s_images_suffix=s390x
-      ;;
+        ;;
       *) FATAL "Unknown architecture '$ARCH'" ;;
     esac
 
@@ -1193,12 +1207,12 @@ install_k3s() {
   spinner_start "Installing K3s '$K3S_VERSION'"
 
   INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
-  INSTALL_K3S_SKIP_START=true \
-  INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
-  INSTALL_K3S_VERSION="$K3S_VERSION" \
-  INSTALL_K3S_NAME=recluster \
-  INSTALL_K3S_EXEC="$_k3s_kind" \
-  "$_k3s_install_sh" || FATAL "Error installing K3s '$K3S_VERSION'"
+    INSTALL_K3S_SKIP_START=true \
+    INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
+    INSTALL_K3S_VERSION="$K3S_VERSION" \
+    INSTALL_K3S_NAME=recluster \
+    INSTALL_K3S_EXEC="$_k3s_kind" \
+    "$_k3s_install_sh" || FATAL "Error installing K3s '$K3S_VERSION'"
 
   spinner_stop
 
@@ -1239,11 +1253,11 @@ install_node_exporter() {
   spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
 
   INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
-  INSTALL_NODE_EXPORTER_SKIP_START=true \
-  INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
-  INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
-  INSTALL_NODE_EXPORTER_EXEC="$_node_exporter_config" \
-  "$_node_exporter_install_sh" || FATAL "Error installing Node exporter '$NODE_EXPORTER_VERSION'"
+    INSTALL_NODE_EXPORTER_SKIP_START=true \
+    INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
+    INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
+    INSTALL_NODE_EXPORTER_EXEC="$_node_exporter_config" \
+    "$_node_exporter_install_sh" || FATAL "Error installing Node exporter '$NODE_EXPORTER_VERSION'"
 
   spinner_stop
 
@@ -1253,9 +1267,9 @@ install_node_exporter() {
 
 # Cluster initialization
 cluster_init() {
-  [ "$INIT_CLUSTER" = true ] || return 0;
+  [ "$INIT_CLUSTER" = true ] || return 0
 
-   INFO "Cluster initialization"
+  INFO "Cluster initialization"
 
   _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
   _kubeconfig_file=~/.kube/config
@@ -1266,12 +1280,12 @@ cluster_init() {
 
     INFO "Waiting K3s kubeconfig file at '$_k3s_kubeconfig_file'"
     inotifywait -e create,close_write,moved_to --format '%f' --quiet "$_k3s_kubeconfig_dir" --monitor \
-    | while IFS= read -r file; do
+      | while IFS= read -r file; do
         DEBUG "File '$file' notify at '$_k3s_kubeconfig_dir'"
         if [ "$file" = "$_k3s_kubeconfig_file_name" ]; then
           DEBUG "K3s kubeconfig file generated"
-          break;
-        fi;
+          break
+        fi
       done
   }
 
@@ -1283,14 +1297,14 @@ cluster_init() {
       _wait_k3s_kubeconfig_file_creation
       INFO "openrc: Stopping K3s service"
       $SUDO rc-service k3s-recluster stop
-    ;;
+      ;;
     systemd)
       INFO "systemd: Starting K3s service"
       $SUDO systemctl start k3s-recluster
       _wait_k3s_kubeconfig_file_creation
       INFO "systemd: Stopping K3s service"
       $SUDO systemctl stop k3s-recluster
-    ;;
+      ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
@@ -1408,7 +1422,7 @@ EOF
     --url "\$_server_url" \\
     --data "\$_data") || FATAL "Error sending update node status request to '\$_server_url'"
 EOF
-    ;;
+      ;;
     wget)
       $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
   _response=\$(wget --quiet --output-document=- \\
@@ -1416,7 +1430,7 @@ EOF
     --post-data="\$_data" \\
     "\$_server_url" 2>&1) || FATAL "Error sending update node status request to '\$_server_url'"
 EOF
-    ;;
+      ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
 
@@ -1439,7 +1453,7 @@ EOF
   INFO "Starting K3s"
   rc-service k3s-recluster start
 EOF
-    ;;
+      ;;
     systemd)
       $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
   INFO "Starting Node exporter"
@@ -1447,7 +1461,7 @@ EOF
   INFO "Starting K3s"
   systemctl start k3s-recluster
 EOF
-    ;;
+      ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
@@ -1496,8 +1510,8 @@ EOF
       $SUDO chmod 0755 $_recluster_bootstrap_service_file
 
       INFO "openrc: Enabling reCluster bootstrap service '$_recluster_bootstrap_service_name' for default runlevel"
-      $SUDO rc-update add "$_recluster_bootstrap_service_name" default >/dev/null
-    ;;
+      $SUDO rc-update add "$_recluster_bootstrap_service_name" default > /dev/null
+      ;;
     systemd)
       _recluster_bootstrap_service_file="/etc/systemd/system/$_recluster_bootstrap_service_name.service"
 
@@ -1519,7 +1533,7 @@ EOF
       INFO "systemd: Enabling reCluster bootstrap service '$_recluster_bootstrap_service_name' unit"
       $SUDO systemctl enable "$_recluster_bootstrap_service_name" > /dev/null
       $SUDO systemctl daemon-reload > /dev/null
-    ;;
+      ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
@@ -1536,13 +1550,13 @@ start_services() {
       $SUDO rc-service node_exporter start || true
       INFO "openrc: Starting K3s"
       $SUDO rc-service k3s-recluster start
-    ;;
+      ;;
     systemd)
       INFO "systemd: Starting Node exporter"
       $SUDO systemtc start node_exporter || true
       INFO "systemd: Starting K3s"
       $SUDO systemctl start k3s-recluster
-    ;;
+      ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 }

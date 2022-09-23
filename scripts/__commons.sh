@@ -71,23 +71,23 @@ function _log_print_message() {
     "$LOG_LEVEL_FATAL")
       log_name=FATAL
       log_prefix="\033[41;37m"
-    ;;
+      ;;
     "$LOG_LEVEL_ERROR")
       log_name=ERROR
       log_prefix="\033[1;31m"
-    ;;
+      ;;
     "$LOG_LEVEL_WARN")
       log_name=WARN
       log_prefix="\033[1;33m"
-    ;;
+      ;;
     "$LOG_LEVEL_INFO")
       log_name=INFO
       log_prefix="\033[37m"
-    ;;
+      ;;
     "$LOG_LEVEL_DEBUG")
       log_name=DEBUG
       log_prefix="\033[1;34m"
-    ;;
+      ;;
   esac
 
   # Color disable flag
@@ -101,7 +101,10 @@ function _log_print_message() {
 }
 
 # Fatal log message
-FATAL() { _log_print_message ${LOG_LEVEL_FATAL} "$@"; exit 1; }
+FATAL() {
+  _log_print_message ${LOG_LEVEL_FATAL} "$@"
+  exit 1
+}
 # Error log message
 ERROR() { _log_print_message ${LOG_LEVEL_ERROR} "$@"; }
 # Warning log message
@@ -123,7 +126,7 @@ function assert_cmd() {
 
 # Assert downloader (curl or wget) is installed
 function assert_downloader() {
-  [ -n "${DOWNLOADER+x}" ] && return;
+  [ -n "${DOWNLOADER+x}" ] && return
 
   # Check and set downloader
   _assert_downloader() {
@@ -171,10 +174,10 @@ download() {
   case $DOWNLOADER in
     curl)
       curl --fail --silent --location --output "$1" "$2" || FATAL "Download '$2' failed"
-    ;;
+      ;;
     wget)
       wget --quiet --output-document="$1" "$2" || FATAL "Download '$2' failed"
-    ;;
+      ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
 }
@@ -189,10 +192,10 @@ download_print() {
   case $DOWNLOADER in
     curl)
       curl --fail --silent --location --show-error "$1" || FATAL "Download '$1' failed"
-    ;;
+      ;;
     wget)
       wget --quiet ---output-document=- "$1" 2>&1 || FATAL "Download '$1' failed"
-    ;;
+      ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
 }
