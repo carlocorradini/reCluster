@@ -373,7 +373,6 @@ assert_url_reachability() {
 # @param $1 Output location
 # @param $2 Download URL
 download() {
-  [ $# -eq 2 ] || FATAL "Download requires exactly 2 arguments but $# found"
   DEBUG "Downloading file '$2' to '$1'"
 
   # Download
@@ -393,8 +392,6 @@ download() {
 # Print downloaded content
 # @param $1 Download URL
 download_print() {
-  [ $# -eq 1 ] || FATAL "Download print requires exactly 1 argument but $# found"
-
   # Download
   case $DOWNLOADER in
     curl)
@@ -410,8 +407,6 @@ download_print() {
 # Read power consumption in benchmark interval
 # @param $1 Benchmark PID
 read_power_consumption() {
-  [ $# -eq 1 ] || FATAL "Read power consumption requires exactly 1 argument but $# found"
-
   _read_power_consumption() {
     download_print "$BENCH_DEVICE_API" | jq --raw-output '.StatusSNS.ENERGY.Power'
   }
@@ -937,7 +932,7 @@ parse_args() {
         ;;
       -*)
         # Unknown argument
-        WARN "Unknown argument '$1' is ignored"
+        WARN "Unknown argument '$1'"
         shift
         ;;
       *)
