@@ -1017,8 +1017,8 @@ verify_system() {
   assert_url_reachability "$BENCH_DEVICE_API"
 
   # Directories
-  [ ! -d "$RECLUSTER_ETC_DIR" ] || FATAL "reCluster etc directory '$RECLUSTER_ETC_DIR' already exists"
-  [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "reCluster opt directory '$RECLUSTER_OPT_DIR' already exists"
+  [ ! -d "$RECLUSTER_ETC_DIR" ] || FATAL "reCluster directory '$RECLUSTER_ETC_DIR' already exists"
+  [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "reCluster directory '$RECLUSTER_OPT_DIR' already exists"
 
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
