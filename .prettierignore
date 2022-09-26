@@ -3,4 +3,5 @@
 **/node_modules/
 **/.vagrant/
 **/package-lock.json
-.gitattributes
+/.husky/_/
+/.gitattributes
