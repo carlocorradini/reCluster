@@ -20,21 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
----
 k3s:
   url: https://github.com/k3s-io/k3s
   assets:
     - k3s
-    - k3s-arm64
-    - k3s-armhf
-    - k3s-s390x
+    # - k3s-arm64
+    # - k3s-armhf
+    # - k3s-s390x
     - k3s-airgap-images-amd64.tar.gz
-    - k3s-airgap-images-arm64.tar.gz
-    - k3s-airgap-images-arm.tar.gz
-    - k3s-airgap-images-s390x.tar.gz
+    # - k3s-airgap-images-arm64.tar.gz
+    # - k3s-airgap-images-arm.tar.gz
+    # - k3s-airgap-images-s390x.tar.gz
   releases:
     - latest
-    - v1.23.6+k3s1
   files:
     install.sh: https://raw.githubusercontent.com/k3s-io/k3s/master/install.sh
 
@@ -42,13 +40,12 @@ node_exporter:
   url: https://github.com/prometheus/node_exporter
   assets:
     - node_exporter-[0-9].[0-9].[0-9].linux-amd64.tar.gz
-    - node_exporter-[0-9].[0-9].[0-9].linux-arm64.tar.gz
-    - node_exporter-[0-9].[0-9].[0-9].linux-armv5.tar.gz
-    - node_exporter-[0-9].[0-9].[0-9].linux-armv6.tar.gz
-    - node_exporter-[0-9].[0-9].[0-9].linux-armv7.tar.gz
-    - node_exporter-[0-9].[0-9].[0-9].linux-s390x.tar.gz
+    # - node_exporter-[0-9].[0-9].[0-9].linux-arm64.tar.gz
+    # - node_exporter-[0-9].[0-9].[0-9].linux-armv5.tar.gz
+    # - node_exporter-[0-9].[0-9].[0-9].linux-armv6.tar.gz
+    # - node_exporter-[0-9].[0-9].[0-9].linux-armv7.tar.gz
+    # - node_exporter-[0-9].[0-9].[0-9].linux-s390x.tar.gz
   releases:
     - latest
-    - v1.3.1
   files:
     install.sh: https://raw.githubusercontent.com/carlocorradini/node_exporter_installer/main/install.sh

@@ -95,7 +95,7 @@ sync_deps_clean() {
           # Keep
           ;;
         *)
-          # Remove dependency directory
+          # Remove dependency file
           INFO "Removing '$dep_fd_basename' file"
           rm -f "$dep_fd"
           ;;
@@ -156,15 +156,13 @@ sync_deps_clean() {
 # @param $1 Name
 # @param $2 Release
 sync_dep_release() {
-  [ $# -eq 2 ] || FATAL "sync_dep_release requires exactly 2 arguments but '$#' found"
-
   local config
   config=$(dep_config "$1")
   local name=$1
   local release=$2
   local url
   url=$(jq --raw-output '.url' <<< "$config")
-  [[ $url =~ ^(https|git)(:\/\/|@)([^\/:]+)[\/:]([^\/:]+)\/(.+)(.git)*$ ]] || FATAL "Unable to extract owner and repository from '$url'"
+  [[ $url =~ ^(https|git)(:\/\/|@)([^\/:]+)[\/:]([^\/:]+)\/(.+)(.git)*$ ]] || FATAL "Error reading owner and repository from GitHub URL '$url'"
   local github_api_url="https://api.github.com/repos/${BASH_REMATCH[4]}/${BASH_REMATCH[5]}/releases"
   local release_id
   local assets
@@ -221,8 +219,6 @@ sync_dep_release() {
 # Synchronize dependency
 # @param $1 Name
 sync_dep_files() {
-  [ $# -eq 1 ] || FATAL "sync_dep_files requires exactly 1 arguments but '$#' found"
-
   local config
   config=$(dep_config "$1")
   local name=$1
@@ -251,8 +247,6 @@ sync_dep_files() {
 # Synchronize dependency
 # @param $1 Name
 sync_dep() {
-  [ $# -eq 1 ] || FATAL "sync_dep requires exactly 1 arguments but '$#' found"
-
   local config
   config=$(dep_config "$1")
   local name=$1
@@ -325,7 +319,7 @@ read_config() {
   [ -f "$DEPS_CONFIG_FILE" ] || FATAL "Dependencies configuration file not found at '$DEPS_CONFIG_FILE'"
 
   # Read config file
-  DEPS=$(yq e --output-format=json --no-colors '.' "$DEPS_CONFIG_FILE") || FATAL "Configuration file '$DEPS_CONFIG_FILE' is invalid"
+  DEPS=$(yq e --output-format=json --no-colors '.' "$DEPS_CONFIG_FILE") || FATAL "Error reading configuration file '$DEPS_CONFIG_FILE'"
   DEBUG "Configuration:\n$(jq '.' <<< "$DEPS")"
 }
 
