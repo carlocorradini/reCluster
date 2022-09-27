@@ -1341,11 +1341,14 @@ cluster_init() {
 
 # Install reCluster
 install_recluster() {
+  # Directories
+  _recluster_tmp_etc_dir="$TMP_DIR/etc"
+  _recluster_tmp_opt_dir="$TMP_DIR/opt"
   # Files
   _k3s_config_file=/etc/rancher/k3s/config.yaml
-  _recluster_config_file="$RECLUSTER_ETC_DIR/config.yaml"
-  _recluster_id_file="$RECLUSTER_ETC_DIR/id"
-  _recluster_bootstrap_sh="$RECLUSTER_OPT_DIR/bootstrap.sh"
+  _recluster_config_file="$_recluster_tmp_etc_dir/config.yaml"
+  _recluster_id_file="$_recluster_tmp_etc_dir/id"
+  _recluster_bootstrap_sh="$_recluster_tmp_opt_dir/bootstrap.sh"
   # Configuration
   _recluster_node_label_id="recluster.io/id="
   _recluster_bootstrap_service_name=recluster-bootstrap
@@ -1353,140 +1356,39 @@ install_recluster() {
   spinner_start "Installing reCluster"
 
   # Directories
-  INFO "Creating reCluster etc directory '$RECLUSTER_ETC_DIR'"
-  $SUDO mkdir -p "$RECLUSTER_ETC_DIR"
-  INFO "Creating reCluster opt directory '$RECLUSTER_OPT_DIR'"
-  $SUDO mkdir -p "$RECLUSTER_OPT_DIR"
+  mkdir "$_recluster_tmp_etc_dir"
+  mkdir "$_recluster_tmp_opt_dir"
 
-  # Configuration
-  _recluster_config=$(echo "$CONFIG" | jq '.recluster' | yq e --prettyPrint --no-colors '.' -) || FATAL "Error reading reCluster configuration"
-  INFO "Writing reCluster configuration to '$_recluster_config_file'"
-  printf "%s" "$_recluster_config" | $SUDO tee "$_recluster_config_file" > /dev/null
+  # Write configuration
+  DEBUG "Writing reCluster configuration to '$_recluster_config_file'"
+  echo "$CONFIG" \
+    | jq '.recluster' \
+    | yq e --prettyPrint --no-colors '.' - \
+    | tee "$_recluster_config_file" > /dev/null
 
   # Node registration
   node_registration
-  printf "%s" "$RECLUSTER_NODE_ID" | $SUDO tee "$_recluster_id_file" > /dev/null
-  _recluster_node_label_id="${_recluster_node_label_id}${RECLUSTER_NODE_ID}"
-  # TODO Node token
-  # INFO "Writing reCluster token '$RECLUSTER_NODE_TOKEN' to '$_recluster_token_file'"
-  # printf "%s" "$RECLUSTER_NODE_TOKEN" | $SUDO tee "$_recluster_token_file" > /dev/null
 
-  # Node label reCluster id
+  # Write identifier
+  DEBUG "Writing reCluster identifier '$RECLUSTER_NODE_ID' to '$_recluster_id_file'"
+  echo "$RECLUSTER_NODE_ID" \
+    | tee "$_recluster_id_file" > /dev/null
+
+  # TODO Write token
+  # DEBUG "Writing reCluster token '$RECLUSTER_NODE_TOKEN' to '$_recluster_token_file'"
+  # echo "$RECLUSTER_NODE_TOKEN" \
+  #  | tee "$_recluster_token_file" > /dev/null
+
+  # Node label
+  _recluster_node_label_id="${_recluster_node_label_id}${RECLUSTER_NODE_ID}"
   DEBUG "Updating K3s configuration '$_k3s_config_file' adding 'node-label: - $_recluster_node_label_id'"
   $SUDO \
     node_label="$_recluster_node_label_id" \
     yq e '.node-label += [env(node_label)]' -i "$_k3s_config_file"
 
-  # Bootstrap script
-  $SUDO tee "$_recluster_bootstrap_sh" > /dev/null << EOF
-#!/usr/bin/env sh
-
-# Fail on error
-set -o errexit
-# Disable wildcard character expansion
-set -o noglob
-
-# ================
-# LOGGER
-# ================
-# Fatal log message
-FATAL() {
-  printf '[FATAL] %s\n' "\$@" >&2
-  exit 1
-}
-# Info log message
-INFO() {
-  printf '[INFO ] %s\n' "\$@"
-}
-
-# ================
-# FUNCTIONS
-# ================
-read_config() {
-  INFO "Reading configuration file '$_recluster_config_file'"
-  [ -f $_recluster_config_file ] || FATAL "Configuration file '$_recluster_config_file' not found"
-  RECLUSTER_CONFIG=\$(yq e --output-format=json --no-colors '.' $_recluster_config_file) || FATAL "Error reading configuration file '$_recluster_config_file'"
-}
-
-update_status() {
-  _status=ACTIVE
-  _server_url=\$(echo "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires 'server: <URL>'"
-  # shellcheck disable=SC2016
-  _data='{ "query": "mutation (\$data: UpdateNodeInput!) { updateNode(data: \$data) { id } }", "variables": { "data": { "status": "'"\$_status"'" } } }'
-  _response=
-
-  INFO "Updating node status '\$_status' at '\$_server_url'"
-
-  # Send update request
-EOF
-  case $DOWNLOADER in
-    curl)
-      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
-  _response=\$(curl --fail --silent --location --show-error \\
-    --request POST \\
-    --header 'Content-Type: application/json' \\
-    --url "\$_server_url" \\
-    --data "\$_data") || FATAL "Error sending update node status request to '\$_server_url'"
-EOF
-      ;;
-    wget)
-      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
-  _response=\$(wget --quiet --output-document=- \\
-    --header='Content-Type: application/json' \\
-    --post-data="\$_data" \\
-    "\$_server_url" 2>&1) || FATAL "Error sending update node status request to '\$_server_url'"
-EOF
-      ;;
-    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
-  esac
-
-  $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
-  # Check error response
-  if echo "\$_response" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
-    FATAL "Error updating node status:\n\$(echo "\$_response" | jq .)";
-  fi
-
-  INFO "Node status '\$_status' updated"
-}
-
-start_services() {
-EOF
-  case $INIT_SYSTEM in
-    openrc)
-      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
-  INFO "Starting Node exporter"
-  rc-service node_exporter start || true
-  INFO "Starting K3s"
-  rc-service k3s-recluster start
-EOF
-      ;;
-    systemd)
-      $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
-  INFO "Starting Node exporter"
-  systemtc start node_exporter || true
-  INFO "Starting K3s"
-  systemctl start k3s-recluster
-EOF
-      ;;
-    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
-  esac
-
-  $SUDO tee -a "$_recluster_bootstrap_sh" > /dev/null << EOF
-}
-
-# ================
-# CONFIGURATION
-# ================
-RECLUSTER_CONFIG=
-
-# ================
-# MAIN
-# ================
-{
-  read_config
-  update_status
-  start_services
-}
+  # TODO Bootstrap script
+  DEBUG "Writing reCluster bootstrap script '$_recluster_bootstrap_sh'"
+  tee "$_recluster_bootstrap_sh" > /dev/null << EOF
 EOF
 
   # Bootstrap script permissions
@@ -1544,6 +1446,7 @@ EOF
   esac
 
   spinner_stop
+
   # Success
   INFO "Successfully installed reCluster"
 }
