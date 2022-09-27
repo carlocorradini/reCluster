@@ -48,7 +48,7 @@ MKIMAGE_ARCHS=("x86_64")
 CONTAINER=
 
 # Commons
-source "$DIRNAME/../../scripts/__commons.sh"
+source "$DIRNAME/../../../scripts/__commons.sh"
 
 # Assert
 assert_cmd docker

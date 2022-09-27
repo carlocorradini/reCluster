@@ -56,12 +56,15 @@ LOG_COLOR_ENABLE=true
 # @param $1 Log level
 # @param $2 Message
 function _log_print_message() {
-  local log_level=${1:-LOG_LEVEL_FATAL}
-  shift
+  local log_level
   local log_level_name
-  local log_message=${*:-}
+  local log_message
   local log_prefix
-  local log_suffix="\033[0m"
+  local log_suffix
+  log_level=${1:-LOG_LEVEL_FATAL}
+  shift
+  log_message=${*:-}
+  log_suffix="\033[0m"
 
   # Check log level
   if [ "$log_level" -gt "$LOG_LEVEL" ]; then return; fi
