@@ -72,17 +72,24 @@ dep_config() {
   jq --arg name "$1" '.[$name]' <<< "$DEPS"
 }
 
-# Return dependency latest release
+# Generate github api url
 # @param $1 Dependency name
-find_latest_release() {
+gen_github_api_url() {
   local config
   local url
-  local github_api_url
 
   config=$(dep_config "$1")
   url=$(jq --raw-output '.url' <<< "$config")
   [[ $url =~ ^(https|git)(:\/\/|@)([^\/:]+)[\/:]([^\/:]+)\/(.+)(.git)*$ ]] || FATAL "Error reading owner and repository from GitHub URL '$url'"
-  github_api_url="https://api.github.com/repos/${BASH_REMATCH[4]}/${BASH_REMATCH[5]}/releases"
+  echo "https://api.github.com/repos/${BASH_REMATCH[4]}/${BASH_REMATCH[5]}/releases"
+}
+
+# Return dependency latest release
+# @param $1 Dependency name
+find_latest_release() {
+  local github_api_url
+  github_api_url=$(gen_github_api_url "$1")
+
   download_print "$github_api_url/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || FATAL "Download '$github_api_url/latest' failed"
 }
 
@@ -91,7 +98,6 @@ sync_deps_clean() {
   local -
   set +o noglob
 
-  # TODO Better names
   local dep_fd_basename
   local fd_basename
   local ufd_basename
@@ -142,21 +148,9 @@ sync_deps_clean() {
             continue
           fi
         elif [ -d "$fd" ]; then
-          # Skip if latest release
-          if [ "$fd_basename" = "$latest_release" ]; then
-            continue
-          fi
 
-          # 'latest' symbolic link release directory
-          if [ "$fd_basename" = latest ]; then
-            # Remove 'latest' directory
-            INFO "Removing '$dep_fd_basename' symbolic link 'latest' directory"
-            rm -f "$fd"
-            continue
-          fi
-
-          # Check release directory
-          if ! jq --exit-status --arg dir "$fd_basename" '.releases | any(. == $dir)' <<< "$config" > /dev/null 2>&1; then
+          # Skip if 'latest' release and check release directory
+          if [ ! "$fd_basename" = "$latest_release" ] && ! jq --exit-status --arg dir "$fd_basename" '.releases | any(. == $dir)' <<< "$config" > /dev/null 2>&1; then
             # Remove release directory
             INFO "Removing '$dep_fd_basename' release directory '$fd_basename'"
             rm -rf "$fd"
@@ -186,8 +180,6 @@ sync_deps_clean() {
 # @param $1 Name
 # @param $2 Release
 sync_dep_release() {
-  local config
-  config=$(dep_config "$1")
   local name=$1
   local release=$2
   local is_release_latest
@@ -195,10 +187,8 @@ sync_dep_release() {
     latest) is_release_latest=true ;;
     *) is_release_latest=false ;;
   esac
-  local url
-  url=$(jq --raw-output '.url' <<< "$config")
-  [[ $url =~ ^(https|git)(:\/\/|@)([^\/:]+)[\/:]([^\/:]+)\/(.+)(.git)*$ ]] || FATAL "Error reading owner and repository from GitHub URL '$url'"
-  local github_api_url="https://api.github.com/repos/${BASH_REMATCH[4]}/${BASH_REMATCH[5]}/releases"
+  local github_api_url
+  github_api_url=$(gen_github_api_url "$name")
   local release_id
   local assets
   local release_dir
@@ -223,11 +213,6 @@ sync_dep_release() {
   if [ ! -d "$release_dir" ]; then
     INFO "Creating '$name' directory '$release_dir'"
     mkdir -p "$release_dir"
-  fi
-  # If release is 'latest' create symbolic link to release directory
-  if [ $is_release_latest = true ]; then
-    INFO "Creating '$name' symbolic link 'latest' directory to '$release_dir'"
-    ln -s "$release_dir" "$(readlink -f "$DIRNAME")/$name/latest"
   fi
 
   # Download assets
