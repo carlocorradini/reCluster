@@ -1336,12 +1336,7 @@ cluster_init() {
 
   # TODO Server token
 
-  # reCluster server
-  # TODO Must be a service
-  # TODO Wait until server URL is reachable
-  WARN "Waiting you to start reCluster server"
-  WARN "Press [ENTER] to continue..."
-  read -r
+  # TODO Start server
 }
 
 # Install reCluster
