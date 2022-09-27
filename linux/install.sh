@@ -245,10 +245,10 @@ show_help() {
   _config_file_name=$(basename "$CONFIG_FILE")
 
   cat << EOF
-Usage: install.sh [--airgap] [--bench-device-api <URL>] [--bench-interval <TIME>]
-                  [--bench-time <TIME>] [--config <PATH>] [--disable-color]
-                  [--disable-spinner] [--help] [--init-cluster]
-                  [--k3s-version <VERSION>] [--log-level <LEVEL>] [--node_exporter-version <VERSION>]
+Usage: install.sh [--airgap] [--bench-time <TIME>] [--config <PATH>] [--disable-color]
+                  [--disable-spinner] [--help] [--init-cluster] [--k3s-version <VERSION>]
+                  [--log-level <LEVEL>] [--node_exporter-version <VERSION>]
+                  [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
                   [--spinner <SPINNER>]
 
 reCluster installation script.
@@ -256,23 +256,8 @@ reCluster installation script.
 Options:
   --airgap                             Perform installation in Air-Gap environment
 
-  --bench-device-api <URL>             Benchmark device api url
-                                       Default: $BENCH_DEVICE_API
-                                       Values:
-                                         Any valid api url
-
-  --bench-interval <TIME>              Benchmark read interval time in seconds
-                                       Default: $BENCH_INTERVAL
-                                       Values:
-                                         Any positive number
-
   --bench-time <TIME>                  Benchmark execution time in seconds
                                        Default: $BENCH_TIME
-                                       Values:
-                                         Any positive number
-
-  --bench-warmup <TIME>                Benchmark warmup time in seconds
-                                       Default: $BENCH_WARMUP
                                        Values:
                                          Any positive number
 
@@ -306,6 +291,26 @@ Options:
 
   --node_exporter-version <VERSION>    Node exporter version
                                        Default: $NODE_EXPORTER_VERSION
+
+  --pc-device-api <URL>                Power consumption device api url
+                                       Default: $PC_DEVICE_API
+                                       Values:
+                                         Any valid api url
+
+  --pc-interval <TIME>                 Power consumption read interval time in seconds
+                                       Default: $PC_INTERVAL
+                                       Values:
+                                         Any positive number
+
+  --pc-time <TIME>                     Power consumption execution time in seconds
+                                       Default: $PC_TIME
+                                        Values:
+                                          Any positive number
+
+  --pc-warmup <TIME>                   Power consumption warmup time in seconds
+                                       Default: $PC_WARMUP
+                                       Values:
+                                         Any positive number
 
   --spinner <SPINNER>                  Spinner symbols
                                        Default: propeller
@@ -416,16 +421,16 @@ download_print() {
 # @param $1 Benchmark PID
 read_power_consumption() {
   _read_power_consumption() {
-    download_print "$BENCH_DEVICE_API" | jq --raw-output '.StatusSNS.ENERGY.Power'
+    download_print "$PC_DEVICE_API" | jq --raw-output '.StatusSNS.ENERGY.Power'
   }
   _pid=$1
   _pcs="[]"
 
   # Warmup
-  sleep "$BENCH_WARMUP"
+  sleep "$PC_WARMUP"
 
   # Execute
-  _end=$(date -ud "$BENCH_TIME second" +%s)
+  _end=$(date -ud "$PC_TIME second" +%s)
   while [ "$(date -u +%s)" -le "$_end" ]; do
     # Current power consumption
     _pc=$(_read_power_consumption)
@@ -433,7 +438,7 @@ read_power_consumption() {
     # Add current power consumption to list
     _pcs=$(echo "$_pcs" | jq --arg pc "$_pc" '. |= . + [$pc|tonumber]')
     # Sleep
-    sleep "$BENCH_INTERVAL"
+    sleep "$PC_INTERVAL"
   done
 
   # Terminate benchmark
@@ -645,6 +650,8 @@ run_cpu_bench() {
   }
   _threads=$(grep -c ^processor /proc/cpuinfo)
 
+  # TODO Idle
+
   # Single-thread
   DEBUG "Running CPU benchmark: single-thread (1)"
   _run_cpu_bench 1
@@ -654,6 +661,8 @@ run_cpu_bench() {
   DEBUG "Running CPU benchmark: multi-thread ($_threads)"
   _run_cpu_bench "$_threads"
   _multi_thread=$RETVAL
+
+  # TODO Bench multi-thread
 
   # Update node facts
   NODE_FACTS=$(
@@ -832,38 +841,12 @@ parse_args() {
         AIRGAP_ENV=true
         shift
         ;;
-      --bench-device-api)
-        # Benchmark device api url
-        _parse_args_assert_value "$@"
-
-        _bench_device_api=$2
-        shift
-        shift
-        ;;
-      --bench-interval)
-        # Benchmark interval
-        _parse_args_assert_value "$@"
-        _parse_args_assert_positive_number_integer "$1" "$2"
-
-        _bench_interval=$2
-        shift
-        shift
-        ;;
       --bench-time)
         # Benchmark time
         _parse_args_assert_value "$@"
         _parse_args_assert_positive_number_integer "$1" "$2"
 
         _bench_time=$2
-        shift
-        shift
-        ;;
-      --bench-warmup)
-        # Benchmark warmup time
-        _parse_args_assert_value "$@"
-        _parse_args_assert_positive_number_integer "$1" "$2"
-
-        _bench_warmup=$2
         shift
         shift
         ;;
@@ -926,6 +909,41 @@ parse_args() {
         shift
         shift
         ;;
+      --pc-device-api)
+        # Power consumption device api url
+        _parse_args_assert_value "$@"
+
+        _pc_device_api=$2
+        shift
+        shift
+        ;;
+      --pc-interval)
+        # Power consumption interval
+        _parse_args_assert_value "$@"
+        _parse_args_assert_positive_number_integer "$1" "$2"
+
+        _pc_interval=$2
+        shift
+        shift
+        ;;
+      --pc-time)
+        # Power consumption time
+        _parse_args_assert_value "$@"
+        _parse_args_assert_positive_number_integer "$1" "$2"
+
+        _pc_time=$2
+        shift
+        shift
+        ;;
+      --pc-warmup)
+        # Power consumption warmup time
+        _parse_args_assert_value "$@"
+        _parse_args_assert_positive_number_integer "$1" "$2"
+
+        _pc_warmup=$2
+        shift
+        shift
+        ;;
       --spinner)
         _parse_args_assert_value "$@"
 
@@ -951,14 +969,8 @@ parse_args() {
     esac
   done
 
-  # Benchmark device api
-  if [ -n "$_bench_device_api" ]; then BENCH_DEVICE_API=$_bench_device_api; fi
-  # Benchmark interval
-  if [ -n "$_bench_interval" ]; then BENCH_INTERVAL=$_bench_interval; fi
   # Benchmark time
   if [ -n "$_bench_time" ]; then BENCH_TIME=$_bench_time; fi
-  # Benchmark warmup time
-  if [ -n "$_bench_warmup" ]; then BENCH_WARMUP=$_bench_warmup; fi
   # Configuration file
   if [ -n "$_config" ]; then CONFIG_FILE=$_config; fi
   # K3s version
@@ -967,6 +979,14 @@ parse_args() {
   if [ -n "$_log_level" ]; then LOG_LEVEL=$_log_level; fi
   # Node exporter version
   if [ -n "$_node_exporter_version" ]; then NODE_EXPORTER_VERSION=$_node_exporter_version; fi
+  # Power consumption device api
+  if [ -n "$_pc_device_api" ]; then PC_DEVICE_API=$_pc_device_api; fi
+  # Power consumption interval
+  if [ -n "$_pc_interval" ]; then PC_INTERVAL=$_pc_interval; fi
+  # Power consumption time
+  if [ -n "$_pc_time" ]; then PC_TIME=$_pc_time; fi
+  # Power consumption warmup time
+  if [ -n "$_pc_warmup" ]; then PC_WARMUP=$_pc_warmup; fi
   # Spinner
   if [ -n "$_spinner" ]; then SPINNER_SYMBOLS=$_spinner; fi
 }
@@ -1021,8 +1041,8 @@ verify_system() {
   # Downloader command
   assert_downloader
 
-  # Check BENCH_DEVICE_API reachability
-  assert_url_reachability "$BENCH_DEVICE_API"
+  # Check power consumption device reachability
+  assert_url_reachability "$PC_DEVICE_API"
 
   # Directories
   [ ! -d "$RECLUSTER_ETC_DIR" ] || FATAL "reCluster directory '$RECLUSTER_ETC_DIR' already exists"
@@ -1486,14 +1506,8 @@ start_services() {
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # Airgap environment flag
 AIRGAP_ENV=false
-# Benchmark device api url
-BENCH_DEVICE_API="http://bench.local/cm?cmnd=status%2010"
-# Benchmark interval in seconds
-BENCH_INTERVAL=1
 # Benchmark time in seconds
 BENCH_TIME=30
-# Benchmark warmup time in seconds
-BENCH_WARMUP=10
 # Configuration file
 CONFIG_FILE="$DIRNAME/config.yaml"
 # Initialize cluster
@@ -1506,6 +1520,14 @@ LOG_COLOR_ENABLE=true
 LOG_LEVEL=$LOG_LEVEL_INFO
 # Node exporter version
 NODE_EXPORTER_VERSION=v1.3.1
+# Power consumption device api url
+PC_DEVICE_API="http://pc.local/cm?cmnd=status%2010"
+# Power consumption interval in seconds
+PC_INTERVAL=1
+# Power consumption time in seconds
+PC_TIME=30
+# Power consumption warmup time in seconds
+PC_WARMUP=10
 # reCluster etc directory
 RECLUSTER_ETC_DIR=/etc/recluster
 # reCluster opt directory
