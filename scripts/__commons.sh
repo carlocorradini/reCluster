@@ -47,57 +47,56 @@ readonly LOG_LEVEL_WARN=300
 readonly LOG_LEVEL_INFO=500
 # Debug log level
 readonly LOG_LEVEL_DEBUG=600
-
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
-# Log disable color flag
-LOG_DISABLE_COLOR=1
+# Log color flag
+LOG_COLOR_ENABLE=true
 
 # Print log message
 # @param $1 Log level
 # @param $2 Message
 function _log_print_message() {
-  local log_level=$1
+  local log_level=${1:-LOG_LEVEL_FATAL}
   shift
+  local log_level_name
   local log_message=${*:-}
-  local log_name
   local log_prefix
   local log_suffix="\033[0m"
 
-  # Log level is enabled
+  # Check log level
   if [ "$log_level" -gt "$LOG_LEVEL" ]; then return; fi
 
   case $log_level in
     "$LOG_LEVEL_FATAL")
-      log_name=FATAL
+      log_level_name=FATAL
       log_prefix="\033[41;37m"
       ;;
     "$LOG_LEVEL_ERROR")
-      log_name=ERROR
+      log_level_name=ERROR
       log_prefix="\033[1;31m"
       ;;
     "$LOG_LEVEL_WARN")
-      log_name=WARN
+      log_level_name=WARN
       log_prefix="\033[1;33m"
       ;;
     "$LOG_LEVEL_INFO")
-      log_name=INFO
+      log_level_name=INFO
       log_prefix="\033[37m"
       ;;
     "$LOG_LEVEL_DEBUG")
-      log_name=DEBUG
+      log_level_name=DEBUG
       log_prefix="\033[1;34m"
       ;;
   esac
 
-  # Color disable flag
-  if [ "$LOG_DISABLE_COLOR" -eq 0 ]; then
+  # Check color flag
+  if [ "$LOG_COLOR_ENABLE" = false ]; then
     log_prefix=
     log_suffix=
   fi
 
   # Output to stdout
-  printf '%b[%-5s][%s:%d] %b%b\n' "$log_prefix" "$log_name" "${FUNCNAME[2]}" "${BASH_LINENO[1]}" "$log_message" "$log_suffix"
+  printf '%b[%-5s][%s:%d] %b%b\n' "$log_prefix" "$log_level_name" "${FUNCNAME[2]}" "${BASH_LINENO[1]}" "$log_message" "$log_suffix"
 }
 
 # Fatal log message
@@ -134,14 +133,16 @@ function assert_downloader() {
     [ -x "$(command -v "$1")" ] || return 1
     # Set downloader program and return success
     DOWNLOADER=$1
+    readonly DOWNLOADER
     DEBUG "Downloader is '$DOWNLOADER'"
     return 0
   }
 
+  # Downloader command
   _assert_downloader curl \
     || _assert_downloader wget \
-    || FATAL "Unable to find downloader 'curl' or 'wget'"
-  readonly DOWNLOADER
+    || FATAL "No executable downloader found: 'curl' or 'wget'"
+  DEBUG "Downloader '$DOWNLOADER' found at '$(command -v "$DOWNLOADER")'"
 }
 
 # Check docker image
@@ -166,17 +167,17 @@ function assert_docker_image() {
 # @param $1 Output location
 # @param $2 Download URL
 download() {
-  [ $# -eq 2 ] || FATAL "Download requires exactly 2 arguments but '$#' found"
   assert_downloader
 
+  DEBUG "Downloading file '$2' to '$1'"
+
   # Download
-  DEBUG "Downloading '$2' into '$1'"
   case $DOWNLOADER in
     curl)
-      curl --fail --silent --location --output "$1" "$2" || FATAL "Download '$2' failed"
+      curl --fail --silent --location --output "$1" "$2" || FATAL "Download file '$2' failed"
       ;;
     wget)
-      wget --quiet --output-document="$1" "$2" || FATAL "Download '$2' failed"
+      wget --quiet --output-document="$1" "$2" || FATAL "Download file '$2' failed"
       ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
@@ -185,8 +186,7 @@ download() {
 # Print downloaded content
 # @param $1 Download URL
 download_print() {
-  [ $# -eq 1 ] || FATAL "Download requires exactly 1 argument but '$#' found"
-  assert_downloader
+  assert_downloader > /dev/null
 
   # Download
   case $DOWNLOADER in

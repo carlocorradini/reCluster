@@ -67,6 +67,10 @@ LOG_LEVEL_WARN=300
 LOG_LEVEL_INFO=500
 # Debug log level
 LOG_LEVEL_DEBUG=600
+# Log color flag
+LOG_COLOR_ENABLE=true
+# Log level
+LOG_LEVEL=$LOG_LEVEL_INFO
 
 # Print log message
 # @param $1 Log level
@@ -142,6 +146,10 @@ SPINNER_SYMBOLS_DOTS="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
 SPINNER_SYMBOLS_GREYSCALE="░░░░░░░ ▒░░░░░░ ▒▒░░░░░ ▒▒▒░░░░ ▒▒▒▒░░░ ▒▒▒▒▒░░ ▒▒▒▒▒▒░ ▒▒▒▒▒▒▒ ░▒▒▒▒▒▒ ░░▒▒▒▒▒ ░░░▒▒▒▒ ░░░░▒▒▒ ░░░░░▒▒ ░░░░░░▒"
 # Spinner symbols propeller
 SPINNER_SYMBOLS_PROPELLER="/ - \\ |"
+# Spinner flag
+SPINNER_ENABLE=true
+# Spinner symbols
+SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
 
 # Spinner logic
 _spinner() {

@@ -28,7 +28,7 @@
 DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DIRNAME
 # Alpine Linux version
-readonly ALPINE_VERSION=3.16
+readonly ALPINE_VERSION="3.16"
 # reCluster Alpine Linux image
 readonly RECLUSTER_ALPINE_IMAGE="recluster-alpine:$ALPINE_VERSION"
 # reCluster Alpine Linux Dockerfile
@@ -103,7 +103,6 @@ function prepare_container() {
       --tty \
       "$RECLUSTER_ALPINE_IMAGE"
   )
-  readonly CONTAINER
 
   # Script permission
   docker exec "$CONTAINER" chmod +x "/home/build/aports/scripts/$profile_file_name"
@@ -111,9 +110,9 @@ function prepare_container() {
 
 # Build ISO image
 function builder() {
-  [ $# -eq 1 ] || FATAL "Builder requires exactly 1 arguments but '$#' found"
-
+  local arch
   local profile_name
+  arch=$1
   profile_name=$(basename "$MKIMAGE_PROFILE" | sed -E 's/.*mkimg\.(.*)\.sh.*/\1/')
 
   INFO "Building '$profile_name' architecture '$arch'"
@@ -122,7 +121,7 @@ function builder() {
     /home/build/aports/scripts/mkimage.sh \
     --tag "v$ALPINE_VERSION" \
     --outdir /home/build/iso \
-    --arch "$1" \
+    --arch "$arch" \
     --repository "http://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/main" \
     --repository "http://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/community" \
     --profile "$profile_name"
@@ -134,5 +133,7 @@ function builder() {
 {
   iso_dir
   prepare_container
-  for arch in "${MKIMAGE_ARCHS[@]}"; do builder "$arch"; done
+  for arch in "${MKIMAGE_ARCHS[@]}"; do
+    builder "$arch"
+  done
 }
