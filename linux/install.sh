@@ -1180,6 +1180,8 @@ install_k3s() {
   _k3s_config_file=/etc/rancher/k3s/config.yaml
   _k3s_config=
 
+  spinner_start "Installing K3s '$K3S_VERSION'"
+
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
     # Airgap enabled
@@ -1215,8 +1217,6 @@ install_k3s() {
   printf "%s" "$_k3s_config" | $SUDO tee "$_k3s_config_file" > /dev/null
 
   # Install
-  spinner_start "Installing K3s '$K3S_VERSION'"
-
   INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
     INSTALL_K3S_SKIP_START=true \
     INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
@@ -1235,6 +1235,8 @@ install_k3s() {
 install_node_exporter() {
   _node_exporter_install_sh=
   _node_exporter_config=
+
+  spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
 
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
@@ -1261,8 +1263,6 @@ install_node_exporter() {
   _node_exporter_config=$(echo "$CONFIG" | jq --raw-output '.node_exporter.collector | to_entries | map(if .value == true then ("--collector."+.key) else ("--no-collector."+.key) end) | join(" ")') || FATAL "Error reading Node exporter configuration"
 
   # Install
-  spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
-
   INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
     INSTALL_NODE_EXPORTER_SKIP_START=true \
     INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
