@@ -77,9 +77,9 @@ dep_config() {
 gen_github_api_url() {
   local config
   local url
-
   config=$(dep_config "$1")
   url=$(jq --raw-output '.url' <<< "$config")
+
   [[ $url =~ ^(https|git)(:\/\/|@)([^\/:]+)[\/:]([^\/:]+)\/(.+)(.git)*$ ]] || FATAL "Error reading owner and repository from GitHub URL '$url'"
   echo "https://api.github.com/repos/${BASH_REMATCH[4]}/${BASH_REMATCH[5]}/releases"
 }
@@ -148,9 +148,8 @@ sync_deps_clean() {
             continue
           fi
         elif [ -d "$fd" ]; then
-
           # Skip if 'latest' release and check release directory
-          if [ ! "$fd_basename" = "$latest_release" ] && ! jq --exit-status --arg dir "$fd_basename" '.releases | any(. == $dir)' <<< "$config" > /dev/null 2>&1; then
+          if ! { jq --exit-status '.releases | any(. == "latest")' <<< "$config" > /dev/null 2>&1 && [ "$fd_basename" = "$latest_release" ]; } && ! jq --exit-status --arg dir "$fd_basename" '.releases | any(. == $dir)' <<< "$config" > /dev/null 2>&1; then
             # Remove release directory
             INFO "Removing '$dep_fd_basename' release directory '$fd_basename'"
             rm -rf "$fd"
@@ -180,18 +179,23 @@ sync_deps_clean() {
 # @param $1 Name
 # @param $2 Release
 sync_dep_release() {
-  local name=$1
-  local release=$2
+  local name
+  local release
   local is_release_latest
+  local github_api_url
+  local release_id
+  local assets
+  local release_dir
+  local asset_name
+  local asset_url
+  local asset_path
+  name=$1
+  release=$2
+  github_api_url=$(gen_github_api_url "$name")
   case "$release" in
     latest) is_release_latest=true ;;
     *) is_release_latest=false ;;
   esac
-  local github_api_url
-  github_api_url=$(gen_github_api_url "$name")
-  local release_id
-  local assets
-  local release_dir
 
   # If release is 'latest' find tag name
   if [ $is_release_latest = true ]; then
@@ -217,9 +221,6 @@ sync_dep_release() {
 
   # Download assets
   while read -r asset; do
-    local asset_name
-    local asset_url
-    local asset_path
     asset_name=$(jq --raw-output .name <<< "$asset")
     asset_url=$(jq --raw-output .url <<< "$asset")
     asset_path="$release_dir/$asset_name"
@@ -245,14 +246,15 @@ sync_dep_release() {
 # @param $1 Name
 sync_dep_files() {
   local config
+  local name
+  local file_name
+  local file_url
+  local file_path
   config=$(dep_config "$1")
-  local name=$1
+  name=$1
 
   # Files
   while read -r file; do
-    local file_name
-    local file_url
-    local file_path
     file_name=$(jq --raw-output '.key' <<< "$file")
     file_url=$(jq --raw-output '.value' <<< "$file")
     file_path="$(readlink -f "$DIRNAME")/$name/$file_name"
@@ -273,8 +275,9 @@ sync_dep_files() {
 # @param $1 Name
 sync_dep() {
   local config
+  local name
   config=$(dep_config "$1")
-  local name=$1
+  name=$1
 
   # Releases
   while read -r release; do
@@ -351,10 +354,10 @@ read_config() {
 # Synchronize dependency
 sync_deps() {
   local num_deps
-  num_deps=$(jq --raw-output '. | length' <<< "$DEPS")
   local name
+  num_deps=$(jq --raw-output '. | length' <<< "$DEPS")
 
-  INFO "Syncing '$num_deps' dependencies"
+  INFO "Syncing $num_deps dependencies"
 
   # Clean environment
   sync_deps_clean
@@ -365,7 +368,7 @@ sync_deps() {
     sync_dep "$name"
   done <<< "$(jq --compact-output 'to_entries[]' <<< "$DEPS")"
 
-  INFO "Successfully synced '$num_deps' dependencies"
+  INFO "Successfully synced $num_deps dependencies"
 }
 
 # ================
