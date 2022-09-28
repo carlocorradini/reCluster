@@ -822,7 +822,6 @@ read_cpu_power_consumption() {
   }
   _threads=$(grep -c ^processor /proc/cpuinfo)
 
-  # TODO Idle
   DEBUG "Reading CPU power consumption: idle"
   read_power_consumption
   _idle=$RETVAL
