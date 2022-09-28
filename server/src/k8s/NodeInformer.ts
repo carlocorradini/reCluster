@@ -26,7 +26,6 @@ import * as k8s from '@kubernetes/client-node';
 import { Inject, Service } from 'typedi';
 import { NodeService } from '~/services';
 import { logger } from '~/logger';
-import { NodeStatus } from '~/graphql';
 import { kubeconfig } from './kubeconfig';
 
 type NodeInfo = {
@@ -91,97 +90,24 @@ export class NodeInformer {
   }
 
   private async onAdd(node: k8s.V1Node) {
-    logger.debug(`Node added in K8s: ${JSON.stringify(node)}`);
-
     const nodeInfo = this.readNodeInfo(node);
-    logger.info(`Node '${nodeInfo.id}' added in K8s`);
-
-    let status: NodeStatus = NodeStatus.ERROR;
-    const reClusterNode = await this.nodeService.findUnique({
-      select: { status: true },
-      where: { id: nodeInfo.id },
-      rejectOnNotFound: true
-    });
-
     logger.debug(
-      `Node ${nodeInfo.id} current status: ${reClusterNode?.status}`
+      `Node '${nodeInfo.id}' added in K8s: ${JSON.stringify(nodeInfo)}`
     );
-
-    switch (reClusterNode?.status) {
-      case NodeStatus.ACTIVE: {
-        status = nodeInfo.ready
-          ? NodeStatus.WORKING
-          : NodeStatus.ACTIVE_TO_WORKING;
-        break;
-      }
-      case NodeStatus.WORKING: {
-        if (nodeInfo.ready) return;
-        status = NodeStatus.ERROR;
-        break;
-      }
-      default: {
-        status = NodeStatus.ERROR;
-        break;
-      }
-    }
-
-    this.nodeService.update(nodeInfo.id, { data: { status } });
   }
 
   private async onUpdate(node: k8s.V1Node) {
-    logger.debug(`Node updated in K8s: ${JSON.stringify(node)}`);
-
     const nodeInfo = this.readNodeInfo(node);
-    logger.info(
+    logger.debug(
       `Node '${nodeInfo.id}' updated in K8s: ${JSON.stringify(nodeInfo)}`
     );
-
-    let status: NodeStatus = NodeStatus.ERROR;
-    const reClusterNode = await this.nodeService.findUnique({
-      select: { status: true },
-      where: { id: nodeInfo.id },
-      rejectOnNotFound: true
-    });
-
-    logger.debug(
-      `Node ${nodeInfo.id} current status: ${reClusterNode?.status}`
-    );
-
-    switch (reClusterNode?.status) {
-      case NodeStatus.ACTIVE_TO_WORKING: {
-        if (!nodeInfo.ready) return;
-        status = NodeStatus.WORKING;
-        break;
-      }
-      case NodeStatus.WORKING_TO_ACTIVE: {
-        if (nodeInfo.ready) return;
-        status = NodeStatus.ACTIVE;
-        break;
-      }
-      case NodeStatus.WORKING: {
-        if (nodeInfo.ready) return;
-        status = NodeStatus.ERROR;
-        break;
-      }
-      default: {
-        status = NodeStatus.ERROR;
-        break;
-      }
-    }
-
-    this.nodeService.update(nodeInfo.id, { data: { status } });
   }
 
   private onDelete(node: k8s.V1Node) {
-    // TODO Fix status
-    logger.debug(`Node deleted in K8s: ${JSON.stringify(node)}`);
-
     const nodeInfo = this.readNodeInfo(node);
-    logger.info(`Node '${nodeInfo.id}' deleted in K8s`);
-
-    this.nodeService.update(nodeInfo.id, {
-      data: { status: NodeStatus.ACTIVE }
-    });
+    logger.info(
+      `Node '${nodeInfo.id}' deleted in K8s: ${JSON.stringify(nodeInfo)}`
+    );
   }
 
   private onConnect() {

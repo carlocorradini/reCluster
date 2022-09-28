@@ -41,7 +41,6 @@ export enum InterfaceWol {
   s = 's',
   u = 'u'
 }
-
 registerEnumType(InterfaceWol, {
   name: 'InterfaceWol',
   description: 'Interface Wake On Lan flag'

@@ -25,7 +25,7 @@
 import { env } from './env';
 
 export type Config = {
-  name: string;
+  app: string;
   node: {
     env: string;
   };
@@ -39,7 +39,7 @@ export type Config = {
 };
 
 export const config: Config = {
-  name: 'reCluster',
+  app: 'reCluster',
   node: {
     env: env.NODE_ENV
   },

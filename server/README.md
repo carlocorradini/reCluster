@@ -39,7 +39,7 @@ npm run build
 1. Server
 
    ```console
-   npm run watch
+   npm run start:dev
    ```
 
 1. Execute Queries

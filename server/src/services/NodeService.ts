@@ -26,8 +26,6 @@ import { Prisma } from '@prisma/client';
 import { Service } from 'typedi';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
-import { NodeStatus } from '~/graphql/entities';
-import { nodeStatusMachine } from './nodeStatusMachine';
 
 @Service()
 export class NodeService {
@@ -109,27 +107,6 @@ export class NodeService {
 
   public async update(id: string, args: Omit<Prisma.NodeUpdateArgs, 'where'>) {
     logger.info(`Node service update: ${JSON.stringify(args)}`);
-
-    // Check status machine
-    if (args.data.status) {
-      const node = await this.findUnique({
-        select: { status: true },
-        where: { id },
-        rejectOnNotFound: true
-      });
-
-      const nextStatus = nodeStatusMachine.transition(
-        node?.status,
-        args.data.status as NodeStatus
-      ).value;
-
-      // TODO Better error
-      if (node?.status === nextStatus && node.status !== NodeStatus.ERROR)
-        throw new Error(
-          `Invalid node status transition from '${node.status}' to '${args.data.status}'`
-        );
-    }
-
     return prisma.node.update({ ...args, where: { id } });
   }
 }

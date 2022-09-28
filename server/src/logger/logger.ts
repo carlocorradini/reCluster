@@ -29,5 +29,5 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 export const logger = pino({
   level: isDevelopment ? 'debug' : 'info',
-  name: config.name
+  name: config.app
 });
