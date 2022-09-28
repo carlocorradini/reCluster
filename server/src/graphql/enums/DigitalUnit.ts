@@ -24,15 +24,28 @@
 
 import { registerEnumType } from 'type-graphql';
 
-export enum DigitalByteUnit {
+export enum DigitalUnit {
+  b = 'b',
+  Kb = 'Kb',
+  Kib = 'Kib',
+  Mb = 'Mb',
+  Mib = 'Mib',
+  Gb = 'Gb',
+  Gib = 'Gib',
+  Tb = 'Tb',
+  Tib = 'Tib',
   B = 'B',
   KB = 'KB',
+  KiB = 'KiB',
   MB = 'MB',
+  MiB = 'MiB',
   GB = 'GB',
-  TB = 'TB'
+  GiB = 'GiB',
+  TB = 'TB',
+  TiB = 'TiB'
 }
 
-registerEnumType(DigitalByteUnit, {
-  name: 'DigitalByteUnit',
-  description: 'Digital Byte unit'
+registerEnumType(DigitalUnit, {
+  name: 'DigitalUnit',
+  description: 'Digital unit'
 });

@@ -22,6 +22,5 @@
  * SOFTWARE.
  */
 
-export * from './DigitalBitUnit';
-export * from './DigitalByteUnit';
+export * from './DigitalUnit';
 export * from './SortOrder';

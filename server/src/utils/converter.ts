@@ -22,33 +22,24 @@
  * SOFTWARE.
  */
 
-import configMeasurements, { digital } from 'convert-units';
-import { DigitalByteUnit, DigitalBitUnit } from '~/graphql/enums';
+import configMeasurements, { digital, DigitalUnits } from 'convert-units';
+import { DigitalUnit } from '~/graphql/enums';
 
 const convert = configMeasurements({ digital });
 
 type Converter<V, F, T = F> = {
   value: V;
-  from?: F;
-  to?: T;
+  from: F;
+  to: T;
 };
 
-export function byteConverter(
-  args: Converter<number | bigint, DigitalByteUnit>
+export function digitalConverter(
+  args: Converter<number | bigint, DigitalUnit>
 ) {
   // FIXME BigInt conversion
   return convert(
     typeof args.value === 'number' ? args.value : Number(args.value)
   )
-    .from(args.from ?? DigitalByteUnit.B)
-    .to(args.to ?? DigitalByteUnit.B);
-}
-
-export function bitConverter(args: Converter<number | bigint, DigitalBitUnit>) {
-  // FIXME BigInt conversion
-  return convert(
-    typeof args.value === 'number' ? args.value : Number(args.value)
-  )
-    .from(args.from ?? DigitalBitUnit.b)
-    .to(args.to ?? DigitalBitUnit.b);
+    .from(args.from as DigitalUnits) // FIXME as
+    .to(args.to as DigitalUnits); // FIXME as
 }

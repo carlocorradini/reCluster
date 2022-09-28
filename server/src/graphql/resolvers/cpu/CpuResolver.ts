@@ -26,8 +26,8 @@ import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { injectable, inject } from 'tsyringe';
 import { GraphQLNonNegativeInt } from 'graphql-scalars';
 import { CpuService } from '~/services';
-import { byteConverter } from '~/utils';
-import { DigitalByteUnit } from '../../enums';
+import { digitalConverter } from '~/utils';
+import { DigitalUnit } from '../../enums';
 import { Cpu } from '../../entities';
 import { FindUniqueCpuArgs, FindManyCpuArgs } from '../../args';
 
@@ -54,48 +54,64 @@ export class CpuResolver {
   @FieldResolver(() => GraphQLNonNegativeInt)
   cacheL1d(
     @Root() cpu: Cpu,
-    @Arg('unit', () => DigitalByteUnit, {
-      defaultValue: DigitalByteUnit.B,
+    @Arg('unit', () => DigitalUnit, {
+      defaultValue: DigitalUnit.B,
       description: 'Digital conversion unit'
     })
-    unit?: DigitalByteUnit
+    unit: DigitalUnit
   ) {
-    return byteConverter({ value: cpu.cacheL1d, to: unit });
+    return digitalConverter({
+      value: cpu.cacheL1d,
+      from: DigitalUnit.B,
+      to: unit
+    });
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
   cacheL1i(
     @Root() cpu: Cpu,
-    @Arg('unit', () => DigitalByteUnit, {
-      defaultValue: DigitalByteUnit.B,
+    @Arg('unit', () => DigitalUnit, {
+      defaultValue: DigitalUnit.B,
       description: 'Digital conversion unit'
     })
-    unit?: DigitalByteUnit
+    unit: DigitalUnit
   ) {
-    return byteConverter({ value: cpu.cacheL1i, to: unit });
+    return digitalConverter({
+      value: cpu.cacheL1i,
+      from: DigitalUnit.B,
+      to: unit
+    });
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
   cacheL2(
     @Root() cpu: Cpu,
-    @Arg('unit', () => DigitalByteUnit, {
-      defaultValue: DigitalByteUnit.B,
+    @Arg('unit', () => DigitalUnit, {
+      defaultValue: DigitalUnit.B,
       description: 'Digital conversion unit'
     })
-    unit?: DigitalByteUnit
+    unit: DigitalUnit
   ) {
-    return byteConverter({ value: cpu.cacheL2, to: unit });
+    return digitalConverter({
+      value: cpu.cacheL2,
+      from: DigitalUnit.B,
+      to: unit
+    });
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
   cacheL3(
     @Root() cpu: Cpu,
-    @Arg('unit', () => DigitalByteUnit, {
-      defaultValue: DigitalByteUnit.B,
+    @Arg('unit', () => DigitalUnit, {
+      defaultValue: DigitalUnit.B,
       description: 'Digital conversion unit'
     })
-    unit?: DigitalByteUnit
+    unit: DigitalUnit
   ) {
-    return byteConverter({ value: cpu.cacheL3, to: unit });
+    return digitalConverter({
+      value: cpu.cacheL3,
+      from: DigitalUnit.B,
+      to: unit
+    });
   }
 }

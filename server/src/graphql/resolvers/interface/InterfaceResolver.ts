@@ -26,8 +26,8 @@ import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
 import { InterfaceService } from '~/services';
-import { bitConverter } from '~/utils';
-import { DigitalBitUnit } from '../../enums';
+import { digitalConverter } from '~/utils';
+import { DigitalUnit } from '../../enums';
 import { Interface } from '../../entities';
 import { FindUniqueInterfaceArgs, FindManyInterfaceArgs } from '../../args';
 
@@ -55,12 +55,16 @@ export class InterfaceResolver {
   @FieldResolver(() => GraphQLBigInt)
   speed(
     @Root() inf: Interface,
-    @Arg('unit', () => DigitalBitUnit, {
-      defaultValue: DigitalBitUnit.b,
+    @Arg('unit', () => DigitalUnit, {
+      defaultValue: DigitalUnit.b,
       description: 'Digital conversion unit'
     })
-    unit?: DigitalBitUnit
+    unit: DigitalUnit
   ) {
-    return bitConverter({ value: inf.speed, to: unit });
+    return digitalConverter({
+      value: inf.speed,
+      from: DigitalUnit.b,
+      to: unit
+    });
   }
 }
