@@ -417,7 +417,7 @@ download_print() {
   esac
 }
 
-# Read power consumption in benchmark interval
+# Read power consumption
 # @param $1 Benchmark PID
 read_power_consumption() {
   _read_power_consumption() {
@@ -441,11 +441,13 @@ read_power_consumption() {
     sleep "$PC_INTERVAL"
   done
 
-  # Terminate benchmark
-  DEBUG "Terminating benchmark process PID $_pid"
-  kill -s HUP "$_pid"
-  # Wait may fail
-  wait "$_pid" || :
+  # Terminate benchmark process
+  if [ -n "$_pid" ]; then
+    DEBUG "Terminating benchmark process PID $_pid"
+    kill -s HUP "$_pid"
+    # Wait may fail
+    wait "$_pid" || :
+  fi
 
   # Check pcs length
   [ "$(echo "$_pcs" | jq --raw-output 'length')" -ge 2 ] || FATAL "Not enough power consumption readings"
@@ -453,10 +455,12 @@ read_power_consumption() {
   # Calculate mean
   _mean=$(
     echo "$_pcs" \
-      | jq --raw-output \
-        'add / length
-          | . + 0.5
-          | floor
+      | jq \
+        --raw-output \
+        '
+          add / length
+           | . + 0.5
+           | floor
         '
   )
   DEBUG "PC mean: $_mean"
@@ -464,17 +468,20 @@ read_power_consumption() {
   # Calculate standard deviation
   _standard_deviation=$(
     echo "$_pcs" \
-      | jq --raw-output \
-        '(add / length) as $mean
-          | (map(. - $mean | . * .) | add) / (length - 1)
-          | sqrt
+      | jq \
+        --raw-output \
+        '
+          (add / length) as $mean
+           | (map(. - $mean | . * .) | add) / (length - 1)
+           | sqrt
         '
   )
   DEBUG "PC standard deviation: $_standard_deviation"
 
   # Return
   RETVAL=$(
-    jq --null-input \
+    jq \
+      --null-input \
       --arg mean "$_mean" \
       --arg standard_deviation "$_standard_deviation" \
       '{
@@ -544,19 +551,17 @@ read_cpu_info() {
         --arg cachel1i "$_cache_l1i" \
         --arg cachel2 "$_cache_l2" \
         --arg cachel3 "$_cache_l3" \
-        '.vendor = $vendor
-          | .cacheL1d = ($cachel1d | tonumber)
-          | .cacheL1i = ($cachel1i | tonumber)
-          | .cacheL2 = ($cachel2 | tonumber)
-          | .cacheL3 = ($cachel3 | tonumber)
+        '
+          .vendor = $vendor
+           | .cacheL1d = ($cachel1d | tonumber)
+           | .cacheL1i = ($cachel1i | tonumber)
+           | .cacheL2 = ($cachel2 | tonumber)
+           | .cacheL3 = ($cachel3 | tonumber)
         '
   )
 
-  # Update node facts
-  NODE_FACTS=$(
-    echo "$NODE_FACTS" \
-      | jq --argjson cpuinfo "$_cpu_info" '.cpu = $cpuinfo'
-  )
+  # Return
+  RETVAL=$_cpu_info
 }
 
 # Read RAM information
@@ -571,17 +576,18 @@ read_ram_info() {
   )
 
   _ram_info=$(
-    jq --null-input --arg size "$_ram_size" \
-      '{
-        "size": ($size | tonumber)
-      }'
+    jq \
+      --null-input \
+      --arg size "$_ram_size" \
+      '
+        {
+          "size": ($size | tonumber)
+        }
+      '
   )
 
-  # Update node facts
-  NODE_FACTS=$(
-    echo "$NODE_FACTS" \
-      | jq --argjson raminfo "$_ram_info" '.ram = $raminfo'
-  )
+  # Return
+  RETVAL=$_ram_info
 }
 
 # Read Disk(s) information
@@ -589,17 +595,15 @@ read_disks_info() {
   _disks_info=$(
     lsblk --bytes --json \
       | jq \
-        '.blockdevices
-          | map(select(.type == "disk"))
-          | map({name, size})
+        '
+          .blockdevices
+           | map(select(.type == "disk"))
+           | map({name, size})
         '
   )
 
-  # Update node facts
-  NODE_FACTS=$(
-    echo "$NODE_FACTS" \
-      | jq --argjson disksinfo "$_disks_info" '.disks = $disksinfo'
-  )
+  # Return
+  RETVAL=$_disks_info
 }
 
 # Read Interface(s) information
@@ -607,9 +611,10 @@ read_interfaces_info() {
   _interfaces_info=$(
     ip -details -json link show \
       | jq \
-        'map(if .linkinfo.info_kind // .link_type == "loopback" then empty else . end)
-          | map(.name = .ifname)
-          | map({address, name})
+        '
+          map(if .linkinfo.info_kind // .link_type == "loopback" then empty else . end)
+           | map(.name = .ifname)
+           | map({address, name})
         '
   )
 
@@ -635,11 +640,8 @@ read_interfaces_info() {
 $(echo "$_interfaces_info" | jq --compact-output '.[]')
 EOF
 
-  # Update node facts
-  NODE_FACTS=$(
-    echo "$NODE_FACTS" \
-      | jq --argjson interfacesinfo "$_interfaces_info" '.interfaces = $interfacesinfo'
-  )
+  # Return
+  RETVAL=$_interfaces_info
 }
 
 # Execute CPU benchmark
@@ -661,17 +663,18 @@ run_cpu_bench() {
   DEBUG "Running CPU benchmark: multi-thread ($_threads)"
   _multi_thread=$(_run_cpu_bench "$_threads")
 
-  # Update node facts
-  NODE_FACTS=$(
-    echo "$NODE_FACTS" \
-      | jq \
-        --argjson singlethread "$_single_thread" \
-        --argjson multithread "$_multi_thread" \
-        '.cpu.benchmark = {
-            "singleThread": $singlethread,
-            "multiThread": $multithread
-          }
-        '
+  # Return
+  RETVAL=$(
+    jq \
+      --null-input \
+      --argjson singlethread "$_single_thread" \
+      --argjson multithread "$_multi_thread" \
+      '
+        {
+          "singleThread": $singlethread,
+          "multiThread": $multithread
+        }
+      '
   )
 }
 
@@ -701,15 +704,16 @@ run_ram_bench() {
   DEBUG "Running RAM benchmark: write random"
   _write_rand=$(_run_ram_bench write rnd)
 
-  # Update node facts
-  NODE_FACTS=$(
-    echo "$NODE_FACTS" \
-      | jq \
-        --arg readseq "$_read_seq" \
-        --arg readrand "$_read_rand" \
-        --arg writeseq "$_write_seq" \
-        --arg writerand "$_write_rand" \
-        '.ram.benchmark = {
+  # Return
+  RETVAL=$(
+    jq \
+      --null-input \
+      --arg readseq "$_read_seq" \
+      --arg readrand "$_read_rand" \
+      --arg writeseq "$_write_seq" \
+      --arg writerand "$_write_rand" \
+      '
+        {
           "read": {
             "sequential": ($readseq | tonumber),
             "random": ($readrand | tonumber)
@@ -771,19 +775,20 @@ run_io_bench() {
   # Clean sysbench IO
   sysbench fileio cleanup > /dev/null
 
-  # Update node facts
-  NODE_FACTS=$(
-    echo "$NODE_FACTS" \
-      | jq \
-        --arg readseqsync "$_read_seq_sync" \
-        --arg readseqasync "$_read_seq_async" \
-        --arg readrandsync "$_read_rand_sync" \
-        --arg readrandasync "$_read_rand_async" \
-        --arg writeseqsync "$_write_seq_sync" \
-        --arg writeseqasync "$_write_seq_async" \
-        --arg writerandsync "$_write_rand_sync" \
-        --arg writerandasync "$_write_rand_async" \
-        '.io.benchmark = {
+  # Return
+  RETVAL=$(
+    jq \
+      --null-input \
+      --arg readseqsync "$_read_seq_sync" \
+      --arg readseqasync "$_read_seq_async" \
+      --arg readrandsync "$_read_rand_sync" \
+      --arg readrandasync "$_read_rand_async" \
+      --arg writeseqsync "$_write_seq_sync" \
+      --arg writeseqasync "$_write_seq_async" \
+      --arg writerandsync "$_write_rand_sync" \
+      --arg writerandasync "$_write_rand_async" \
+      '
+        {
           "read": {
             "sequential": {
               "sync": ($readseqsync | tonumber),
@@ -818,6 +823,9 @@ read_cpu_power_consumption() {
   _threads=$(grep -c ^processor /proc/cpuinfo)
 
   # TODO Idle
+  DEBUG "Reading CPU power consumption: idle"
+  read_power_consumption
+  _idle=$RETVAL
 
   # Single-thread
   DEBUG "Reading CPU power consumption: single-thread (1)"
@@ -829,17 +837,20 @@ read_cpu_power_consumption() {
   _run_cpu_bench "$_threads"
   _multi_thread=$RETVAL
 
-  # Update node facts
-  NODE_FACTS=$(
-    echo "$NODE_FACTS" \
-      | jq \
-        --argjson singlethread "$_single_thread" \
-        --argjson multithread "$_multi_thread" \
-        '.cpu.powerConsumption = {
-            "singleThread": $singlethread,
-            "multiThread": $multithread
-          }
-        '
+  # Return
+  RETVAL=$(
+    jq \
+      --null-input \
+      --argjson idle "$_idle" \
+      --argjson single "$_single_thread" \
+      --argjson multi "$_multi_thread" \
+      '
+        {
+          "idle": $idle,
+          "singleThread": $single,
+          "multiThread": $multi
+        }
+      '
   )
 }
 
@@ -1212,18 +1223,21 @@ setup_system() {
 read_system_info() {
   spinner_start "Reading system information"
 
-  # CPU info
+  # CPU
   read_cpu_info
+  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson cpu "$RETVAL" '.cpu = $cpu')
   DEBUG "CPU info:\n$(echo "$NODE_FACTS" | jq .cpu)"
   INFO "CPU is '$(echo "$NODE_FACTS" | jq --raw-output .cpu.name)'"
 
-  # RAM info
+  # RAM
   read_ram_info
+  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson ram "$RETVAL" '.ram = $ram')
   DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .ram)"
   INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .ram.size | numfmt --to=iec-i)B'"
 
-  # Disk(s) info
+  # Disk(s)
   read_disks_info
+  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson disks "$RETVAL" '.disks = $disks')
   DEBUG "Disk(s) info:\n$(echo "$NODE_FACTS" | jq .disks)"
   _disks_info="Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.disks | length'):"
   while read -r _disk_info; do
@@ -1233,8 +1247,9 @@ $(echo "$NODE_FACTS" | jq --compact-output '.disks[]')
 EOF
   INFO "$_disks_info"
 
-  # Interface(s) info
+  # Interface(s)
   read_interfaces_info
+  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson interfaces "$RETVAL" '.interfaces = $interfaces')
   DEBUG "Interface(s) info:\n$(echo "$NODE_FACTS" | jq .interfaces)"
   INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.interfaces | length'):
     $(echo "$NODE_FACTS" | jq --raw-output '.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
@@ -1247,21 +1262,24 @@ run_benchmarks() {
   # CPU
   spinner_start "CPU benchmark"
   run_cpu_bench
+  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson cpu "$RETVAL" '.cpu.benchmark = $cpu')
   spinner_stop
   DEBUG "CPU benchmark:\n$(echo "$NODE_FACTS" | jq .cpu.benchmark)"
 
   # RAM
   spinner_start "RAM benchmark"
   run_ram_bench
+  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson ram "$RETVAL" '.ram.benchmark = $ram')
   spinner_stop
   DEBUG "RAM benchmark:\n$(echo "$NODE_FACTS" | jq .ram.benchmark)"
 
   # IO
+  return 0 # FIXME
   spinner_start "IO benchmark"
-  # FIXME run_io_bench
+  run_io_bench
+  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson io "$RETVAL" '.io.benchmark = $io')
   spinner_stop
-  # TODO IO benchmark
-  # DEBUG "IO benchmark:\n$(echo "$NODE_FACTS" | jq .io.benchmark)"
+  DEBUG "IO benchmark:\n$(echo "$NODE_FACTS" | jq .io.benchmark)"
 }
 
 # Read power consumptions
@@ -1269,6 +1287,7 @@ read_power_consumptions() {
   # CPU
   spinner_start "CPU power consumption"
   read_cpu_power_consumption
+  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson cpu "$RETVAL" '.cpu.powerConsumption = $cpu')
   spinner_stop
   DEBUG "CPU power consumption:\n$(echo "$NODE_FACTS" | jq .cpu.powerConsumption)"
 }
@@ -1358,7 +1377,17 @@ install_node_exporter() {
 
   # Configuration
   INFO "Writing Node exporter configuration"
-  _node_exporter_config=$(echo "$CONFIG" | jq --raw-output '.node_exporter.collector | to_entries | map(if .value == true then ("--collector."+.key) else ("--no-collector."+.key) end) | join(" ")') || FATAL "Error reading Node exporter configuration"
+  _node_exporter_config=$(
+    echo "$CONFIG" \
+      | jq \
+        --raw-output \
+        '
+          .node_exporter.collector
+           | to_entries
+           | map(if .value == true then ("--collector."+.key) else ("--no-collector."+.key) end)
+           | join(" ")
+        '
+  ) || FATAL "Error reading Node exporter configuration"
 
   # Install
   INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
