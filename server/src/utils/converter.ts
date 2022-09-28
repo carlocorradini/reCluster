@@ -27,28 +27,28 @@ import { DigitalByteUnit, DigitalBitUnit } from '~/graphql/enums';
 
 const convert = configMeasurements({ digital });
 
-export type ByteConverter = {
-  value: number | bigint;
-  from?: DigitalByteUnit;
-  to?: DigitalByteUnit;
+type Converter<V, F, T = F> = {
+  value: V;
+  from?: F;
+  to?: T;
 };
 
-export function byteConverter(args: ByteConverter) {
+export function byteConverter(
+  args: Converter<number | bigint, DigitalByteUnit>
+) {
   // FIXME BigInt conversion
-  convert(typeof args.value === 'number' ? args.value : Number(args.value))
+  return convert(
+    typeof args.value === 'number' ? args.value : Number(args.value)
+  )
     .from(args.from ?? DigitalByteUnit.B)
     .to(args.to ?? DigitalByteUnit.B);
 }
 
-export type BitConverter = {
-  value: number | bigint;
-  from?: DigitalBitUnit;
-  to?: DigitalBitUnit;
-};
-
-export function bitConverter(args: BitConverter) {
+export function bitConverter(args: Converter<number | bigint, DigitalBitUnit>) {
   // FIXME BigInt conversion
-  convert(typeof args.value === 'number' ? args.value : Number(args.value))
+  return convert(
+    typeof args.value === 'number' ? args.value : Number(args.value)
+  )
     .from(args.from ?? DigitalBitUnit.b)
     .to(args.to ?? DigitalBitUnit.b);
 }
