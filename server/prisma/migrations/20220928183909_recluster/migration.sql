@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "NodeStatus" AS ENUM ('ACTIVE', 'ACTIVE_TO_WORKING', 'ACTIVE_TO_INACTIVE', 'WORKING', 'WORKING_TO_ACTIVE', 'INACTIVE', 'INACTIVE_TO_ACTIVE', 'ERROR');
+CREATE TYPE "NodeStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'WORKING', 'ERROR');
 
 -- CreateEnum
 CREATE TYPE "InterfaceWol" AS ENUM ('a', 'b', 'd', 'g', 'm', 'p', 's', 'u');
@@ -15,7 +15,7 @@ CREATE TABLE "Node" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "ram" BIGINT NOT NULL,
     "cpuId" UUID NOT NULL,
-    "status" "NodeStatus" NOT NULL DEFAULT E'ACTIVE',
+    "status" "NodeStatus" NOT NULL DEFAULT 'ACTIVE',
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ NOT NULL,
 
