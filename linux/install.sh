@@ -645,24 +645,21 @@ EOF
 # Execute CPU benchmark
 run_cpu_bench() {
   _run_cpu_bench() {
-    sysbench --time=0 --threads="$1" cpu run > /dev/null &
-    read_power_consumption "$!"
+    sysbench --time="$BENCH_TIME" --threads="$1" cpu run \
+      | grep 'events per second' \
+      | sed 's/events per second://g' \
+      | sed 's/[[:space:]]*//g' \
+      | xargs printf "%.0f"
   }
   _threads=$(grep -c ^processor /proc/cpuinfo)
 
-  # TODO Idle
-
   # Single-thread
   DEBUG "Running CPU benchmark: single-thread (1)"
-  _run_cpu_bench 1
-  _single_thread=$RETVAL
+  _single_thread=$(_run_cpu_bench 1)
 
   # Multi-thread
   DEBUG "Running CPU benchmark: multi-thread ($_threads)"
-  _run_cpu_bench "$_threads"
-  _multi_thread=$RETVAL
-
-  # TODO Bench multi-thread
+  _multi_thread=$(_run_cpu_bench "$_threads")
 
   # Update node facts
   NODE_FACTS=$(
@@ -681,44 +678,45 @@ run_cpu_bench() {
 # Execute RAM benchmark
 run_ram_bench() {
   _run_ram_bench() {
-    sysbench --time=0 --memory-oper="$1" --memory-access-mode="$2" memory run > /dev/null &
-    read_power_consumption "$!"
+    _ram_output=$(sysbench --time="$BENCH_TIME" --memory-oper="$1" --memory-access-mode="$2" memory run \
+      | grep 'transferred' \
+      | sed 's/.*(\(.*\))/\1/' \
+      | sed 's/B.*//' \
+      | sed 's/[[:space:]]*//g' \
+      | numfmt --from=iec-i)
+    echo $((_ram_output * 8))
   }
 
   # Read sequential
   DEBUG "Running RAM benchmark: read sequential"
-  _run_ram_bench read seq
-  _read_seq=$RETVAL
+  _read_seq=$(_run_ram_bench read seq)
   # Read random
   DEBUG "Running RAM benchmark: read random"
-  _run_ram_bench read rnd
-  _read_rand=$RETVAL
+  _read_rand=$(_run_ram_bench read rnd)
 
   # Write sequential
   DEBUG "Running RAM benchmark: write sequential"
-  _run_ram_bench write seq
-  _write_seq=$RETVAL
+  _write_seq=$(_run_ram_bench write seq)
   # Write random
   DEBUG "Running RAM benchmark: write random"
-  _run_ram_bench write rnd
-  _write_rand=$RETVAL
+  _write_rand=$(_run_ram_bench write rnd)
 
   # Update node facts
   NODE_FACTS=$(
     echo "$NODE_FACTS" \
       | jq \
-        --argjson readseq "$_read_seq" \
-        --argjson readrand "$_read_rand" \
-        --argjson writeseq "$_write_seq" \
-        --argjson writerand "$_write_rand" \
+        --arg readseq "$_read_seq" \
+        --arg readrand "$_read_rand" \
+        --arg writeseq "$_write_seq" \
+        --arg writerand "$_write_rand" \
         '.ram.benchmark = {
-            "read": {
-            "sequential": $readseq,
-            "random": $readrand
+          "read": {
+            "sequential": ($readseq | tonumber),
+            "random": ($readrand | tonumber)
           },
           "write": {
-            "sequential": $writeseq,
-            "random": $writerand
+            "sequential": ($writeseq | tonumber),
+            "random": ($writerand | tonumber)
           }
         }
       '
@@ -735,8 +733,12 @@ run_io_bench() {
       write) _io_opt=written ;;
     esac
 
-    sysbench --time=0 --file-test-mode="$2" --file-io-mode="$3" fileio run > /dev/null &
-    read_power_consumption "$!"
+    _io_output=$(sysbench --time="$BENCH_TIME" --file-test-mode="$2" --file-io-mode="$3" fileio run | grep "$_io_opt, ")
+    _io_throughput_value=$(echo "$_io_output" | sed 's/^.*: //' | sed 's/[[:space:]]*//g')
+    _io_throughput_unit=$(echo "$_io_output" | sed 's/.*,\(.*\)B\/s.*/\1/' | sed 's/[[:space:]]*//g')
+
+    _io_throughput=$(printf "%s%s\n" "$_io_throughput_value" "$_io_throughput_unit" | numfmt --from=iec-i)
+    echo $((_io_throughput * 8))
   }
 
   # TODO Benchmark per disk
@@ -769,15 +771,76 @@ run_io_bench() {
   # Clean sysbench IO
   sysbench fileio cleanup > /dev/null
 
-  DEBUG "IO bench:
-    \tRead Sequential Sync '$(echo "$_read_seq_sync" | numfmt --to=si)b/s'
-    \tRead Sequential Async '$(echo "$_read_seq_async" | numfmt --to=si)b/s'
-    \tRead Random Sync '$(echo "$_read_rand_sync" | numfmt --to=si)b/s'
-    \tRead Random Async '$(echo "$_read_rand_async" | numfmt --to=si)b/s'
-    \tWrite Sequential Sync '$(echo "$_write_seq_sync" | numfmt --to=si)b/s'
-    \tWrite Sequential Async '$(echo "$_write_seq_async" | numfmt --to=si)b/s'
-    \tWrite Random Sync '$(echo "$_write_rand_sync" | numfmt --to=si)b/s'
-    \tWrite Random Async '$(echo "$_write_rand_async" | numfmt --to=si)b/s'"
+  # Update node facts
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq \
+        --arg readseqsync "$_read_seq_sync" \
+        --arg readseqasync "$_read_seq_async" \
+        --arg readrandsync "$_read_rand_sync" \
+        --arg readrandasync "$_read_rand_async" \
+        --arg writeseqsync "$_write_seq_sync" \
+        --arg writeseqasync "$_write_seq_async" \
+        --arg writerandsync "$_write_rand_sync" \
+        --arg writerandasync "$_write_rand_async" \
+        '.io.benchmark = {
+          "read": {
+            "sequential": {
+              "sync": ($readseqsync | tonumber),
+              "async": ($readseqasync | tonumber),
+            },
+            "random": {
+              "sync": ($readrandsync | tonumber),
+              "async": ($readrandasync | tonumber),
+            }
+          },
+          "write": {
+            "sequential": {
+              "sync": ($writeseqsync | tonumber),
+              "async": ($writeseqasync | tonumber),
+            },
+            "random": {
+              "sync": ($writerandsync | tonumber),
+              "async": ($writerandasync | tonumber),
+            }
+          }
+        }
+      '
+  )
+}
+
+# Read CPU power consumption
+read_cpu_power_consumption() {
+  _run_cpu_bench() {
+    sysbench --time=0 --threads="$1" cpu run > /dev/null &
+    read_power_consumption "$!"
+  }
+  _threads=$(grep -c ^processor /proc/cpuinfo)
+
+  # TODO Idle
+
+  # Single-thread
+  DEBUG "Reading CPU power consumption: single-thread (1)"
+  _run_cpu_bench 1
+  _single_thread=$RETVAL
+
+  # Multi-thread
+  DEBUG "Reading CPU power consumption: multi-thread ($_threads)"
+  _run_cpu_bench "$_threads"
+  _multi_thread=$RETVAL
+
+  # Update node facts
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq \
+        --argjson singlethread "$_single_thread" \
+        --argjson multithread "$_multi_thread" \
+        '.cpu.powerConsumption = {
+            "singleThread": $singlethread,
+            "multiThread": $multithread
+          }
+        '
+  )
 }
 
 # Register current node
@@ -1181,24 +1244,33 @@ EOF
 
 # Execute benchmarks
 run_benchmarks() {
-  # CPU bench
+  # CPU
   spinner_start "CPU benchmark"
   run_cpu_bench
   spinner_stop
   DEBUG "CPU benchmark:\n$(echo "$NODE_FACTS" | jq .cpu.benchmark)"
 
-  # RAM bench
+  # RAM
   spinner_start "RAM benchmark"
   run_ram_bench
   spinner_stop
   DEBUG "RAM benchmark:\n$(echo "$NODE_FACTS" | jq .ram.benchmark)"
 
-  # IO bench
+  # IO
   spinner_start "IO benchmark"
   # FIXME run_io_bench
   spinner_stop
   # TODO IO benchmark
   # DEBUG "IO benchmark:\n$(echo "$NODE_FACTS" | jq .io.benchmark)"
+}
+
+# Read power consumptions
+read_power_consumptions() {
+  # CPU
+  spinner_start "CPU power consumption"
+  read_cpu_power_consumption
+  spinner_stop
+  DEBUG "CPU power consumption:\n$(echo "$NODE_FACTS" | jq .cpu.powerConsumption)"
 }
 
 # Install K3s
@@ -1224,10 +1296,9 @@ install_k3s() {
     # Airgap disabled
     _k3s_install_sh="$TMP_DIR/install.k3s.sh"
     # Download installer
-    spinner_start "Downloading K3s installer"
+    DEBUG "Downloading K3s installer"
     download "$_k3s_install_sh" https://get.k3s.io
     chmod 755 "$_k3s_install_sh"
-    spinner_stop
   fi
 
   # Checks
@@ -1242,7 +1313,7 @@ install_k3s() {
   _k3s_config=$(echo "$CONFIG" | jq --exit-status '.k3s | del(.kind)' | yq e --exit-status --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
   INFO "Writing K3s configuration to '$_k3s_config_file'"
   $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
-  printf "%s" "$_k3s_config" | $SUDO tee "$_k3s_config_file" > /dev/null
+  echo "$_k3s_config" | $SUDO tee "$_k3s_config_file" > /dev/null
 
   # Install
   INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
@@ -1276,10 +1347,9 @@ install_node_exporter() {
     # Airgap disabled
     _node_exporter_install_sh="$TMP_DIR/install.node_exporter.sh"
     # Download installer
-    spinner_start "Downloading Node exporter installer"
+    DEBUG "Downloading Node exporter installer"
     download "$_node_exporter_install_sh" https://raw.githubusercontent.com/carlocorradini/node_exporter_installer/main/install.sh
     chmod 755 "$_node_exporter_install_sh"
-    spinner_stop
   fi
 
   # Checks
@@ -1548,6 +1618,7 @@ NODE_FACTS="{}"
   setup_system
   read_system_info
   run_benchmarks
+  read_power_consumptions
   install_k3s
   install_node_exporter
   cluster_init
