@@ -23,7 +23,7 @@
  */
 
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
-import { Service, Inject } from 'typedi';
+import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
 import { InterfaceService } from '~/services';
 import { bitConverter } from '~/utils';
@@ -32,10 +32,12 @@ import { Interface } from '../../entities';
 import { FindUniqueInterfaceArgs, FindManyInterfaceArgs } from '../../args';
 
 @Resolver(Interface)
-@Service()
+@injectable()
 export class InterfaceResolver {
-  @Inject()
-  private readonly interfaceService!: InterfaceService;
+  public constructor(
+    @inject(InterfaceService)
+    private readonly interfaceService: InterfaceService
+  ) {}
 
   @Query(() => [Interface], { description: 'List of Interfaces' })
   async interfaces(@Args() args: FindManyInterfaceArgs) {

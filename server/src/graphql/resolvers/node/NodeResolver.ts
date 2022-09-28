@@ -31,7 +31,7 @@ import {
   Resolver,
   Root
 } from 'type-graphql';
-import { Service, Inject } from 'typedi';
+import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
 import { NodeService } from '~/services';
 import { byteConverter } from '~/utils';
@@ -45,10 +45,12 @@ import {
 } from '../../args';
 
 @Resolver(Node)
-@Service()
+@injectable()
 export class NodeResolver {
-  @Inject()
-  private readonly nodeService!: NodeService;
+  public constructor(
+    @inject(NodeService)
+    private readonly nodeService: NodeService
+  ) {}
 
   @Query(() => [Node], { description: 'List of nodes' })
   async nodes(@Args() args: FindManyNodeArgs) {

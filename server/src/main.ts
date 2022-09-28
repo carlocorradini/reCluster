@@ -26,7 +26,7 @@ import 'reflect-metadata';
 import 'dotenv/config';
 import 'json-bigint-patch';
 import { ApolloServer } from 'apollo-server';
-import Container from 'typedi';
+import { container } from 'tsyringe';
 import { formatErrorApolloServer } from './helpers';
 import { config } from './config';
 import { prisma } from './db';
@@ -41,25 +41,23 @@ const server = new ApolloServer({
 });
 
 async function main() {
-  // K8s
-  try {
-    kubeconfig.loadFromDefault();
-    if (kubeconfig.getCurrentCluster() === null)
-      throw new Error('kubeconfig has no active cluster');
-    const nodeInformer = Container.get(NodeInformer);
-    nodeInformer.start();
-    logger.info('K8s configured');
-  } catch (error) {
-    logger.fatal(`K8s error: ${error}`);
-    throw error;
-  }
-
   // Database
   try {
     await prisma.$connect();
     logger.info(`Database connected`);
   } catch (error) {
     logger.fatal(`Database error: ${error}`);
+    throw error;
+  }
+
+  // K8s
+  try {
+    kubeconfig.loadFromDefault(); // Always first
+    const nodeInformer = container.resolve(NodeInformer);
+    // FIXME nodeInformer.start();
+    logger.info('K8s configured');
+  } catch (error) {
+    logger.fatal(`K8s error: ${error}`);
     throw error;
   }
 

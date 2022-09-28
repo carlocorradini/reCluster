@@ -23,11 +23,9 @@
  */
 
 import { Prisma } from '@prisma/client';
-import { Service } from 'typedi';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
 
-@Service()
 export class DiskService {
   public async findMany(
     args: Omit<Prisma.DiskFindManyArgs, 'cursor'> & { cursor?: string }

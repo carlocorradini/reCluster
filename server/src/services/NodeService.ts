@@ -23,11 +23,9 @@
  */
 
 import { Prisma } from '@prisma/client';
-import { Service } from 'typedi';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
 
-@Service()
 export class NodeService {
   public async findMany(
     args: Omit<Prisma.NodeFindManyArgs, 'cursor'> & { cursor?: string }

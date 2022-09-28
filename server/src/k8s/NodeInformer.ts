@@ -23,8 +23,7 @@
  */
 
 import * as k8s from '@kubernetes/client-node';
-import { Inject, Service } from 'typedi';
-import { NodeService } from '~/services';
+import { singleton } from 'tsyringe';
 import { logger } from '~/logger';
 import { kubeconfig } from './kubeconfig';
 
@@ -33,14 +32,11 @@ type NodeInfo = {
   ready: boolean;
 };
 
-@Service()
+@singleton()
 export class NodeInformer {
   public static readonly RECLUSTER_IO_ID: string = 'recluster.io/id';
 
   public static readonly RESTART_TIME_MS: number = 3000;
-
-  @Inject()
-  private readonly nodeService!: NodeService;
 
   private readonly informer: k8s.Informer<k8s.V1Node>;
 

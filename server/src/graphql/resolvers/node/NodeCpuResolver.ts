@@ -23,15 +23,17 @@
  */
 
 import { FieldResolver, Resolver, Root } from 'type-graphql';
-import { Inject, Service } from 'typedi';
+import { inject, injectable } from 'tsyringe';
 import { CpuService } from '~/services';
 import { Node, Cpu } from '../../entities';
 
 @Resolver(() => Node)
-@Service()
+@injectable()
 export class NodeCpuResolver {
-  @Inject()
-  private readonly cpuService!: CpuService;
+  public constructor(
+    @inject(CpuService)
+    private readonly cpuService: CpuService
+  ) {}
 
   @FieldResolver(() => Cpu, { description: 'Node CPU' })
   async cpu(@Root() node: Node) {

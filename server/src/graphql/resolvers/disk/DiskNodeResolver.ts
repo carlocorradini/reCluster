@@ -23,15 +23,16 @@
  */
 
 import { FieldResolver, Resolver, Root } from 'type-graphql';
-import { Inject, Service } from 'typedi';
+import { inject, injectable } from 'tsyringe';
 import { NodeService } from '~/services';
 import { Disk, Node } from '../../entities';
 
 @Resolver(() => Disk)
-@Service()
+@injectable()
 export class DiskNodeResolver {
-  @Inject()
-  private readonly nodeService!: NodeService;
+  public constructor(
+    @inject(NodeService) private readonly nodeService: NodeService
+  ) {}
 
   @FieldResolver(() => Node, { description: 'Disk node' })
   async node(@Root() disk: Disk) {

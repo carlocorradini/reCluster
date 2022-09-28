@@ -23,7 +23,7 @@
  */
 
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
-import { Service, Inject } from 'typedi';
+import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
 import { DiskService } from '~/services';
 import { byteConverter } from '~/utils';
@@ -32,10 +32,12 @@ import { Disk } from '../../entities';
 import { FindUniqueDiskArgs, FindManyDiskArgs } from '../../args';
 
 @Resolver(Disk)
-@Service()
+@injectable()
 export class DiskResolver {
-  @Inject()
-  private readonly diskService!: DiskService;
+  public constructor(
+    @inject(DiskService)
+    private readonly diskService: DiskService
+  ) {}
 
   @Query(() => [Disk], { description: 'List of Disks' })
   async disks(@Args() args: FindManyDiskArgs) {

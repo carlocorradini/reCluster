@@ -23,7 +23,7 @@
  */
 
 import { buildSchemaSync } from 'type-graphql';
-import { Container } from 'typedi';
+import { container } from 'tsyringe';
 import {
   CpuNodeResolver,
   CpuResolver,
@@ -38,7 +38,7 @@ import {
 } from './resolvers';
 
 export const schema = buildSchemaSync({
-  container: Container,
+  container: { get: (cls) => container.resolve(cls) },
   resolvers: [
     CpuResolver,
     CpuNodeResolver,

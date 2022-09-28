@@ -23,16 +23,18 @@
  */
 
 import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
-import { Inject, Service } from 'typedi';
+import { inject, injectable } from 'tsyringe';
 import { InterfaceService } from '~/services';
 import { PaginationArgs } from '../../args';
 import { Node, Interface } from '../../entities';
 
 @Resolver(() => Node)
-@Service()
+@injectable()
 export class NodeInterfaceResolver {
-  @Inject()
-  private readonly interfaceService!: InterfaceService;
+  public constructor(
+    @inject(InterfaceService)
+    private readonly interfaceService: InterfaceService
+  ) {}
 
   @FieldResolver(() => [Interface], { description: 'Node interfaces' })
   async interfaces(@Root() node: Node, @Args() args: PaginationArgs) {

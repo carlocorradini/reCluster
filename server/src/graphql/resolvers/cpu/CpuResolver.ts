@@ -23,7 +23,7 @@
  */
 
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
-import { Service, Inject } from 'typedi';
+import { injectable, inject } from 'tsyringe';
 import { GraphQLNonNegativeInt } from 'graphql-scalars';
 import { CpuService } from '~/services';
 import { byteConverter } from '~/utils';
@@ -32,10 +32,11 @@ import { Cpu } from '../../entities';
 import { FindUniqueCpuArgs, FindManyCpuArgs } from '../../args';
 
 @Resolver(Cpu)
-@Service()
+@injectable()
 export class CpuResolver {
-  @Inject()
-  private readonly cpuService!: CpuService;
+  public constructor(
+    @inject(CpuService) private readonly cpuService: CpuService
+  ) {}
 
   @Query(() => [Cpu], { description: 'List of Cpus' })
   async cpus(@Args() args: FindManyCpuArgs) {
