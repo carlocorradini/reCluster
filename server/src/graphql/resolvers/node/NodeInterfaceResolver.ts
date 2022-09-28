@@ -25,7 +25,7 @@
 import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { InterfaceService } from '~/services';
-import { PaginationArgs } from '../../args';
+import { FindManyInterfaceArgs } from '../../args';
 import { Node, Interface } from '../../entities';
 
 @Resolver(() => Node)
@@ -37,11 +37,10 @@ export class NodeInterfaceResolver {
   ) {}
 
   @FieldResolver(() => [Interface], { description: 'Node interfaces' })
-  async interfaces(@Root() node: Node, @Args() args: PaginationArgs) {
+  async interfaces(@Root() node: Node, @Args() args: FindManyInterfaceArgs) {
     return this.interfaceService.findMany({
       ...args,
-      where: { nodeId: node.id },
-      orderBy: { id: 'asc' }
+      where: { nodeId: { equals: node.id } }
     });
   }
 }

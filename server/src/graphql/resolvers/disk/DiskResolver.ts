@@ -49,7 +49,7 @@ export class DiskResolver {
     description: 'Disk matching the identifier'
   })
   async disk(@Args() args: FindUniqueDiskArgs) {
-    return this.diskService.findUnique({ ...args, where: { id: args.id } });
+    return this.diskService.findUnique(args);
   }
 
   @FieldResolver(() => GraphQLBigInt)

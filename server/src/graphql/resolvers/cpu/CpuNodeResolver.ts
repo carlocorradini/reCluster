@@ -25,7 +25,7 @@
 import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
 import { injectable, inject } from 'tsyringe';
 import { NodeService } from '~/services';
-import { PaginationArgs } from '../../args';
+import { FindManyNodeArgs } from '../../args';
 import { Cpu, Node } from '../../entities';
 
 @Resolver(() => Cpu)
@@ -36,11 +36,10 @@ export class CpuNodeResolver {
   ) {}
 
   @FieldResolver(() => [Node], { description: 'CPU nodes' })
-  async nodes(@Root() cpu: Cpu, @Args() args: PaginationArgs) {
+  async nodes(@Root() cpu: Cpu, @Args() args: FindManyNodeArgs) {
     return this.nodeService.findMany({
       ...args,
-      where: { cpuId: cpu.id },
-      orderBy: { id: 'asc' }
+      where: { cpuId: { equals: cpu.id } }
     });
   }
 }

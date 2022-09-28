@@ -48,7 +48,7 @@ export class CpuResolver {
     description: 'Cpu matching the identifier'
   })
   async cpu(@Args() args: FindUniqueCpuArgs) {
-    return this.cpuService.findUnique({ ...args, where: { id: args.id } });
+    return this.cpuService.findUnique(args);
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)

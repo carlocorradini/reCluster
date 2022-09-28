@@ -36,6 +36,6 @@ export class DiskNodeResolver {
 
   @FieldResolver(() => Node, { description: 'Disk node' })
   async node(@Root() disk: Disk) {
-    return this.nodeService.findUnique({ where: { id: disk.nodeId } });
+    return this.nodeService.findUnique({ id: disk.nodeId });
   }
 }

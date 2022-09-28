@@ -49,10 +49,7 @@ export class InterfaceResolver {
     description: 'Interface matching the identifier'
   })
   async interface(@Args() args: FindUniqueInterfaceArgs) {
-    return this.interfaceService.findUnique({
-      ...args,
-      where: { id: args.id }
-    });
+    return this.interfaceService.findUnique(args);
   }
 
   @FieldResolver(() => GraphQLBigInt)

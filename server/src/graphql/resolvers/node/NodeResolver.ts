@@ -62,7 +62,7 @@ export class NodeResolver {
     description: 'Node matching the identifier'
   })
   async node(@Args() args: FindUniqueNodeArgs) {
-    return this.nodeService.findUnique({ ...args, where: { id: args.id } });
+    return this.nodeService.findUnique(args);
   }
 
   @Mutation(() => Node, { description: 'Create a new node' })
@@ -72,7 +72,7 @@ export class NodeResolver {
 
   @Mutation(() => Node, { description: 'Update node matching the identifier' })
   async updateNode(@Args() args: UpdateNodeArgs) {
-    return this.nodeService.update(args.id, args);
+    return this.nodeService.update(args);
   }
 
   @FieldResolver(() => GraphQLBigInt)

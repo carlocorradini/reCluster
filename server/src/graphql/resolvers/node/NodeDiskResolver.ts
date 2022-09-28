@@ -25,7 +25,7 @@
 import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { DiskService } from '~/services';
-import { PaginationArgs } from '../../args';
+import { FindManyDiskArgs } from '../../args';
 import { Node, Disk } from '../../entities';
 
 @Resolver(() => Node)
@@ -37,11 +37,10 @@ export class NodeDiskResolver {
   ) {}
 
   @FieldResolver(() => [Disk], { description: 'Node disks' })
-  async disks(@Root() node: Node, @Args() args: PaginationArgs) {
+  async disks(@Root() node: Node, @Args() args: FindManyDiskArgs) {
     return this.diskService.findMany({
       ...args,
-      where: { nodeId: node.id },
-      orderBy: { id: 'asc' }
+      where: { nodeId: { equals: node.id } }
     });
   }
 }

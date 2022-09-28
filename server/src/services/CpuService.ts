@@ -22,14 +22,12 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
+import type { FindManyCpuArgs, FindUniqueCpuArgs } from '~/graphql';
 
 export class CpuService {
-  public async findMany(
-    args: Omit<Prisma.CpuFindManyArgs, 'cursor'> & { cursor?: string }
-  ) {
+  public async findMany(args: FindManyCpuArgs) {
     logger.debug(`Cpu service find many: ${JSON.stringify(args)}`);
 
     return prisma.cpu.findMany({
@@ -38,11 +36,9 @@ export class CpuService {
     });
   }
 
-  public async findUnique(
-    args: Omit<Prisma.CpuFindUniqueArgs, 'where'> & { where: { id: string } }
-  ) {
+  public async findUnique(args: FindUniqueCpuArgs) {
     logger.debug(`Cpu service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.cpu.findUnique(args);
+    return prisma.cpu.findUnique({ where: { id: args.id } });
   }
 }

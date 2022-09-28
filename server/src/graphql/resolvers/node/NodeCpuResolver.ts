@@ -37,6 +37,6 @@ export class NodeCpuResolver {
 
   @FieldResolver(() => Cpu, { description: 'Node CPU' })
   async cpu(@Root() node: Node) {
-    return this.cpuService.findUnique({ where: { id: node.cpuId } });
+    return this.cpuService.findUnique({ id: node.cpuId });
   }
 }

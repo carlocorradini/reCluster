@@ -22,14 +22,17 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
+import type {
+  FindManyNodeArgs,
+  FindUniqueNodeArgs,
+  CreateNodeArgs,
+  UpdateNodeArgs
+} from '~/graphql';
 
 export class NodeService {
-  public async findMany(
-    args: Omit<Prisma.NodeFindManyArgs, 'cursor'> & { cursor?: string }
-  ) {
+  public async findMany(args: FindManyNodeArgs) {
     logger.debug(`Node service find many: ${JSON.stringify(args)}`);
 
     return prisma.node.findMany({
@@ -38,28 +41,13 @@ export class NodeService {
     });
   }
 
-  public async findUnique(
-    args: Omit<Prisma.NodeFindUniqueArgs, 'where'> & { where: { id: string } }
-  ) {
+  public async findUnique(args: FindUniqueNodeArgs) {
     logger.debug(`Node service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.node.findUnique(args);
+    return prisma.node.findUnique({ where: { id: args.id } });
   }
 
-  public async create(
-    args: Omit<Prisma.NodeCreateArgs, 'data'> & {
-      data: Omit<
-        Prisma.NodeCreateInput,
-        'cpu' | 'status' | 'disks' | 'interfaces'
-      > & {
-        cpu: Omit<Prisma.CpuCreateWithoutNodesInput, 'vulnerabilities'> & {
-          vulnerabilities: Prisma.Enumerable<string>;
-        };
-        disks: Prisma.DiskCreateWithoutNodeInput[];
-        interfaces: Prisma.InterfaceCreateWithoutNodeInput[];
-      };
-    }
-  ) {
+  public async create(args: CreateNodeArgs) {
     logger.info(`Node service create: ${JSON.stringify(args)}`);
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -103,8 +91,9 @@ export class NodeService {
     });
   }
 
-  public async update(id: string, args: Omit<Prisma.NodeUpdateArgs, 'where'>) {
+  public async update(args: UpdateNodeArgs) {
     logger.info(`Node service update: ${JSON.stringify(args)}`);
-    return prisma.node.update({ ...args, where: { id } });
+
+    return prisma.node.update({ where: { id: args.id }, data: args.data });
   }
 }

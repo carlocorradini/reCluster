@@ -22,14 +22,12 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
+import type { FindManyDiskArgs, FindUniqueDiskArgs } from '~/graphql';
 
 export class DiskService {
-  public async findMany(
-    args: Omit<Prisma.DiskFindManyArgs, 'cursor'> & { cursor?: string }
-  ) {
+  public async findMany(args: FindManyDiskArgs) {
     logger.debug(`Disk service find many: ${JSON.stringify(args)}`);
 
     return prisma.disk.findMany({
@@ -38,11 +36,9 @@ export class DiskService {
     });
   }
 
-  public async findUnique(
-    args: Omit<Prisma.DiskFindUniqueArgs, 'where'> & { where: { id: string } }
-  ) {
+  public async findUnique(args: FindUniqueDiskArgs) {
     logger.debug(`Disk service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.disk.findUnique(args);
+    return prisma.disk.findUnique({ where: { id: args.id } });
   }
 }
