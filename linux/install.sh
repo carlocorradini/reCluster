@@ -566,24 +566,13 @@ read_cpu_info() {
 
 # Read RAM information
 read_ram_info() {
-  _ram_size=$(
+  _ram_info=$(
     grep MemTotal /proc/meminfo \
       | sed 's/MemTotal://g' \
       | sed 's/[[:space:]]*//g' \
       | sed 's/B.*//' \
       | tr '[:lower:]' '[:upper:]' \
       | numfmt --from iec
-  )
-
-  _ram_info=$(
-    jq \
-      --null-input \
-      --arg size "$_ram_size" \
-      '
-        {
-          "size": ($size | tonumber)
-        }
-      '
   )
 
   # Return
@@ -1284,8 +1273,7 @@ read_system_info() {
   # RAM
   read_ram_info
   _ram_info=$RETVAL
-  DEBUG "RAM info:\n$(echo "$_ram_info" | jq .)"
-  INFO "RAM is '$(echo "$_ram_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
+  INFO "RAM is '$(echo "$_ram_info" | numfmt --to=iec-i)B'"
 
   # Disk(s)
   read_disks_info
