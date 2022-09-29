@@ -1,0 +1,190 @@
+{
+  "info": {
+    "cpu": {
+      "architecture": "x86_64",
+      "flags": [
+        "fpu",
+        "vme",
+        "de",
+        "pse",
+        "tsc",
+        "msr",
+        "pae",
+        "mce",
+        "cx8",
+        "apic",
+        "sep",
+        "mtrr",
+        "pge",
+        "mca",
+        "cmov",
+        "pat",
+        "pse36",
+        "clflush",
+        "mmx",
+        "fxsr",
+        "sse",
+        "sse2",
+        "ss",
+        "ht",
+        "syscall",
+        "nx",
+        "pdpe1gb",
+        "rdtscp",
+        "lm",
+        "constant_tsc",
+        "rep_good",
+        "nopl",
+        "xtopology",
+        "cpuid",
+        "pni",
+        "pclmulqdq",
+        "ssse3",
+        "fma",
+        "cx16",
+        "pcid",
+        "sse4_1",
+        "sse4_2",
+        "movbe",
+        "popcnt",
+        "aes",
+        "xsave",
+        "avx",
+        "f16c",
+        "rdrand",
+        "hypervisor",
+        "lahf_lm",
+        "abm",
+        "3dnowprefetch",
+        "invpcid_single",
+        "pti",
+        "ssbd",
+        "ibrs",
+        "ibpb",
+        "stibp",
+        "fsgsbase",
+        "bmi1",
+        "hle",
+        "avx2",
+        "smep",
+        "bmi2",
+        "erms",
+        "invpcid",
+        "rtm",
+        "rdseed",
+        "adx",
+        "smap",
+        "clflushopt",
+        "xsaveopt",
+        "xsavec",
+        "xgetbv1",
+        "xsaves",
+        "flush_l1d",
+        "arch_capabilities"
+      ],
+      "cores": 8,
+      "vendor": "INTEL",
+      "family": 6,
+      "model": 94,
+      "name": "Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz",
+      "vulnerabilities": [
+        "Itlb multihit",
+        "L1tf",
+        "Mds",
+        "Meltdown",
+        "Spec store bypass",
+        "Spectre v1",
+        "Spectre v2",
+        "Srbds",
+        "Tsx async abort"
+      ],
+      "cacheL1d": 131072,
+      "cacheL1i": 131072,
+      "cacheL2": 1048576,
+      "cacheL3": 6291456
+    },
+    "ram": {
+      "size": 13311717376
+    },
+    "disks": [
+      {
+        "name": "sda",
+        "size": 274877906944
+      },
+      {
+        "name": "sdb",
+        "size": 274877906944
+      },
+      {
+        "name": "sdc",
+        "size": 274877906944
+      },
+      {
+        "name": "sdd",
+        "size": 274877906944
+      }
+    ],
+    "interfaces": [
+      {
+        "address": "00:15:5d:99:c7:68",
+        "name": "eth0",
+        "speed": 10000000000,
+        "wol": []
+      }
+    ]
+  },
+  "benchmark": {
+    "cpu": {
+      "singleThread": 856,
+      "multiThread": 2781
+    },
+    "ram": {
+      "read": {
+        "sequential": 4000946592,
+        "random": 3148999560
+      },
+      "write": {
+        "sequential": 3723786984,
+        "random": 2763207480
+      }
+    },
+    "disks": {
+      "read": {
+        "sequential": {
+          "synchronous": 318683224,
+          "asynchronous": 508014104
+        },
+        "random": {
+          "synchronous": 528482304,
+          "asynchronous": 548950512
+        }
+      },
+      "write": {
+        "sequential": {
+          "synchronous": 109555224,
+          "asynchronous": 132288352
+        },
+        "random": {
+          "synchronous": 54358184,
+          "asynchronous": 51338288
+        }
+      }
+    }
+  },
+  "powerConsumption": {
+    "cpu": {
+      "idle": {
+        "mean": "6",
+        "standardDeviation": "0"
+      },
+      "singleThread": {
+        "mean": "6",
+        "standardDeviation": "0"
+      },
+      "multiThread": {
+        "mean": "6",
+        "standardDeviation": "0"
+      }
+    }
+  }
+}

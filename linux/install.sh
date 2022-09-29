@@ -734,14 +734,19 @@ run_ram_bench() {
   )
 }
 
-# Execute IO benchmark
-run_io_bench() {
-  _run_io_bench() {
+# Execute disk(s) benchmark
+run_disks_bench() {
+  _run_disks_bench() {
     # Io operation
     _io_opt=
     case $1 in
       read) _io_opt=$1 ;;
-      write) _io_opt=written ;;
+      write)
+        _io_opt=written
+        # Prepare write benchmark
+        sysbench fileio cleanup > /dev/null
+        sysbench fileio prepare > /dev/null
+        ;;
     esac
 
     _io_output=$(sysbench --time="$BENCH_TIME" --file-test-mode="$2" --file-io-mode="$3" fileio run | grep "$_io_opt, ")
@@ -754,53 +759,53 @@ run_io_bench() {
 
   # TODO Benchmark per disk
 
-  # Prepare sysbench IO
-  DEBUG "Preparing IO benchmark"
+  # Prepare read benchmark
+  DEBUG "Preparing disk(s) read benchmark"
   sysbench fileio cleanup > /dev/null
   sysbench fileio prepare > /dev/null
 
   # Read sequential synchronous
-  DEBUG "Running IO benchmark in read sequential synchronous"
-  _read_seq_sync=$(_run_io_bench read seqrd sync)
-  DEBUG "IO benchmark in read sequential synchronous: $_read_seq_sync"
+  DEBUG "Running disk(s) benchmark in read sequential synchronous"
+  _read_seq_sync=$(_run_disks_bench read seqrd sync)
+  DEBUG "Disk(s) benchmark in read sequential synchronous: $_read_seq_sync"
 
   # Read sequential asynchronous
-  DEBUG "Running IO benchmark in read sequential asynchronous"
-  _read_seq_async=$(_run_io_bench read seqrd async)
-  DEBUG "IO benchmark in read sequential asynchronous: $_read_seq_async"
+  DEBUG "Running disk(s) benchmark in read sequential asynchronous"
+  _read_seq_async=$(_run_disks_bench read seqrd async)
+  DEBUG "Disk(s) benchmark in read sequential asynchronous: $_read_seq_async"
 
   # Read random synchronous
-  DEBUG "Running IO benchmark in read random synchronous"
-  _read_rand_sync=$(_run_io_bench read rndrd sync)
-  DEBUG "IO benchmark in read random synchronous: $_read_rand_sync"
+  DEBUG "Running disk(s) benchmark in read random synchronous"
+  _read_rand_sync=$(_run_disks_bench read rndrd sync)
+  DEBUG "Disk(s) benchmark in read random synchronous: $_read_rand_sync"
 
   # Read random asynchronous
-  DEBUG "Running IO benchmark in read random asynchronous"
-  _read_rand_async=$(_run_io_bench read rndrd async)
-  DEBUG "IO benchmark in read random asynchronous: $_read_rand_async"
+  DEBUG "Running disk(s) benchmark in read random asynchronous"
+  _read_rand_async=$(_run_disks_bench read rndrd async)
+  DEBUG "Disk(s) benchmark in read random asynchronous: $_read_rand_async"
 
   # Write sequential synchronous
-  DEBUG "Running IO benchmark in write sequential synchronous"
-  _write_seq_sync=$(_run_io_bench write seqwr sync)
-  DEBUG "IO benchmark in write sequential synchronous: $_write_seq_sync"
+  DEBUG "Running disk(s) benchmark in write sequential synchronous"
+  _write_seq_sync=$(_run_disks_bench write seqwr sync)
+  DEBUG "Disk(s) benchmark in write sequential synchronous: $_write_seq_sync"
 
   # Write sequential asynchronous
-  DEBUG "Running IO benchmark in write sequential asynchronous"
-  _write_seq_async=$(_run_io_bench write seqwr async)
-  DEBUG "IO benchmark in write sequential asynchronous: $_write_seq_async"
+  DEBUG "Running disk(s) benchmark in write sequential asynchronous"
+  _write_seq_async=$(_run_disks_bench write seqwr async)
+  DEBUG "Disk(s) benchmark in write sequential asynchronous: $_write_seq_async"
 
   # Write random synchronous
-  DEBUG "Running IO benchmark in write random synchronous"
-  _write_rand_sync=$(_run_io_bench write rndwr sync)
-  DEBUG "IO benchmark in write random synchronous: $_write_rand_sync"
+  DEBUG "Running disk(s) benchmark in write random synchronous"
+  _write_rand_sync=$(_run_disks_bench write rndwr sync)
+  DEBUG "Disk(s) benchmark in write random synchronous: $_write_rand_sync"
 
   # Write random asynchronous
-  DEBUG "Running IO benchmark in write random asynchronous"
-  _write_rand_async=$(_run_io_bench write rndwr async)
-  DEBUG "IO benchmark in write random asynchronous: $_write_rand_async"
+  DEBUG "Running disk(s) benchmark in write random asynchronous"
+  _write_rand_async=$(_run_disks_bench write rndwr async)
+  DEBUG "Disk(s) benchmark in write random asynchronous: $_write_rand_async"
 
-  # Clean sysbench IO
-  DEBUG "Cleaning IO benchmark"
+  # Clean
+  DEBUG "Cleaning disk(s) benchmark"
   sysbench fileio cleanup > /dev/null
 
   # Return
@@ -819,22 +824,22 @@ run_io_bench() {
         {
           "read": {
             "sequential": {
-              "sync": ($readseqsync | tonumber),
-              "async": ($readseqasync | tonumber),
+              "synchronous": ($readseqsync | tonumber),
+              "asynchronous": ($readseqasync | tonumber),
             },
             "random": {
-              "sync": ($readrandsync | tonumber),
-              "async": ($readrandasync | tonumber),
+              "synchronous": ($readrandsync | tonumber),
+              "asynchronous": ($readrandasync | tonumber),
             }
           },
           "write": {
             "sequential": {
-              "sync": ($writeseqsync | tonumber),
-              "async": ($writeseqasync | tonumber),
+              "synchronous": ($writeseqsync | tonumber),
+              "asynchronous": ($writeseqasync | tonumber),
             },
             "random": {
-              "sync": ($writerandsync | tonumber),
-              "async": ($writerandasync | tonumber),
+              "synchronous": ($writerandsync | tonumber),
+              "asynchronous": ($writerandasync | tonumber),
             }
           }
         }
@@ -1272,71 +1277,120 @@ read_system_info() {
 
   # CPU
   read_cpu_info
-  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson cpu "$RETVAL" '.cpu = $cpu')
-  DEBUG "CPU info:\n$(echo "$NODE_FACTS" | jq .cpu)"
-  INFO "CPU is '$(echo "$NODE_FACTS" | jq --raw-output .cpu.name)'"
+  _cpu_info=$RETVAL
+  DEBUG "CPU info:\n$(echo "$_cpu_info" | jq .)"
+  INFO "CPU is '$(echo "$_cpu_info" | jq --raw-output .name)'"
 
   # RAM
   read_ram_info
-  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson ram "$RETVAL" '.ram = $ram')
-  DEBUG "RAM info:\n$(echo "$NODE_FACTS" | jq .ram)"
-  INFO "RAM is '$(echo "$NODE_FACTS" | jq --raw-output .ram.size | numfmt --to=iec-i)B'"
+  _ram_info=$RETVAL
+  DEBUG "RAM info:\n$(echo "$_ram_info" | jq .)"
+  INFO "RAM is '$(echo "$_ram_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
 
   # Disk(s)
   read_disks_info
-  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson disks "$RETVAL" '.disks = $disks')
-  DEBUG "Disk(s) info:\n$(echo "$NODE_FACTS" | jq .disks)"
-  _disks_info="Disk(s) found $(echo "$NODE_FACTS" | jq --raw-output '.disks | length'):"
+  _disks_info=$RETVAL
+  DEBUG "Disk(s) info:\n$(echo "$_disks_info" | jq .)"
+  _disks_info_msg="Disk(s) found $(echo "$_disks_info" | jq --raw-output 'length'):"
   while read -r _disk_info; do
-    _disks_info="$_disks_info\n\t'$(echo "$_disk_info" | jq --raw-output .name)' of '$(echo "$_disk_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
+    _disks_info_msg="$_disks_info_msg\n\t'$(echo "$_disk_info" | jq --raw-output .name)' of '$(echo "$_disk_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
   done << EOF
-$(echo "$NODE_FACTS" | jq --compact-output '.disks[]')
+$(echo "$_disks_info" | jq --compact-output '.[]')
 EOF
-  INFO "$_disks_info"
+  INFO "$_disks_info_msg"
 
   # Interface(s)
   read_interfaces_info
-  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson interfaces "$RETVAL" '.interfaces = $interfaces')
-  DEBUG "Interface(s) info:\n$(echo "$NODE_FACTS" | jq .interfaces)"
-  INFO "Interface(s) found $(echo "$NODE_FACTS" | jq --raw-output '.interfaces | length'):
-    $(echo "$NODE_FACTS" | jq --raw-output '.interfaces[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
+  _interfaces_info=$RETVAL
+  DEBUG "Interface(s) info:\n$(echo "$_interfaces_info" | jq .)"
+  INFO "Interface(s) found $(echo "$_interfaces_info" | jq --raw-output 'length'):
+    $(echo "$_interfaces_info" | jq --raw-output '.[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
 
   spinner_stop
+
+  # Update
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq \
+        --argjson cpu "$_cpu_info" \
+        --argjson ram "$_ram_info" \
+        --argjson disks "$_disks_info" \
+        --argjson interfaces "$_interfaces_info" \
+        '
+          .info = {
+            "cpu": $cpu,
+            "ram": $ram,
+            "disks": $disks,
+            "interfaces": $interfaces
+          }
+        '
+  )
 }
 
 # Execute benchmarks
 run_benchmarks() {
+  spinner_start "Benchmarking"
+
   # CPU
-  spinner_start "CPU benchmark"
+  INFO "CPU benchmark"
   run_cpu_bench
-  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson cpu "$RETVAL" '.cpu.benchmark = $cpu')
-  spinner_stop
-  DEBUG "CPU benchmark:\n$(echo "$NODE_FACTS" | jq .cpu.benchmark)"
+  _cpu_benchmark=$RETVAL
+  DEBUG "CPU benchmark:\n$(echo "$_cpu_benchmark" | jq .)"
 
   # RAM
-  spinner_start "RAM benchmark"
+  INFO "RAM benchmark"
   run_ram_bench
-  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson ram "$RETVAL" '.ram.benchmark = $ram')
-  spinner_stop
-  DEBUG "RAM benchmark:\n$(echo "$NODE_FACTS" | jq .ram.benchmark)"
+  _ram_benchmark=$RETVAL
+  DEBUG "RAM benchmark:\n$(echo "$_ram_benchmark" | jq .)"
 
-  # IO
-  return 0 # FIXME
-  spinner_start "IO benchmark"
-  run_io_bench
-  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson io "$RETVAL" '.io.benchmark = $io')
+  # Disk(s)
+  INFO "Disk(s) benchmark"
+  run_disks_bench
+  _disks_benchmark=$RETVAL
+  DEBUG "Disk(s) benchmark:\n$(echo "$_disks_benchmark" | jq .)"
+
   spinner_stop
-  DEBUG "IO benchmark:\n$(echo "$NODE_FACTS" | jq .io.benchmark)"
+
+  # Update
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq \
+        --argjson cpu "$_cpu_benchmark" \
+        --argjson ram "$_ram_benchmark" \
+        --argjson disks "$_disks_benchmark" \
+        '
+          .benchmark = {
+            "cpu": $cpu,
+            "ram": $ram,
+            "disks": $disks
+          }
+        '
+  )
 }
 
 # Read power consumptions
 read_power_consumptions() {
+  spinner_start "Reading power consumption"
+
   # CPU
-  spinner_start "CPU power consumption"
+  INFO "CPU power consumption"
   read_cpu_power_consumption
-  NODE_FACTS=$(echo "$NODE_FACTS" | jq --argjson cpu "$RETVAL" '.cpu.powerConsumption = $cpu')
+  _cpu_power_consumption=$RETVAL
+  DEBUG "CPU power consumption:\n$(echo "$_cpu_power_consumption" | jq .)"
+
   spinner_stop
-  DEBUG "CPU power consumption:\n$(echo "$NODE_FACTS" | jq .cpu.powerConsumption)"
+
+  # Update
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq \
+        --argjson cpu "$_cpu_power_consumption" \
+        '
+          .powerConsumption = {
+            "cpu": $cpu
+          }
+        '
+  )
 }
 
 # Install K3s
