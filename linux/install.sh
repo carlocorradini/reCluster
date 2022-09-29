@@ -656,12 +656,14 @@ run_cpu_bench() {
   _threads=$(grep -c ^processor /proc/cpuinfo)
 
   # Single-thread
-  DEBUG "Running CPU benchmark: single-thread (1)"
+  DEBUG "Running CPU benchmark in single-thread (1)"
   _single_thread=$(_run_cpu_bench 1)
+  DEBUG "CPU benchmark in single-thread (1): $_single_thread"
 
   # Multi-thread
-  DEBUG "Running CPU benchmark: multi-thread ($_threads)"
+  DEBUG "Running CPU benchmark in multi-thread ($_threads)"
   _multi_thread=$(_run_cpu_bench "$_threads")
+  DEBUG "CPU benchmark in multi-thread ($_threads): $_multi_thread"
 
   # Return
   RETVAL=$(
@@ -691,18 +693,23 @@ run_ram_bench() {
   }
 
   # Read sequential
-  DEBUG "Running RAM benchmark: read sequential"
+  DEBUG "Running RAM benchmark in read sequential"
   _read_seq=$(_run_ram_bench read seq)
+  DEBUG "RAM benchmark in read sequential: $_read_seq"
+
   # Read random
-  DEBUG "Running RAM benchmark: read random"
+  DEBUG "Running RAM benchmark in read random"
   _read_rand=$(_run_ram_bench read rnd)
+  DEBUG "RAM benchmark in read random: $_read_rand"
 
   # Write sequential
-  DEBUG "Running RAM benchmark: write sequential"
+  DEBUG "Running RAM benchmark in write sequential"
   _write_seq=$(_run_ram_bench write seq)
+  DEBUG "RAM benchmark in write sequential: $_write_seq"
   # Write random
-  DEBUG "Running RAM benchmark: write random"
+  DEBUG "Running RAM benchmark in write random"
   _write_rand=$(_run_ram_bench write rnd)
+  DEBUG "RAM benchmark in write random: $_write_rand"
 
   # Return
   RETVAL=$(
@@ -753,26 +760,47 @@ run_io_bench() {
   sysbench fileio prepare > /dev/null
 
   # Read sequential synchronous
+  DEBUG "Running IO benchmark in read sequential synchronous"
   _read_seq_sync=$(_run_io_bench read seqrd sync)
+  DEBUG "IO benchmark in read sequential synchronous: $_read_seq_sync"
+
   # Read sequential asynchronous
+  DEBUG "Running IO benchmark in read sequential asynchronous"
   _read_seq_async=$(_run_io_bench read seqrd async)
+  DEBUG "IO benchmark in read sequential asynchronous: $_read_seq_async"
 
   # Read random synchronous
+  DEBUG "Running IO benchmark in read random synchronous"
   _read_rand_sync=$(_run_io_bench read rndrd sync)
+  DEBUG "IO benchmark in read random synchronous: $_read_rand_sync"
+
   # Read random asynchronous
+  DEBUG "Running IO benchmark in read random asynchronous"
   _read_rand_async=$(_run_io_bench read rndrd async)
+  DEBUG "IO benchmark in read random asynchronous: $_read_rand_async"
 
   # Write sequential synchronous
+  DEBUG "Running IO benchmark in write sequential synchronous"
   _write_seq_sync=$(_run_io_bench write seqwr sync)
+  DEBUG "IO benchmark in write sequential synchronous: $_write_seq_sync"
+
   # Write sequential asynchronous
+  DEBUG "Running IO benchmark in write sequential asynchronous"
   _write_seq_async=$(_run_io_bench write seqwr async)
+  DEBUG "IO benchmark in write sequential asynchronous: $_write_seq_async"
 
   # Write random synchronous
+  DEBUG "Running IO benchmark in write random synchronous"
   _write_rand_sync=$(_run_io_bench write rndwr sync)
+  DEBUG "IO benchmark in write random synchronous: $_write_rand_sync"
+
   # Write random asynchronous
+  DEBUG "Running IO benchmark in write random asynchronous"
   _write_rand_async=$(_run_io_bench write rndwr async)
+  DEBUG "IO benchmark in write random asynchronous: $_write_rand_async"
 
   # Clean sysbench IO
+  DEBUG "Cleaning IO benchmark"
   sysbench fileio cleanup > /dev/null
 
   # Return
@@ -822,19 +850,22 @@ read_cpu_power_consumption() {
   }
   _threads=$(grep -c ^processor /proc/cpuinfo)
 
-  DEBUG "Reading CPU power consumption: idle"
+  DEBUG "Reading CPU power consumption in idle"
   read_power_consumption
   _idle=$RETVAL
+  DEBUG "CPU power consumption in idle:\n$(echo "$_idle" | jq '.')"
 
   # Single-thread
-  DEBUG "Reading CPU power consumption: single-thread (1)"
+  DEBUG "Reading CPU power consumption in single-thread (1)"
   _run_cpu_bench 1
   _single_thread=$RETVAL
+  DEBUG "CPU power consumption in single-thread (1):\n$(echo "$_single_thread" | jq '.')"
 
   # Multi-thread
-  DEBUG "Reading CPU power consumption: multi-thread ($_threads)"
+  DEBUG "Reading CPU power consumption in multi-thread ($_threads)"
   _run_cpu_bench "$_threads"
   _multi_thread=$RETVAL
+  DEBUG "CPU power consumption in multi-thread ($_threads):\n$(echo "$_multi_thread" | jq '.')"
 
   # Return
   RETVAL=$(
