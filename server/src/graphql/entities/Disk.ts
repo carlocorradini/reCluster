@@ -24,8 +24,12 @@
 
 import { GraphQLID } from 'graphql';
 import { Disk as DiskPrisma } from '@prisma/client';
-import { Field, GraphQLTimestamp, ObjectType } from 'type-graphql';
-import { GraphQLBigInt, GraphQLNonEmptyString } from 'graphql-scalars';
+import { Field, ObjectType } from 'type-graphql';
+import {
+  GraphQLBigInt,
+  GraphQLNonEmptyString,
+  GraphQLTimestamp
+} from 'graphql-scalars';
 
 @ObjectType({ description: 'Disk' })
 export class Disk implements DiskPrisma {

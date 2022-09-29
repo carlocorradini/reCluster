@@ -72,4 +72,10 @@ export class CreateCpuInput implements ICreateCpuInput {
 
   @Field(() => [GraphQLNonEmptyString], { description: 'Cpu vulnerabilities' })
   vulnerabilities!: string[];
+
+  @Field(() => GraphQLPositiveInt, { description: 'Cpu single-thread score' })
+  scoreSingleThread!: number;
+
+  @Field(() => GraphQLPositiveInt, { description: 'Cpu multi-thread score' })
+  scoreMultiThread!: number;
 }

@@ -25,7 +25,11 @@
 import { GraphQLID } from 'graphql';
 import { Node as NodePrisma } from '@prisma/client';
 import { Field, ObjectType, registerEnumType } from 'type-graphql';
-import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
+import {
+  GraphQLBigInt,
+  GraphQLPositiveInt,
+  GraphQLTimestamp
+} from 'graphql-scalars';
 
 export enum NodeStatus {
   ACTIVE = 'ACTIVE',
@@ -50,6 +54,12 @@ export class Node implements NodePrisma {
 
   @Field(() => NodeStatus, { description: 'Node status' })
   status!: NodeStatus;
+
+  @Field(() => GraphQLPositiveInt, { description: 'Minimum power consumption' })
+  minPowerConsumption!: number;
+
+  @Field(() => GraphQLPositiveInt, { description: 'Maximum power consumption' })
+  maxPowerConsumption!: number;
 
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
   createdAt!: Date;

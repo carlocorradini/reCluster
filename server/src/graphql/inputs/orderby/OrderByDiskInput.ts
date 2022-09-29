@@ -41,4 +41,10 @@ export class OrderByDiskInput
 
   @Field(() => SortOrder, { description: 'Disk size' })
   size?: SortOrder;
+
+  @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
+  createdAt?: SortOrder;
+
+  @Field(() => SortOrder, { nullable: true, description: 'Update timestamp' })
+  updatedAt?: SortOrder;
 }

@@ -47,4 +47,10 @@ export class OrderByInterfaceInput
 
   @Field(() => SortOrder, { description: 'Interface Wake On Lan flags' })
   wol?: SortOrder;
+
+  @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
+  createdAt?: SortOrder;
+
+  @Field(() => SortOrder, { nullable: true, description: 'Update timestamp' })
+  updatedAt?: SortOrder;
 }

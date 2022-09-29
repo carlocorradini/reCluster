@@ -45,6 +45,18 @@ export class OrderByNodeInput
   @Field(() => SortOrder, { nullable: true, description: 'Node status' })
   status?: SortOrder;
 
+  @Field(() => SortOrder, {
+    nullable: true,
+    description: 'Minimum power consumption'
+  })
+  minPowerConsumption?: SortOrder;
+
+  @Field(() => SortOrder, {
+    nullable: true,
+    description: 'Maximum power consumption'
+  })
+  maxPowerConsumption?: SortOrder;
+
   @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
   createdAt?: SortOrder;
 

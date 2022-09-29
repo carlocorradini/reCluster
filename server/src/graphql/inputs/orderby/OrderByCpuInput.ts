@@ -69,6 +69,18 @@ export class OrderByCpuInput
   @Field(() => SortOrder, { nullable: true, description: 'Cpu identifier' })
   vulnerabilities?: SortOrder;
 
+  @Field(() => SortOrder, {
+    nullable: true,
+    description: 'Cpu single-thread score'
+  })
+  scoreSingleThread?: SortOrder;
+
+  @Field(() => SortOrder, {
+    nullable: true,
+    description: 'Cpu multi-thread score'
+  })
+  scoreMultiThread?: SortOrder;
+
   @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
   createdAt?: SortOrder;
 

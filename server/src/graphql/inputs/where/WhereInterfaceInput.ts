@@ -24,7 +24,12 @@
 
 import { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { BigIntFilter, StringFilter, InterfaceWolListFilter } from '../filters';
+import {
+  BigIntFilter,
+  StringFilter,
+  InterfaceWolListFilter,
+  TimestampFilter
+} from '../filters';
 
 @InputType({ isAbstract: true, description: 'Interface where input' })
 export class WhereInterfaceInput
@@ -48,4 +53,10 @@ export class WhereInterfaceInput
 
   @Field({ nullable: true, description: 'Interface Wake On Lan flags' })
   wol?: InterfaceWolListFilter;
+
+  @Field({ nullable: true, description: 'Creation timestamp' })
+  createdAt?: TimestampFilter;
+
+  @Field({ nullable: true, description: 'Update timestamp' })
+  updatedAt?: TimestampFilter;
 }

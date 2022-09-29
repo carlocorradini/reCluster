@@ -28,7 +28,8 @@ import {
   StringFilter,
   TimestampFilter,
   BigIntFilter,
-  NodeStatusFilter
+  NodeStatusFilter,
+  IntFilter
 } from '../filters';
 
 @InputType({ isAbstract: true, description: 'Node where input' })
@@ -52,6 +53,12 @@ export class WhereNodeInput
 
   @Field({ nullable: true, description: 'Node status' })
   status?: NodeStatusFilter;
+
+  @Field({ nullable: true, description: 'Minimum power consumption' })
+  minPowerConsumption?: IntFilter;
+
+  @Field({ nullable: true, description: 'Maximum power consumption' })
+  maxPowerConsumption?: IntFilter;
 
   @Field({ nullable: true, description: 'Creation timestamp' })
   createdAt?: TimestampFilter;

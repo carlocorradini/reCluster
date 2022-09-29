@@ -23,7 +23,7 @@
  */
 
 import { Prisma } from '@prisma/client';
-import { GraphQLBigInt } from 'graphql-scalars';
+import { GraphQLBigInt, GraphQLPositiveInt } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
 import { PickRequired } from '~/utils';
 import { CreateCpuInput } from './CreateCpuInput';
@@ -40,6 +40,12 @@ type ICreateNodeInput = PickRequired<Omit<Prisma.NodeCreateInput, 'status'>> & {
 export class CreateNodeInput implements ICreateNodeInput {
   @Field(() => GraphQLBigInt, { description: 'Node ram' })
   ram!: bigint;
+
+  @Field(() => GraphQLPositiveInt, { description: 'Minimum power consumption' })
+  minPowerConsumption!: number;
+
+  @Field(() => GraphQLPositiveInt, { description: 'Maximum power consumption' })
+  maxPowerConsumption!: number;
 
   @Field(() => CreateCpuInput, { description: 'Node Cpu' })
   cpu!: CreateCpuInput;

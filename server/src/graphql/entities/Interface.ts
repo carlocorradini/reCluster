@@ -24,16 +24,12 @@
 
 import { GraphQLID } from 'graphql';
 import { Interface as InterfacePrisma } from '@prisma/client';
-import {
-  Field,
-  GraphQLTimestamp,
-  ObjectType,
-  registerEnumType
-} from 'type-graphql';
+import { Field, ObjectType, registerEnumType } from 'type-graphql';
 import {
   GraphQLBigInt,
   GraphQLMAC,
-  GraphQLNonEmptyString
+  GraphQLNonEmptyString,
+  GraphQLTimestamp
 } from 'graphql-scalars';
 
 export enum InterfaceWol {

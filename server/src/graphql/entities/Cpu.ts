@@ -87,6 +87,12 @@ export class Cpu implements CpuPrisma {
   @Field(() => [GraphQLNonEmptyString], { description: 'Cpu vulnerabilities' })
   vulnerabilities!: string[];
 
+  @Field(() => GraphQLPositiveInt, { description: 'Cpu single-thread score' })
+  scoreSingleThread!: number;
+
+  @Field(() => GraphQLPositiveInt, { description: 'Cpu multi-thread score' })
+  scoreMultiThread!: number;
+
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
   createdAt!: Date;
 

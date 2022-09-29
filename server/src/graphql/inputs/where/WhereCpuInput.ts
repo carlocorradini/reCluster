@@ -77,6 +77,12 @@ export class WhereCpuInput
   @Field({ nullable: true, description: 'Cpu vulnerabilities' })
   vulnerabilities?: StringListFilter;
 
+  @Field({ nullable: true, description: 'Cpu single-thread score' })
+  scoreSingleThread?: IntFilter;
+
+  @Field({ nullable: true, description: 'Cpu multi-thread score' })
+  scoreMultiThread?: IntFilter;
+
   @Field({ nullable: true, description: 'Creation timestamp' })
   createdAt?: TimestampFilter;
 
