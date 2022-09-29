@@ -24,7 +24,7 @@
 
 import { GraphQLID } from 'graphql';
 import { Disk as DiskPrisma } from '@prisma/client';
-import { Field, ObjectType } from 'type-graphql';
+import { Field, GraphQLTimestamp, ObjectType } from 'type-graphql';
 import { GraphQLBigInt, GraphQLNonEmptyString } from 'graphql-scalars';
 
 @ObjectType({ description: 'Disk' })
@@ -39,4 +39,10 @@ export class Disk implements DiskPrisma {
 
   @Field(() => GraphQLBigInt, { description: 'Disk size' })
   size!: bigint;
+
+  @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
+  createdAt!: Date;
+
+  @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
+  updatedAt!: Date;
 }

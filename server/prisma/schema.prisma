@@ -36,7 +36,7 @@ model Node {
   cpuId     String     @db.Uuid
   status    NodeStatus @default(ACTIVE)
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime   @updatedAt @db.Timestamptz()
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
 
   disks      Disk[]
   interfaces Interface[]
@@ -50,23 +50,27 @@ enum NodeStatus {
 }
 
 model Disk {
-  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  node   Node   @relation(fields: [nodeId], references: [id], map: "node_id")
-  nodeId String @db.Uuid
-  name   String
-  size   BigInt
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  node      Node     @relation(fields: [nodeId], references: [id], map: "node_id")
+  nodeId    String   @db.Uuid
+  name      String
+  size      BigInt
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@unique([nodeId, name])
 }
 
 model Interface {
-  id      String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  node    Node           @relation(fields: [nodeId], references: [id], map: "node_id")
-  nodeId  String         @db.Uuid
-  name    String
-  address String
-  speed   BigInt
-  wol     InterfaceWol[]
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  node      Node           @relation(fields: [nodeId], references: [id], map: "node_id")
+  nodeId    String         @db.Uuid
+  name      String
+  address   String
+  speed     BigInt
+  wol       InterfaceWol[]
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@unique([nodeId, name])
   @@unique([address])
@@ -106,7 +110,7 @@ model Cpu {
   cacheL3         Int             @map("cache_l3")
   vulnerabilities String[]
   createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime        @updatedAt @db.Timestamptz()
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
 
   nodes Node[]
 

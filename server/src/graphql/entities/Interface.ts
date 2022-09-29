@@ -24,7 +24,12 @@
 
 import { GraphQLID } from 'graphql';
 import { Interface as InterfacePrisma } from '@prisma/client';
-import { Field, ObjectType, registerEnumType } from 'type-graphql';
+import {
+  Field,
+  GraphQLTimestamp,
+  ObjectType,
+  registerEnumType
+} from 'type-graphql';
 import {
   GraphQLBigInt,
   GraphQLMAC,
@@ -64,4 +69,10 @@ export class Interface implements InterfacePrisma {
 
   @Field(() => [InterfaceWol], { description: 'Interface Wake On Lan flags' })
   wol!: InterfaceWol[];
+
+  @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
+  createdAt!: Date;
+
+  @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
+  updatedAt!: Date;
 }

@@ -17,7 +17,7 @@ CREATE TABLE "Node" (
     "cpuId" UUID NOT NULL,
     "status" "NodeStatus" NOT NULL DEFAULT 'ACTIVE',
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMPTZ NOT NULL,
+    "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "Node_pkey" PRIMARY KEY ("id")
 );
@@ -28,6 +28,8 @@ CREATE TABLE "Disk" (
     "nodeId" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "size" BIGINT NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "Disk_pkey" PRIMARY KEY ("id")
 );
@@ -40,6 +42,8 @@ CREATE TABLE "Interface" (
     "address" TEXT NOT NULL,
     "speed" BIGINT NOT NULL,
     "wol" "InterfaceWol"[],
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "Interface_pkey" PRIMARY KEY ("id")
 );
@@ -60,7 +64,7 @@ CREATE TABLE "Cpu" (
     "cache_l3" INTEGER NOT NULL,
     "vulnerabilities" TEXT[],
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMPTZ NOT NULL,
+    "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "Cpu_pkey" PRIMARY KEY ("id")
 );
