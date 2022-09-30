@@ -25,9 +25,7 @@
 import pino from 'pino';
 import { config } from '~/config';
 
-const isDevelopment = process.env.NODE_ENV === 'development';
-
 export const logger = pino({
-  level: isDevelopment ? 'debug' : 'info',
-  name: config.app
+  name: config.app,
+  level: process.env.NODE_ENV === 'development' ? 'debug' : 'info'
 });
