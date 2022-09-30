@@ -73,13 +73,25 @@ export class OrderByCpuInput
     nullable: true,
     description: 'Cpu single-thread score'
   })
-  scoreSingleThread?: SortOrder;
+  singleThreadScore?: SortOrder;
 
   @Field(() => SortOrder, {
     nullable: true,
     description: 'Cpu multi-thread score'
   })
-  scoreMultiThread?: SortOrder;
+  multiThreadScore?: SortOrder;
+
+  @Field(() => SortOrder, {
+    nullable: true,
+    description: 'Cpu efficiency threshold'
+  })
+  efficiencyThreshold?: SortOrder;
+
+  @Field(() => SortOrder, {
+    nullable: true,
+    description: 'Cpu performance threshold'
+  })
+  performanceThreshold?: SortOrder;
 
   @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
   createdAt?: SortOrder;

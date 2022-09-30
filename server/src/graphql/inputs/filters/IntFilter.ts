@@ -31,10 +31,7 @@ export class IntFilter implements Prisma.IntFilter {
   @Field(() => GraphQLInt, { nullable: true, description: 'Integer equals' })
   equals?: number;
 
-  @Field(() => GraphQLInt, {
-    nullable: true,
-    description: 'Integer not equals'
-  })
+  @Field({ nullable: true, description: 'Integer not equals' })
   not?: IntFilter;
 
   @Field(() => [GraphQLInt], {

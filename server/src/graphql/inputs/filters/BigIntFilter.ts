@@ -31,10 +31,7 @@ export class BigIntFilter implements Prisma.BigIntFilter {
   @Field(() => GraphQLBigInt, { nullable: true, description: 'BigInt equals' })
   equals?: bigint;
 
-  @Field(() => GraphQLBigInt, {
-    nullable: true,
-    description: 'BigInt not equals'
-  })
+  @Field({ nullable: true, description: 'BigInt not equals' })
   not?: BigIntFilter;
 
   @Field(() => [GraphQLBigInt], {

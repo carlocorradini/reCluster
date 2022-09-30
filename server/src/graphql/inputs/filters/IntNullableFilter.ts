@@ -22,54 +22,51 @@
  * SOFTWARE.
  */
 
+import { GraphQLInt } from 'graphql';
 import { Field, InputType } from 'type-graphql';
-import { GraphQLTimestamp } from 'graphql-scalars';
 import { Prisma } from '@prisma/client';
 
-@InputType({ isAbstract: true, description: 'Timestamp filter' })
-export class TimestampFilter implements Prisma.DateTimeFilter {
-  @Field(() => GraphQLTimestamp, {
-    nullable: true,
-    description: 'Timestamp equals'
-  })
-  equals?: Date;
+@InputType({ isAbstract: true, description: 'Integer nullable filter' })
+export class IntNullableFilter implements Prisma.IntNullableFilter {
+  @Field(() => GraphQLInt, { nullable: true, description: 'Integer equals' })
+  equals?: number | null;
 
-  @Field({ nullable: true, description: 'Timestamp not equals' })
-  not?: TimestampFilter;
+  @Field({ nullable: true, description: 'Integer not equals' })
+  not?: IntNullableFilter;
 
-  @Field(() => [GraphQLTimestamp], {
+  @Field(() => [GraphQLInt], {
     nullable: true,
-    description: 'Timestamp exists in list'
+    description: 'Integer exists in list'
   })
-  in?: Date[];
+  in?: number[] | null;
 
-  @Field(() => [GraphQLTimestamp], {
+  @Field(() => [GraphQLInt], {
     nullable: true,
-    description: 'Timestamp does not exists in list'
+    description: 'Integer does not exists in list'
   })
-  notIn?: Date[];
+  notIn?: number[] | null;
 
-  @Field(() => GraphQLTimestamp, {
+  @Field(() => GraphQLInt, {
     nullable: true,
-    description: 'Timestamp is less than'
+    description: 'Integer is less than'
   })
-  lt?: Date;
+  lt?: number;
 
-  @Field(() => GraphQLTimestamp, {
+  @Field(() => GraphQLInt, {
     nullable: true,
-    description: 'Timestamp is less than or equal to'
+    description: 'Integer is less than or equal to'
   })
-  lte?: Date;
+  lte?: number;
 
-  @Field(() => GraphQLTimestamp, {
+  @Field(() => GraphQLInt, {
     nullable: true,
-    description: 'Timestamp is greater than'
+    description: 'Integer is greater than'
   })
-  gt?: Date;
+  gt?: number;
 
-  @Field(() => GraphQLTimestamp, {
+  @Field(() => GraphQLInt, {
     nullable: true,
-    description: 'Timestamp is greater than or equal to'
+    description: 'Integer is greater than or equal to'
   })
-  gte?: Date;
+  gte?: number;
 }

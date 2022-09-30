@@ -65,8 +65,10 @@ CREATE TABLE "Cpu" (
     "cache_l2" INTEGER NOT NULL,
     "cache_l3" INTEGER NOT NULL,
     "vulnerabilities" TEXT[],
-    "score_single_thread" INTEGER NOT NULL,
-    "score_multi_thread" INTEGER NOT NULL,
+    "single_thread_score" INTEGER NOT NULL,
+    "multi_thread_score" INTEGER NOT NULL,
+    "efficiency_threshold" INTEGER,
+    "performance_threshold" INTEGER,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 

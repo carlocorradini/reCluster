@@ -27,6 +27,7 @@ export * from './CpuArchitectureFilter';
 export * from './CpuVendorFilter';
 export * from './InterfaceWolListFilter';
 export * from './IntFilter';
+export * from './IntNullableFilter';
 export * from './NodeStatusFilter';
 export * from './StringFilter';
 export * from './StringListFilter';

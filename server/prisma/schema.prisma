@@ -98,23 +98,25 @@ enum InterfaceWol {
 }
 
 model Cpu {
-  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  architecture      CpuArchitecture
-  flags             String[]
-  cores             Int
-  vendor            CpuVendor
-  family            Int
-  model             Int
-  name              String
-  cacheL1d          Int             @map("cache_l1d")
-  cacheL1i          Int             @map("cache_l1i")
-  cacheL2           Int             @map("cache_l2")
-  cacheL3           Int             @map("cache_l3")
-  vulnerabilities   String[]
-  scoreSingleThread Int             @map("score_single_thread")
-  scoreMultiThread  Int             @map("score_multi_thread")
-  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  architecture         CpuArchitecture
+  flags                String[]
+  cores                Int
+  vendor               CpuVendor
+  family               Int
+  model                Int
+  name                 String
+  cacheL1d             Int             @map("cache_l1d")
+  cacheL1i             Int             @map("cache_l1i")
+  cacheL2              Int             @map("cache_l2")
+  cacheL3              Int             @map("cache_l3")
+  vulnerabilities      String[]
+  singleThreadScore    Int             @map("single_thread_score")
+  multiThreadScore     Int             @map("multi_thread_score")
+  efficiencyThreshold  Int?            @map("efficiency_threshold")
+  performanceThreshold Int?            @map("performance_threshold")
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
 
   nodes Node[]
 

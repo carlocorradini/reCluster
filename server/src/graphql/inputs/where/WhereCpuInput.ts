@@ -28,6 +28,7 @@ import {
   CpuArchitectureFilter,
   CpuVendorFilter,
   IntFilter,
+  IntNullableFilter,
   StringFilter,
   StringListFilter,
   TimestampFilter
@@ -78,10 +79,16 @@ export class WhereCpuInput
   vulnerabilities?: StringListFilter;
 
   @Field({ nullable: true, description: 'Cpu single-thread score' })
-  scoreSingleThread?: IntFilter;
+  singleThreadScore?: IntFilter;
 
   @Field({ nullable: true, description: 'Cpu multi-thread score' })
-  scoreMultiThread?: IntFilter;
+  multiThreadScore?: IntFilter;
+
+  @Field({ nullable: true, description: 'Cpu efficiency threshold' })
+  efficiencyThreshold?: IntNullableFilter;
+
+  @Field({ nullable: true, description: 'Cpu performance threshold' })
+  performanceThreshold?: IntNullableFilter;
 
   @Field({ nullable: true, description: 'Creation timestamp' })
   createdAt?: TimestampFilter;
