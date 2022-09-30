@@ -30,15 +30,17 @@ datasource db {
 }
 
 model Node {
-  id                  String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ram                 BigInt
-  cpu                 Cpu        @relation(fields: [cpuId], references: [id], map: "cpu_id")
-  cpuId               String     @db.Uuid
-  status              NodeStatus @default(ACTIVE)
-  minPowerConsumption Int        @map("min_power_consumption")
-  maxPowerConsumption Int        @map("max_power_consumption")
-  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt           DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
+  id                             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ram                            BigInt
+  cpu                            Cpu        @relation(fields: [cpuId], references: [id], map: "cpu_id")
+  cpuId                          String     @db.Uuid
+  status                         NodeStatus @default(ACTIVE)
+  minPowerConsumption            Int        @map("min_power_consumption")
+  maxEfficiencyPowerConsumption  Int?       @map("max_efficiency_power_consumption")
+  minPerformancePowerConsumption Int?       @map("min_performance_power_consumption")
+  maxPowerConsumption            Int        @map("max_power_consumption")
+  createdAt                      DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                      DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
 
   disks      Disk[]
   interfaces Interface[]

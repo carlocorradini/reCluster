@@ -17,6 +17,8 @@ CREATE TABLE "Node" (
     "cpuId" UUID NOT NULL,
     "status" "NodeStatus" NOT NULL DEFAULT 'ACTIVE',
     "min_power_consumption" INTEGER NOT NULL,
+    "max_efficiency_power_consumption" INTEGER,
+    "min_performance_power_consumption" INTEGER,
     "max_power_consumption" INTEGER NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,

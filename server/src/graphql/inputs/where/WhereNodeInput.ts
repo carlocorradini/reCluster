@@ -29,7 +29,8 @@ import {
   TimestampFilter,
   BigIntFilter,
   NodeStatusFilter,
-  IntFilter
+  IntFilter,
+  IntNullableFilter
 } from '../filters';
 
 @InputType({ isAbstract: true, description: 'Node where input' })
@@ -56,6 +57,18 @@ export class WhereNodeInput
 
   @Field({ nullable: true, description: 'Minimum power consumption' })
   minPowerConsumption?: IntFilter;
+
+  @Field({
+    nullable: true,
+    description: 'Maximum efficiency power consumption'
+  })
+  maxEfficiencyPowerConsumption?: IntNullableFilter;
+
+  @Field({
+    nullable: true,
+    description: 'Minimum performance power consumption'
+  })
+  minPerformancePowerConsumption?: IntNullableFilter;
 
   @Field({ nullable: true, description: 'Maximum power consumption' })
   maxPowerConsumption?: IntFilter;

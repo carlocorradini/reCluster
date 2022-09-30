@@ -58,6 +58,18 @@ export class Node implements NodePrisma {
   @Field(() => GraphQLPositiveInt, { description: 'Minimum power consumption' })
   minPowerConsumption!: number;
 
+  @Field(() => GraphQLPositiveInt, {
+    nullable: true,
+    description: 'Maximum efficiency power consumption'
+  })
+  maxEfficiencyPowerConsumption!: number | null;
+
+  @Field(() => GraphQLPositiveInt, {
+    nullable: true,
+    description: 'Minimum performance power consumption'
+  })
+  minPerformancePowerConsumption!: number | null;
+
   @Field(() => GraphQLPositiveInt, { description: 'Maximum power consumption' })
   maxPowerConsumption!: number;
 

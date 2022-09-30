@@ -53,6 +53,18 @@ export class OrderByNodeInput
 
   @Field(() => SortOrder, {
     nullable: true,
+    description: 'Maximum efficiency power consumption'
+  })
+  maxEfficiencyPowerConsumption?: SortOrder;
+
+  @Field(() => SortOrder, {
+    nullable: true,
+    description: 'Minimum performance power consumption'
+  })
+  minPerformancePowerConsumption?: SortOrder;
+
+  @Field(() => SortOrder, {
+    nullable: true,
     description: 'Maximum power consumption'
   })
   maxPowerConsumption?: SortOrder;
