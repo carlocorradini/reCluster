@@ -25,6 +25,12 @@
 import { Prisma } from '@prisma/client';
 import { GraphQLBigInt, GraphQLPositiveInt } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
+import {
+  IsDefined,
+  isNotEmpty,
+  ValidateIf,
+  ValidateNested
+} from 'class-validator';
 import { PickRequired } from '~/utils';
 import { CreateCpuInput } from './CreateCpuInput';
 import { CreateDiskInput } from './CreateDiskInput';
@@ -48,18 +54,27 @@ export class CreateNodeInput implements ICreateNodeInput {
     nullable: true,
     description: 'Maximum efficiency power consumption'
   })
+  @ValidateIf((c: CreateNodeInput) =>
+    isNotEmpty(c.minPerformancePowerConsumption)
+  )
+  @IsDefined()
   maxEfficiencyPowerConsumption?: number | null;
 
   @Field(() => GraphQLPositiveInt, {
     nullable: true,
     description: 'Minimum performance power consumption'
   })
+  @ValidateIf((c: CreateNodeInput) =>
+    isNotEmpty(c.maxEfficiencyPowerConsumption)
+  )
+  @IsDefined()
   minPerformancePowerConsumption?: number | null;
 
   @Field(() => GraphQLPositiveInt, { description: 'Maximum power consumption' })
   maxPowerConsumption!: number;
 
   @Field(() => CreateCpuInput, { description: 'Node Cpu' })
+  @ValidateNested()
   cpu!: CreateCpuInput;
 
   @Field(() => [CreateDiskInput], { description: 'Node disks' })

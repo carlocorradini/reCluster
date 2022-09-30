@@ -57,6 +57,7 @@
     "timestamptz",
     "tsbuildinfo",
     "tsdoc",
+    "tsyringe",
     "typedi",
     "upsert",
     "xstate"

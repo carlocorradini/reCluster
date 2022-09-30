@@ -20,7 +20,8 @@ npm run build
 
 1. Environment
 
-   Copy & paste `.env.example` file, name it `.env` and edit it according to your configuration
+   Copy `.env.example` & paste`.env` file. \
+   Edit according to your configuration.
 
 1. Database
 
@@ -44,7 +45,7 @@ npm run build
 
 1. Execute Queries
 
-   - Apollo Sandbox \
+   - Apollo Studio \
      Visit <http://localhost:8080> in your browser
 
    - Manually
@@ -52,6 +53,6 @@ npm run build
    ```console
    curl --request POST \
      --header 'content-type: application/json' \
-     --url 'http://localhost:8080/graphql' \
-     --data '{ "query": "{ nodes { id cpu { name } } }" }'
+     --url 'http://localhost:8080' \
+     --data '{ "query": "query { __typename }" }'
    ```

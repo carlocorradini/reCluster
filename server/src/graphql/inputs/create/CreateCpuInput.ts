@@ -25,6 +25,7 @@
 import { Field, InputType } from 'type-graphql';
 import { Prisma } from '@prisma/client';
 import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
+import { IsDefined, isNotEmpty, ValidateIf } from 'class-validator';
 import { PickRequired } from '~/utils';
 import { CpuArchitecture, CpuVendor } from '../../entities';
 
@@ -83,11 +84,15 @@ export class CreateCpuInput implements ICreateCpuInput {
     nullable: true,
     description: 'Cpu efficiency threshold'
   })
+  @ValidateIf((c: CreateCpuInput) => isNotEmpty(c.performanceThreshold))
+  @IsDefined()
   efficiencyThreshold?: number | null;
 
   @Field(() => GraphQLPositiveInt, {
     nullable: true,
     description: 'Cpu performance threshold'
   })
+  @ValidateIf((c: CreateCpuInput) => isNotEmpty(c.efficiencyThreshold))
+  @IsDefined()
   performanceThreshold?: number | null;
 }
