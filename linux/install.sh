@@ -459,8 +459,8 @@ read_power_consumption() {
         --raw-output \
         '
           add / length
-           | . + 0.5
-           | floor
+          | . + 0.5
+          | floor
         '
   )
   DEBUG "PC mean: $_mean"
@@ -472,8 +472,8 @@ read_power_consumption() {
         --raw-output \
         '
           (add / length) as $mean
-           | (map(. - $mean | . * .) | add) / (length - 1)
-           | sqrt
+          | (map(. - $mean | . * .) | add) / (length - 1)
+          | sqrt
         '
   )
   DEBUG "PC standard deviation: $_standard_deviation"
@@ -506,7 +506,8 @@ read_cpu_info() {
   _cpu_info=$(
     lscpu --json \
       | jq \
-        '.lscpu
+        '
+          .lscpu
           | map({(.field): .data})
           | add
           | with_entries(if .key | endswith(":") then .key |= sub(":";"") else . end)
@@ -553,10 +554,10 @@ read_cpu_info() {
         --arg cachel3 "$_cache_l3" \
         '
           .vendor = $vendor
-           | .cacheL1d = ($cachel1d | tonumber)
-           | .cacheL1i = ($cachel1i | tonumber)
-           | .cacheL2 = ($cachel2 | tonumber)
-           | .cacheL3 = ($cachel3 | tonumber)
+          | .cacheL1d = ($cachel1d | tonumber)
+          | .cacheL1i = ($cachel1i | tonumber)
+          | .cacheL2 = ($cachel2 | tonumber)
+          | .cacheL3 = ($cachel3 | tonumber)
         '
   )
 
@@ -586,8 +587,8 @@ read_disks_info() {
       | jq \
         '
           .blockdevices
-           | map(select(.type == "disk"))
-           | map({name, size})
+          | map(select(.type == "disk"))
+          | map({name, size})
         '
   )
 
@@ -602,8 +603,8 @@ read_interfaces_info() {
       | jq \
         '
           map(if .linkinfo.info_kind // .link_type == "loopback" then empty else . end)
-           | map(.name = .ifname)
-           | map({address, name})
+          | map(.name = .ifname)
+          | map({address, name})
         '
   )
 
@@ -844,16 +845,11 @@ read_cpu_power_consumption() {
   }
   _threads=$(grep -c ^processor /proc/cpuinfo)
 
+  # Idle
   DEBUG "Reading CPU power consumption in idle"
   read_power_consumption
   _idle=$RETVAL
   DEBUG "CPU power consumption in idle:\n$(echo "$_idle" | jq '.')"
-
-  # Single-thread
-  DEBUG "Reading CPU power consumption in single-thread (1)"
-  _run_cpu_bench 1
-  _single_thread=$RETVAL
-  DEBUG "CPU power consumption in single-thread (1):\n$(echo "$_single_thread" | jq '.')"
 
   # Multi-thread
   DEBUG "Reading CPU power consumption in multi-thread ($_threads)"
@@ -866,12 +862,10 @@ read_cpu_power_consumption() {
     jq \
       --null-input \
       --argjson idle "$_idle" \
-      --argjson single "$_single_thread" \
       --argjson multi "$_multi_thread" \
       '
         {
           "idle": $idle,
-          "singleThread": $single,
           "multiThread": $multi
         }
       '
@@ -1305,12 +1299,10 @@ EOF
         --argjson disks "$_disks_info" \
         --argjson interfaces "$_interfaces_info" \
         '
-          .info = {
-            "cpu": $cpu,
-            "ram": $ram,
-            "disks": $disks,
-            "interfaces": $interfaces
-          }
+          .cpu = $cpu
+          | .ram = $ram
+          | .disks = $disks
+          | .interfaces = $interfaces
         '
   )
 }
@@ -1347,11 +1339,8 @@ run_benchmarks() {
         --argjson ram "$_ram_benchmark" \
         --argjson disks "$_disks_benchmark" \
         '
-          .benchmark = {
-            "cpu": $cpu,
-            "ram": $ram,
-            "disks": $disks
-          }
+          .cpu.singleThreadScore = $cpu.singleThread
+          | .cpu.multiThreadScore = $cpu.multiThread
         '
   )
 }
@@ -1374,9 +1363,8 @@ read_power_consumptions() {
       | jq \
         --argjson cpu "$_cpu_power_consumption" \
         '
-          .powerConsumption = {
-            "cpu": $cpu
-          }
+          .minPowerConsumption = $cpu.idle.mean
+          | .maxPowerConsumption = $cpu.multiThread.mean
         '
   )
 }
@@ -1472,9 +1460,9 @@ install_node_exporter() {
         --raw-output \
         '
           .node_exporter.collector
-           | to_entries
-           | map(if .value == true then ("--collector."+.key) else ("--no-collector."+.key) end)
-           | join(" ")
+          | to_entries
+          | map(if .value == true then ("--collector."+.key) else ("--no-collector."+.key) end)
+          | join(" ")
         '
   ) || FATAL "Error reading Node exporter configuration"
 
