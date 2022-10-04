@@ -22,27 +22,25 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { Prisma } from '@prisma/client';
-import { CpuVendor } from '../../entities';
+import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
+import { inject, injectable } from 'tsyringe';
+import { StatusService } from '~/services';
+import { FindManyStatusArgs } from '../../args';
+import { Node, Status } from '../../entities';
 
-@InputType({ isAbstract: true, description: 'Cpu vendor filter' })
-export class CpuVendorFilter implements Prisma.EnumCpuVendorFilter {
-  @Field(() => CpuVendor, { nullable: true, description: 'Cpu vendor equals' })
-  equals?: CpuVendor;
+@Resolver(() => Node)
+@injectable()
+export class NodeStatusResolver {
+  public constructor(
+    @inject(StatusService)
+    private readonly statusService: StatusService
+  ) {}
 
-  @Field({ nullable: true, description: 'Cpu vendor not equals' })
-  not?: CpuVendorFilter;
-
-  @Field(() => [CpuVendor], {
-    nullable: true,
-    description: 'Cpu vendor exists in list'
-  })
-  in?: CpuVendor[];
-
-  @Field(() => [CpuVendor], {
-    nullable: true,
-    description: 'Cpu vendor does not exists in list'
-  })
-  notIn?: CpuVendor[];
+  @FieldResolver(() => [Status], { description: 'Node statuses' })
+  async statuses(@Root() node: Node, @Args() args: FindManyStatusArgs) {
+    return this.statusService.findMany({
+      ...args,
+      where: { nodeId: { equals: node.id } }
+    });
+  }
 }

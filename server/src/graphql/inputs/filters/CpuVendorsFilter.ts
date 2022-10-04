@@ -22,8 +22,27 @@
  * SOFTWARE.
  */
 
-export * from './FindUniqueCpuArgs';
-export * from './FindUniqueDiskArgs';
-export * from './FindUniqueInterfaceArgs';
-export * from './FindUniqueNodeArgs';
-export * from './FindUniqueStatusArgs';
+import { Field, InputType } from 'type-graphql';
+import { Prisma } from '@prisma/client';
+import { CpuVendors } from '../../entities';
+
+@InputType({ isAbstract: true, description: 'Cpu vendor filter' })
+export class CpuVendorsFilter implements Prisma.EnumCpuVendorsFilter {
+  @Field(() => CpuVendors, { nullable: true, description: 'Cpu vendor equals' })
+  equals?: CpuVendors;
+
+  @Field({ nullable: true, description: 'Cpu vendor not equals' })
+  not?: CpuVendorsFilter;
+
+  @Field(() => [CpuVendors], {
+    nullable: true,
+    description: 'Cpu vendor exists in list'
+  })
+  in?: CpuVendors[];
+
+  @Field(() => [CpuVendors], {
+    nullable: true,
+    description: 'Cpu vendor does not exists in list'
+  })
+  notIn?: CpuVendors[];
+}

@@ -26,3 +26,4 @@ export * from './CpuService';
 export * from './DiskService';
 export * from './InterfaceService';
 export * from './NodeService';
+export * from './StatusService';

@@ -45,7 +45,7 @@ export class OrderByInterfaceInput
   @Field(() => SortOrder, { description: 'Interface speed' })
   speed?: SortOrder;
 
-  @Field(() => SortOrder, { description: 'Interface Wake On Lan flags' })
+  @Field(() => SortOrder, { description: 'Interface Wake-on-Lan flags' })
   wol?: SortOrder;
 
   @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })

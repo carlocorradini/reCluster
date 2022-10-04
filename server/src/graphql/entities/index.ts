@@ -26,3 +26,4 @@ export * from './Cpu';
 export * from './Disk';
 export * from './Interface';
 export * from './Node';
+export * from './Status';

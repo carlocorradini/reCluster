@@ -22,8 +22,14 @@
  * SOFTWARE.
  */
 
-export * from './FindUniqueCpuArgs';
-export * from './FindUniqueDiskArgs';
-export * from './FindUniqueInterfaceArgs';
-export * from './FindUniqueNodeArgs';
-export * from './FindUniqueStatusArgs';
+import { GraphQLID } from 'graphql';
+import { ArgsType, Field } from 'type-graphql';
+import { Prisma } from '@prisma/client';
+
+@ArgsType()
+export class FindUniqueStatusArgs
+  implements Pick<Prisma.StatusWhereUniqueInput, 'id'>
+{
+  @Field(() => GraphQLID, { description: 'Status identifier' })
+  id!: string;
+}

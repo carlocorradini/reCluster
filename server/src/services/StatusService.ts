@@ -22,8 +22,23 @@
  * SOFTWARE.
  */
 
-export * from './FindUniqueCpuArgs';
-export * from './FindUniqueDiskArgs';
-export * from './FindUniqueInterfaceArgs';
-export * from './FindUniqueNodeArgs';
-export * from './FindUniqueStatusArgs';
+import { prisma } from '~/db';
+import { logger } from '~/logger';
+import type { FindManyStatusArgs, FindUniqueStatusArgs } from '~/graphql';
+
+export class StatusService {
+  public async findMany(args: FindManyStatusArgs) {
+    logger.debug(`Status service find many: ${JSON.stringify(args)}`);
+
+    return prisma.status.findMany({
+      ...args,
+      cursor: args.cursor ? { id: args.cursor } : undefined
+    });
+  }
+
+  public async findUnique(args: FindUniqueStatusArgs) {
+    logger.debug(`Status service find unique: ${JSON.stringify(args)}`);
+
+    return prisma.status.findUnique({ where: { id: args.id } });
+  }
+}

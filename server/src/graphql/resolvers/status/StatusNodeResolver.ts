@@ -22,8 +22,21 @@
  * SOFTWARE.
  */
 
-export * from './FindUniqueCpuArgs';
-export * from './FindUniqueDiskArgs';
-export * from './FindUniqueInterfaceArgs';
-export * from './FindUniqueNodeArgs';
-export * from './FindUniqueStatusArgs';
+import { FieldResolver, Resolver, Root } from 'type-graphql';
+import { inject, injectable } from 'tsyringe';
+import { NodeService } from '~/services';
+import { Status, Node } from '../../entities';
+
+@Resolver(() => Status)
+@injectable()
+export class StatusNodeResolver {
+  public constructor(
+    @inject(NodeService)
+    private readonly nodeService: NodeService
+  ) {}
+
+  @FieldResolver(() => Node, { description: 'Status node' })
+  async node(@Root() status: Status) {
+    return this.nodeService.findUnique({ id: status.nodeId });
+  }
+}

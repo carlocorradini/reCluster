@@ -22,8 +22,26 @@
  * SOFTWARE.
  */
 
-export * from './FindUniqueCpuArgs';
-export * from './FindUniqueDiskArgs';
-export * from './FindUniqueInterfaceArgs';
-export * from './FindUniqueNodeArgs';
-export * from './FindUniqueStatusArgs';
+import { ArgsType, Field } from 'type-graphql';
+import { Prisma } from '@prisma/client';
+import { FindManyArgs } from '~/utils';
+import { OrderByStatusInput, WhereStatusInput } from '../../../inputs';
+import { PaginationArgs } from './PaginationArgs';
+
+@ArgsType()
+export class FindManyStatusArgs
+  extends PaginationArgs
+  implements FindManyArgs<Prisma.StatusFindManyArgs>
+{
+  @Field(() => WhereStatusInput, {
+    nullable: true,
+    description: 'Filter options'
+  })
+  where?: WhereStatusInput;
+
+  @Field(() => OrderByStatusInput, {
+    nullable: true,
+    description: 'Order options'
+  })
+  orderBy?: OrderByStatusInput;
+}

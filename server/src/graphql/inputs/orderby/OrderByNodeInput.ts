@@ -30,20 +30,23 @@ import { SortOrder } from '../../enums';
 export class OrderByNodeInput
   implements
     Partial<
-      Omit<Prisma.NodeOrderByWithRelationInput, 'cpu' | 'disks' | 'interfaces'>
+      Omit<
+        Prisma.NodeOrderByWithRelationInput,
+        'statuses' | 'cpu' | 'disks' | 'interfaces'
+      >
     >
 {
   @Field(() => SortOrder, { nullable: true, description: 'Node identifier' })
   id?: SortOrder;
+
+  @Field(() => SortOrder, { nullable: true, description: 'Node roles' })
+  roles?: SortOrder;
 
   @Field(() => SortOrder, { nullable: true, description: 'Node ram' })
   ram?: SortOrder;
 
   @Field(() => SortOrder, { nullable: true, description: 'Cpu identifier' })
   cpuId?: SortOrder;
-
-  @Field(() => SortOrder, { nullable: true, description: 'Node status' })
-  status?: SortOrder;
 
   @Field(() => SortOrder, {
     nullable: true,

@@ -1,21 +1,24 @@
 -- CreateEnum
-CREATE TYPE "NodeStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'WORKING', 'ERROR');
+CREATE TYPE "NodeRoles" AS ENUM ('RECLUSTER_MASTER', 'K8S_MASTER', 'K8S_WORKER');
 
 -- CreateEnum
-CREATE TYPE "InterfaceWol" AS ENUM ('a', 'b', 'd', 'g', 'm', 'p', 's', 'u');
+CREATE TYPE "NodeStatuses" AS ENUM ('ACTIVE', 'INACTIVE', 'WORKING', 'ERROR');
 
 -- CreateEnum
-CREATE TYPE "CpuArchitecture" AS ENUM ('x86_64');
+CREATE TYPE "InterfaceWoLFlags" AS ENUM ('a', 'b', 'd', 'g', 'm', 'p', 's', 'u');
 
 -- CreateEnum
-CREATE TYPE "CpuVendor" AS ENUM ('AMD', 'INTEL');
+CREATE TYPE "CpuArchitectures" AS ENUM ('x86_64');
+
+-- CreateEnum
+CREATE TYPE "CpuVendors" AS ENUM ('AMD', 'INTEL');
 
 -- CreateTable
 CREATE TABLE "Node" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "ram" BIGINT NOT NULL,
+    "roles" "NodeRoles"[],
     "cpuId" UUID NOT NULL,
-    "status" "NodeStatus" NOT NULL DEFAULT 'ACTIVE',
+    "ram" BIGINT NOT NULL,
     "min_power_consumption" INTEGER NOT NULL,
     "max_efficiency_power_consumption" INTEGER,
     "min_performance_power_consumption" INTEGER,
@@ -24,6 +27,16 @@ CREATE TABLE "Node" (
     "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "Node_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Status" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "status" "NodeStatuses" NOT NULL,
+    "nodeId" UUID NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Status_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -45,7 +58,7 @@ CREATE TABLE "Interface" (
     "name" TEXT NOT NULL,
     "address" TEXT NOT NULL,
     "speed" BIGINT NOT NULL,
-    "wol" "InterfaceWol"[],
+    "wol" "InterfaceWoLFlags"[],
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -55,10 +68,10 @@ CREATE TABLE "Interface" (
 -- CreateTable
 CREATE TABLE "Cpu" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "architecture" "CpuArchitecture" NOT NULL,
+    "architecture" "CpuArchitectures" NOT NULL,
     "flags" TEXT[],
     "cores" INTEGER NOT NULL,
-    "vendor" "CpuVendor" NOT NULL,
+    "vendor" "CpuVendors" NOT NULL,
     "family" INTEGER NOT NULL,
     "model" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
@@ -91,6 +104,9 @@ CREATE UNIQUE INDEX "Cpu_vendor_family_model_key" ON "Cpu"("vendor", "family", "
 
 -- AddForeignKey
 ALTER TABLE "Node" ADD CONSTRAINT "cpu_id" FOREIGN KEY ("cpuId") REFERENCES "Cpu"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Status" ADD CONSTRAINT "node_id" FOREIGN KEY ("nodeId") REFERENCES "Node"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Disk" ADD CONSTRAINT "node_id" FOREIGN KEY ("nodeId") REFERENCES "Node"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

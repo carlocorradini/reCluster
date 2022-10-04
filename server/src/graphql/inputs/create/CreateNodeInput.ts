@@ -35,8 +35,9 @@ import { PickRequired } from '~/utils';
 import { CreateCpuInput } from './CreateCpuInput';
 import { CreateDiskInput } from './CreateDiskInput';
 import { CreateInterfaceInput } from './CreateInterfaceInput';
+import { NodeRoles } from '../../entities';
 
-type ICreateNodeInput = PickRequired<Omit<Prisma.NodeCreateInput, 'status'>> & {
+type ICreateNodeInput = PickRequired<Prisma.NodeCreateInput> & {
   cpu: CreateCpuInput;
   disks: CreateDiskInput[];
   interfaces: CreateInterfaceInput[];
@@ -44,6 +45,9 @@ type ICreateNodeInput = PickRequired<Omit<Prisma.NodeCreateInput, 'status'>> & {
 
 @InputType({ description: 'Create Node input' })
 export class CreateNodeInput implements ICreateNodeInput {
+  @Field(() => [NodeRoles], { description: 'Node roles' })
+  roles!: NodeRoles[];
+
   @Field(() => GraphQLBigInt, { description: 'Node ram' })
   ram!: bigint;
 

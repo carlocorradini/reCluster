@@ -22,8 +22,41 @@
  * SOFTWARE.
  */
 
-export * from './FindUniqueCpuArgs';
-export * from './FindUniqueDiskArgs';
-export * from './FindUniqueInterfaceArgs';
-export * from './FindUniqueNodeArgs';
-export * from './FindUniqueStatusArgs';
+import { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { InterfaceWoLFlags } from '../../entities';
+
+@InputType({
+  isAbstract: true,
+  description: 'Interface Wake-on-Lan flags filter'
+})
+export class InterfaceWoLFlagsListFilter
+  implements Prisma.EnumInterfaceWoLFlagsNullableListFilter
+{
+  @Field(() => InterfaceWoLFlags, {
+    nullable: true,
+    description: 'Wake-on-Lan flag exists in the list'
+  })
+  has?: InterfaceWoLFlags;
+
+  @Field(() => [InterfaceWoLFlags], {
+    nullable: true,
+    description: 'Every Wake-on-Lan flag exists in the list'
+  })
+  hasEvery?: InterfaceWoLFlags[];
+
+  @Field(() => [InterfaceWoLFlags], {
+    nullable: true,
+    description: 'At least one Wake-on-Lan flag exists in the list'
+  })
+  hasSome?: InterfaceWoLFlags[];
+
+  @Field({ nullable: true, description: 'List is empty' })
+  isEmpty?: boolean;
+
+  @Field(() => [InterfaceWoLFlags], {
+    nullable: true,
+    description: 'List matches the given Wake-on-Lan flag list exactly'
+  })
+  equals?: InterfaceWoLFlags[];
+}

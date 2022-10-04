@@ -26,3 +26,4 @@ export * from './OrderByCpuInput';
 export * from './OrderByDiskInput';
 export * from './OrderByInterfaceInput';
 export * from './OrderByNodeInput';
+export * from './OrderByStatusInput';

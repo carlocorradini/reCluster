@@ -32,7 +32,7 @@ import {
   GraphQLTimestamp
 } from 'graphql-scalars';
 
-export enum InterfaceWol {
+export enum InterfaceWoLFlags {
   a = 'a',
   b = 'b',
   d = 'd',
@@ -42,9 +42,9 @@ export enum InterfaceWol {
   s = 's',
   u = 'u'
 }
-registerEnumType(InterfaceWol, {
-  name: 'InterfaceWol',
-  description: 'Interface Wake On Lan flag'
+registerEnumType(InterfaceWoLFlags, {
+  name: 'InterfaceWoLFlags',
+  description: 'Interface Wake-on-Lan flags'
 });
 
 @ObjectType({ description: 'Interface' })
@@ -63,8 +63,10 @@ export class Interface implements InterfacePrisma {
   @Field(() => GraphQLBigInt, { description: 'Interface speed' })
   speed!: bigint;
 
-  @Field(() => [InterfaceWol], { description: 'Interface Wake On Lan flags' })
-  wol!: InterfaceWol[];
+  @Field(() => [InterfaceWoLFlags], {
+    description: 'Interface Wake-on-Lan flags'
+  })
+  wol!: InterfaceWoLFlags[];
 
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
   createdAt!: Date;

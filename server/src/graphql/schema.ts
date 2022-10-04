@@ -34,7 +34,10 @@ import {
   NodeCpuResolver,
   NodeDiskResolver,
   NodeInterfaceResolver,
-  NodeResolver
+  NodeStatusResolver,
+  NodeResolver,
+  StatusNodeResolver,
+  StatusResolver
 } from './resolvers';
 
 export const schema = buildSchemaSync({
@@ -49,6 +52,9 @@ export const schema = buildSchemaSync({
     NodeResolver,
     NodeCpuResolver,
     NodeDiskResolver,
-    NodeInterfaceResolver
+    NodeInterfaceResolver,
+    NodeStatusResolver,
+    StatusResolver,
+    StatusNodeResolver
   ]
 });

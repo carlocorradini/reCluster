@@ -31,15 +31,14 @@ import {
   GraphQLTimestamp
 } from 'graphql-scalars';
 
-export enum NodeStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  WORKING = 'WORKING',
-  ERROR = 'ERROR'
+export enum NodeRoles {
+  RECLUSTER_MASTER = 'RECLUSTER_MASTER',
+  K8S_MASTER = 'K8S_MASTER',
+  K8S_WORKER = 'K8S_WORKER'
 }
-registerEnumType(NodeStatus, {
-  name: 'NodeStatus',
-  description: 'Node status'
+registerEnumType(NodeRoles, {
+  name: 'NodeRoles',
+  description: 'Node roles'
 });
 
 @ObjectType({ description: 'Node' })
@@ -47,13 +46,13 @@ export class Node implements NodePrisma {
   @Field(() => GraphQLID, { description: 'Node identifier' })
   id!: string;
 
+  @Field(() => [NodeRoles], { description: 'Node roles' })
+  roles!: NodeRoles[];
+
   @Field(() => GraphQLBigInt, { description: 'Node ram' })
   ram!: bigint;
 
   cpuId!: string;
-
-  @Field(() => NodeStatus, { description: 'Node status' })
-  status!: NodeStatus;
 
   @Field(() => GraphQLPositiveInt, { description: 'Minimum power consumption' })
   minPowerConsumption!: number;

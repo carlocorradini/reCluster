@@ -22,16 +22,32 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
 import { GraphQLID } from 'graphql';
-import { ArgsType, Field } from 'type-graphql';
-import { UpdateNodeInput } from '../../inputs';
+import { Status as StatusPrisma } from '@prisma/client';
+import { Field, ObjectType, registerEnumType } from 'type-graphql';
+import { GraphQLTimestamp } from 'graphql-scalars';
 
-@ArgsType()
-export class UpdateNodeArgs implements Pick<Prisma.NodeUpdateArgs, 'data'> {
-  @Field(() => GraphQLID, { description: 'Node identifier' })
+export enum NodeStatuses {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  WORKING = 'WORKING',
+  ERROR = 'ERROR'
+}
+registerEnumType(NodeStatuses, {
+  name: 'NodeStatus',
+  description: 'Node statuses'
+});
+
+@ObjectType({ description: 'Status' })
+export class Status implements StatusPrisma {
+  @Field(() => GraphQLID, { description: 'Status identifier' })
   id!: string;
 
-  @Field({ description: 'Node data' })
-  data!: UpdateNodeInput;
+  @Field(() => NodeStatuses, { description: 'Status' })
+  status!: NodeStatuses;
+
+  nodeId!: string;
+
+  @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
+  createdAt!: Date;
 }

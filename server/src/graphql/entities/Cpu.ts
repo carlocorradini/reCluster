@@ -32,27 +32,27 @@ import {
   GraphQLTimestamp
 } from 'graphql-scalars';
 
-export enum CpuArchitecture {
+export enum CpuArchitectures {
   x86_64 = 'x86_64'
 }
-registerEnumType(CpuArchitecture, {
+registerEnumType(CpuArchitectures, {
   name: 'CpuArchitecture',
-  description: 'Cpu architecture'
+  description: 'Cpu architectures'
 });
 
-export enum CpuVendor {
+export enum CpuVendors {
   AMD = 'AMD',
   INTEL = 'INTEL'
 }
-registerEnumType(CpuVendor, { name: 'CpuVendor', description: 'Cpu vendor' });
+registerEnumType(CpuVendors, { name: 'CpuVendor', description: 'Cpu vendors' });
 
 @ObjectType({ description: 'Cpu' })
 export class Cpu implements CpuPrisma {
   @Field(() => GraphQLID, { description: 'Cpu identifier' })
   id!: string;
 
-  @Field(() => CpuArchitecture, { description: 'Cpu architecture' })
-  architecture!: CpuArchitecture;
+  @Field(() => CpuArchitectures, { description: 'Cpu architecture' })
+  architecture!: CpuArchitectures;
 
   @Field(() => [GraphQLNonEmptyString], { description: 'Cpu flags' })
   flags!: string[];
@@ -60,8 +60,8 @@ export class Cpu implements CpuPrisma {
   @Field(() => GraphQLPositiveInt, { description: 'Cpu cores' })
   cores!: number;
 
-  @Field(() => CpuVendor, { description: 'Cpu vendor' })
-  vendor!: CpuVendor;
+  @Field(() => CpuVendors, { description: 'Cpu vendor' })
+  vendor!: CpuVendors;
 
   @Field(() => GraphQLPositiveInt, { description: 'Cpu family' })
   family!: number;

@@ -26,4 +26,5 @@ export * from './FindManyCpuArgs';
 export * from './FindManyDiskArgs';
 export * from './FindManyInterfaceArgs';
 export * from './FindManyNodeArgs';
+export * from './FindManyStatusArgs';
 export * from './PaginationArgs';

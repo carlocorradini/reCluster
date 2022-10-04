@@ -24,31 +24,31 @@
 
 import { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { NodeStatus } from '../../entities';
+import { NodeStatuses } from '../../entities';
 
 @InputType({
   isAbstract: true,
   description: 'Node status filter'
 })
-export class NodeStatusFilter implements Prisma.EnumNodeStatusFilter {
-  @Field(() => NodeStatus, {
+export class NodeStatusesFilter implements Prisma.EnumNodeStatusesFilter {
+  @Field(() => NodeStatuses, {
     nullable: true,
     description: 'Node status equals'
   })
-  equals?: NodeStatus;
+  equals?: NodeStatuses;
 
   @Field({ nullable: true, description: 'Node status not equals' })
-  not?: NodeStatusFilter;
+  not?: NodeStatusesFilter;
 
-  @Field(() => [NodeStatus], {
+  @Field(() => [NodeStatuses], {
     nullable: true,
     description: 'Node status exists in list'
   })
-  in?: NodeStatus[];
+  in?: NodeStatuses[];
 
-  @Field(() => [NodeStatus], {
+  @Field(() => [NodeStatuses], {
     nullable: true,
     description: 'Node status does not exists in list'
   })
-  notIn?: NodeStatus[];
+  notIn?: NodeStatuses[];
 }

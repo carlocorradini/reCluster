@@ -22,8 +22,24 @@
  * SOFTWARE.
  */
 
-export * from './FindUniqueCpuArgs';
-export * from './FindUniqueDiskArgs';
-export * from './FindUniqueInterfaceArgs';
-export * from './FindUniqueNodeArgs';
-export * from './FindUniqueStatusArgs';
+import { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { StringFilter, NodeStatusesFilter, TimestampFilter } from '../filters';
+
+@InputType({ isAbstract: true, description: 'Status where input' })
+export class WhereStatusInput
+  implements
+    Partial<Omit<Prisma.StatusWhereInput, 'AND' | 'OR' | 'NOT' | 'node'>>
+{
+  @Field({ nullable: true, description: 'Status identifier' })
+  id?: StringFilter;
+
+  @Field({ nullable: true, description: 'Status' })
+  status?: NodeStatusesFilter;
+
+  @Field({ description: 'Node identifier' })
+  nodeId?: StringFilter;
+
+  @Field({ nullable: true, description: 'Creation timestamp' })
+  createdAt?: TimestampFilter;
+}

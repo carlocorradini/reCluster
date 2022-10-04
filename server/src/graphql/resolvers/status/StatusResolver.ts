@@ -22,8 +22,30 @@
  * SOFTWARE.
  */
 
-export * from './FindUniqueCpuArgs';
-export * from './FindUniqueDiskArgs';
-export * from './FindUniqueInterfaceArgs';
-export * from './FindUniqueNodeArgs';
-export * from './FindUniqueStatusArgs';
+import { Args, Query, Resolver } from 'type-graphql';
+import { inject, injectable } from 'tsyringe';
+import { StatusService } from '~/services';
+import { Status } from '../../entities';
+import { FindUniqueStatusArgs, FindManyStatusArgs } from '../../args';
+
+@Resolver(Status)
+@injectable()
+export class StatusResolver {
+  public constructor(
+    @inject(StatusService)
+    private readonly statusService: StatusService
+  ) {}
+
+  @Query(() => [Status], { description: 'List of Statuses' })
+  async statuses(@Args() args: FindManyStatusArgs) {
+    return this.statusService.findMany(args);
+  }
+
+  @Query(() => Status, {
+    nullable: true,
+    description: 'Status matching the identifier'
+  })
+  async status(@Args() args: FindUniqueStatusArgs) {
+    return this.statusService.findUnique(args);
+  }
+}

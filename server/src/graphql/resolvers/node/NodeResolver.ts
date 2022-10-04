@@ -40,8 +40,7 @@ import { Node } from '../../entities';
 import {
   CreateNodeArgs,
   FindUniqueNodeArgs,
-  FindManyNodeArgs,
-  UpdateNodeArgs
+  FindManyNodeArgs
 } from '../../args';
 
 @Resolver(Node)
@@ -68,11 +67,6 @@ export class NodeResolver {
   @Mutation(() => Node, { description: 'Create a new node' })
   async createNode(@Args() args: CreateNodeArgs) {
     return this.nodeService.create(args);
-  }
-
-  @Mutation(() => Node, { description: 'Update node matching the identifier' })
-  async updateNode(@Args() args: UpdateNodeArgs) {
-    return this.nodeService.update(args);
   }
 
   @FieldResolver(() => GraphQLBigInt)

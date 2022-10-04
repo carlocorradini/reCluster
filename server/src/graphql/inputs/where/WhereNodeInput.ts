@@ -28,9 +28,9 @@ import {
   StringFilter,
   TimestampFilter,
   BigIntFilter,
-  NodeStatusFilter,
   IntFilter,
-  IntNullableFilter
+  IntNullableFilter,
+  NodeRolesListFilter
 } from '../filters';
 
 @InputType({ isAbstract: true, description: 'Node where input' })
@@ -39,21 +39,21 @@ export class WhereNodeInput
     Partial<
       Omit<
         Prisma.NodeWhereInput,
-        'AND' | 'OR' | 'NOT' | 'cpu' | 'disks' | 'interfaces'
+        'AND' | 'OR' | 'NOT' | 'statuses' | 'cpu' | 'disks' | 'interfaces'
       >
     >
 {
   @Field({ nullable: true, description: 'Node identifier' })
   id?: StringFilter;
 
+  @Field({ nullable: true, description: 'Node roles' })
+  roles?: NodeRolesListFilter;
+
   @Field({ nullable: true, description: 'Node ram' })
   ram?: BigIntFilter;
 
   @Field({ nullable: true, description: 'Cpu identifier' })
   cpuId?: StringFilter;
-
-  @Field({ nullable: true, description: 'Node status' })
-  status?: NodeStatusFilter;
 
   @Field({ nullable: true, description: 'Minimum power consumption' })
   minPowerConsumption?: IntFilter;

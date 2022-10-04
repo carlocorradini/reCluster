@@ -23,12 +23,13 @@
  */
 
 export * from './BigIntFilter';
-export * from './CpuArchitectureFilter';
-export * from './CpuVendorFilter';
-export * from './InterfaceWolListFilter';
+export * from './CpuArchitecturesFilter';
+export * from './CpuVendorsFilter';
+export * from './InterfaceWoLFlagsListFilter';
 export * from './IntFilter';
 export * from './IntNullableFilter';
-export * from './NodeStatusFilter';
+export * from './NodeRolesListFilter';
+export * from './NodeStatusesFilter';
 export * from './StringFilter';
 export * from './StringListFilter';
 export * from './TimestampFilter';

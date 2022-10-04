@@ -30,11 +30,11 @@ import {
 } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
 import { PickRequired } from '~/utils';
-import { InterfaceWol } from '../../entities';
+import { InterfaceWoLFlags } from '../../entities';
 
 type ICreateInterfaceInput = PickRequired<
   Prisma.InterfaceCreateWithoutNodeInput & {
-    wol: InterfaceWol[];
+    wol: InterfaceWoLFlags[];
   }
 >;
 
@@ -49,6 +49,8 @@ export class CreateInterfaceInput implements ICreateInterfaceInput {
   @Field(() => GraphQLBigInt, { description: 'Interface speed' })
   speed!: bigint;
 
-  @Field(() => [InterfaceWol], { description: 'Interface Wake On Lan flags' })
-  wol!: InterfaceWol[];
+  @Field(() => [InterfaceWoLFlags], {
+    description: 'Interface Wake-on-Lan flags'
+  })
+  wol!: InterfaceWoLFlags[];
 }

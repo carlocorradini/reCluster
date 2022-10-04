@@ -27,8 +27,7 @@ import { logger } from '~/logger';
 import type {
   FindManyNodeArgs,
   FindUniqueNodeArgs,
-  CreateNodeArgs,
-  UpdateNodeArgs
+  CreateNodeArgs
 } from '~/graphql';
 
 export class NodeService {
@@ -89,11 +88,5 @@ export class NodeService {
         }
       }
     });
-  }
-
-  public async update(args: UpdateNodeArgs) {
-    logger.info(`Node service update: ${JSON.stringify(args)}`);
-
-    return prisma.node.update({ where: { id: args.id }, data: args.data });
   }
 }

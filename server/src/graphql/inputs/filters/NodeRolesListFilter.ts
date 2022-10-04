@@ -24,12 +24,39 @@
 
 import { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { NodeStatus } from '../../entities';
+import { NodeRoles } from '../../entities';
 
-type IUpdateNodeInput = Pick<Prisma.NodeUpdateInput, 'status'>;
+@InputType({
+  isAbstract: true,
+  description: 'Node roles filter'
+})
+export class NodeRolesListFilter
+  implements Prisma.EnumNodeRolesNullableListFilter
+{
+  @Field(() => NodeRoles, {
+    nullable: true,
+    description: 'Node role exists in the list'
+  })
+  has?: NodeRoles;
 
-@InputType({ description: 'Update Node input' })
-export class UpdateNodeInput implements IUpdateNodeInput {
-  @Field(() => NodeStatus, { nullable: true, description: 'Node status' })
-  status?: NodeStatus;
+  @Field(() => [NodeRoles], {
+    nullable: true,
+    description: 'Every Node role exists in the list'
+  })
+  hasEvery?: NodeRoles[];
+
+  @Field(() => [NodeRoles], {
+    nullable: true,
+    description: 'At least one Node role exists in the list'
+  })
+  hasSome?: NodeRoles[];
+
+  @Field({ nullable: true, description: 'List is empty' })
+  isEmpty?: boolean;
+
+  @Field(() => [NodeRoles], {
+    nullable: true,
+    description: 'List matches the given Node role list exactly'
+  })
+  equals?: NodeRoles[];
 }

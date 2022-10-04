@@ -22,30 +22,23 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { CpuArchitecture } from '../../entities';
+import { Field, InputType } from 'type-graphql';
+import { SortOrder } from '../../enums';
 
-@InputType({ isAbstract: true, description: 'Cpu architecture filter' })
-export class CpuArchitectureFilter implements Prisma.EnumCpuArchitectureFilter {
-  @Field(() => CpuArchitecture, {
-    nullable: true,
-    description: 'Cpu architecture equals'
-  })
-  equals?: CpuArchitecture;
+@InputType({ isAbstract: true, description: 'Status order by input' })
+export class OrderByStatusInput
+  implements Partial<Omit<Prisma.StatusOrderByWithRelationInput, 'node'>>
+{
+  @Field(() => SortOrder, { nullable: true, description: 'Status identifier' })
+  id?: SortOrder;
 
-  @Field({ nullable: true, description: 'Cpu architecture not equals' })
-  not?: CpuArchitectureFilter;
+  @Field(() => SortOrder, { nullable: true, description: 'Status' })
+  status?: SortOrder;
 
-  @Field(() => [CpuArchitecture], {
-    nullable: true,
-    description: 'Cpu architecture exists in list'
-  })
-  in?: CpuArchitecture[];
+  @Field(() => SortOrder, { description: 'Node identifier' })
+  nodeId?: SortOrder;
 
-  @Field(() => [CpuArchitecture], {
-    nullable: true,
-    description: 'Cpu architecture does not exists in list'
-  })
-  notIn?: CpuArchitecture[];
+  @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
+  createdAt?: SortOrder;
 }

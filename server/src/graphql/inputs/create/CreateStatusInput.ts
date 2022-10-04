@@ -22,8 +22,15 @@
  * SOFTWARE.
  */
 
-export * from './FindUniqueCpuArgs';
-export * from './FindUniqueDiskArgs';
-export * from './FindUniqueInterfaceArgs';
-export * from './FindUniqueNodeArgs';
-export * from './FindUniqueStatusArgs';
+import { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { PickRequired } from '~/utils';
+import { NodeStatuses } from '../../entities';
+
+type ICreateStatusInput = PickRequired<Prisma.StatusCreateWithoutNodeInput>;
+
+@InputType({ description: 'Create Status input' })
+export class CreateStatusInput implements ICreateStatusInput {
+  @Field(() => NodeStatuses, { description: 'Status' })
+  status!: NodeStatuses;
+}

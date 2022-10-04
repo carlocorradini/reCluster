@@ -27,7 +27,7 @@ import { Prisma } from '@prisma/client';
 import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
 import { IsDefined, isNotEmpty, ValidateIf } from 'class-validator';
 import { PickRequired } from '~/utils';
-import { CpuArchitecture, CpuVendor } from '../../entities';
+import { CpuArchitectures, CpuVendors } from '../../entities';
 
 type ICreateCpuInput = PickRequired<
   Prisma.CpuCreateWithoutNodesInput & {
@@ -38,8 +38,8 @@ type ICreateCpuInput = PickRequired<
 
 @InputType({ description: 'Create Cpu input' })
 export class CreateCpuInput implements ICreateCpuInput {
-  @Field(() => CpuArchitecture, { description: 'Cpu architecture' })
-  architecture!: CpuArchitecture;
+  @Field(() => CpuArchitectures, { description: 'Cpu architecture' })
+  architecture!: CpuArchitectures;
 
   @Field(() => [GraphQLNonEmptyString], { description: 'Cpu flags' })
   flags!: string[];
@@ -47,8 +47,8 @@ export class CreateCpuInput implements ICreateCpuInput {
   @Field(() => GraphQLPositiveInt, { description: 'Cpu cores' })
   cores!: number;
 
-  @Field(() => CpuVendor, { description: 'Cpu vendor' })
-  vendor!: CpuVendor;
+  @Field(() => CpuVendors, { description: 'Cpu vendor' })
+  vendor!: CpuVendors;
 
   @Field(() => GraphQLPositiveInt, { description: 'Cpu family' })
   family!: number;

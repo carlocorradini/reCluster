@@ -30,23 +30,37 @@ datasource db {
 }
 
 model Node {
-  id                             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roles                          NodeRoles[]
+  statuses                       Status[]
+  cpu                            Cpu         @relation(fields: [cpuId], references: [id], map: "cpu_id")
+  cpuId                          String      @db.Uuid
   ram                            BigInt
-  cpu                            Cpu        @relation(fields: [cpuId], references: [id], map: "cpu_id")
-  cpuId                          String     @db.Uuid
-  status                         NodeStatus @default(ACTIVE)
-  minPowerConsumption            Int        @map("min_power_consumption")
-  maxEfficiencyPowerConsumption  Int?       @map("max_efficiency_power_consumption")
-  minPerformancePowerConsumption Int?       @map("min_performance_power_consumption")
-  maxPowerConsumption            Int        @map("max_power_consumption")
-  createdAt                      DateTime   @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt                      DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
-
-  disks      Disk[]
-  interfaces Interface[]
+  disks                          Disk[]
+  interfaces                     Interface[]
+  minPowerConsumption            Int         @map("min_power_consumption")
+  maxEfficiencyPowerConsumption  Int?        @map("max_efficiency_power_consumption")
+  minPerformancePowerConsumption Int?        @map("min_performance_power_consumption")
+  maxPowerConsumption            Int         @map("max_power_consumption")
+  createdAt                      DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                      DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
 }
 
-enum NodeStatus {
+enum NodeRoles {
+  RECLUSTER_MASTER
+  K8S_MASTER
+  K8S_WORKER
+}
+
+model Status {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  status    NodeStatuses
+  node      Node         @relation(fields: [nodeId], references: [id], map: "node_id")
+  nodeId    String       @db.Uuid
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+}
+
+enum NodeStatuses {
   ACTIVE
   INACTIVE
   WORKING
@@ -66,21 +80,21 @@ model Disk {
 }
 
 model Interface {
-  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  node      Node           @relation(fields: [nodeId], references: [id], map: "node_id")
-  nodeId    String         @db.Uuid
+  id        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  node      Node                @relation(fields: [nodeId], references: [id], map: "node_id")
+  nodeId    String              @db.Uuid
   name      String
   address   String
   speed     BigInt
-  wol       InterfaceWol[]
-  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+  wol       InterfaceWoLFlags[]
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@unique([nodeId, name])
   @@unique([address])
 }
 
-enum InterfaceWol {
+enum InterfaceWoLFlags {
   // Wke on ARP
   a
   // Wake on broadcast messages
@@ -100,36 +114,36 @@ enum InterfaceWol {
 }
 
 model Cpu {
-  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  architecture         CpuArchitecture
+  id                   String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  architecture         CpuArchitectures
   flags                String[]
   cores                Int
-  vendor               CpuVendor
+  vendor               CpuVendors
   family               Int
   model                Int
   name                 String
-  cacheL1d             Int             @map("cache_l1d")
-  cacheL1i             Int             @map("cache_l1i")
-  cacheL2              Int             @map("cache_l2")
-  cacheL3              Int             @map("cache_l3")
+  cacheL1d             Int              @map("cache_l1d")
+  cacheL1i             Int              @map("cache_l1i")
+  cacheL2              Int              @map("cache_l2")
+  cacheL3              Int              @map("cache_l3")
   vulnerabilities      String[]
-  singleThreadScore    Int             @map("single_thread_score")
-  multiThreadScore     Int             @map("multi_thread_score")
-  efficiencyThreshold  Int?            @map("efficiency_threshold")
-  performanceThreshold Int?            @map("performance_threshold")
-  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz()
+  singleThreadScore    Int              @map("single_thread_score")
+  multiThreadScore     Int              @map("multi_thread_score")
+  efficiencyThreshold  Int?             @map("efficiency_threshold")
+  performanceThreshold Int?             @map("performance_threshold")
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime         @updatedAt @map("updated_at") @db.Timestamptz()
 
   nodes Node[]
 
   @@unique([vendor, family, model])
 }
 
-enum CpuArchitecture {
+enum CpuArchitectures {
   x86_64
 }
 
-enum CpuVendor {
+enum CpuVendors {
   AMD
   INTEL
 }
