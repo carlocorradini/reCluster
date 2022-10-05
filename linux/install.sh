@@ -1407,8 +1407,10 @@ install_k3s() {
   [ -x "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' is not executable"
 
   # Kind
-  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind: <server|agent>'"
-  [ "server" = "$_k3s_kind" ] || [ "agent" = "$_k3s_kind" ] || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
+  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
+  [ "server" = "$_k3s_kind" ] \
+    || [ "agent" = "$_k3s_kind" ] \
+    || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
 
   # Configuration
   _k3s_config=$(echo "$CONFIG" | jq --exit-status '.k3s | del(.kind)' | yq e --exit-status --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
@@ -1492,6 +1494,7 @@ cluster_init() {
   INFO "Cluster initialization"
 
   _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
+  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
   _kubeconfig_file=~/.kube/config
 
   _wait_k3s_kubeconfig_file_creation() {
@@ -1508,6 +1511,9 @@ cluster_init() {
         fi
       done
   }
+
+  # K3s kind
+  [ "server" = "$_k3s_kind" ] || FATAL "Cluster initialization requires K3s 'kind' to be 'server' but '$_k3s_kind' found"
 
   # Start and stop K3s service to generate initial configuration
   case $INIT_SYSTEM in
