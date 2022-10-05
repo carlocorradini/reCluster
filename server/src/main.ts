@@ -74,6 +74,25 @@ async function main() {
   }
 }
 
+async function terminate(signal: NodeJS.Signals) {
+  logger.warn(`Received '${signal}' signal`);
+
+  // Database
+  await prisma.$disconnect();
+  // K8s
+  await container.resolve(NodeInformer).stop();
+  // Server
+  await server.stop();
+
+  process.kill(process.pid, signal);
+}
+
+process.once('SIGTERM', terminate);
+process.once('SIGKILL', terminate);
+process.once('SIGINT', terminate);
+process.once('SIGQUIT', terminate);
+process.once('SIGHUP', terminate);
+
 main().catch((error: Error) => {
   logger.fatal(`Error starting: ${error.message}`);
   throw error;

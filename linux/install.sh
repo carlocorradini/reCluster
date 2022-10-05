@@ -849,13 +849,13 @@ read_cpu_power_consumption() {
   DEBUG "Reading CPU power consumption in idle"
   read_power_consumption
   _idle=$RETVAL
-  DEBUG "CPU power consumption in idle:\n$(echo "$_idle" | jq '.')"
+  DEBUG "CPU power consumption in idle:\n$(echo "$_idle" | jq .)"
 
   # Multi-thread
   DEBUG "Reading CPU power consumption in multi-thread ($_threads)"
   _run_cpu_bench "$_threads"
   _multi_thread=$RETVAL
-  DEBUG "CPU power consumption in multi-thread ($_threads):\n$(echo "$_multi_thread" | jq '.')"
+  DEBUG "CPU power consumption in multi-thread ($_threads):\n$(echo "$_multi_thread" | jq .)"
 
   # Return
   RETVAL=$(
@@ -1371,7 +1371,8 @@ read_power_consumptions() {
 
 # Print node facts
 print_node_facts() {
-  DEBUG "Node facts:\n$(echo "$NODE_FACTS" | jq .)"
+  DEBUG "Node facts:"
+  echo "$NODE_FACTS" | jq .
 }
 
 # Install K3s
@@ -1408,8 +1409,8 @@ install_k3s() {
 
   # Kind
   _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
-  [ "server" = "$_k3s_kind" ] \
-    || [ "agent" = "$_k3s_kind" ] \
+  [ "$_k3s_kind" = "server" ] \
+    || [ "$_k3s_kind" = "agent" ] \
     || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
 
   # Configuration
@@ -1513,7 +1514,7 @@ cluster_init() {
   }
 
   # K3s kind
-  [ "server" = "$_k3s_kind" ] || FATAL "Cluster initialization requires K3s 'kind' to be 'server' but '$_k3s_kind' found"
+  [ "$_k3s_kind" = "server" ] || FATAL "Cluster initialization requires K3s 'kind' to be 'server' but '$_k3s_kind' found"
 
   # Start and stop K3s service to generate initial configuration
   case $INIT_SYSTEM in
@@ -1536,10 +1537,10 @@ cluster_init() {
 
   # Copy kubeconfig
   if [ -f "$_kubeconfig_file" ]; then
-    WARN "kubeconfig '$_kubeconfig_file' already exists, skipping copying to '$_kubeconfig_file'"
+    WARN "Skipping copying K3s kubeconfig from '$_k3s_kubeconfig_file' to '$_kubeconfig_file' because it already exists"
   else
-    _kubeconfig_dir=$(dirname "$_kubeconfig_file")
     INFO "Copying K3s kubeconfig from '$_k3s_kubeconfig_file' to '$_kubeconfig_file'"
+    _kubeconfig_dir=$(dirname "$_kubeconfig_file")
     [ -d "$_kubeconfig_dir" ] || mkdir "$_kubeconfig_dir"
     $SUDO cp "$_k3s_kubeconfig_file" "$_kubeconfig_file"
     $SUDO chmod 0644 "$_kubeconfig_file"
@@ -1547,7 +1548,7 @@ cluster_init() {
 
   # Read kubeconfig
   WARN "kubeconfig:"
-  $SUDO yq e --prettyPrint '.' "$_k3s_kubeconfig_file"
+  $SUDO yq e --prettyPrint '.' "$_kubeconfig_file"
 
   # TODO Server token
 

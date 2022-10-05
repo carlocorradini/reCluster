@@ -61,23 +61,33 @@ FROM node:$NODEJS_VERSION-alpine
 # Author
 LABEL org.opencontainers.image.authors="Carlo Corradini <carlo.corradini98@gmail.com>"
 
+# Environment
+ENV NODE_ENV production
+ENV PORT $PORT
+
 # Working directory
 ARG WORKDIR
 WORKDIR $WORKDIR
 
+# Install packages
+RUN apk add --no-cache dumb-init
+
+# Change user
+USER node
+
 # Copy package.json and package-lock.json
-COPY --from=builder $WORKDIR/package.json $WORKDIR/package-lock.json ./
+COPY --from=builder --chown=node:node $WORKDIR/package.json $WORKDIR/package-lock.json ./
 # Copy build files
-COPY --from=builder $WORKDIR/build ./
+COPY --from=builder --chown=node:node $WORKDIR/build ./
 
 # Install production dependencies
 RUN npm ci --production --ignore-scripts
 
 # Copy prisma
-COPY --from=builder $WORKDIR/node_modules/.prisma $WORKDIR/node_modules/.prisma
+COPY --from=builder --chown=node:node $WORKDIR/node_modules/.prisma $WORKDIR/node_modules/.prisma
 
 # Expose
 EXPOSE $PORT
 
 # Bootstrap
-CMD [ "node", "main.js" ]
+CMD [ "dumb-init", "node", "main.js" ]
