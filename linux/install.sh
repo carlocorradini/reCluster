@@ -1369,6 +1369,11 @@ read_power_consumptions() {
   )
 }
 
+# Print node facts
+print_node_facts() {
+  DEBUG "Node facts:\n$(echo "$NODE_FACTS" | jq .)"
+}
+
 # Install K3s
 install_k3s() {
   _k3s_install_sh=
@@ -1735,6 +1740,7 @@ NODE_FACTS="{}"
   read_system_info
   run_benchmarks
   read_power_consumptions
+  print_node_facts
   install_k3s
   install_node_exporter
   cluster_init
