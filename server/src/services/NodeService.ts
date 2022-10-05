@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+import type { Node } from '@prisma/client';
+import { inject, injectable } from 'tsyringe';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
 import type {
@@ -30,9 +32,16 @@ import type {
   CreateNodeArgs,
   UpdateNodeArgs
 } from '~/graphql';
+import { TokenService, TokenTypes } from './TokenService';
 
+@injectable()
 export class NodeService {
-  public async findMany(args: FindManyNodeArgs) {
+  public constructor(
+    @inject(TokenService)
+    private readonly tokenService: TokenService
+  ) {}
+
+  public async findMany(args: FindManyNodeArgs): Promise<Node[]> {
     logger.debug(`Node service find many: ${JSON.stringify(args)}`);
 
     return prisma.node.findMany({
@@ -41,13 +50,13 @@ export class NodeService {
     });
   }
 
-  public async findUnique(args: FindUniqueNodeArgs) {
+  public async findUnique(args: FindUniqueNodeArgs): Promise<Node | null> {
     logger.debug(`Node service find unique: ${JSON.stringify(args)}`);
 
     return prisma.node.findUnique({ where: { id: args.id } });
   }
 
-  public async create(args: CreateNodeArgs) {
+  public async create(args: CreateNodeArgs): Promise<string> {
     logger.info(`Node service create: ${JSON.stringify(args)}`);
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -78,8 +87,9 @@ export class NodeService {
     });
 
     // Create
-    return prisma.node.create({
+    const node = await prisma.node.create({
       ...args,
+      select: { id: true },
       data: {
         ...args.data,
         cpu: { connect: { vendor_family_model } },
@@ -89,9 +99,12 @@ export class NodeService {
         }
       }
     });
+
+    // Generate token
+    return this.tokenService.sign({ type: TokenTypes.NODE, id: node.id });
   }
 
-  public async update(args: UpdateNodeArgs) {
+  public async update(args: UpdateNodeArgs): Promise<Node> {
     logger.info(`Node service update: ${JSON.stringify(args)}`);
 
     return prisma.node.update({ where: { id: args.id }, data: args.data });

@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
@@ -40,7 +41,9 @@ export class InterfaceResolver {
   ) {}
 
   @Query(() => [Interface], { description: 'List of Interfaces' })
-  async interfaces(@Args() args: FindManyInterfaceArgs) {
+  async interfaces(
+    @Args() args: FindManyInterfaceArgs
+  ): Promise<Prisma.Interface[]> {
     return this.interfaceService.findMany(args);
   }
 
@@ -48,7 +51,9 @@ export class InterfaceResolver {
     nullable: true,
     description: 'Interface matching the identifier'
   })
-  async interface(@Args() args: FindUniqueInterfaceArgs) {
+  async interface(
+    @Args() args: FindUniqueInterfaceArgs
+  ): Promise<Prisma.Interface | null> {
     return this.interfaceService.findUnique(args);
   }
 
@@ -60,11 +65,11 @@ export class InterfaceResolver {
       description: 'Digital conversion unit'
     })
     unit: DigitalUnits
-  ) {
+  ): bigint {
     return digitalConverter({
       value: inf.speed,
       from: DigitalUnits.b,
       to: unit
-    });
+    }) as bigint;
   }
 }

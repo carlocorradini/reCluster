@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { GraphQLID } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
 import { UpdateNodeInput } from '../../inputs';

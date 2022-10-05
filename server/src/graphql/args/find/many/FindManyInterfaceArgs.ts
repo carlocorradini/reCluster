@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+import type { Prisma } from '@prisma/client';
 import { ArgsType, Field } from 'type-graphql';
-import { Prisma } from '@prisma/client';
 import { FindManyArgs } from '~/utils';
 import { OrderByInterfaceInput, WhereInterfaceInput } from '../../../inputs';
 import { PaginationArgs } from './PaginationArgs';

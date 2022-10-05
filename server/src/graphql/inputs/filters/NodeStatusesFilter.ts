@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
 import { NodeStatuses } from '../../enums';
 

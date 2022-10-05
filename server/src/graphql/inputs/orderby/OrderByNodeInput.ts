@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { SortOrder } from '../../enums';
+import { SortOrders } from '../../enums';
 
 @InputType({ isAbstract: true, description: 'Node order by input' })
 export class OrderByNodeInput
@@ -36,45 +36,48 @@ export class OrderByNodeInput
       >
     >
 {
-  @Field(() => SortOrder, { nullable: true, description: 'Node identifier' })
-  id?: SortOrder;
+  @Field(() => SortOrders, { nullable: true, description: 'Node identifier' })
+  id?: SortOrders;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Node roles' })
-  roles?: SortOrder;
+  @Field(() => SortOrders, { nullable: true, description: 'Node roles' })
+  roles?: SortOrders;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Node ram' })
-  ram?: SortOrder;
+  @Field(() => SortOrders, { nullable: true, description: 'Node ram' })
+  ram?: SortOrders;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Cpu identifier' })
-  cpuId?: SortOrder;
+  @Field(() => SortOrders, { nullable: true, description: 'Cpu identifier' })
+  cpuId?: SortOrders;
 
-  @Field(() => SortOrder, {
+  @Field(() => SortOrders, {
     nullable: true,
     description: 'Minimum power consumption'
   })
-  minPowerConsumption?: SortOrder;
+  minPowerConsumption?: SortOrders;
 
-  @Field(() => SortOrder, {
+  @Field(() => SortOrders, {
     nullable: true,
     description: 'Maximum efficiency power consumption'
   })
-  maxEfficiencyPowerConsumption?: SortOrder;
+  maxEfficiencyPowerConsumption?: SortOrders;
 
-  @Field(() => SortOrder, {
+  @Field(() => SortOrders, {
     nullable: true,
     description: 'Minimum performance power consumption'
   })
-  minPerformancePowerConsumption?: SortOrder;
+  minPerformancePowerConsumption?: SortOrders;
 
-  @Field(() => SortOrder, {
+  @Field(() => SortOrders, {
     nullable: true,
     description: 'Maximum power consumption'
   })
-  maxPowerConsumption?: SortOrder;
+  maxPowerConsumption?: SortOrders;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
-  createdAt?: SortOrder;
+  @Field(() => SortOrders, {
+    nullable: true,
+    description: 'Creation timestamp'
+  })
+  createdAt?: SortOrders;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Update timestamp' })
-  updatedAt?: SortOrder;
+  @Field(() => SortOrders, { nullable: true, description: 'Update timestamp' })
+  updatedAt?: SortOrders;
 }

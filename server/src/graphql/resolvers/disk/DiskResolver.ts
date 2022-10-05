@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
@@ -40,7 +41,7 @@ export class DiskResolver {
   ) {}
 
   @Query(() => [Disk], { description: 'List of Disks' })
-  async disks(@Args() args: FindManyDiskArgs) {
+  async disks(@Args() args: FindManyDiskArgs): Promise<Prisma.Disk[]> {
     return this.diskService.findMany(args);
   }
 
@@ -48,7 +49,7 @@ export class DiskResolver {
     nullable: true,
     description: 'Disk matching the identifier'
   })
-  async disk(@Args() args: FindUniqueDiskArgs) {
+  async disk(@Args() args: FindUniqueDiskArgs): Promise<Prisma.Disk | null> {
     return this.diskService.findUnique(args);
   }
 
@@ -60,11 +61,11 @@ export class DiskResolver {
       description: 'Digital conversion unit'
     })
     unit: DigitalUnits
-  ) {
+  ): bigint {
     return digitalConverter({
       value: disk.size,
       from: DigitalUnits.B,
       to: unit
-    });
+    }) as bigint;
   }
 }

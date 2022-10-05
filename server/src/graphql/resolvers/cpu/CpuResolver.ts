@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { injectable, inject } from 'tsyringe';
 import { GraphQLNonNegativeInt } from 'graphql-scalars';
@@ -39,7 +40,7 @@ export class CpuResolver {
   ) {}
 
   @Query(() => [Cpu], { description: 'List of Cpus' })
-  async cpus(@Args() args: FindManyCpuArgs) {
+  async cpus(@Args() args: FindManyCpuArgs): Promise<Prisma.Cpu[]> {
     return this.cpuService.findMany(args);
   }
 
@@ -47,7 +48,7 @@ export class CpuResolver {
     nullable: true,
     description: 'Cpu matching the identifier'
   })
-  async cpu(@Args() args: FindUniqueCpuArgs) {
+  async cpu(@Args() args: FindUniqueCpuArgs): Promise<Prisma.Cpu | null> {
     return this.cpuService.findUnique(args);
   }
 
@@ -59,12 +60,12 @@ export class CpuResolver {
       description: 'Digital conversion unit'
     })
     unit: DigitalUnits
-  ) {
+  ): number {
     return digitalConverter({
       value: cpu.cacheL1d,
       from: DigitalUnits.B,
       to: unit
-    });
+    }) as number;
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
@@ -75,12 +76,12 @@ export class CpuResolver {
       description: 'Digital conversion unit'
     })
     unit: DigitalUnits
-  ) {
+  ): number {
     return digitalConverter({
       value: cpu.cacheL1i,
       from: DigitalUnits.B,
       to: unit
-    });
+    }) as number;
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
@@ -91,12 +92,12 @@ export class CpuResolver {
       description: 'Digital conversion unit'
     })
     unit: DigitalUnits
-  ) {
+  ): number {
     return digitalConverter({
       value: cpu.cacheL2,
       from: DigitalUnits.B,
       to: unit
-    });
+    }) as number;
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
@@ -107,11 +108,11 @@ export class CpuResolver {
       description: 'Digital conversion unit'
     })
     unit: DigitalUnits
-  ) {
+  ): number {
     return digitalConverter({
       value: cpu.cacheL3,
       from: DigitalUnits.B,
       to: unit
-    });
+    }) as number;
   }
 }

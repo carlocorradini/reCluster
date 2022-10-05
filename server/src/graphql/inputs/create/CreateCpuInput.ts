@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { Prisma } from '@prisma/client';
 import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
 import { IsDefined, isNotEmpty, ValidateIf } from 'class-validator';
 import { PickRequired } from '~/utils';

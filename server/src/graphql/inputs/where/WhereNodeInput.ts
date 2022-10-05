@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { Prisma } from '@prisma/client';
 import {
   StringFilter,
   TimestampFilter,

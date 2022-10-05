@@ -32,5 +32,7 @@ export const env = cleanEnv(process.env, {
   }),
   HOST: host({ default: '0.0.0.0', desc: 'Server host' }),
   PORT: port({ default: 80, desc: 'Server port' }),
-  DATABASE_URL: url({ desc: 'Database URL' })
+  DATABASE_URL: url({ desc: 'Database URL' }),
+  RECLUSTER_TOKEN_USER_SECRET: str({ desc: 'User token secret' }),
+  RECLUSTER_TOKEN_NODE_SECRET: str({ desc: 'Node token secret' })
 });

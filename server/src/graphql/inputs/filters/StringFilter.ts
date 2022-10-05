@@ -24,9 +24,9 @@
 
 /* eslint-disable max-classes-per-file */
 
+import type { Prisma } from '@prisma/client';
 import { GraphQLString } from 'graphql';
 import { Field, InputType, registerEnumType } from 'type-graphql';
-import { Prisma } from '@prisma/client';
 
 export enum StringFilterCaseSensitivity {
   CASE_SENSITIVE = 'default',

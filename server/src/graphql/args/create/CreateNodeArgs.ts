@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { ArgsType, Field } from 'type-graphql';
 import { ValidateNested } from 'class-validator';
 import { CreateNodeInput } from '../../inputs';

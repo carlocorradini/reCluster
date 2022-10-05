@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { FieldResolver, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { CpuService } from '~/services';
@@ -36,7 +37,7 @@ export class NodeCpuResolver {
   ) {}
 
   @FieldResolver(() => Cpu, { description: 'Node CPU' })
-  async cpu(@Root() node: Node) {
+  async cpu(@Root() node: Node): Promise<Prisma.Cpu | null> {
     return this.cpuService.findUnique({ id: node.cpuId });
   }
 }

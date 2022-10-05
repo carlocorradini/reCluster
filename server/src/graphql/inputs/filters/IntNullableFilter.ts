@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
+import type { Prisma } from '@prisma/client';
 import { GraphQLInt } from 'graphql';
 import { Field, InputType } from 'type-graphql';
-import { Prisma } from '@prisma/client';
 
 @InputType({ isAbstract: true, description: 'Integer nullable filter' })
 export class IntNullableFilter implements Prisma.IntNullableFilter {

@@ -22,24 +22,16 @@
  * SOFTWARE.
  */
 
-import type { Cpu } from '@prisma/client';
-import { prisma } from '~/db';
-import { logger } from '~/logger';
-import type { FindManyCpuArgs, FindUniqueCpuArgs } from '~/graphql';
+import { registerEnumType } from 'type-graphql';
 
-export class CpuService {
-  public async findMany(args: FindManyCpuArgs): Promise<Cpu[]> {
-    logger.debug(`Cpu service find many: ${JSON.stringify(args)}`);
-
-    return prisma.cpu.findMany({
-      ...args,
-      cursor: args.cursor ? { id: args.cursor } : undefined
-    });
-  }
-
-  public async findUnique(args: FindUniqueCpuArgs): Promise<Cpu | null> {
-    logger.debug(`Cpu service find unique: ${JSON.stringify(args)}`);
-
-    return prisma.cpu.findUnique({ where: { id: args.id } });
-  }
+export enum UserRoles {
+  ADMIN = 'ADMIN'
 }
+
+registerEnumType(UserRoles, {
+  name: 'UserRoles',
+  description: 'User roles',
+  valuesConfig: {
+    ADMIN: { description: 'Administrator' }
+  }
+});

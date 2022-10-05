@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
+import type { Prisma } from '@prisma/client';
 import { GraphQLString } from 'graphql';
 import { Field, InputType } from 'type-graphql';
-import { Prisma } from '@prisma/client';
 
 @InputType({
   isAbstract: true,

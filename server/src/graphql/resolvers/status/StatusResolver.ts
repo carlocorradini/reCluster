@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { Args, Query, Resolver } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { StatusService } from '~/services';
@@ -37,7 +38,7 @@ export class StatusResolver {
   ) {}
 
   @Query(() => [Status], { description: 'List of Statuses' })
-  async statuses(@Args() args: FindManyStatusArgs) {
+  async statuses(@Args() args: FindManyStatusArgs): Promise<Prisma.Status[]> {
     return this.statusService.findMany(args);
   }
 
@@ -45,7 +46,9 @@ export class StatusResolver {
     nullable: true,
     description: 'Status matching the identifier'
   })
-  async status(@Args() args: FindUniqueStatusArgs) {
+  async status(
+    @Args() args: FindUniqueStatusArgs
+  ): Promise<Prisma.Status | null> {
     return this.statusService.findUnique(args);
   }
 }

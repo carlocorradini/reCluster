@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { GraphQLID } from 'graphql';
-import { Interface as InterfacePrisma } from '@prisma/client';
 import { Field, ObjectType } from 'type-graphql';
 import {
   GraphQLBigInt,
@@ -34,7 +34,7 @@ import {
 import { InterfaceWoLFlags } from '../enums';
 
 @ObjectType({ description: 'Interface' })
-export class Interface implements InterfacePrisma {
+export class Interface implements Prisma.Interface {
   @Field(() => GraphQLID, { description: 'Interface identifier' })
   id!: string;
 

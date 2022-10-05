@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { GraphQLID } from 'graphql';
-import { Node as NodePrisma } from '@prisma/client';
 import { Field, ObjectType } from 'type-graphql';
 import {
   GraphQLBigInt,
@@ -33,7 +33,7 @@ import {
 import { NodeRoles } from '../enums';
 
 @ObjectType({ description: 'Node' })
-export class Node implements NodePrisma {
+export class Node implements Prisma.Node {
   @Field(() => GraphQLID, { description: 'Node identifier' })
   id!: string;
 

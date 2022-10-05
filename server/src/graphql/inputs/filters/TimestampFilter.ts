@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
+import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
 import { GraphQLTimestamp } from 'graphql-scalars';
-import { Prisma } from '@prisma/client';
 
 @InputType({ isAbstract: true, description: 'Timestamp filter' })
 export class TimestampFilter implements Prisma.DateTimeFilter {

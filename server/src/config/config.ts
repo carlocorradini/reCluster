@@ -36,6 +36,14 @@ export type Config = {
   database: {
     url: string;
   };
+  token: {
+    user: {
+      secret: string;
+    };
+    node: {
+      secret: string;
+    };
+  };
 };
 
 export const config: Config = {
@@ -49,5 +57,9 @@ export const config: Config = {
   },
   database: {
     url: env.DATABASE_URL
+  },
+  token: {
+    user: { secret: env.RECLUSTER_TOKEN_USER_SECRET },
+    node: { secret: env.RECLUSTER_TOKEN_NODE_SECRET }
   }
 };

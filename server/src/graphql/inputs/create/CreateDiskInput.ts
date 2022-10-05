@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { GraphQLBigInt, GraphQLNonEmptyString } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
 import { PickRequired } from '~/utils';

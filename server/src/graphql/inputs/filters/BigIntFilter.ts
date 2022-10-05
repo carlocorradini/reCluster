@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
+import type { Prisma } from '@prisma/client';
 import { GraphQLBigInt } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
-import { Prisma } from '@prisma/client';
 
 @InputType({ isAbstract: true, description: 'BigInt filter' })
 export class BigIntFilter implements Prisma.BigIntFilter {

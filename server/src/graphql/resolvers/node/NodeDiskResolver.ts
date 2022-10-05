@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { DiskService } from '~/services';
@@ -37,7 +38,10 @@ export class NodeDiskResolver {
   ) {}
 
   @FieldResolver(() => [Disk], { description: 'Node disks' })
-  async disks(@Root() node: Node, @Args() args: FindManyDiskArgs) {
+  async disks(
+    @Root() node: Node,
+    @Args() args: FindManyDiskArgs
+  ): Promise<Prisma.Disk[]> {
     return this.diskService.findMany({
       ...args,
       where: { nodeId: { equals: node.id } }

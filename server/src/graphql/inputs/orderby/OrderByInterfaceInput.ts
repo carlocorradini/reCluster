@@ -22,35 +22,38 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { SortOrder } from '../../enums';
+import { SortOrders } from '../../enums';
 
 @InputType({ isAbstract: true, description: 'Interface order by input' })
 export class OrderByInterfaceInput
   implements Partial<Omit<Prisma.InterfaceOrderByWithRelationInput, 'node'>>
 {
-  @Field(() => SortOrder, { description: 'Interface identifier' })
-  id?: SortOrder;
+  @Field(() => SortOrders, { description: 'Interface identifier' })
+  id?: SortOrders;
 
-  @Field(() => SortOrder, { description: 'Node identifier' })
-  nodeId?: SortOrder;
+  @Field(() => SortOrders, { description: 'Node identifier' })
+  nodeId?: SortOrders;
 
-  @Field(() => SortOrder, { description: 'Interface name' })
-  name?: SortOrder;
+  @Field(() => SortOrders, { description: 'Interface name' })
+  name?: SortOrders;
 
-  @Field(() => SortOrder, { description: 'Interface MAC address' })
-  address?: SortOrder;
+  @Field(() => SortOrders, { description: 'Interface MAC address' })
+  address?: SortOrders;
 
-  @Field(() => SortOrder, { description: 'Interface speed' })
-  speed?: SortOrder;
+  @Field(() => SortOrders, { description: 'Interface speed' })
+  speed?: SortOrders;
 
-  @Field(() => SortOrder, { description: 'Interface Wake-on-Lan flags' })
-  wol?: SortOrder;
+  @Field(() => SortOrders, { description: 'Interface Wake-on-Lan flags' })
+  wol?: SortOrders;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
-  createdAt?: SortOrder;
+  @Field(() => SortOrders, {
+    nullable: true,
+    description: 'Creation timestamp'
+  })
+  createdAt?: SortOrders;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Update timestamp' })
-  updatedAt?: SortOrder;
+  @Field(() => SortOrders, { nullable: true, description: 'Update timestamp' })
+  updatedAt?: SortOrders;
 }

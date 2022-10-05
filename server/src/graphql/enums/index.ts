@@ -29,3 +29,4 @@ export * from './InterfaceWoLFlags';
 export * from './NodeRoles';
 export * from './NodeStatuses';
 export * from './SortOrders';
+export * from './UserRoles';

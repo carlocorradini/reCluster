@@ -22,29 +22,32 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { SortOrder } from '../../enums';
+import { SortOrders } from '../../enums';
 
 @InputType({ isAbstract: true, description: 'Disk order by input' })
 export class OrderByDiskInput
   implements Partial<Omit<Prisma.DiskOrderByWithRelationInput, 'node'>>
 {
-  @Field(() => SortOrder, { description: 'Disk identifier' })
-  id?: SortOrder;
+  @Field(() => SortOrders, { description: 'Disk identifier' })
+  id?: SortOrders;
 
-  @Field(() => SortOrder, { description: 'Node identifier' })
-  nodeId?: SortOrder;
+  @Field(() => SortOrders, { description: 'Node identifier' })
+  nodeId?: SortOrders;
 
-  @Field(() => SortOrder, { description: 'Disk name' })
-  name?: SortOrder;
+  @Field(() => SortOrders, { description: 'Disk name' })
+  name?: SortOrders;
 
-  @Field(() => SortOrder, { description: 'Disk size' })
-  size?: SortOrder;
+  @Field(() => SortOrders, { description: 'Disk size' })
+  size?: SortOrders;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Creation timestamp' })
-  createdAt?: SortOrder;
+  @Field(() => SortOrders, {
+    nullable: true,
+    description: 'Creation timestamp'
+  })
+  createdAt?: SortOrders;
 
-  @Field(() => SortOrder, { nullable: true, description: 'Update timestamp' })
-  updatedAt?: SortOrder;
+  @Field(() => SortOrders, { nullable: true, description: 'Update timestamp' })
+  updatedAt?: SortOrders;
 }

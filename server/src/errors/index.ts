@@ -23,4 +23,5 @@
  */
 
 export * from './DatabaseError';
+export * from './TokenError';
 export * from './ValidationError';

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { GraphQLID } from 'graphql';
-import { Cpu as CpuPrisma } from '@prisma/client';
 import { Field, ObjectType } from 'type-graphql';
 import {
   GraphQLNonEmptyString,
@@ -34,7 +34,7 @@ import {
 import { CpuArchitectures, CpuVendors } from '../enums';
 
 @ObjectType({ description: 'Cpu' })
-export class Cpu implements CpuPrisma {
+export class Cpu implements Prisma.Cpu {
   @Field(() => GraphQLID, { description: 'Cpu identifier' })
   id!: string;
 

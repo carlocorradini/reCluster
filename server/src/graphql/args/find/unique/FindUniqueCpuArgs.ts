@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
+import type { Prisma } from '@prisma/client';
 import { GraphQLID } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
-import { Prisma } from '@prisma/client';
 
 @ArgsType()
 export class FindUniqueCpuArgs

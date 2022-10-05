@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { ArrayUnique } from 'class-validator';
 import {
   GraphQLBigInt,

@@ -22,14 +22,14 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { GraphQLID } from 'graphql';
-import { Status as StatusPrisma } from '@prisma/client';
 import { Field, ObjectType } from 'type-graphql';
 import { GraphQLTimestamp } from 'graphql-scalars';
 import { NodeStatuses } from '../enums';
 
 @ObjectType({ description: 'Status' })
-export class Status implements StatusPrisma {
+export class Status implements Prisma.Status {
   @Field(() => GraphQLID, { description: 'Status identifier' })
   id!: string;
 

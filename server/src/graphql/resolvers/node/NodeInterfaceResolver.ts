@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { InterfaceService } from '~/services';
@@ -37,7 +38,10 @@ export class NodeInterfaceResolver {
   ) {}
 
   @FieldResolver(() => [Interface], { description: 'Node interfaces' })
-  async interfaces(@Root() node: Node, @Args() args: FindManyInterfaceArgs) {
+  async interfaces(
+    @Root() node: Node,
+    @Args() args: FindManyInterfaceArgs
+  ): Promise<Prisma.Interface[]> {
     return this.interfaceService.findMany({
       ...args,
       where: { nodeId: { equals: node.id } }

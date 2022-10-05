@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { GraphQLID } from 'graphql';
-import { Disk as DiskPrisma } from '@prisma/client';
 import { Field, ObjectType } from 'type-graphql';
 import {
   GraphQLBigInt,
@@ -32,7 +32,7 @@ import {
 } from 'graphql-scalars';
 
 @ObjectType({ description: 'Disk' })
-export class Disk implements DiskPrisma {
+export class Disk implements Prisma.Disk {
   @Field(() => GraphQLID, { description: 'Disk identifier' })
   id!: string;
 

@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import type * as Prisma from '@prisma/client';
 import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { StatusService } from '~/services';
@@ -37,7 +38,10 @@ export class NodeStatusResolver {
   ) {}
 
   @FieldResolver(() => [Status], { description: 'Node statuses' })
-  async statuses(@Root() node: Node, @Args() args: FindManyStatusArgs) {
+  async statuses(
+    @Root() node: Node,
+    @Args() args: FindManyStatusArgs
+  ): Promise<Prisma.Status[]> {
     return this.statusService.findMany({
       ...args,
       where: { nodeId: { equals: node.id } }
