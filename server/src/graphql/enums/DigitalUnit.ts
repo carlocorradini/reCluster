@@ -34,6 +34,8 @@ export enum DigitalUnit {
   Gib = 'Gib',
   Tb = 'Tb',
   Tib = 'Tib',
+  Pb = 'Pb',
+  Pib = 'Pib',
   B = 'B',
   KB = 'KB',
   KiB = 'KiB',
@@ -42,7 +44,9 @@ export enum DigitalUnit {
   GB = 'GB',
   GiB = 'GiB',
   TB = 'TB',
-  TiB = 'TiB'
+  TiB = 'TiB',
+  PB = 'PB',
+  PiB = 'PiB'
 }
 
 registerEnumType(DigitalUnit, {

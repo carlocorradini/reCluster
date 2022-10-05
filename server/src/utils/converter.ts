@@ -22,10 +22,8 @@
  * SOFTWARE.
  */
 
-import configMeasurements, { digital, DigitalUnits } from 'convert-units';
+import convert from 'convert';
 import { DigitalUnit } from '~/graphql/enums';
-
-const convert = configMeasurements({ digital });
 
 type Converter<V, F, T = F> = {
   value: V;
@@ -35,11 +33,21 @@ type Converter<V, F, T = F> = {
 
 export function digitalConverter(
   args: Converter<number | bigint, DigitalUnit>
-) {
+): number | bigint {
+  // FIXME Remove Kb and KB conversion
+  const from = // eslint-disable-next-line no-nested-ternary
+    args.from === DigitalUnit.Kb
+      ? 'kb'
+      : args.from === DigitalUnit.KB
+      ? 'kB'
+      : args.from;
+  const to = // eslint-disable-next-line no-nested-ternary
+    args.to === DigitalUnit.Kb
+      ? 'kb'
+      : args.to === DigitalUnit.KB
+      ? 'kB'
+      : args.to;
+
   // FIXME BigInt conversion
-  return convert(
-    typeof args.value === 'number' ? args.value : Number(args.value)
-  )
-    .from(args.from as DigitalUnits) // FIXME as
-    .to(args.to as DigitalUnits); // FIXME as
+  return convert(args.value, from).to(to);
 }
