@@ -24,9 +24,16 @@
 
 import { registerEnumType } from 'type-graphql';
 
-export enum SortOrder {
-  ASC = 'asc',
-  DESC = 'desc'
+export enum NodeStatuses {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  WORKING = 'WORKING',
+  ERROR = 'ERROR'
 }
 
-registerEnumType(SortOrder, { name: 'SortOrder', description: 'Sort order' });
+registerEnumType(NodeStatuses, {
+  name: 'NodeStatuses',
+  description: 'Node statuses',
+  // TODO
+  valuesConfig: {}
+});

@@ -24,7 +24,7 @@
 
 import { Field, InputType } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { CpuArchitectures } from '../../entities';
+import { CpuArchitectures } from '../../enums';
 
 @InputType({ isAbstract: true, description: 'Cpu architecture filter' })
 export class CpuArchitecturesFilter

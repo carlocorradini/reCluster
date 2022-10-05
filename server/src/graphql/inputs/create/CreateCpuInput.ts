@@ -27,7 +27,7 @@ import { Prisma } from '@prisma/client';
 import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
 import { IsDefined, isNotEmpty, ValidateIf } from 'class-validator';
 import { PickRequired } from '~/utils';
-import { CpuArchitectures, CpuVendors } from '../../entities';
+import { CpuArchitectures, CpuVendors } from '../../enums';
 
 type ICreateCpuInput = PickRequired<
   Prisma.CpuCreateWithoutNodesInput & {

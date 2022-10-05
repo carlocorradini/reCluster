@@ -22,33 +22,19 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
-import { Field, InputType } from 'type-graphql';
-import { NodeStatuses } from '../../enums';
+import { registerEnumType } from 'type-graphql';
 
-@InputType({
-  isAbstract: true,
-  description: 'Node status filter'
-})
-export class NodeStatusesFilter implements Prisma.EnumNodeStatusesFilter {
-  @Field(() => NodeStatuses, {
-    nullable: true,
-    description: 'Node status equals'
-  })
-  equals?: NodeStatuses;
-
-  @Field({ nullable: true, description: 'Node status not equals' })
-  not?: NodeStatusesFilter;
-
-  @Field(() => [NodeStatuses], {
-    nullable: true,
-    description: 'Node status exists in list'
-  })
-  in?: NodeStatuses[];
-
-  @Field(() => [NodeStatuses], {
-    nullable: true,
-    description: 'Node status does not exists in list'
-  })
-  notIn?: NodeStatuses[];
+export enum CpuArchitectures {
+  x86_64 = 'x86_64'
 }
+
+registerEnumType(CpuArchitectures, {
+  name: 'CpuArchitectures',
+  description: 'Cpu architectures',
+  valuesConfig: {
+    x86_64: {
+      description:
+        '64-bit version of the x86 instruction set. Also known as x64, x86-64, AMD64, and Intel 64'
+    }
+  }
+});

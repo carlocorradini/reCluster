@@ -27,7 +27,7 @@ import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
 import { DiskService } from '~/services';
 import { digitalConverter } from '~/utils';
-import { DigitalUnit } from '../../enums';
+import { DigitalUnits } from '../../enums';
 import { Disk } from '../../entities';
 import { FindUniqueDiskArgs, FindManyDiskArgs } from '../../args';
 
@@ -55,15 +55,15 @@ export class DiskResolver {
   @FieldResolver(() => GraphQLBigInt)
   size(
     @Root() disk: Disk,
-    @Arg('unit', () => DigitalUnit, {
-      defaultValue: DigitalUnit.B,
+    @Arg('unit', () => DigitalUnits, {
+      defaultValue: DigitalUnits.B,
       description: 'Digital conversion unit'
     })
-    unit: DigitalUnit
+    unit: DigitalUnits
   ) {
     return digitalConverter({
       value: disk.size,
-      from: DigitalUnit.B,
+      from: DigitalUnits.B,
       to: unit
     });
   }

@@ -24,7 +24,7 @@
 
 import { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { InterfaceWoLFlags } from '../../entities';
+import { InterfaceWoLFlags } from '../../enums';
 
 @InputType({
   isAbstract: true,

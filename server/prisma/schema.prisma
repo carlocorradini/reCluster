@@ -95,7 +95,7 @@ model Interface {
 }
 
 enum InterfaceWoLFlags {
-  // Wke on ARP
+  // Wake on ARP
   a
   // Wake on broadcast messages
   b

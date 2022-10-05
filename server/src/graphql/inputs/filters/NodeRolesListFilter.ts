@@ -24,7 +24,7 @@
 
 import { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { NodeRoles } from '../../entities';
+import { NodeRoles } from '../../enums';
 
 @InputType({
   isAbstract: true,

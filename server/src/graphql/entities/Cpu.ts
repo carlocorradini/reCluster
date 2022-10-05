@@ -24,27 +24,14 @@
 
 import { GraphQLID } from 'graphql';
 import { Cpu as CpuPrisma } from '@prisma/client';
-import { Field, ObjectType, registerEnumType } from 'type-graphql';
+import { Field, ObjectType } from 'type-graphql';
 import {
   GraphQLNonEmptyString,
   GraphQLNonNegativeInt,
   GraphQLPositiveInt,
   GraphQLTimestamp
 } from 'graphql-scalars';
-
-export enum CpuArchitectures {
-  x86_64 = 'x86_64'
-}
-registerEnumType(CpuArchitectures, {
-  name: 'CpuArchitecture',
-  description: 'Cpu architectures'
-});
-
-export enum CpuVendors {
-  AMD = 'AMD',
-  INTEL = 'INTEL'
-}
-registerEnumType(CpuVendors, { name: 'CpuVendor', description: 'Cpu vendors' });
+import { CpuArchitectures, CpuVendors } from '../enums';
 
 @ObjectType({ description: 'Cpu' })
 export class Cpu implements CpuPrisma {

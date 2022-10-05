@@ -23,7 +23,7 @@
  */
 
 import convert from 'convert';
-import { DigitalUnit } from '~/graphql/enums';
+import { DigitalUnits } from '~/graphql/enums';
 
 type Converter<V, F, T = F> = {
   value: V;
@@ -32,19 +32,19 @@ type Converter<V, F, T = F> = {
 };
 
 export function digitalConverter(
-  args: Converter<number | bigint, DigitalUnit>
+  args: Converter<number | bigint, DigitalUnits>
 ): number | bigint {
   // FIXME Remove Kb and KB conversion
   const from = // eslint-disable-next-line no-nested-ternary
-    args.from === DigitalUnit.Kb
+    args.from === DigitalUnits.Kb
       ? 'kb'
-      : args.from === DigitalUnit.KB
+      : args.from === DigitalUnits.KB
       ? 'kB'
       : args.from;
   const to = // eslint-disable-next-line no-nested-ternary
-    args.to === DigitalUnit.Kb
+    args.to === DigitalUnits.Kb
       ? 'kb'
-      : args.to === DigitalUnit.KB
+      : args.to === DigitalUnits.KB
       ? 'kB'
       : args.to;
 

@@ -26,6 +26,7 @@ import { Prisma } from '@prisma/client';
 import { GraphQLBigInt, GraphQLPositiveInt } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
 import {
+  ArrayUnique,
   IsDefined,
   isNotEmpty,
   ValidateIf,
@@ -35,7 +36,7 @@ import { PickRequired } from '~/utils';
 import { CreateCpuInput } from './CreateCpuInput';
 import { CreateDiskInput } from './CreateDiskInput';
 import { CreateInterfaceInput } from './CreateInterfaceInput';
-import { NodeRoles } from '../../entities';
+import { NodeRoles } from '../../enums';
 
 type ICreateNodeInput = PickRequired<Prisma.NodeCreateInput> & {
   cpu: CreateCpuInput;
@@ -46,6 +47,7 @@ type ICreateNodeInput = PickRequired<Prisma.NodeCreateInput> & {
 @InputType({ description: 'Create Node input' })
 export class CreateNodeInput implements ICreateNodeInput {
   @Field(() => [NodeRoles], { description: 'Node roles' })
+  @ArrayUnique()
   roles!: NodeRoles[];
 
   @Field(() => GraphQLBigInt, { description: 'Node ram' })

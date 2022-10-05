@@ -35,12 +35,13 @@ import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
 import { NodeService } from '~/services';
 import { digitalConverter } from '~/utils';
-import { DigitalUnit } from '../../enums';
+import { DigitalUnits } from '../../enums';
 import { Node } from '../../entities';
 import {
   CreateNodeArgs,
   FindUniqueNodeArgs,
-  FindManyNodeArgs
+  FindManyNodeArgs,
+  UpdateNodeArgs
 } from '../../args';
 
 @Resolver(Node)
@@ -69,15 +70,24 @@ export class NodeResolver {
     return this.nodeService.create(args);
   }
 
+  @Mutation(() => Node, { description: 'Update node' })
+  async updateNode(@Args() args: UpdateNodeArgs) {
+    return this.nodeService.update(args);
+  }
+
   @FieldResolver(() => GraphQLBigInt)
   ram(
     @Root() node: Node,
-    @Arg('unit', () => DigitalUnit, {
-      defaultValue: DigitalUnit.B,
+    @Arg('unit', () => DigitalUnits, {
+      defaultValue: DigitalUnits.B,
       description: 'Digital conversion unit'
     })
-    unit: DigitalUnit
+    unit: DigitalUnits
   ) {
-    return digitalConverter({ value: node.ram, from: DigitalUnit.B, to: unit });
+    return digitalConverter({
+      value: node.ram,
+      from: DigitalUnits.B,
+      to: unit
+    });
   }
 }

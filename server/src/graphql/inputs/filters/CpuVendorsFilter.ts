@@ -24,7 +24,7 @@
 
 import { Field, InputType } from 'type-graphql';
 import { Prisma } from '@prisma/client';
-import { CpuVendors } from '../../entities';
+import { CpuVendors } from '../../enums';
 
 @InputType({ isAbstract: true, description: 'Cpu vendor filter' })
 export class CpuVendorsFilter implements Prisma.EnumCpuVendorsFilter {

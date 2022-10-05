@@ -24,19 +24,9 @@
 
 import { GraphQLID } from 'graphql';
 import { Status as StatusPrisma } from '@prisma/client';
-import { Field, ObjectType, registerEnumType } from 'type-graphql';
+import { Field, ObjectType } from 'type-graphql';
 import { GraphQLTimestamp } from 'graphql-scalars';
-
-export enum NodeStatuses {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  WORKING = 'WORKING',
-  ERROR = 'ERROR'
-}
-registerEnumType(NodeStatuses, {
-  name: 'NodeStatus',
-  description: 'Node statuses'
-});
+import { NodeStatuses } from '../enums';
 
 @ObjectType({ description: 'Status' })
 export class Status implements StatusPrisma {

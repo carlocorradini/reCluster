@@ -24,28 +24,14 @@
 
 import { GraphQLID } from 'graphql';
 import { Interface as InterfacePrisma } from '@prisma/client';
-import { Field, ObjectType, registerEnumType } from 'type-graphql';
+import { Field, ObjectType } from 'type-graphql';
 import {
   GraphQLBigInt,
   GraphQLMAC,
   GraphQLNonEmptyString,
   GraphQLTimestamp
 } from 'graphql-scalars';
-
-export enum InterfaceWoLFlags {
-  a = 'a',
-  b = 'b',
-  d = 'd',
-  g = 'g',
-  m = 'm',
-  p = 'p',
-  s = 's',
-  u = 'u'
-}
-registerEnumType(InterfaceWoLFlags, {
-  name: 'InterfaceWoLFlags',
-  description: 'Interface Wake-on-Lan flags'
-});
+import { InterfaceWoLFlags } from '../enums';
 
 @ObjectType({ description: 'Interface' })
 export class Interface implements InterfacePrisma {

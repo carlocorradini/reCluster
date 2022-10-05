@@ -22,33 +22,18 @@
  * SOFTWARE.
  */
 
-import { Prisma } from '@prisma/client';
-import { Field, InputType } from 'type-graphql';
-import { NodeStatuses } from '../../enums';
+import { registerEnumType } from 'type-graphql';
 
-@InputType({
-  isAbstract: true,
-  description: 'Node status filter'
-})
-export class NodeStatusesFilter implements Prisma.EnumNodeStatusesFilter {
-  @Field(() => NodeStatuses, {
-    nullable: true,
-    description: 'Node status equals'
-  })
-  equals?: NodeStatuses;
-
-  @Field({ nullable: true, description: 'Node status not equals' })
-  not?: NodeStatusesFilter;
-
-  @Field(() => [NodeStatuses], {
-    nullable: true,
-    description: 'Node status exists in list'
-  })
-  in?: NodeStatuses[];
-
-  @Field(() => [NodeStatuses], {
-    nullable: true,
-    description: 'Node status does not exists in list'
-  })
-  notIn?: NodeStatuses[];
+export enum SortOrders {
+  ASC = 'asc',
+  DESC = 'desc'
 }
+
+registerEnumType(SortOrders, {
+  name: 'SortOrders',
+  description: 'Sort orders',
+  valuesConfig: {
+    ASC: { description: 'Ascending order' },
+    DESC: { description: 'Descending order' }
+  }
+});

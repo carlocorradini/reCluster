@@ -22,5 +22,4 @@
  * SOFTWARE.
  */
 
-// FIXME
-export {};
+export * from './UpdateNodeInput';

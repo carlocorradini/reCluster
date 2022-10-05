@@ -24,22 +24,13 @@
 
 import { GraphQLID } from 'graphql';
 import { Node as NodePrisma } from '@prisma/client';
-import { Field, ObjectType, registerEnumType } from 'type-graphql';
+import { Field, ObjectType } from 'type-graphql';
 import {
   GraphQLBigInt,
   GraphQLPositiveInt,
   GraphQLTimestamp
 } from 'graphql-scalars';
-
-export enum NodeRoles {
-  RECLUSTER_MASTER = 'RECLUSTER_MASTER',
-  K8S_MASTER = 'K8S_MASTER',
-  K8S_WORKER = 'K8S_WORKER'
-}
-registerEnumType(NodeRoles, {
-  name: 'NodeRoles',
-  description: 'Node roles'
-});
+import { NodeRoles } from '../enums';
 
 @ObjectType({ description: 'Node' })
 export class Node implements NodePrisma {

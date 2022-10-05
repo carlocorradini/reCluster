@@ -24,7 +24,7 @@
 
 import { registerEnumType } from 'type-graphql';
 
-export enum DigitalUnit {
+export enum DigitalUnits {
   b = 'b',
   Kb = 'Kb',
   Kib = 'Kib',
@@ -49,7 +49,31 @@ export enum DigitalUnit {
   PiB = 'PiB'
 }
 
-registerEnumType(DigitalUnit, {
-  name: 'DigitalUnit',
-  description: 'Digital unit'
+registerEnumType(DigitalUnits, {
+  name: 'DigitalUnits',
+  description: 'Digital units',
+  valuesConfig: {
+    b: { description: 'Bit' },
+    Kb: { description: 'Kilobit' },
+    Kib: { description: 'Kibibit' },
+    Mb: { description: 'Megabit' },
+    Mib: { description: 'Mebibit' },
+    Gb: { description: 'Gigabit' },
+    Gib: { description: 'Gibibit' },
+    Tb: { description: 'Terabit' },
+    Tib: { description: 'Tebibit' },
+    Pb: { description: 'Petabit' },
+    Pib: { description: 'Pebibit' },
+    B: { description: 'Byte' },
+    KB: { description: 'Kilobyte' },
+    KiB: { description: 'Kibibyte' },
+    MB: { description: 'Megabyte' },
+    MiB: { description: 'Mebibyte' },
+    GB: { description: 'Gigabyte' },
+    GiB: { description: 'Gibibyte' },
+    TB: { description: 'Terabyte' },
+    TiB: { description: 'Tebibyte' },
+    PB: { description: 'Petabyte' },
+    PiB: { description: 'Pebibyte' }
+  }
 });

@@ -23,32 +23,15 @@
  */
 
 import { Prisma } from '@prisma/client';
+import { ArrayUnique } from 'class-validator';
 import { Field, InputType } from 'type-graphql';
-import { NodeStatuses } from '../../enums';
+import { NodeRoles } from '../../enums';
 
-@InputType({
-  isAbstract: true,
-  description: 'Node status filter'
-})
-export class NodeStatusesFilter implements Prisma.EnumNodeStatusesFilter {
-  @Field(() => NodeStatuses, {
-    nullable: true,
-    description: 'Node status equals'
-  })
-  equals?: NodeStatuses;
+type IUpdateNodeInput = Pick<Prisma.NodeUpdateInput, 'roles'>;
 
-  @Field({ nullable: true, description: 'Node status not equals' })
-  not?: NodeStatusesFilter;
-
-  @Field(() => [NodeStatuses], {
-    nullable: true,
-    description: 'Node status exists in list'
-  })
-  in?: NodeStatuses[];
-
-  @Field(() => [NodeStatuses], {
-    nullable: true,
-    description: 'Node status does not exists in list'
-  })
-  notIn?: NodeStatuses[];
+@InputType({ description: 'Update Node input' })
+export class UpdateNodeInput implements IUpdateNodeInput {
+  @Field(() => [NodeRoles], { nullable: true, description: 'Node roles' })
+  @ArrayUnique()
+  roles?: [NodeRoles];
 }
