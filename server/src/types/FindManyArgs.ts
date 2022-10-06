@@ -22,11 +22,9 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+/**
+ * Find many args of T
+ */
+export type FindManyArgs<T> = Omit<T, 'select' | 'include' | 'distinct'> & {
+  cursor?: string;
+};

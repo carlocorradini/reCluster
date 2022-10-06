@@ -22,11 +22,7 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+/**
+ * Set properties K of T to optional
+ */
+export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;

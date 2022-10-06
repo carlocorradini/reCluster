@@ -27,3 +27,4 @@ export * from './disk';
 export * from './interface';
 export * from './node';
 export * from './status';
+export * from './user';

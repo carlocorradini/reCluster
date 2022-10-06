@@ -25,26 +25,30 @@
 import jwt from 'jsonwebtoken';
 import { config } from '~/config';
 import { TokenError } from '~/errors';
-import { UserRoles } from '~/graphql/enums';
+import { UserRoles, NodeRoles } from '~/graphql/enums';
 
 export enum TokenTypes {
   USER = 'USER',
   NODE = 'NODE'
 }
 
-type TokenPayload<T extends TokenTypes = TokenTypes> = {
+type ITokenPayload<T extends TokenTypes> = {
   type: T;
   id: string;
+  roles: T extends TokenTypes.USER
+    ? UserRoles[]
+    : T extends TokenTypes.NODE
+    ? NodeRoles[]
+    : never;
 };
-export type UserTokenPayload = TokenPayload<TokenTypes.USER> & {
-  roles: UserRoles[];
-};
-export type NodeTokenPayload = TokenPayload<TokenTypes.NODE>;
+export type UserTokenPayload = ITokenPayload<TokenTypes.USER>;
+export type NodeTokenPayload = ITokenPayload<TokenTypes.NODE>;
+export type TokenPayload = UserTokenPayload | NodeTokenPayload;
 
-type Token<T extends TokenPayload = TokenPayload> = jwt.Jwt & { payload: T };
-export type UserToken = Token<UserTokenPayload>;
-export type NodeToken = Token<NodeTokenPayload>;
-export type Tokens = UserToken | NodeToken;
+type IToken<T> = jwt.Jwt & { payload: T };
+export type UserToken = IToken<UserTokenPayload>;
+export type NodeToken = IToken<NodeTokenPayload>;
+export type Token = UserToken | NodeToken;
 
 export class TokenService {
   public static readonly SIGN_OPTIONS: jwt.SignOptions = {
@@ -55,7 +59,7 @@ export class TokenService {
     complete: true
   };
 
-  public sign(payload: UserTokenPayload | NodeTokenPayload): Promise<string> {
+  public sign(payload: TokenPayload): Promise<string> {
     return new Promise((resolve, reject) => {
       jwt.sign(
         payload,
@@ -70,7 +74,7 @@ export class TokenService {
     });
   }
 
-  public verify(token: string): Promise<Tokens> {
+  public verify(token: string): Promise<Token> {
     return new Promise((resolve, reject) => {
       jwt.verify(
         token,
@@ -79,13 +83,13 @@ export class TokenService {
         (error, decoded) => {
           if (error) reject(new TokenError(error.message));
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          else resolve(decoded! as Tokens);
+          else resolve(decoded! as Token);
         }
       );
     });
   }
 
-  public decode(token: string): Tokens {
+  public decode(token: string): Token {
     const decoded = jwt.decode(token, { complete: true });
     const error = new TokenError('Error decoding token');
 
@@ -100,7 +104,7 @@ export class TokenService {
     switch (decoded.payload.type) {
       case TokenTypes.USER:
       case TokenTypes.NODE:
-        return decoded as Tokens;
+        return decoded as Token;
       default:
         throw error;
     }

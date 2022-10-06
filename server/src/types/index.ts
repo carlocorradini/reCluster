@@ -22,11 +22,17 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+export * from './ClassType';
+export * from './ExpandRecursively';
+export * from './FindManyArgs';
+export * from './NonNullableRecursive';
+export * from './Nullable';
+export * from './NullableOptions';
+export * from './NullableRecursive';
+export * from './OptionalKeys';
+export * from './PartialBy';
+export * from './PartialRecursive';
+export * from './PickOptional';
+export * from './PickRequired';
+export * from './RequiredKeys';
+export * from './ResolverData';

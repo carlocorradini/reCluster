@@ -22,11 +22,25 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+import type * as Prisma from '@prisma/client';
+import { GraphQLID } from 'graphql';
+import { Field, ObjectType } from 'type-graphql';
+import { GraphQLTimestamp } from 'graphql-scalars';
+import { UserRoles } from '../enums';
+
+// FIXME Missing implements Prisma.User
+
+@ObjectType({ description: 'User' })
+export class User {
+  @Field(() => GraphQLID, { description: 'User identifier' })
+  id!: string;
+
+  @Field(() => [UserRoles], { description: 'User roles' })
+  roles!: UserRoles[];
+
+  @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
+  createdAt!: Date;
+
+  @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
+  updatedAt!: Date;
+}

@@ -22,6 +22,13 @@
  * SOFTWARE.
  */
 
-export type Context = { [K in string | number | symbol]: never };
+import type { NodeTokenPayload, UserTokenPayload } from '~/services';
+
+type IContext<TApplicant> = {
+  applicant?: TApplicant;
+};
+export type UserContext = IContext<UserTokenPayload>;
+export type NodeContext = IContext<NodeTokenPayload>;
+export type Context = UserContext | NodeContext;
 
 export const context: Context = {};

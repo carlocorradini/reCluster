@@ -26,7 +26,7 @@ import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
 import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
 import { IsDefined, isNotEmpty, ValidateIf } from 'class-validator';
-import { PickRequired } from '~/utils';
+import { PickRequired } from '~/types';
 import { CpuArchitectures, CpuVendors } from '../../enums';
 
 type ICreateCpuInput = PickRequired<

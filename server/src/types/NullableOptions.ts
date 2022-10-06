@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+import type { PickRequired } from './PickRequired';
+import type { PickOptional } from './PickOptional';
+import type { Nullable } from './Nullable';
+
+/**
+ * Optional properties of T can be null
+ */
+export type NullableOptional<T> = PickRequired<T> & Nullable<PickOptional<T>>;

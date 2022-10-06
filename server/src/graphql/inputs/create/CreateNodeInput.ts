@@ -32,7 +32,7 @@ import {
   ValidateIf,
   ValidateNested
 } from 'class-validator';
-import { PickRequired } from '~/utils';
+import { PickRequired } from '~/types';
 import { CreateCpuInput } from './CreateCpuInput';
 import { CreateDiskInput } from './CreateDiskInput';
 import { CreateInterfaceInput } from './CreateInterfaceInput';

@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+/**
+ * Expand T recursively
+ */
+export type ExpandRecursively<T> = T extends object
+  ? T extends infer O
+    ? { [K in keyof O]: ExpandRecursively<O[K]> }
+    : never
+  : T;

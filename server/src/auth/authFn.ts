@@ -22,11 +22,22 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+import type { AuthFn, Context } from '~/graphql';
+
+export const authFn: AuthFn<Context> = (
+  { context: { applicant } },
+  { type, roles }
+) => {
+  if (!applicant || applicant.type !== type) {
+    // No applicant or invalid type
+    return false;
+  }
+
+  if (roles.length === 0) {
+    // Check if applicant exists
+    return applicant !== undefined && applicant !== null;
+  }
+
+  // Check applicant roles overlap
+  return applicant.roles.some((role) => roles.includes(role));
+};

@@ -22,11 +22,7 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+/**
+ * Properties of T can be null
+ */
+export type Nullable<T> = { [P in keyof T]: T[P] | null };

@@ -22,11 +22,14 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+import { ApolloError } from 'apollo-server-errors';
+
+export class AuthorizationError extends ApolloError {
+  public constructor(
+    message = "Access denied! You don't have permission for this action!"
+  ) {
+    super(message, 'UNAUTHORIZED');
+
+    Object.defineProperty(this, 'name', { value: 'AuthorizationError' });
+  }
+}

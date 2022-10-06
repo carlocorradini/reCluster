@@ -24,7 +24,7 @@
 
 import type { Prisma } from '@prisma/client';
 import { ArgsType, Field } from 'type-graphql';
-import { FindManyArgs } from '~/utils';
+import { FindManyArgs } from '~/types';
 import { OrderByDiskInput, WhereDiskInput } from '../../../inputs';
 import { PaginationArgs } from './PaginationArgs';
 

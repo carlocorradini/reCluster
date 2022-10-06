@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+import type { GraphQLResolveInfo } from 'graphql';
+
+export type ResolverData<TContext = Record<string, never>> = {
+  root: unknown;
+  args: { [arg: string]: unknown };
+  context: TContext;
+  info: GraphQLResolveInfo;
+};

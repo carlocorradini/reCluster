@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+export * from './AuthenticationError';
+export * from './AuthorizationError';
 export * from './DatabaseError';
 export * from './TokenError';
 export * from './ValidationError';

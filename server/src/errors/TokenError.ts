@@ -25,8 +25,11 @@
 import { ApolloError } from 'apollo-server-errors';
 
 export class TokenError extends ApolloError {
-  constructor(message = 'Token Error') {
-    super(message, 'INTERNAL_SERVER_ERROR');
+  public constructor(cause?: string) {
+    super('Internal Server Error', 'INTERNAL_SERVER_ERROR', {
+      kind: 'TOKEN',
+      cause: cause || null
+    });
 
     Object.defineProperty(this, 'name', { value: 'TokenError' });
   }

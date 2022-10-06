@@ -30,7 +30,7 @@ import {
   GraphQLNonEmptyString
 } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
-import { PickRequired } from '~/utils';
+import { PickRequired } from '~/types';
 import { InterfaceWoLFlags } from '../../enums';
 
 type ICreateInterfaceInput = PickRequired<

@@ -25,9 +25,10 @@
 import { ApolloError } from 'apollo-server-errors';
 
 export class DatabaseError extends ApolloError {
-  constructor(code?: string) {
+  public constructor(cause?: string) {
     super('Internal Server Error', 'INTERNAL_SERVER_ERROR', {
-      kind: code ? code.replace('P', 'DB') : 'DB0000'
+      kind: 'DB',
+      cause: cause ? cause.replace('P', 'DB') : null
     });
 
     Object.defineProperty(this, 'name', { value: 'DatabaseError' });

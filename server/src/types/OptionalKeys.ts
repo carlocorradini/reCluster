@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+/**
+ * Optional keys of T
+ */
+export type OptionalKeys<T> = {
+  [K in keyof T]-?: Record<string, never> extends { [P in K]: T[K] }
+    ? K
+    : never;
+}[keyof T];

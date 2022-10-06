@@ -24,7 +24,7 @@
 
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { PickRequired } from '~/utils';
+import { PickRequired } from '~/types';
 import { NodeStatuses } from '../../enums';
 
 type ICreateStatusInput = PickRequired<Prisma.StatusCreateWithoutNodeInput>;

@@ -22,11 +22,9 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+import type { ExpandRecursively } from './ExpandRecursively';
+
+/**
+ * Properties and nested properties of T can not be null
+ */
+export type NonNullableRecursive<T> = ExpandRecursively<NonNullable<T>>;

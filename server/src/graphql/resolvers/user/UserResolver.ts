@@ -22,11 +22,23 @@
  * SOFTWARE.
  */
 
-export * from './args';
-export * from './directives';
-export * from './entities';
-export * from './enums';
-export * from './inputs';
-export * from './resolvers';
-export * from './context';
-export * from './schema';
+import { Query, Resolver } from 'type-graphql';
+import { injectable } from 'tsyringe';
+import { User } from '../../entities';
+
+// FIXME All class
+@Resolver(User)
+@injectable()
+export class UserResolver {
+  /*
+  public constructor(
+    @inject(UserService) private readonly userService: UserService
+  ) {}
+  */
+
+  // FIXME Delete this!
+  @Query(() => [User], { description: 'List of users' })
+  async users(): Promise<User[]> {
+    return [];
+  }
+}
