@@ -44,6 +44,7 @@ export type NodeTokenPayload = TokenPayload<TokenTypes.NODE>;
 type Token<T extends TokenPayload = TokenPayload> = jwt.Jwt & { payload: T };
 export type UserToken = Token<UserTokenPayload>;
 export type NodeToken = Token<NodeTokenPayload>;
+export type Tokens = UserToken | NodeToken;
 
 export class TokenService {
   public static readonly SIGN_OPTIONS: jwt.SignOptions = {
@@ -69,7 +70,7 @@ export class TokenService {
     });
   }
 
-  public verify(token: string): Promise<UserToken | NodeToken> {
+  public verify(token: string): Promise<Tokens> {
     return new Promise((resolve, reject) => {
       jwt.verify(
         token,
@@ -78,13 +79,13 @@ export class TokenService {
         (error, decoded) => {
           if (error) reject(new TokenError(error.message));
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          else resolve(decoded! as UserToken | NodeToken);
+          else resolve(decoded! as Tokens);
         }
       );
     });
   }
 
-  public decode(token: string): UserToken | NodeToken {
+  public decode(token: string): Tokens {
     const decoded = jwt.decode(token, { complete: true });
     const error = new TokenError('Error decoding token');
 
@@ -99,7 +100,7 @@ export class TokenService {
     switch (decoded.payload.type) {
       case TokenTypes.USER:
       case TokenTypes.NODE:
-        return decoded as UserToken | NodeToken;
+        return decoded as Tokens;
       default:
         throw error;
     }
