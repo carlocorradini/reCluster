@@ -37,12 +37,7 @@ export type Config = {
     url: string;
   };
   token: {
-    user: {
-      secret: string;
-    };
-    node: {
-      secret: string;
-    };
+    secret: string;
   };
 };
 
@@ -59,7 +54,6 @@ export const config: Config = {
     url: env.DATABASE_URL
   },
   token: {
-    user: { secret: env.RECLUSTER_TOKEN_USER_SECRET },
-    node: { secret: env.RECLUSTER_TOKEN_NODE_SECRET }
+    secret: env.RECLUSTER_TOKEN_SECRET
   }
 };

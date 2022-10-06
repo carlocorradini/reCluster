@@ -54,22 +54,11 @@ export class TokenService {
     complete: true
   };
 
-  private static secret(type: TokenTypes) {
-    switch (type) {
-      case TokenTypes.USER:
-        return config.token.user.secret;
-      case TokenTypes.NODE:
-        return config.token.node.secret;
-      default:
-        throw new TokenError(`Unknown token type '${type}'`);
-    }
-  }
-
   public sign(payload: UserTokenPayload | NodeTokenPayload): Promise<string> {
     return new Promise((resolve, reject) => {
       jwt.sign(
         payload,
-        TokenService.secret(payload.type),
+        config.token.secret,
         TokenService.SIGN_OPTIONS,
         (error, encoded) => {
           if (error) reject(new TokenError(error.message));
@@ -81,14 +70,10 @@ export class TokenService {
   }
 
   public verify(token: string): Promise<UserToken | NodeToken> {
-    const {
-      payload: { type }
-    } = this.decode(token);
-
     return new Promise((resolve, reject) => {
       jwt.verify(
         token,
-        TokenService.secret(type),
+        config.token.secret,
         TokenService.VERIFY_OPTIONS,
         (error, decoded) => {
           if (error) reject(new TokenError(error.message));
@@ -99,7 +84,7 @@ export class TokenService {
     });
   }
 
-  public decode(token: string): jwt.Jwt & { payload: TokenPayload } {
+  public decode(token: string): UserToken | NodeToken {
     const decoded = jwt.decode(token, { complete: true });
     const error = new TokenError('Error decoding token');
 
@@ -114,7 +99,7 @@ export class TokenService {
     switch (decoded.payload.type) {
       case TokenTypes.USER:
       case TokenTypes.NODE:
-        return decoded as jwt.Jwt & { payload: TokenPayload };
+        return decoded as UserToken | NodeToken;
       default:
         throw error;
     }
