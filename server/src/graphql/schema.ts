@@ -24,7 +24,6 @@
 
 import { GraphQLSchema } from 'graphql';
 import { buildSchemaSync } from 'type-graphql';
-import { mergeSchemas } from '@graphql-tools/schema';
 import { container } from 'tsyringe';
 import {
   CpuNodeResolver,
@@ -71,12 +70,7 @@ const schemaSimple = buildSchemaSync({
   container: { get: (cls) => container.resolve(cls) }
 });
 
-const schemaMerged = mergeSchemas({
-  schemas: [schemaSimple],
-  typeDefs: directives.map((directive) => directive.typeDefs)
-});
-
 export const schema: GraphQLSchema = directives.reduce(
   (newSchema, { transformer }) => transformer(newSchema),
-  schemaMerged
+  schemaSimple
 );

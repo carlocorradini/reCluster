@@ -27,18 +27,30 @@ import type { Context } from '~/types';
 
 export const authFn: AuthFn<Context> = (
   { context: { applicant } },
-  { type, roles }
+  { type, roles, permissions }
 ) => {
   if (!applicant || applicant.type !== type) {
     // No applicant or invalid type
     return false;
   }
 
-  if (roles.length === 0) {
+  if (roles.length === 0 && permissions.length === 0) {
     // Only authentication required
     return true;
   }
 
-  // Check authorization roles
-  return applicant.roles.some((role) => roles.includes(role));
+  // Roles
+  const rolesMatch: boolean =
+    roles.length === 0
+      ? true
+      : applicant.roles.some((role) => roles.includes(role));
+  // Permissions
+  const permissionsMatch: boolean =
+    permissions.length === 0
+      ? true
+      : applicant.permissions.some((permission) =>
+          permissions.includes(permission)
+        );
+  // Roles & Permissions
+  return rolesMatch && permissionsMatch;
 };

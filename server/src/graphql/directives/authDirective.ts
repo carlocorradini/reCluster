@@ -44,8 +44,9 @@ enum AuthMode {
 }
 
 type AuthData = {
-  type: TokenTypes;
+  type: string;
   roles: string[];
+  permissions: string[];
 };
 
 export type AuthFn<TContext = Record<string, unknown>> = (
@@ -73,16 +74,13 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
   auth,
   authMode
 }: AuthDirective<TContext>) {
+  const name = 'auth';
   const typeDirectiveArgumentMaps: Record<string, unknown> = {};
 
   return {
-    typeDefs: `
-    directive @auth(
-      type: String! = "USER",
-      roles: [String!]! = [],
-    ) on OBJECT | FIELD | FIELD_DEFINITION | INPUT_FIELD_DEFINITION`,
     typeDefsObj: new GraphQLDirective({
-      name: 'auth',
+      name,
+      description: 'Protect the resource from unauthorized access.',
       locations: [
         DirectiveLocation.OBJECT,
         DirectiveLocation.FIELD,
@@ -92,18 +90,25 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
       args: {
         type: {
           type: GraphQLNonNull(GraphQLString),
-          defaultValue: TokenTypes.USER
+          defaultValue: TokenTypes.USER,
+          description: 'Applicant type.'
         },
         roles: {
           type: GraphQLNonNull(GraphQLList(GraphQLNonNull(GraphQLString))),
-          defaultValue: []
+          defaultValue: [],
+          description: 'Allowed roles to access the resource.'
+        },
+        permissions: {
+          type: GraphQLNonNull(GraphQLList(GraphQLNonNull(GraphQLString))),
+          defaultValue: [],
+          description: 'Allowed applicant to access the resource.'
         }
       }
     }),
     transformer: (schema: GraphQLSchema) =>
       mapSchema(schema, {
         [MapperKind.TYPE]: (type) => {
-          const authDirective = getDirective(schema, type, 'auth')?.[0];
+          const authDirective = getDirective(schema, type, name)?.[0];
           if (authDirective) {
             typeDirectiveArgumentMaps[type.name] = authDirective;
           }
@@ -112,14 +117,18 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
         // eslint-disable-next-line consistent-return
         [MapperKind.OBJECT_FIELD]: (fieldConfig, _, typeName) => {
           const authDirective =
-            getDirective(schema, fieldConfig, 'auth')?.[0] ??
+            getDirective(schema, fieldConfig, name)?.[0] ??
             typeDirectiveArgumentMaps[typeName];
 
           if (authDirective) {
-            const { type, roles }: { type?: TokenTypes; roles?: string[] } =
+            const {
+              type,
+              roles,
+              permissions
+            }: { type?: string; roles?: string[]; permissions?: string[] } =
               authDirective;
 
-            if (type && roles) {
+            if (type && roles && permissions) {
               const { resolve = defaultFieldResolver } = fieldConfig;
 
               // eslint-disable-next-line no-param-reassign
@@ -131,7 +140,7 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
                   context,
                   info
                 };
-                const authData: AuthData = { type, roles };
+                const authData: AuthData = { type, roles, permissions };
 
                 if (auth.prototype) {
                   // Auth class

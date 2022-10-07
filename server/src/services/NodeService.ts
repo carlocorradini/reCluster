@@ -107,7 +107,9 @@ export class NodeService {
     return this.tokenService.sign({
       type: TokenTypes.NODE,
       id: node.id,
-      roles: node.roles as NodeRoles[]
+      roles: node.roles as NodeRoles[],
+      // TODO
+      permissions: []
     });
   }
 

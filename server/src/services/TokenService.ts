@@ -40,6 +40,8 @@ type ITokenPayload<T extends TokenTypes> = {
     : T extends TokenTypes.NODE
     ? NodeRoles[]
     : never;
+  // TODO
+  permissions: string[];
 };
 export type UserTokenPayload = ITokenPayload<TokenTypes.USER>;
 export type NodeTokenPayload = ITokenPayload<TokenTypes.NODE>;
