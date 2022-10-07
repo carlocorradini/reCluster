@@ -23,6 +23,8 @@
  */
 
 export * from './ClassType';
+export * from './Config';
+export * from './Context';
 export * from './ExpandRecursively';
 export * from './FindManyArgs';
 export * from './NonNullableRecursive';

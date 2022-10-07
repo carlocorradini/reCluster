@@ -22,13 +22,19 @@
  * SOFTWARE.
  */
 
-import type { NodeTokenPayload, UserTokenPayload } from '~/services';
-
-type IContext<TApplicant> = {
-  applicant?: TApplicant;
+export type Config = {
+  app: string;
+  node: {
+    env: string;
+  };
+  server: {
+    host: string;
+    port: number;
+  };
+  database: {
+    url: string;
+  };
+  token: {
+    secret: string;
+  };
 };
-export type UserContext = IContext<UserTokenPayload>;
-export type NodeContext = IContext<NodeTokenPayload>;
-export type Context = UserContext | NodeContext;
-
-export const context: Context = {};

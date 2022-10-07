@@ -28,5 +28,4 @@ export * from './entities';
 export * from './enums';
 export * from './inputs';
 export * from './resolvers';
-export * from './context';
 export * from './schema';

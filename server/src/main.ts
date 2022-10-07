@@ -27,17 +27,18 @@ import 'dotenv/config';
 import 'json-bigint-patch';
 import { ApolloServer } from 'apollo-server';
 import { container } from 'tsyringe';
-import { formatErrorApolloServer } from './helpers';
+import { logger } from './logger';
+import { formatErrorHelper } from './helpers';
+import { contextMiddleware } from './middlewares';
 import { config } from './config';
 import { prisma } from './db';
-import { schema, context } from './graphql';
+import { schema } from './graphql';
 import { kubeconfig, NodeInformer } from './k8s';
-import { logger } from './logger';
 
 const server = new ApolloServer({
   schema,
-  context,
-  formatError: formatErrorApolloServer
+  context: contextMiddleware,
+  formatError: formatErrorHelper
 });
 
 async function main() {

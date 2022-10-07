@@ -22,22 +22,4 @@
  * SOFTWARE.
  */
 
-import type { Config } from '~/types';
-import { env } from './env';
-
-export const config: Config = {
-  app: 'reCluster',
-  node: {
-    env: env.NODE_ENV
-  },
-  server: {
-    host: env.HOST,
-    port: env.PORT
-  },
-  database: {
-    url: env.DATABASE_URL
-  },
-  token: {
-    secret: env.RECLUSTER_TOKEN_SECRET
-  }
-};
+export * from './contextMiddleware';

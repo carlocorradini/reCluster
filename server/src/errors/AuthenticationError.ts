@@ -26,7 +26,7 @@ import * as Apollo from 'apollo-server-errors';
 
 export class AuthenticationError extends Apollo.AuthenticationError {
   public constructor(
-    message = 'Access denied! You need to be authorized to perform this action!'
+    message = 'Access denied! You need to be authenticated to perform this action!'
   ) {
     super(message);
   }

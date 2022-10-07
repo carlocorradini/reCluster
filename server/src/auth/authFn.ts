@@ -22,7 +22,8 @@
  * SOFTWARE.
  */
 
-import type { AuthFn, Context } from '~/graphql';
+import type { AuthFn } from '~/graphql';
+import type { Context } from '~/types';
 
 export const authFn: AuthFn<Context> = (
   { context: { applicant } },

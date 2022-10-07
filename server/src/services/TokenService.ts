@@ -88,25 +88,4 @@ export class TokenService {
       );
     });
   }
-
-  public decode(token: string): Token {
-    const decoded = jwt.decode(token, { complete: true });
-    const error = new TokenError('Error decoding token');
-
-    if (
-      !decoded || // 'null' or 'undefined'
-      typeof decoded.payload === 'string' || // 'string' payload
-      !Object.prototype.hasOwnProperty.call(decoded.payload, 'type') // No 'type' property
-    ) {
-      throw error;
-    }
-
-    switch (decoded.payload.type) {
-      case TokenTypes.USER:
-      case TokenTypes.NODE:
-        return decoded as Token;
-      default:
-        throw error;
-    }
-  }
 }

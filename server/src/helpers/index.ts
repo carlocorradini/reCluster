@@ -22,4 +22,4 @@
  * SOFTWARE.
  */
 
-export * from './formatErrorApolloServer';
+export * from './formatErrorHelper';

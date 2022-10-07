@@ -28,7 +28,7 @@ import { Prisma } from '@prisma/client';
 import { logger } from '~/logger';
 import { DatabaseError, ValidationError } from '~/errors';
 
-export function formatErrorApolloServer(error: GraphQLError) {
+export function formatErrorHelper(error: GraphQLError) {
   // Log
   logger.error(`Server error: ${error}`);
 
