@@ -35,10 +35,10 @@ export const authFn: AuthFn<Context> = (
   }
 
   if (roles.length === 0) {
-    // Check if applicant exists
-    return applicant !== undefined && applicant !== null;
+    // Only authentication required
+    return true;
   }
 
-  // Check applicant roles overlap
+  // Check authorization roles
   return applicant.roles.some((role) => roles.includes(role));
 };

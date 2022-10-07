@@ -22,26 +22,21 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
-import { prisma } from '~/db';
-import { logger } from '~/logger';
-import type { FindManyDiskArgs, FindUniqueDiskArgs } from '~/graphql';
+import { createParamDecorator } from 'type-graphql';
+import type { Context } from '~/types';
+import type { TokenTypes } from '~/services';
+import { AuthenticationError, AuthorizationError } from '~/errors';
 
-export class DiskService {
-  public async findMany(args: FindManyDiskArgs): Promise<Prisma.Disk[]> {
-    logger.debug(`Disk service find many: ${JSON.stringify(args)}`);
+type ApplicantArgs = {
+  type?: TokenTypes;
+};
 
-    return prisma.disk.findMany({
-      ...args,
-      cursor: args.cursor ? { id: args.cursor } : undefined
-    });
-  }
+export function Applicant(args?: ApplicantArgs): ParameterDecorator {
+  return createParamDecorator<Context>(({ context }) => {
+    if (!context.applicant) throw new AuthenticationError();
+    if (args?.type && args?.type !== context.applicant.type)
+      throw new AuthorizationError();
 
-  public async findUnique(
-    args: FindUniqueDiskArgs
-  ): Promise<Prisma.Disk | null> {
-    logger.debug(`Disk service find unique: ${JSON.stringify(args)}`);
-
-    return prisma.disk.findUnique({ where: { id: args.id } });
-  }
+    return context.applicant;
+  });
 }

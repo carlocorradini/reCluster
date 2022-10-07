@@ -22,13 +22,15 @@
  * SOFTWARE.
  */
 
-import type { Interface } from '@prisma/client';
+import type * as Prisma from '@prisma/client';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
 import type { FindManyInterfaceArgs, FindUniqueInterfaceArgs } from '~/graphql';
 
 export class InterfaceService {
-  public async findMany(args: FindManyInterfaceArgs): Promise<Interface[]> {
+  public async findMany(
+    args: FindManyInterfaceArgs
+  ): Promise<Prisma.Interface[]> {
     logger.debug(`Interface service find many: ${JSON.stringify(args)}`);
 
     return prisma.interface.findMany({
@@ -39,7 +41,7 @@ export class InterfaceService {
 
   public async findUnique(
     args: FindUniqueInterfaceArgs
-  ): Promise<Interface | null> {
+  ): Promise<Prisma.Interface | null> {
     logger.debug(`Interface service find unique: ${JSON.stringify(args)}`);
 
     return prisma.interface.findUnique({ where: { id: args.id } });

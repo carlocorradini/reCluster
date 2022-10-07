@@ -22,13 +22,17 @@
  * SOFTWARE.
  */
 
-import type { Status } from '@prisma/client';
+import type * as Prisma from '@prisma/client';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
-import type { FindManyStatusArgs, FindUniqueStatusArgs } from '~/graphql';
+import type {
+  CreateStatusArgs,
+  FindManyStatusArgs,
+  FindUniqueStatusArgs
+} from '~/graphql';
 
 export class StatusService {
-  public async findMany(args: FindManyStatusArgs): Promise<Status[]> {
+  public async findMany(args: FindManyStatusArgs): Promise<Prisma.Status[]> {
     logger.debug(`Status service find many: ${JSON.stringify(args)}`);
 
     return prisma.status.findMany({
@@ -37,9 +41,19 @@ export class StatusService {
     });
   }
 
-  public async findUnique(args: FindUniqueStatusArgs): Promise<Status | null> {
+  public async findUnique(
+    args: FindUniqueStatusArgs
+  ): Promise<Prisma.Status | null> {
     logger.debug(`Status service find unique: ${JSON.stringify(args)}`);
 
     return prisma.status.findUnique({ where: { id: args.id } });
+  }
+
+  public async create(
+    args: CreateStatusArgs & { data: { nodeId: string } }
+  ): Promise<Prisma.Status> {
+    logger.info(`Status service create: ${JSON.stringify(args)}`);
+
+    return prisma.status.create({ ...args });
   }
 }

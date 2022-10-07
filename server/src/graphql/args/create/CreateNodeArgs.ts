@@ -27,8 +27,10 @@ import { ArgsType, Field } from 'type-graphql';
 import { ValidateNested } from 'class-validator';
 import { CreateNodeInput } from '../../inputs';
 
+type ICreateNodeArgs = Pick<Prisma.NodeCreateArgs, 'data'>;
+
 @ArgsType()
-export class CreateNodeArgs implements Pick<Prisma.NodeCreateArgs, 'data'> {
+export class CreateNodeArgs implements ICreateNodeArgs {
   @Field({ description: 'Node data' })
   @ValidateNested()
   data!: CreateNodeInput;

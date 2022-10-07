@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import type { Node } from '@prisma/client';
+import type * as Prisma from '@prisma/client';
 import { inject, injectable } from 'tsyringe';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
@@ -42,7 +42,7 @@ export class NodeService {
     private readonly tokenService: TokenService
   ) {}
 
-  public async findMany(args: FindManyNodeArgs): Promise<Node[]> {
+  public async findMany(args: FindManyNodeArgs): Promise<Prisma.Node[]> {
     logger.debug(`Node service find many: ${JSON.stringify(args)}`);
 
     return prisma.node.findMany({
@@ -51,7 +51,9 @@ export class NodeService {
     });
   }
 
-  public async findUnique(args: FindUniqueNodeArgs): Promise<Node | null> {
+  public async findUnique(
+    args: FindUniqueNodeArgs
+  ): Promise<Prisma.Node | null> {
     logger.debug(`Node service find unique: ${JSON.stringify(args)}`);
 
     return prisma.node.findUnique({ where: { id: args.id } });
@@ -109,7 +111,7 @@ export class NodeService {
     });
   }
 
-  public async update(args: UpdateNodeArgs): Promise<Node> {
+  public async update(args: UpdateNodeArgs): Promise<Prisma.Node> {
     logger.info(`Node service update: ${JSON.stringify(args)}`);
 
     return prisma.node.update({ where: { id: args.id }, data: args.data });

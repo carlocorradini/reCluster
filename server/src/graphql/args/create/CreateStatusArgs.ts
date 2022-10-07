@@ -22,26 +22,19 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
-import { prisma } from '~/db';
-import { logger } from '~/logger';
-import type { FindManyDiskArgs, FindUniqueDiskArgs } from '~/graphql';
+import type { Prisma } from '@prisma/client';
+import { ArgsType, Field } from 'type-graphql';
+import { ValidateNested } from 'class-validator';
+import { CreateStatusInput } from '../../inputs';
 
-export class DiskService {
-  public async findMany(args: FindManyDiskArgs): Promise<Prisma.Disk[]> {
-    logger.debug(`Disk service find many: ${JSON.stringify(args)}`);
+// FIXME Omitting data
+type ICreateStatusArgs = Omit<Prisma.StatusCreateArgs, 'data'> & {
+  data: CreateStatusInput;
+};
 
-    return prisma.disk.findMany({
-      ...args,
-      cursor: args.cursor ? { id: args.cursor } : undefined
-    });
-  }
-
-  public async findUnique(
-    args: FindUniqueDiskArgs
-  ): Promise<Prisma.Disk | null> {
-    logger.debug(`Disk service find unique: ${JSON.stringify(args)}`);
-
-    return prisma.disk.findUnique({ where: { id: args.id } });
-  }
+@ArgsType()
+export class CreateStatusArgs implements ICreateStatusArgs {
+  @Field({ description: 'Status data' })
+  @ValidateNested()
+  data!: CreateStatusInput;
 }

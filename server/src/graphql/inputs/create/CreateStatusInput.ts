@@ -27,7 +27,7 @@ import { Field, InputType } from 'type-graphql';
 import { PickRequired } from '~/types';
 import { NodeStatuses } from '../../enums';
 
-type ICreateStatusInput = PickRequired<Prisma.StatusCreateWithoutNodeInput>;
+type ICreateStatusInput = PickRequired<Omit<Prisma.StatusCreateInput, 'node'>>;
 
 @InputType({ description: 'Create Status input' })
 export class CreateStatusInput implements ICreateStatusInput {

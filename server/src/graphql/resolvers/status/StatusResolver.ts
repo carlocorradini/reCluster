@@ -23,11 +23,16 @@
  */
 
 import type * as Prisma from '@prisma/client';
-import { Args, Query, Resolver } from 'type-graphql';
+import { Args, Directive, Mutation, Query, Resolver } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
-import { StatusService } from '~/services';
+import { StatusService, TokenPayload, TokenTypes } from '~/services';
 import { Status } from '../../entities';
-import { FindUniqueStatusArgs, FindManyStatusArgs } from '../../args';
+import {
+  FindUniqueStatusArgs,
+  FindManyStatusArgs,
+  CreateStatusArgs
+} from '../../args';
+import { Applicant } from '../../decorators';
 
 @Resolver(Status)
 @injectable()
@@ -50,5 +55,16 @@ export class StatusResolver {
     @Args() args: FindUniqueStatusArgs
   ): Promise<Prisma.Status | null> {
     return this.statusService.findUnique(args);
+  }
+
+  @Mutation(() => Status, { description: 'Create a new status' })
+  @Directive(`@auth(type: "${TokenTypes.NODE}")`)
+  async createStatus(
+    @Args() args: CreateStatusArgs,
+    @Applicant() applicant: TokenPayload
+  ): Promise<Prisma.Status> {
+    return this.statusService.create({
+      data: { ...args.data, nodeId: applicant.id }
+    });
   }
 }
