@@ -24,8 +24,8 @@
 
 import { container } from 'tsyringe';
 import type { ExpressContext } from 'apollo-server-express';
-import type { Context } from '~/types';
-import { TokenPayload, TokenService } from '~/services';
+import type { Context, TokenPayload } from '~/types';
+import { TokenService } from '~/services';
 import { AuthenticationError, TokenError } from '~/errors';
 
 export async function contextHelper({ req }: ExpressContext): Promise<Context> {

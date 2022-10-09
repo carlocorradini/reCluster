@@ -25,32 +25,12 @@
 import jwt from 'jsonwebtoken';
 import { config } from '~/config';
 import { TokenError } from '~/errors';
-import { UserRoles, NodeRoles } from '~/graphql/enums';
+import type { Token, TokenPayload } from '~/types';
 
 export enum TokenTypes {
   USER = 'USER',
   NODE = 'NODE'
 }
-
-type ITokenPayload<T extends TokenTypes> = {
-  type: T;
-  id: string;
-  roles: T extends TokenTypes.USER
-    ? UserRoles[]
-    : T extends TokenTypes.NODE
-    ? NodeRoles[]
-    : never;
-  // TODO
-  permissions: string[];
-};
-export type UserTokenPayload = ITokenPayload<TokenTypes.USER>;
-export type NodeTokenPayload = ITokenPayload<TokenTypes.NODE>;
-export type TokenPayload = UserTokenPayload | NodeTokenPayload;
-
-type IToken<T> = jwt.Jwt & { payload: T };
-export type UserToken = IToken<UserTokenPayload>;
-export type NodeToken = IToken<NodeTokenPayload>;
-export type Token = UserToken | NodeToken;
 
 export class TokenService {
   public static readonly SIGN_OPTIONS: jwt.SignOptions = {

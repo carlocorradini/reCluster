@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
-import type { TokenPayload } from './token';
-
-export type Context = { applicant?: TokenPayload };
+export type AuthData = {
+  type: string;
+  roles: string[];
+  permissions: string[];
+};

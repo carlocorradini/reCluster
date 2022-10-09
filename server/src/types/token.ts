@@ -22,6 +22,26 @@
  * SOFTWARE.
  */
 
-import type { TokenPayload } from './token';
+import type jwt from 'jsonwebtoken';
+import type { TokenTypes } from '~/services';
+import type { UserRoles, NodeRoles } from '~/graphql';
 
-export type Context = { applicant?: TokenPayload };
+type ITokenPayload<T extends TokenTypes> = {
+  type: T;
+  id: string;
+  roles: T extends TokenTypes.USER
+    ? UserRoles[]
+    : T extends TokenTypes.NODE
+    ? NodeRoles[]
+    : never;
+  // TODO
+  permissions: string[];
+};
+export type UserTokenPayload = ITokenPayload<TokenTypes.USER>;
+export type NodeTokenPayload = ITokenPayload<TokenTypes.NODE>;
+export type TokenPayload = UserTokenPayload | NodeTokenPayload;
+
+type IToken<T> = jwt.Jwt & { payload: T };
+export type UserToken = IToken<UserTokenPayload>;
+export type NodeToken = IToken<NodeTokenPayload>;
+export type Token = UserToken | NodeToken;

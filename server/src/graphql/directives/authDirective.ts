@@ -33,7 +33,7 @@ import {
 } from 'graphql';
 import { mapSchema, MapperKind, getDirective } from '@graphql-tools/utils';
 import { container } from 'tsyringe';
-import { ClassType, ResolverData } from '~/types';
+import type { AuthData, ClassType, ResolverData } from '~/types';
 import { AuthenticationError, AuthorizationError } from '~/errors';
 import { authFn } from '~/auth';
 
@@ -41,12 +41,6 @@ enum AuthMode {
   ERROR = 'ERROR',
   NULL = 'NULL'
 }
-
-export type AuthData = {
-  type: string;
-  roles: string[];
-  permissions: string[];
-};
 
 export type AuthFn<TContext = Record<string, unknown>> = (
   resolverData: ResolverData<TContext>,

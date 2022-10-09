@@ -25,7 +25,8 @@
 import type * as Prisma from '@prisma/client';
 import { Args, Mutation, Query, Resolver } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
-import { StatusService, TokenPayload, TokenTypes } from '~/services';
+import type { TokenPayload } from '~/types';
+import { StatusService, TokenTypes } from '~/services';
 import { Status } from '../../entities';
 import {
   FindUniqueStatusArgs,
