@@ -160,7 +160,7 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
                       return null;
                     case AuthMode.ERROR:
                     default:
-                      throw roles.length === 0
+                      throw roles.length === 0 && permissions.length === 0
                         ? new AuthenticationError()
                         : new AuthorizationError();
                   }

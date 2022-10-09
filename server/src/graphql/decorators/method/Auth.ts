@@ -53,15 +53,21 @@ export function Auth<T extends TokenTypes = TokenTypes.USER>(
       permissions: []
     };
 
-    const typeString = `"${authData.type}"`;
-    const rolesString = `[${authData.roles
-      .map((role) => `"${role}"`)
-      .join(',')}]`;
-    const permissionsString = `[${authData.permissions
-      .map((permission) => `"${permission}"`)
-      .join(',')}]`;
+    // Directive sdl
+    let sdl = `@auth(type: "${authData.type}"`;
+    if (authData.roles.length > 0) {
+      sdl += `, roles: [${authData.roles
+        .map((role) => `"${role}"`)
+        .join(',')}]`;
+    }
+    if (authData.permissions.length > 0) {
+      sdl += `, permissions: [${authData.permissions
+        .map((permission) => `"${permission}"`)
+        .join(',')}]`;
+    }
+    sdl += `)`;
 
-    const authDataString = `@auth(type: ${typeString}, roles: ${rolesString}, permissions: ${permissionsString})`;
-    Directive(authDataString)(targetOrPrototype, propertyKey, descriptor);
+    // Attach
+    Directive(sdl)(targetOrPrototype, propertyKey, descriptor);
   };
 }
