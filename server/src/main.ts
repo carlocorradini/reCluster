@@ -28,8 +28,7 @@ import 'json-bigint-patch';
 import { ApolloServer } from 'apollo-server';
 import { container } from 'tsyringe';
 import { logger } from './logger';
-import { formatErrorHelper } from './helpers';
-import { contextMiddleware } from './middlewares';
+import { contextHelper, formatErrorHelper } from './helpers';
 import { config } from './config';
 import { prisma } from './db';
 import { schema } from './graphql';
@@ -37,7 +36,7 @@ import { kubeconfig, NodeInformer } from './k8s';
 
 const server = new ApolloServer({
   schema,
-  context: contextMiddleware,
+  context: contextHelper,
   formatError: formatErrorHelper
 });
 

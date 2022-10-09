@@ -28,9 +28,7 @@ import type { Context } from '~/types';
 import { TokenPayload, TokenService } from '~/services';
 import { AuthenticationError, TokenError } from '~/errors';
 
-export async function contextMiddleware({
-  req
-}: ExpressContext): Promise<Context> {
+export async function contextHelper({ req }: ExpressContext): Promise<Context> {
   let applicant: TokenPayload | undefined;
   const authorizationHeader =
     req.headers && 'Authorization' in req.headers

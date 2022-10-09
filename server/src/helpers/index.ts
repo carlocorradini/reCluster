@@ -22,4 +22,5 @@
  * SOFTWARE.
  */
 
+export * from './contextHelper';
 export * from './formatErrorHelper';
