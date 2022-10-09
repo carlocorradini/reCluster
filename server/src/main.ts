@@ -23,8 +23,8 @@
  */
 
 import 'reflect-metadata';
-import 'dotenv/config';
 import 'json-bigint-patch';
+import 'dotenv/config';
 import { ApolloServer } from 'apollo-server';
 import { container } from 'tsyringe';
 import { logger } from './logger';
