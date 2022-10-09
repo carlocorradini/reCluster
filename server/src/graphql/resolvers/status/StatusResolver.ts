@@ -23,7 +23,7 @@
  */
 
 import type * as Prisma from '@prisma/client';
-import { Args, Directive, Mutation, Query, Resolver } from 'type-graphql';
+import { Args, Mutation, Query, Resolver } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { StatusService, TokenPayload, TokenTypes } from '~/services';
 import { Status } from '../../entities';
@@ -32,7 +32,7 @@ import {
   FindManyStatusArgs,
   CreateStatusArgs
 } from '../../args';
-import { Applicant } from '../../decorators';
+import { Applicant, Auth } from '../../decorators';
 
 @Resolver(Status)
 @injectable()
@@ -58,7 +58,7 @@ export class StatusResolver {
   }
 
   @Mutation(() => Status, { description: 'Create a new status' })
-  @Directive(`@auth(type: "${TokenTypes.NODE}")`)
+  @Auth({ type: TokenTypes.NODE })
   async createStatus(
     @Args() args: CreateStatusArgs,
     @Applicant() applicant: TokenPayload

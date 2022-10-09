@@ -35,7 +35,6 @@ import { mapSchema, MapperKind, getDirective } from '@graphql-tools/utils';
 import { container } from 'tsyringe';
 import { ClassType, ResolverData } from '~/types';
 import { AuthenticationError, AuthorizationError } from '~/errors';
-import { TokenTypes } from '~/services';
 import { authFn } from '~/auth';
 
 enum AuthMode {
@@ -43,7 +42,7 @@ enum AuthMode {
   NULL = 'NULL'
 }
 
-type AuthData = {
+export type AuthData = {
   type: string;
   roles: string[];
   permissions: string[];
@@ -61,26 +60,27 @@ export type AuthFnClass<TContext = Record<string, unknown>> = {
   ): boolean | Promise<boolean>;
 };
 
-export type Auth<TContext = Record<string, unknown>> =
+type Auth<TContext = Record<string, unknown>> =
   | AuthFn<TContext>
   | ClassType<AuthFnClass<TContext>>;
 
 type AuthDirective<TContext = Record<string, unknown>> = {
+  name: string;
   auth: Auth<TContext>;
   authMode?: AuthMode;
 };
 
 function buildAuthDirective<TContext = Record<string, unknown>>({
+  name,
   auth,
   authMode
 }: AuthDirective<TContext>) {
-  const name = 'auth';
   const typeDirectiveArgumentMaps: Record<string, unknown> = {};
 
   return {
     typeDefsObj: new GraphQLDirective({
       name,
-      description: 'Protect the resource from unauthorized access.',
+      description: 'Protect the resource from unauthorized access',
       locations: [
         DirectiveLocation.OBJECT,
         DirectiveLocation.FIELD,
@@ -90,18 +90,17 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
       args: {
         type: {
           type: GraphQLNonNull(GraphQLString),
-          defaultValue: TokenTypes.USER,
           description: 'Applicant type.'
         },
         roles: {
           type: GraphQLNonNull(GraphQLList(GraphQLNonNull(GraphQLString))),
           defaultValue: [],
-          description: 'Allowed roles to access the resource.'
+          description: 'Allowed roles to access the resource'
         },
         permissions: {
           type: GraphQLNonNull(GraphQLList(GraphQLNonNull(GraphQLString))),
           defaultValue: [],
-          description: 'Allowed applicant to access the resource.'
+          description: 'Allowed applicant to access the resource'
         }
       }
     }),
@@ -121,11 +120,7 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
             typeDirectiveArgumentMaps[typeName];
 
           if (authDirective) {
-            const {
-              type,
-              roles,
-              permissions
-            }: { type?: string; roles?: string[]; permissions?: string[] } =
+            const { type, roles, permissions }: Partial<AuthData> =
               authDirective;
 
             if (type && roles && permissions) {
@@ -183,6 +178,7 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
 }
 
 export const authDirective = buildAuthDirective({
+  name: 'auth',
   auth: authFn,
   authMode: AuthMode.ERROR
 });
