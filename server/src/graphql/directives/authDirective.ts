@@ -33,9 +33,8 @@ import {
 } from 'graphql';
 import { mapSchema, MapperKind, getDirective } from '@graphql-tools/utils';
 import { container } from 'tsyringe';
-import type { AuthData, ClassType, ResolverData } from '~/types';
+import type { AuthData, ClassType, Context, ResolverData } from '~/types';
 import { AuthenticationError, AuthorizationError } from '~/errors';
-import { authFn } from '~/auth';
 
 enum AuthMode {
   ERROR = 'ERROR',
@@ -58,7 +57,7 @@ type Auth<TContext = Record<string, unknown>> =
   | AuthFn<TContext>
   | ClassType<AuthFnClass<TContext>>;
 
-type AuthDirective<TContext = Record<string, unknown>> = {
+type AuthDirectiveArgs<TContext = Record<string, unknown>> = {
   name: string;
   auth: Auth<TContext>;
   authMode?: AuthMode;
@@ -68,7 +67,7 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
   name,
   auth,
   authMode
-}: AuthDirective<TContext>) {
+}: AuthDirectiveArgs<TContext>) {
   const typeDirectiveArgumentMaps: Record<string, unknown> = {};
 
   return {
@@ -171,8 +170,38 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
   };
 }
 
+const authFn: AuthFn<Context> = (
+  { context: { applicant } },
+  { type, roles, permissions }
+) => {
+  if (!applicant || applicant.type !== type) {
+    // No applicant or invalid type
+    return false;
+  }
+
+  if (roles.length === 0 && permissions.length === 0) {
+    // Only authentication required
+    return true;
+  }
+
+  // Roles
+  const rolesMatch: boolean =
+    roles.length === 0
+      ? true
+      : applicant.roles.some((role) => roles.includes(role));
+  // Permissions
+  const permissionsMatch: boolean =
+    permissions.length === 0
+      ? true
+      : applicant.permissions.some((permission) =>
+          permissions.includes(permission)
+        );
+  // Roles & Permissions
+  return rolesMatch && permissionsMatch;
+};
+
 export const authDirective = buildAuthDirective({
   name: 'auth',
-  auth: authFn,
-  authMode: AuthMode.ERROR
+  authMode: AuthMode.ERROR,
+  auth: authFn
 });
