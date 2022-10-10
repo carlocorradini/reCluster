@@ -1,21 +1,21 @@
 {
   "name": "recluster",
   "version": "0.0.1",
-  "description": "reCluster is an architecture for a data centre that actively reduces its impact and minimizes its resource utilization",
-  "author": {
-    "name": "Carlo Corradini",
-    "email": "carlo.corradini98@gmail.com",
-    "url": "https://linkedin.com/in/carlo-corradini"
-  },
-  "license": "MIT",
   "private": true,
+  "description": "reCluster is an architecture for a data centre that actively reduces its impact and minimizes its resource utilization",
   "homepage": "https://github.com/carlocorradini/reCluster#readme",
+  "bugs": {
+    "url": "https://github.com/carlocorradini/reCluster/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/carlocorradini/reCluster.git"
   },
-  "bugs": {
-    "url": "https://github.com/carlocorradini/reCluster/issues"
+  "license": "MIT",
+  "author": {
+    "name": "Carlo Corradini",
+    "email": "carlo.corradini98@gmail.com",
+    "url": "https://linkedin.com/in/carlo-corradini"
   },
   "scripts": {
     "check": "npx npm-run-all --npm-path npm --serial check:* && cd server && npm run check",

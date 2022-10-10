@@ -6,7 +6,7 @@
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": ["tsconfig.json", "prisma/tsconfig.json"],
-    "ecmaVersion": 2022,
+    "ecmaVersion": "latest",
     "sourceType": "module"
   },
   "settings": {

@@ -47,8 +47,6 @@
     "**/*.d.ts.map",
     "**/*.tar",
     "**/*.tar.gz",
-    "**/.gitignore",
-    "**/.gitmodules",
     "**/.commitlintrc",
     "**/.dockerignore",
     "**/.editorconfig",
