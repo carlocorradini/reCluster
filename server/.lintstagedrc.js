@@ -2,5 +2,5 @@ const config = require('../.lintstagedrc.js');
 
 module.exports = {
   ...config,
-  '*.ts': 'eslint --fix'
+  '*.ts': ['eslint --fix', 'prettier --write']
 };
