@@ -1,15 +1,12 @@
 {
   "compilerOptions": {
-    "incremental": true,
     "target": "ESNext",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "module": "CommonJS",
-    "rootDir": "src",
     "moduleResolution": "Node",
-    "baseUrl": ".",
     "paths": {
-      "~*": ["src/*"]
+      "~*": ["./src/*"]
     },
     "allowJs": false,
     "outDir": "build",
@@ -30,6 +27,6 @@
       }
     ]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules/**/*", "build/**/*"]
+  "include": ["./src/**/*.ts"],
+  "exclude": ["./node_modules/**/*", "./build/**/*"]
 }
