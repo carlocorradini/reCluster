@@ -1,87 +1,50 @@
 {
-  "name": "recluster-server",
+  "name": "recluster",
   "version": "0.0.1",
   "private": true,
-  "description": "reCluster server",
+  "description": "reCluster is an architecture for a data centre that actively reduces its impact and minimizes its resource utilization",
   "homepage": "https://github.com/carlocorradini/reCluster#readme",
   "bugs": {
     "url": "https://github.com/carlocorradini/reCluster/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/carlocorradini/reCluster.git",
-    "directory": "server"
+    "url": "git+https://github.com/carlocorradini/reCluster.git"
   },
   "license": "MIT",
-  "author": "Carlo Corradini <carlo.corradini98@gmail.com>",
-  "scripts": {
-    "build": "npx tsc --build tsconfig.json",
-    "build:clean": "npx tsc --build --clean tsconfig.json",
-    "build:watch": "npx tsc --build --watch tsconfig.json",
-    "check": "npx npm-run-all --npm-path npm --serial check:*",
-    "check:db": "npm run db:format",
-    "check:lint": "npx eslint .",
-    "db:format": "npx prisma format",
-    "db:generate": "npx prisma generate",
-    "db:generate:watch": "npx prisma generate --watch",
-    "db:migrate": "npx prisma migrate dev --name recluster",
-    "db:reset": "npx prisma migrate reset",
-    "db:seed": "npx prisma db seed",
-    "db:studio": "npx prisma studio",
-    "fix": "npx npm-run-all --npm-path npm --serial fix:*",
-    "fix:database": "npm run db:format",
-    "fix:lint": "npx eslint --fix .",
-    "prepare": "npx ts-patch install -s && npm run db:generate",
-    "start": "build/main.js",
-    "start:dev": "npx ts-node-dev --respawn --clear --rs --transpile-only --require tsconfig-paths/register src/main.ts | npx pino-pretty"
+  "author": {
+    "name": "Carlo Corradini",
+    "email": "carlo.corradini98@gmail.com",
+    "url": "https://linkedin.com/in/carlo-corradini"
   },
-  "dependencies": {
-    "@graphql-tools/utils": "^8.12.0",
-    "@kubernetes/client-node": "^0.17.1",
-    "@prisma/client": "^4.3.1",
-    "apollo-server": "^3.10.3",
-    "apollo-server-errors": "^3.3.1",
-    "class-validator": "^0.13.2",
-    "convert": "^4.6.3",
-    "dotenv": "^16.0.3",
-    "envalid": "^7.3.1",
-    "graphql": "^15.8.0",
-    "graphql-scalars": "^1.19.0",
-    "json-bigint-patch": "^0.0.8",
-    "jsonwebtoken": "^8.5.1",
-    "pino": "^8.5.0",
-    "reflect-metadata": "^0.1.13",
-    "tsyringe": "^4.7.0",
-    "type-graphql": "^1.1.1"
+  "scripts": {
+    "check": "npx npm-run-all --npm-path npm --serial check:* && cd server && npm run check",
+    "check:format": "npx prettier --check .",
+    "check:license": "npx license-check-and-add check -f license.json",
+    "check:markdown": "npx markdownlint \"**/*.md\"",
+    "check:spell": "npx cspell lint --config cspell.json --no-progress --show-context \"**\"",
+    "fix": "npx npm-run-all --npm-path npm --serial fix:* && cd server && npm run fix",
+    "fix:format": "npx prettier --write .",
+    "fix:license": "npx license-check-and-add add -f license.json",
+    "fix:markdown": "npx markdownlint --fix \"**/*.md\"",
+    "prepare": "npx husky install"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^8.5.9",
-    "@types/node": "^16.11.65",
-    "@typescript-eslint/eslint-plugin": "^5.40.0",
-    "@typescript-eslint/parser": "^5.40.0",
-    "eslint": "^8.25.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-airbnb-typescript": "^17.0.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-import-resolver-typescript": "^3.5.1",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-license-header": "^0.6.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-tsdoc": "^0.2.17",
-    "pino-pretty": "^9.1.1",
-    "prisma": "^4.3.1",
-    "ts-node": "^10.9.1",
-    "ts-node-dev": "^2.0.0",
-    "ts-patch": "^2.0.2",
-    "tsconfig-paths": "^4.1.0",
-    "typescript": "^4.8.3",
-    "typescript-transform-paths": "^3.3.1"
-  },
-  "engines": {
-    "node": ">=16",
-    "npm": ">=8"
-  },
-  "prisma": {
-    "seed": "npx ts-node prisma/seed.ts"
+    "@commitlint/cli": "^17.1.2",
+    "@commitlint/config-conventional": "^17.1.0",
+    "@cspell/dict-bash": "^3.0.0",
+    "@cspell/dict-node": "^4.0.0",
+    "@cspell/dict-npm": "^4.0.0",
+    "@cspell/dict-typescript": "^3.0.0",
+    "@cspell/eslint-plugin": "^6.12.0",
+    "cspell": "^6.12.0",
+    "husky": "^8.0.1",
+    "license-check-and-add": "^4.0.5",
+    "lint-staged": "^13.0.3",
+    "markdownlint": "^0.26.2",
+    "markdownlint-cli": "^0.32.2",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.7.1",
+    "prettier-plugin-sh": "^0.12.8"
   }
 }
