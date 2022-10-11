@@ -73,27 +73,31 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
   return {
     typeDefsObj: new GraphQLDirective({
       name,
-      description: 'Protect the resource from unauthorized access',
+      description:
+        'Protect the resource from unauthenticated and unauthorized access.',
       locations: [
         DirectiveLocation.OBJECT,
         DirectiveLocation.FIELD,
-        DirectiveLocation.FIELD_DEFINITION,
-        DirectiveLocation.INPUT_FIELD_DEFINITION
+        DirectiveLocation.FIELD_DEFINITION
       ],
       args: {
         type: {
-          type: GraphQLNonNull(GraphQLString),
+          type: new GraphQLNonNull(GraphQLString),
           description: 'Applicant type.'
         },
         roles: {
-          type: GraphQLNonNull(GraphQLList(GraphQLNonNull(GraphQLString))),
+          type: new GraphQLNonNull(
+            new GraphQLList(new GraphQLNonNull(GraphQLString))
+          ),
           defaultValue: [],
-          description: 'Allowed roles to access the resource'
+          description: 'Allowed roles to access the resource.'
         },
         permissions: {
-          type: GraphQLNonNull(GraphQLList(GraphQLNonNull(GraphQLString))),
+          type: new GraphQLNonNull(
+            new GraphQLList(new GraphQLNonNull(GraphQLString))
+          ),
           defaultValue: [],
-          description: 'Allowed applicant to access the resource'
+          description: 'Allowed permissions to access the resource.'
         }
       }
     }),
