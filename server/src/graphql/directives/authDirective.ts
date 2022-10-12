@@ -22,15 +22,7 @@
  * SOFTWARE.
  */
 
-import {
-  GraphQLSchema,
-  defaultFieldResolver,
-  GraphQLDirective,
-  DirectiveLocation,
-  GraphQLList,
-  GraphQLString,
-  GraphQLNonNull
-} from 'graphql';
+import { GraphQLSchema, defaultFieldResolver } from 'graphql';
 import { mapSchema, MapperKind, getDirective } from '@graphql-tools/utils';
 import { container } from 'tsyringe';
 import type { AuthData, ClassType, Context, ResolverData } from '~/types';
@@ -71,36 +63,16 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
   const typeDirectiveArgumentMaps: Record<string, unknown> = {};
 
   return {
-    typeDefsObj: new GraphQLDirective({
-      name,
-      description:
-        'Protect the resource from unauthenticated and unauthorized access.',
-      locations: [
-        DirectiveLocation.OBJECT,
-        DirectiveLocation.FIELD,
-        DirectiveLocation.FIELD_DEFINITION
-      ],
-      args: {
-        type: {
-          type: new GraphQLNonNull(GraphQLString),
-          description: 'Applicant type.'
-        },
-        roles: {
-          type: new GraphQLNonNull(
-            new GraphQLList(new GraphQLNonNull(GraphQLString))
-          ),
-          defaultValue: [],
-          description: 'Allowed roles to access the resource.'
-        },
-        permissions: {
-          type: new GraphQLNonNull(
-            new GraphQLList(new GraphQLNonNull(GraphQLString))
-          ),
-          defaultValue: [],
-          description: 'Allowed permissions to access the resource.'
-        }
-      }
-    }),
+    typeDefs: `
+      """Protect the resource from unauthenticated and unauthorized access."""
+      directive @${name}(
+        """Applicant type."""
+        type: String!,
+        """Allowed roles to access the resource."""
+        roles: [String!]! = [],
+        """Allowed permissions to access the resource."""
+        permissions: [String!]! = [],
+      ) on OBJECT | FIELD | FIELD_DEFINITION`,
     transformer: (schema: GraphQLSchema) =>
       mapSchema(schema, {
         [MapperKind.TYPE]: (type) => {
