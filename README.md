@@ -14,13 +14,6 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 ## Development
 
-### Requirements
-
-- [Node.js](https://nodejs.org)
-- [npm](https://www.npmjs.com)
-- [Docker](https://www.docker.com)
-- [Vagrant](https://www.vagrantup.com)
-
 ### Preparation
 
 1. Clone
@@ -124,6 +117,22 @@ reCluster is an architecture for a data center that actively reduces its impact 
       /vagrant/linux/install.sh \
         --config /vagrant/linux/config.worker.yaml
       ```
+
+### Scripts
+
+> **Note**: Execute with `npm run <NAME>`
+
+| **Name** | **Description** |
+| -------- | --------------- |
+| `check` | Check for errors. |
+| `check:format` | Check for format errors. |
+| `check:license` | Check for license errors. |
+| `check:markdown` | Check for markdown errors. |
+| `check:spell` | Check for spelling errors. |
+| `fix` | Fix errors. |
+| `fix:format` | Fix format errors. |
+| `fix:license` | Fix license errors. |
+| `fix:markdown` | Fix markdown errors. |
 
 ## License
 

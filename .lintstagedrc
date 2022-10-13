@@ -1,0 +1,8 @@
+{
+  "*.{json,md}": "prettier --write",
+  "*.md": "markdownlint",
+  "*.ts": [
+    "npm --prefix server eslint --fix",
+    "prettier --write"
+  ]
+}

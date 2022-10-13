@@ -1,26 +1,14 @@
 # reCluster Server
 
-reCluster server
-
-## Build
-
-```console
-npm run build
-```
+reCluster server.
 
 ## Development
-
-### Requirements
-
-- [Node.js](https://nodejs.org)
-- [npm](https://www.npmjs.com)
-- [Docker](https://www.docker.com)
 
 ### Preparation
 
 1. Environment
 
-   Copy `.env.example` & paste`.env` file. \
+   Copy `.env.example` and paste`.env` file. \
    Edit according to your configuration.
 
 1. Database
@@ -28,7 +16,7 @@ npm run build
    Start:
 
    ```console
-   scripts/database.sh
+   npm run db:start
    ```
 
    Synchronize:
@@ -56,3 +44,28 @@ npm run build
      --url 'http://localhost:8080' \
      --data '{ "query": "query { __typename }" }'
    ```
+
+### Scripts
+
+> **Note**: Execute with `npm run <NAME>`
+
+| **Name** | **Description** |
+| -------- | --------------- |
+| `build` | Compile server. |
+| `build:clean` | Clean compilation directory. |
+| `build:watch` | Compile server every time a file is updated. |
+| `check` | Check for errors. |
+| `check:db` | Check for database errors. |
+| `check:lint` | Check for linting errors. |
+| `db:format` | Format database file. |
+| `db:generate` | Generate database assets. |
+| `db:migrate` | Updates database using migrations. |
+| `db:reset` | Deletes and recreates the database. |
+| `db:start` | Start a local database. |
+| `db:studio` | Start a local web server with a web app that allows to interact and manage the database. |
+| `docker` | Generate Docker image. |
+| `fix` | Fix errors. |
+| `fix:db` | Fix database errors. |
+| `fix:lint` | Fix linting errors. |
+| `start` | Start compiled server. |
+| `start:dev` | Start development/uncompiled server. |
