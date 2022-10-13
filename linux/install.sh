@@ -31,6 +31,8 @@ set -o noglob
 # ================
 # Return value
 RETVAL=
+# Configuration
+CONFIG=
 
 # ================
 # CLEANUP
@@ -501,6 +503,36 @@ is_number_integer() {
   esac
 }
 
+# Decode JWT token
+# @param $1 JWT token
+decode_token() {
+  _decode_token() {
+    echo "$1" | jq --raw-input --arg idx "$2" 'gsub("-";"+") | gsub("_";"/") | split(".") | .[$idx|tonumber] | @base64d | fromjson'
+  }
+  _token=$1
+
+  DEBUG "Decoding JWT token '$_token'"
+
+  # Token header
+  _token_header=$(_decode_token "$_token" 0)
+  # Token payload
+  _token_payload=$(_decode_token "$_token" 1)
+
+  # Return
+  RETVAL=$(
+    jq \
+      --null-input \
+      --argjson header "$_token_header" \
+      --argjson payload "$_token_payload" \
+      '
+        {
+          "header": $header,
+          "payload": $payload
+        }
+      '
+  )
+}
+
 # Read CPU information
 read_cpu_info() {
   _cpu_info=$(
@@ -876,14 +908,16 @@ read_cpu_power_consumption() {
 node_registration() {
   _server_url=$(echo "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires server URL"
   # shellcheck disable=SC2016
-  _request_data='{
-              "query": "mutation ($data: CreateNodeInput!) {
-                createNode(data: $data) { id }
-              }",
-              "variables": {
-                "data": '"$(echo "$NODE_FACTS" | jq --compact-output .)"'
-              }
-            }'
+  _request_data='
+    {
+      "query": "mutation ($data: CreateNodeInput!) {
+        createNode(data: $data) { id }
+      }",
+      "variables": {
+        "data": '"$(echo "$NODE_FACTS" | jq --compact-output .)"'
+      }
+    }
+  '
   _response_data=
 
   INFO "Registering node at '$_server_url'"
@@ -917,14 +951,28 @@ node_registration() {
     FATAL "Error registering node at '$_server_url':\n$(echo "$_response_data" | jq .)"
   fi
 
-  # Extract registration data
-  _registration_data=$(echo "$_response_data" | jq '.data.createNode')
+  # Extract token
+  _token=$(echo "$_response_data" | jq '.data.createNode')
+
+  # Decode token
+  _token_decoded=$(decode_token "$_token")
 
   # Success
-  INFO "Successfully registered node:\n$(echo "$_registration_data" | jq .)"
+  INFO "Successfully registered node:\n$(echo "$_token_decoded" | jq .)"
 
   # Return
-  RETVAL=$_registration_data
+  RETVAL=$(
+    jq \
+      --null-input \
+      --arg token "$_token" \
+      --argjson decoded "$_token_decoded" \
+      '
+        {
+          "token": $token,
+          "decoded": $decoded
+        }
+      '
+  )
 }
 
 ################################################################################################################################
@@ -1550,20 +1598,17 @@ cluster_init() {
   WARN "kubeconfig:"
   $SUDO yq e --prettyPrint '.' "$_kubeconfig_file"
 
-  # TODO Server token
-
   # TODO Start server
 }
 
 # Install reCluster
 install_recluster() {
   # Directories
-  _etc_dir="$TMP_DIR/etc/recluster"
-  _opt_dir="$TMP_DIR/opt/recluster"
+  _etc_dir="${TMP_DIR}${RECLUSTER_ETC_DIR}"
+  _opt_dir="${TMP_DIR}${RECLUSTER_OPT_DIR}"
   # Files
   _k3s_config_file=/etc/rancher/k3s/config.yaml
-  _recluster_config_file="$_etc_dir/config.yaml"
-  _node_id_file="$_etc_dir/id"
+  _recluster_config_file="$_etc_dir/config.yml"
   _node_token_file="$_etc_dir/token"
   _bootstrap_script_file="$_opt_dir/bootstrap.sh"
   # Configuration
@@ -1571,8 +1616,8 @@ install_recluster() {
   _bootstrap_service_name=recluster-bootstrap
   # Registration data
   _regitration_data=
-  _node_id=
   _node_token=
+  _node_id=
 
   spinner_start "Installing reCluster"
 
@@ -1581,7 +1626,6 @@ install_recluster() {
   mkdir -p "$_opt_dir"
 
   # Write configuration
-  DEBUG "Writing reCluster configuration to '$_recluster_config_file'"
   echo "$CONFIG" \
     | jq '.recluster' \
     | yq e --prettyPrint --no-colors '.' - \
@@ -1590,27 +1634,175 @@ install_recluster() {
   # Register node
   node_registration
   _regitration_data=$RETVAL
-  _node_id=$(echo "$_regitration_data" | jq --raw-output '.id')
-  _node_token=$(echo "$_registration_data" | jq --raw-output '.token')
 
-  # Write node identifier
-  DEBUG "Writing node identifier '$_node_id' to '$_node_id_file'"
-  echo "$_node_id" | tee "$_node_id_file" > /dev/null
+  # Read node token
+  _node_token=$(echo "$_regitration_data" | jq --raw-output '.token')
+  # Read node id
+  _node_id=$(echo "$_regitration_data" | jq --raw-output '.decoded.payload.id')
 
-  # TODO Write node token
-  # DEBUG "Writing node token '$_node_token' to '$_node_token_file'"
-  # echo "$_node_token" | tee "$_node_token_file" > /dev/null
+  # Write node token
+  echo "$_node_token" | tee "$_node_token_file" > /dev/null
 
   # Update node label
   _node_label_id="${_node_label_id}${_node_id}"
-  DEBUG "Updating K3s configuration '$_k3s_config_file' adding 'node-label: - $_node_label_id'"
+  INFO "Updating K3s configuration '$_k3s_config_file' adding 'node-label: - $_node_label_id'"
   $SUDO \
     node_label="$_node_label_id" \
     yq e '.node-label += [env(node_label)]' -i "$_k3s_config_file"
 
-  # TODO Bootstrap script
-  DEBUG "Writing bootstrap script '$_bootstrap_script_file'"
+  # Bootstrap script
+  _etc_recluster_config_file="${RECLUSTER_ETC_DIR}$(echo "$_recluster_config_file" | sed -n -e 's#^.*'"$RECLUSTER_ETC_DIR"'##p')"
+  _etc_node_token_file="${RECLUSTER_ETC_DIR}$(echo "$_node_token_file" | sed -n -e 's#^.*'"$RECLUSTER_ETC_DIR"'##p')"
+  _opt_bootstrap_script_file="${RECLUSTER_OPT_DIR}$(echo "$_bootstrap_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
+  INFO "Constructing reCluster bootstrap script"
   tee "$_bootstrap_script_file" > /dev/null << EOF
+#!/usr/bin/env sh
+
+# Fail on error
+set -o errexit
+# Disable wildcard character expansion
+set -o noglob
+
+# ================
+# CONFIGURATION
+# ================
+# Configuration file
+RECLUSTER_CONFIG_FILE="$_etc_recluster_config_file"
+# Node token file
+RECLUSTER_NODE_TOKEN_FILE="$_etc_node_token_file"
+
+# ================
+# GLOBALS
+# ================
+# Config
+RECLUSTER_CONFIG=
+# Node token
+RECLUSTER_NODE_TOKEN=
+
+# ================
+# LOGGER
+# ================
+# Fatal log message
+FATAL() {
+  printf '[FATAL] %s\n' "\$@" >&2
+  exit 1
+}
+# Info log message
+INFO() {
+  printf '[INFO ] %s\n' "\$@"
+}
+
+# ================
+# FUNCTIONS
+# ================
+# Read configuration file
+read_config() {
+  INFO "Reading reCluster configuration file '\$RECLUSTER_CONFIG_FILE'"
+  [ -f \$RECLUSTER_CONFIG_FILE ] || FATAL "reCluster configuration file '\$RECLUSTER_CONFIG_FILE' not found"
+  RECLUSTER_CONFIG=\$(yq e --output-format=json --no-colors '.' "\$RECLUSTER_CONFIG_FILE") || FATAL "Error reading reCluster configuration file '\$RECLUSTER_CONFIG_FILE'"
+}
+
+# Read node token file
+read_node_token() {
+  INFO "Reading node token file '\$RECLUSTER_NODE_TOKEN_FILE'"
+  [ -f \$RECLUSTER_NODE_TOKEN_FILE ] || FATAL "Node token file '\$RECLUSTER_NODE_TOKEN_FILE' not found"
+  RECLUSTER_NODE_TOKEN=\$(cat "\$RECLUSTER_NODE_TOKEN_FILE") || FATAL "Error reading node token file '\$RECLUSTER_NODE_TOKEN_FILE'"
+}
+
+# Update node status
+update_node_status() {
+  _status="ACTIVE"
+  _server_url=\$(echo "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
+  # shellcheck disable=SC2016
+  _request_data='
+    {
+      "query": "mutation (\$data: CreateStatusInput!) {
+        createStatus(data: \$data) { id }
+      }",
+      "variables": {
+        "data": { "status": "'"\$_status"'" }
+      }
+    }
+  '
+  _response_data=
+
+  INFO "Updating node status '\$_status' at '\$_server_url'"
+
+  # Send update request
+EOF
+
+  case $DOWNLOADER in
+    curl)
+      tee -a "$_bootstrap_script_file" > /dev/null << EOF
+      _response_data=\$(
+        curl --fail --silent --location --show-error \\
+          --request POST \\
+          --header 'Content-Type: application/json' \\
+          --header 'Authorization: Bearer '"\$RECLUSTER_NODE_TOKEN"'' \\
+          --url "\$_server_url" \\
+          --data "\$_request_data"
+      ) || FATAL "Error sending update node status request to '\$_server_url'"
+EOF
+      ;;
+    wget)
+      tee -a "$_bootstrap_script_file" > /dev/null << EOF
+      _response_data=\$(
+        wget --quiet --output-document=- \\
+          --header='Content-Type: application/json' \\
+          --header 'Authorization: Bearer '"\$RECLUSTER_NODE_TOKEN"'' \\
+          --post-data="\$_request_data" \\
+          "\$_server_url" 2>&1
+      ) || FATAL "Error sending update node status request to '\$_server_url'"
+EOF
+      ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
+  esac
+
+  tee -a "$_bootstrap_script_file" > /dev/null << EOF
+  # Check error response
+  if echo "\$_response_data" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
+    FATAL "Error updating node status at '\$_server_url':\\n\$(echo "\$_response_data" | jq .)"
+  fi
+
+  INFO "Successfully updated node status to '\$_status'"
+}
+
+# Start services
+start_services() {
+EOF
+
+  case $INIT_SYSTEM in
+    openrc)
+      tee -a "$_bootstrap_script_file" > /dev/null << EOF
+      INFO "openrc: Starting Node exporter"
+      rc-service node_exporter start || true
+      INFO "openrc: Starting K3s"
+      rc-service k3s-recluster start
+EOF
+      ;;
+    systemd)
+      tee -a "$_bootstrap_script_file" > /dev/null << EOF
+      INFO "systemd: Starting Node exporter"
+      systemtc start node_exporter || true
+      INFO "systemd: Starting K3s"
+      systemctl start k3s-recluster
+EOF
+      ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
+
+  tee -a "$_bootstrap_script_file" > /dev/null << EOF
+}
+
+# ================
+# MAIN
+# ================
+{
+  read_config
+  read_node_token
+  update_node_status
+  start_services
+}
 EOF
 
   # Bootstrap script permissions
@@ -1620,10 +1812,10 @@ EOF
   # Bootstrap service
   case $INIT_SYSTEM in
     openrc)
-      _bootstrap_service_file="/etc/init.d/$_bootstrap_service_name"
+      _openrc_bootstrap_service_file="/etc/init.d/$_bootstrap_service_name"
 
-      INFO "openrc: Creating reCluster bootstrap service file '$_bootstrap_service_file'"
-      $SUDO tee "$_bootstrap_service_file" > /dev/null << EOF
+      INFO "openrc: Constructing reCluster bootstrap service file '$_openrc_bootstrap_service_file'"
+      $SUDO tee "$_openrc_bootstrap_service_file" > /dev/null << EOF
 #!/sbin/openrc-run
 
 description="reCluster bootstrap"
@@ -1634,19 +1826,19 @@ depend() {
   after firewall
 }
 
-command="$_bootstrap_script_file"
+command="$_opt_bootstrap_script_file"
 EOF
 
-      $SUDO chmod 0755 $_bootstrap_service_file
+      $SUDO chmod 0755 "$_openrc_bootstrap_service_file"
 
       INFO "openrc: Enabling reCluster bootstrap service '$_bootstrap_service_name' for default runlevel"
       $SUDO rc-update add "$_bootstrap_service_name" default > /dev/null
       ;;
     systemd)
-      _bootstrap_service_file="/etc/systemd/system/$_bootstrap_service_name.service"
+      _systemd_bootstrap_service_file="/etc/systemd/system/$_bootstrap_service_name.service"
 
-      INFO "systemd: Creating reCluster bootstrap service file '$_bootstrap_service_file'"
-      $SUDO tee "$_bootstrap_service_file" > /dev/null << EOF
+      INFO "systemd: Constructing reCluster bootstrap service file '$_systemd_bootstrap_service_file'"
+      $SUDO tee "$_systemd_bootstrap_service_file" > /dev/null << EOF
 [Unit]
 Description=reCluster bootstrap
 After=network-online.target network.target
@@ -1657,8 +1849,10 @@ WantedBy=multi-user.target
 
 [Service]
 Type=oneshot
-ExecStart=$_bootstrap_script_file
+ExecStart=$_opt_bootstrap_script_file
 EOF
+
+      $SUDO chmod 0755 "$_systemd_bootstrap_service_file"
 
       INFO "systemd: Enabling reCluster bootstrap service '$_bootstrap_service_name' unit"
       $SUDO systemctl enable "$_bootstrap_service_name" > /dev/null
@@ -1667,9 +1861,15 @@ EOF
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
-  # Move etc and opt directories
-  $SUDO mv -f "$_etc_dir" "$RECLUSTER_ETC_DIR"
-  $SUDO mv -f "$_opt_dir" "$RECLUSTER_OPT_DIR"
+  # etc directory
+  INFO "Writing reCluster etc directory '$RECLUSTER_ETC_DIR'"
+  $SUDO mkdir -p "$RECLUSTER_ETC_DIR"
+  $SUDO mv "$_etc_dir" "$RECLUSTER_ETC_DIR"
+
+  # opt directory
+  INFO "Writing reCluster opt directory '$RECLUSTER_OPT_DIR'"
+  $SUDO mkdir -p "$RECLUSTER_OPT_DIR"
+  $SUDO mv "$_opt_dir" "$RECLUSTER_OPT_DIR"
 
   spinner_stop
 
@@ -1707,17 +1907,17 @@ AIRGAP_ENV=false
 # Benchmark time in seconds
 BENCH_TIME=30
 # Configuration file
-CONFIG_FILE="$DIRNAME/config.yaml"
+CONFIG_FILE="$DIRNAME/config.yml"
 # Initialize cluster
 INIT_CLUSTER=false
 # K3s version
-K3S_VERSION=v1.25.0+k3s1
+K3S_VERSION="v1.25.0+k3s1"
 # Log color flag
 LOG_COLOR_ENABLE=true
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
 # Node exporter version
-NODE_EXPORTER_VERSION=v1.4.0
+NODE_EXPORTER_VERSION="v1.4.0"
 # Power consumption device api url
 PC_DEVICE_API="http://pc.local/cm?cmnd=status%2010"
 # Power consumption interval in seconds
@@ -1727,9 +1927,9 @@ PC_TIME=30
 # Power consumption warmup time in seconds
 PC_WARMUP=10
 # reCluster etc directory
-RECLUSTER_ETC_DIR=/etc/recluster
+RECLUSTER_ETC_DIR="/etc/recluster"
 # reCluster opt directory
-RECLUSTER_OPT_DIR=/opt/recluster
+RECLUSTER_OPT_DIR="/opt/recluster"
 # Spinner flag
 SPINNER_ENABLE=true
 # Spinner symbols
