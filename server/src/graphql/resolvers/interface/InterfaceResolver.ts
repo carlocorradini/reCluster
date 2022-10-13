@@ -26,8 +26,8 @@ import type * as Prisma from '@prisma/client';
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
+import { convert } from 'convert';
 import { InterfaceService } from '~/services';
-import { digitalConverter } from '~/utils';
 import { DigitalUnits } from '../../enums';
 import { Interface } from '../../entities';
 import { FindUniqueInterfaceArgs, FindManyInterfaceArgs } from '../../args';
@@ -66,10 +66,6 @@ export class InterfaceResolver {
     })
     unit: DigitalUnits
   ): bigint {
-    return digitalConverter({
-      value: inf.speed,
-      from: DigitalUnits.b,
-      to: unit
-    }) as bigint;
+    return convert(inf.speed, DigitalUnits.b).to(unit);
   }
 }

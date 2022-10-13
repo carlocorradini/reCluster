@@ -26,8 +26,8 @@ import type * as Prisma from '@prisma/client';
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { injectable, inject } from 'tsyringe';
 import { GraphQLNonNegativeInt } from 'graphql-scalars';
+import { convert } from 'convert';
 import { CpuService } from '~/services';
-import { digitalConverter } from '~/utils';
 import { DigitalUnits } from '../../enums';
 import { Cpu } from '../../entities';
 import { FindUniqueCpuArgs, FindManyCpuArgs } from '../../args';
@@ -61,11 +61,7 @@ export class CpuResolver {
     })
     unit: DigitalUnits
   ): number {
-    return digitalConverter({
-      value: cpu.cacheL1d,
-      from: DigitalUnits.B,
-      to: unit
-    }) as number;
+    return convert(cpu.cacheL1d, DigitalUnits.B).to(unit);
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
@@ -77,11 +73,7 @@ export class CpuResolver {
     })
     unit: DigitalUnits
   ): number {
-    return digitalConverter({
-      value: cpu.cacheL1i,
-      from: DigitalUnits.B,
-      to: unit
-    }) as number;
+    return convert(cpu.cacheL1i, DigitalUnits.B).to(unit);
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
@@ -93,11 +85,7 @@ export class CpuResolver {
     })
     unit: DigitalUnits
   ): number {
-    return digitalConverter({
-      value: cpu.cacheL2,
-      from: DigitalUnits.B,
-      to: unit
-    }) as number;
+    return convert(cpu.cacheL2, DigitalUnits.B).to(unit);
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
@@ -109,10 +97,6 @@ export class CpuResolver {
     })
     unit: DigitalUnits
   ): number {
-    return digitalConverter({
-      value: cpu.cacheL3,
-      from: DigitalUnits.B,
-      to: unit
-    }) as number;
+    return convert(cpu.cacheL3, DigitalUnits.B).to(unit);
   }
 }

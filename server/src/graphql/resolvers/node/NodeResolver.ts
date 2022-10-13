@@ -34,8 +34,8 @@ import {
 } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt, GraphQLJWT } from 'graphql-scalars';
+import { convert } from 'convert';
 import { NodeService } from '~/services';
-import { digitalConverter } from '~/utils';
 import { DigitalUnits } from '../../enums';
 import { Node } from '../../entities';
 import {
@@ -85,10 +85,6 @@ export class NodeResolver {
     })
     unit: DigitalUnits
   ): bigint {
-    return digitalConverter({
-      value: node.ram,
-      from: DigitalUnits.B,
-      to: unit
-    }) as bigint;
+    return convert(node.ram, DigitalUnits.B).to(unit);
   }
 }

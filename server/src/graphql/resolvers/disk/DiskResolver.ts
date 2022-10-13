@@ -26,8 +26,8 @@ import type * as Prisma from '@prisma/client';
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
+import { convert } from 'convert';
 import { DiskService } from '~/services';
-import { digitalConverter } from '~/utils';
 import { DigitalUnits } from '../../enums';
 import { Disk } from '../../entities';
 import { FindUniqueDiskArgs, FindManyDiskArgs } from '../../args';
@@ -62,10 +62,6 @@ export class DiskResolver {
     })
     unit: DigitalUnits
   ): bigint {
-    return digitalConverter({
-      value: disk.size,
-      from: DigitalUnits.B,
-      to: unit
-    }) as bigint;
+    return convert(disk.size, DigitalUnits.B).to(unit);
   }
 }
