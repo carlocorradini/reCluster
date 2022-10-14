@@ -2,7 +2,7 @@
   "*.{json,md}": "prettier --write",
   "*.md": "markdownlint",
   "*.ts": [
-    "npm --prefix server eslint --fix",
+    "cd server && eslint --fix",
     "prettier --write"
   ]
 }
