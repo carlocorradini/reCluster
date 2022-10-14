@@ -1,6 +1,6 @@
 {
   "name": "recluster",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "reCluster is an architecture for a data centre that actively reduces its impact and minimizes its resource utilization",
   "homepage": "https://github.com/carlocorradini/reCluster#readme",

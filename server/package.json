@@ -1,6 +1,6 @@
 {
   "name": "recluster-server",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "reCluster server",
   "homepage": "https://github.com/carlocorradini/reCluster#readme",
