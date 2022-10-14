@@ -74,6 +74,18 @@ LOG_COLOR_ENABLE=true
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
 
+# Check if log level is enabled
+# @param $1 Log level
+is_log_level_enabled() {
+  if [ "$1" -le "$LOG_LEVEL" ]; then
+    # Enabled
+    return 0
+  else
+    # Disabled
+    return 1
+  fi
+}
+
 # Print log message
 # @param $1 Log level
 # @param $2 Message
@@ -86,7 +98,7 @@ _log_print_message() {
   _log_suffix="\033[0m"
 
   # Check log level
-  if [ "$_log_level" -gt "$LOG_LEVEL" ]; then return; fi
+  is_log_level_enabled "$_log_level" || return 0
 
   case $_log_level in
     "$LOG_LEVEL_FATAL")
@@ -1163,13 +1175,11 @@ verify_system() {
   esac
 
   # Commands
-  # TODO Check some command only when cluster init is 'true'
   assert_cmd cp
   assert_cmd date
   assert_cmd ethtool
   assert_cmd grep
   assert_cmd ip
-  assert_cmd inotifywait
   assert_cmd jq
   assert_cmd lscpu
   assert_cmd lsblk
@@ -1184,26 +1194,26 @@ verify_system() {
   assert_cmd tr
   assert_cmd uname
   assert_cmd yq
-
-  # Spinner
+  if [ "$INIT_CLUSTER" = true ]; then
+    assert_cmd inotifywait
+  fi
   if [ "$SPINNER_ENABLE" = true ]; then
-    # Commands
     assert_cmd ps
     assert_cmd tput
   fi
 
   # Init system
   assert_init_system
-
   # Downloader command
   assert_downloader
-
   # Check power consumption device reachability
   assert_url_reachability "$PC_DEVICE_API"
 
   # Directories
   [ ! -d "$RECLUSTER_ETC_DIR" ] || FATAL "reCluster directory '$RECLUSTER_ETC_DIR' already exists"
   [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "reCluster directory '$RECLUSTER_OPT_DIR' already exists"
+  # Configuration file
+  [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' not found"
 
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
@@ -1225,9 +1235,19 @@ setup_system() {
 
   # Configuration
   INFO "Reading configuration file '$CONFIG_FILE'"
-  [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' not found"
   CONFIG=$(yq e --output-format=json --no-colors '.' "$CONFIG_FILE") || FATAL "Error reading configuration file '$CONFIG_FILE'"
   DEBUG "Configuration:\n$(echo "$CONFIG" | jq .)"
+
+  # Check configuration
+  # K3s kind
+  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
+  # Server URL
+  echo "$CONFIG" | jq --exit-status '.recluster.server' > /dev/null 2>&1 || FATAL "reCluster configuration requires server URL"
+
+  # Cluster initialization
+  if [ "$INIT_CLUSTER" = true ]; then
+    [ "$_k3s_kind" = server ] || FATAL "Cluster initialization requires K3s 'kind' to be 'server' but '$_k3s_kind' found"
+  fi
 
   # Airgap
   if [ "$AIRGAP_ENV" = true ]; then
@@ -1419,6 +1439,8 @@ read_power_consumptions() {
 
 # Print node facts
 print_node_facts() {
+  is_log_level_enabled "$LOG_LEVEL_DEBUG" || return 0
+
   DEBUG "Node facts:"
   echo "$NODE_FACTS" | jq .
 }
@@ -1452,8 +1474,7 @@ install_k3s() {
   fi
 
   # Checks
-  [ -f "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' not found"
-  [ -x "$_k3s_install_sh" ] || FATAL "K3s installation script '$_k3s_install_sh' is not executable"
+  { [ -f "$_k3s_install_sh" ] && [ -x "$_k3s_install_sh" ]; } || FATAL "K3s installation script '$_k3s_install_sh' not found or not executable"
 
   # Kind
   _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
@@ -1505,8 +1526,7 @@ install_node_exporter() {
   fi
 
   # Checks
-  [ -f "$_node_exporter_install_sh" ] || FATAL "Node exporter installation script '$_node_exporter_install_sh' not found"
-  [ -x "$_node_exporter_install_sh" ] || FATAL "Node exporter installation script '$_node_exporter_install_sh' is not executable"
+  { [ -f "$_node_exporter_install_sh" ] && [ -x "$_node_exporter_install_sh" ]; } || FATAL "Node exporter installation script '$_node_exporter_install_sh' not found or not executable"
 
   # Configuration
   INFO "Writing Node exporter configuration"
@@ -1543,7 +1563,7 @@ cluster_init() {
   INFO "Cluster initialization"
 
   _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
-  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
+  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind')
   _kubeconfig_file=~/.kube/config
 
   _wait_k3s_kubeconfig_file_creation() {
@@ -1560,9 +1580,6 @@ cluster_init() {
         fi
       done
   }
-
-  # K3s kind
-  [ "$_k3s_kind" = "server" ] || FATAL "Cluster initialization requires K3s 'kind' to be 'server' but '$_k3s_kind' found"
 
   # Start and stop K3s service to generate initial configuration
   case $INIT_SYSTEM in
@@ -1621,7 +1638,7 @@ install_recluster() {
 
   spinner_start "Installing reCluster"
 
-  # Directories
+  # Make temporary directories
   mkdir -p "$_etc_dir"
   mkdir -p "$_opt_dir"
 
