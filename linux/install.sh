@@ -134,18 +134,29 @@ _log_print_message() {
 }
 
 # Fatal log message
+# @param $1 Message
 FATAL() {
-  _log_print_message ${LOG_LEVEL_FATAL} "$@" >&2
+  _log_print_message "$LOG_LEVEL_FATAL" "$1" >&2
   exit 1
 }
 # Error log message
-ERROR() { _log_print_message ${LOG_LEVEL_ERROR} "$@" >&2; }
+# @param $1 Message
+ERROR() { _log_print_message "$LOG_LEVEL_ERROR" "$1" >&2; }
 # Warning log message
-WARN() { _log_print_message ${LOG_LEVEL_WARN} "$@" >&2; }
+# @param $1 Message
+WARN() { _log_print_message "$LOG_LEVEL_WARN" "$1" >&2; }
 # Informational log message
-INFO() { _log_print_message ${LOG_LEVEL_INFO} "$@"; }
+# @param $1 Message
+INFO() { _log_print_message "$LOG_LEVEL_INFO" "$1"; }
 # Debug log message
-DEBUG() { _log_print_message ${LOG_LEVEL_DEBUG} "$@"; }
+# @param $1 Message
+# @param $2 JSON value
+DEBUG() {
+  _log_print_message "$LOG_LEVEL_DEBUG" "$1"
+  if [ -n "$2" ] && is_log_level_enabled "$LOG_LEVEL_DEBUG"; then
+    echo "$2" | jq .
+  fi
+}
 
 # ================
 # SPINNER
@@ -893,13 +904,13 @@ read_cpu_power_consumption() {
   DEBUG "Reading CPU power consumption in idle"
   read_power_consumption
   _idle=$RETVAL
-  DEBUG "CPU power consumption in idle:\n$(echo "$_idle" | jq .)"
+  DEBUG "CPU power consumption in idle:" "$_idle"
 
   # Multi-thread
   DEBUG "Reading CPU power consumption in multi-thread ($_threads)"
   _run_cpu_bench "$_threads"
   _multi_thread=$RETVAL
-  DEBUG "CPU power consumption in multi-thread ($_threads):\n$(echo "$_multi_thread" | jq .)"
+  DEBUG "CPU power consumption in multi-thread ($_threads):" "$_multi_thread"
 
   # Return
   RETVAL=$(
@@ -960,7 +971,7 @@ node_registration() {
 
   # Check error response
   if echo "$_response_data" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
-    FATAL "Error registering node at '$_server_url':\n$(echo "$_response_data" | jq .)"
+    FATAL "Error registering node at '$_server_url':" "$_response_data"
   fi
 
   # Extract token
@@ -970,7 +981,7 @@ node_registration() {
   _token_decoded=$(decode_token "$_token")
 
   # Success
-  INFO "Successfully registered node:\n$(echo "$_token_decoded" | jq .)"
+  INFO "Successfully registered node:" "$_token_decoded"
 
   # Return
   RETVAL=$(
@@ -1236,7 +1247,7 @@ setup_system() {
   # Configuration
   INFO "Reading configuration file '$CONFIG_FILE'"
   CONFIG=$(yq e --output-format=json --no-colors '.' "$CONFIG_FILE") || FATAL "Error reading configuration file '$CONFIG_FILE'"
-  DEBUG "Configuration:\n$(echo "$CONFIG" | jq .)"
+  DEBUG "Configuration:" "$CONFIG"
 
   # Check configuration
   # K3s kind
@@ -1329,7 +1340,7 @@ read_system_info() {
   # CPU
   read_cpu_info
   _cpu_info=$RETVAL
-  DEBUG "CPU info:\n$(echo "$_cpu_info" | jq .)"
+  DEBUG "CPU info:" "$_cpu_info"
   INFO "CPU is '$(echo "$_cpu_info" | jq --raw-output .name)'"
 
   # RAM
@@ -1340,7 +1351,7 @@ read_system_info() {
   # Disk(s)
   read_disks_info
   _disks_info=$RETVAL
-  DEBUG "Disk(s) info:\n$(echo "$_disks_info" | jq .)"
+  DEBUG "Disk(s) info:" "$_disks_info"
   _disks_info_msg="Disk(s) found $(echo "$_disks_info" | jq --raw-output 'length'):"
   while read -r _disk_info; do
     _disks_info_msg="$_disks_info_msg\n\t'$(echo "$_disk_info" | jq --raw-output .name)' of '$(echo "$_disk_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
@@ -1352,7 +1363,7 @@ EOF
   # Interface(s)
   read_interfaces_info
   _interfaces_info=$RETVAL
-  DEBUG "Interface(s) info:\n$(echo "$_interfaces_info" | jq .)"
+  DEBUG "Interface(s) info:" "$_interfaces_info"
   INFO "Interface(s) found $(echo "$_interfaces_info" | jq --raw-output 'length'):
     $(echo "$_interfaces_info" | jq --raw-output '.[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
 
@@ -1383,19 +1394,19 @@ run_benchmarks() {
   INFO "CPU benchmark"
   run_cpu_bench
   _cpu_benchmark=$RETVAL
-  DEBUG "CPU benchmark:\n$(echo "$_cpu_benchmark" | jq .)"
+  DEBUG "CPU benchmark:" "$_cpu_benchmark"
 
   # RAM
   INFO "RAM benchmark"
   run_ram_bench
   _ram_benchmark=$RETVAL
-  DEBUG "RAM benchmark:\n$(echo "$_ram_benchmark" | jq .)"
+  DEBUG "RAM benchmark:" "$_ram_benchmark"
 
   # Disk(s)
   INFO "Disk(s) benchmark"
   run_disks_bench
   _disks_benchmark=$RETVAL
-  DEBUG "Disk(s) benchmark:\n$(echo "$_disks_benchmark" | jq .)"
+  DEBUG "Disk(s) benchmark:" "$_disks_benchmark"
 
   spinner_stop
 
@@ -1421,7 +1432,7 @@ read_power_consumptions() {
   INFO "CPU power consumption"
   read_cpu_power_consumption
   _cpu_power_consumption=$RETVAL
-  DEBUG "CPU power consumption:\n$(echo "$_cpu_power_consumption" | jq .)"
+  DEBUG "CPU power consumption:" "$_cpu_power_consumption"
 
   spinner_stop
 
