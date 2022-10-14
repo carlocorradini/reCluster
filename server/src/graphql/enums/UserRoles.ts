@@ -25,13 +25,15 @@
 import { registerEnumType } from 'type-graphql';
 
 export enum UserRoles {
-  ADMIN = 'ADMIN'
+  ADMIN = 'ADMIN',
+  SIMPLE = 'SIMPLE'
 }
 
 registerEnumType(UserRoles, {
   name: 'UserRoles',
   description: 'User roles',
   valuesConfig: {
-    ADMIN: { description: 'Administrator' }
+    ADMIN: { description: 'Administrator' },
+    SIMPLE: { description: 'Simple' }
   }
 });

@@ -22,9 +22,41 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateDiskInput';
-export * from './CreateInterfaceInput';
-export * from './CreateNodeInput';
-export * from './CreateStatusInput';
-export * from './CreateUserInput';
+import type { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { UserPermissions } from '../../enums';
+
+@InputType({
+  isAbstract: true,
+  description: 'User permissions filter'
+})
+export class UserPermissionsListFilter
+  implements Prisma.EnumUserPermissionsNullableListFilter
+{
+  @Field(() => UserPermissions, {
+    nullable: true,
+    description: 'User permissions exists in the list'
+  })
+  has?: UserPermissions;
+
+  @Field(() => [UserPermissions], {
+    nullable: true,
+    description: 'Every User permission exists in the list'
+  })
+  hasEvery?: UserPermissions[];
+
+  @Field(() => [UserPermissions], {
+    nullable: true,
+    description: 'At least one User permission exists in the list'
+  })
+  hasSome?: UserPermissions[];
+
+  @Field({ nullable: true, description: 'List is empty' })
+  isEmpty?: boolean;
+
+  @Field(() => [UserPermissions], {
+    nullable: true,
+    description: 'List matches the given User permission list exactly'
+  })
+  equals?: UserPermissions[];
+}

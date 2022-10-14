@@ -24,3 +24,4 @@
 
 export * from './CreateNodeArgs';
 export * from './CreateStatusArgs';
+export * from './CreateUserArgs';

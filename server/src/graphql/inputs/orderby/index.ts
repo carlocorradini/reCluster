@@ -27,3 +27,4 @@ export * from './OrderByDiskInput';
 export * from './OrderByInterfaceInput';
 export * from './OrderByNodeInput';
 export * from './OrderByStatusInput';
+export * from './OrderByUserInput';

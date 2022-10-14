@@ -22,9 +22,36 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateDiskInput';
-export * from './CreateInterfaceInput';
-export * from './CreateNodeInput';
-export * from './CreateStatusInput';
-export * from './CreateUserInput';
+import type * as Prisma from '@prisma/client';
+import { prisma } from '~/db';
+import { logger } from '~/logger';
+import type {
+  CreateUserArgs,
+  FindManyUserArgs,
+  FindUniqueUserArgs
+} from '~/graphql';
+
+export class UserService {
+  public async findMany(args: FindManyUserArgs): Promise<Prisma.User[]> {
+    logger.debug(`User service find many: ${JSON.stringify(args)}`);
+
+    return prisma.user.findMany({
+      ...args,
+      cursor: args.cursor ? { id: args.cursor } : undefined
+    });
+  }
+
+  public async findUnique(
+    args: FindUniqueUserArgs
+  ): Promise<Prisma.User | null> {
+    logger.debug(`User service find unique: ${JSON.stringify(args)}`);
+
+    return prisma.user.findUnique({ where: { id: args.id } });
+  }
+
+  public async create(args: CreateUserArgs): Promise<Prisma.User> {
+    logger.info(`User service create: ${JSON.stringify(args)}`);
+
+    return prisma.user.create({ ...args });
+  }
+}

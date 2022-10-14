@@ -36,7 +36,7 @@ import { PickRequired } from '~/types';
 import { CreateCpuInput } from './CreateCpuInput';
 import { CreateDiskInput } from './CreateDiskInput';
 import { CreateInterfaceInput } from './CreateInterfaceInput';
-import { NodeRoles } from '../../enums';
+import { NodePermissions, NodeRoles } from '../../enums';
 
 type ICreateNodeInput = PickRequired<Prisma.NodeCreateInput> & {
   cpu: CreateCpuInput;
@@ -49,6 +49,14 @@ export class CreateNodeInput implements ICreateNodeInput {
   @Field(() => [NodeRoles], { description: 'Node roles' })
   @ArrayUnique()
   roles!: NodeRoles[];
+
+  // FIXME Default value
+  @Field(() => [NodePermissions], {
+    defaultValue: [],
+    description: 'Node permissions'
+  })
+  @ArrayUnique()
+  permissions!: NodePermissions[];
 
   @Field(() => GraphQLBigInt, { description: 'Node ram' })
   ram!: bigint;

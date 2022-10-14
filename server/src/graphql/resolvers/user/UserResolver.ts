@@ -22,23 +22,40 @@
  * SOFTWARE.
  */
 
-import { Query, Resolver } from 'type-graphql';
-import { injectable } from 'tsyringe';
+import type * as Prisma from '@prisma/client';
+import { Args, Mutation, Query, Resolver } from 'type-graphql';
+import { inject, injectable } from 'tsyringe';
+import { UserService } from '~/services';
 import { User } from '../../entities';
+import {
+  FindUniqueUserArgs,
+  FindManyUserArgs,
+  CreateUserArgs
+} from '../../args';
 
-// FIXME All class
 @Resolver(User)
 @injectable()
 export class UserResolver {
-  /*
   public constructor(
-    @inject(UserService) private readonly userService: UserService
+    @inject(UserService)
+    private readonly userService: UserService
   ) {}
-  */
 
-  // FIXME Delete this!
-  @Query(() => [User], { description: 'List of users' })
-  async users(): Promise<User[]> {
-    return [];
+  @Query(() => [User], { description: 'List of Users' })
+  async users(@Args() args: FindManyUserArgs): Promise<Prisma.User[]> {
+    return this.userService.findMany(args);
+  }
+
+  @Query(() => User, {
+    nullable: true,
+    description: 'User matching the identifier'
+  })
+  async user(@Args() args: FindUniqueUserArgs): Promise<Prisma.User | null> {
+    return this.userService.findUnique(args);
+  }
+
+  @Mutation(() => User, { description: 'Create a new user' })
+  async createUser(@Args() args: CreateUserArgs): Promise<Prisma.User> {
+    return this.userService.create(args);
   }
 }

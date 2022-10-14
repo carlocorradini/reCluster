@@ -41,7 +41,7 @@ export class PaginationArgs {
     defaultValue: PaginationArgs.SKIP_DEFAULT_VALUE,
     description: `Skip data`
   })
-  skip: number = PaginationArgs.SKIP_DEFAULT_VALUE;
+  skip!: number;
 
   @Field(() => GraphQLInt, {
     defaultValue: PaginationArgs.TAKE_DEFAULT_VALUE,
@@ -49,7 +49,7 @@ export class PaginationArgs {
   })
   @Min(PaginationArgs.TAKE_MIN_VALUE)
   @Max(PaginationArgs.TAKE_MAX_VALUE)
-  take: number = PaginationArgs.TAKE_DEFAULT_VALUE;
+  take!: number;
 
   @Field(() => GraphQLID, {
     nullable: true,

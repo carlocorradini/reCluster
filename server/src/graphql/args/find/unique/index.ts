@@ -27,3 +27,4 @@ export * from './FindUniqueDiskArgs';
 export * from './FindUniqueInterfaceArgs';
 export * from './FindUniqueNodeArgs';
 export * from './FindUniqueStatusArgs';
+export * from './FindUniqueUserArgs';

@@ -26,17 +26,18 @@ import type * as Prisma from '@prisma/client';
 import { GraphQLID } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
 import { GraphQLTimestamp } from 'graphql-scalars';
-import { UserRoles } from '../enums';
-
-// FIXME Missing implements Prisma.User
+import { UserRoles, UserPermissions } from '../enums';
 
 @ObjectType({ description: 'User' })
-export class User {
+export class User implements Prisma.User {
   @Field(() => GraphQLID, { description: 'User identifier' })
   id!: string;
 
   @Field(() => [UserRoles], { description: 'User roles' })
   roles!: UserRoles[];
+
+  @Field(() => [UserPermissions], { description: 'User permissions' })
+  permissions!: UserPermissions[];
 
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
   createdAt!: Date;

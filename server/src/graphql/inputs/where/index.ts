@@ -27,3 +27,4 @@ export * from './WhereDiskInput';
 export * from './WhereInterfaceInput';
 export * from './WhereNodeInput';
 export * from './WhereStatusInput';
+export * from './WhereUserInput';

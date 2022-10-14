@@ -28,3 +28,4 @@ export * from './InterfaceService';
 export * from './NodeService';
 export * from './StatusService';
 export * from './TokenService';
+export * from './UserService';

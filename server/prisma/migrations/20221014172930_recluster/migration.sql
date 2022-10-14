@@ -1,5 +1,14 @@
 -- CreateEnum
+CREATE TYPE "UserRoles" AS ENUM ('ADMIN', 'SIMPLE');
+
+-- CreateEnum
+CREATE TYPE "UserPermissions" AS ENUM ('UNKNOWN');
+
+-- CreateEnum
 CREATE TYPE "NodeRoles" AS ENUM ('RECLUSTER_MASTER', 'K8S_MASTER', 'K8S_WORKER');
+
+-- CreateEnum
+CREATE TYPE "NodePermissions" AS ENUM ('UNKNOWN');
 
 -- CreateEnum
 CREATE TYPE "NodeStatuses" AS ENUM ('ACTIVE', 'INACTIVE', 'WORKING', 'ERROR');
@@ -14,9 +23,21 @@ CREATE TYPE "CpuArchitectures" AS ENUM ('x86_64');
 CREATE TYPE "CpuVendors" AS ENUM ('AMD', 'INTEL');
 
 -- CreateTable
+CREATE TABLE "User" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "roles" "UserRoles"[],
+    "permissions" "UserPermissions"[],
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Node" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "roles" "NodeRoles"[],
+    "permissions" "NodePermissions"[],
     "cpuId" UUID NOT NULL,
     "ram" BIGINT NOT NULL,
     "min_power_consumption" INTEGER NOT NULL,

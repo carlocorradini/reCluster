@@ -29,27 +29,51 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roles       UserRoles[]
+  permissions UserPermissions[]
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
+}
+
+enum UserRoles {
+  ADMIN
+  SIMPLE
+}
+
+enum UserPermissions {
+  // FIXME
+  UNKNOWN
+}
+
 model Node {
-  id                             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   roles                          NodeRoles[]
+  permissions                    NodePermissions[]
   statuses                       Status[]
-  cpu                            Cpu         @relation(fields: [cpuId], references: [id], map: "cpu_id")
-  cpuId                          String      @db.Uuid
+  cpu                            Cpu               @relation(fields: [cpuId], references: [id], map: "cpu_id")
+  cpuId                          String            @db.Uuid
   ram                            BigInt
   disks                          Disk[]
   interfaces                     Interface[]
-  minPowerConsumption            Int         @map("min_power_consumption")
-  maxEfficiencyPowerConsumption  Int?        @map("max_efficiency_power_consumption")
-  minPerformancePowerConsumption Int?        @map("min_performance_power_consumption")
-  maxPowerConsumption            Int         @map("max_power_consumption")
-  createdAt                      DateTime    @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt                      DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
+  minPowerConsumption            Int               @map("min_power_consumption")
+  maxEfficiencyPowerConsumption  Int?              @map("max_efficiency_power_consumption")
+  minPerformancePowerConsumption Int?              @map("min_performance_power_consumption")
+  maxPowerConsumption            Int               @map("max_power_consumption")
+  createdAt                      DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                      DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
 }
 
 enum NodeRoles {
   RECLUSTER_MASTER
   K8S_MASTER
   K8S_WORKER
+}
+
+enum NodePermissions {
+  // FIXME
+  UNKNOWN
 }
 
 model Status {

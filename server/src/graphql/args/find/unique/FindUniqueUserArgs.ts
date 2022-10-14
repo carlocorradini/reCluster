@@ -22,9 +22,14 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateDiskInput';
-export * from './CreateInterfaceInput';
-export * from './CreateNodeInput';
-export * from './CreateStatusInput';
-export * from './CreateUserInput';
+import type { Prisma } from '@prisma/client';
+import { GraphQLID } from 'graphql';
+import { ArgsType, Field } from 'type-graphql';
+
+@ArgsType()
+export class FindUniqueUserArgs
+  implements Pick<Prisma.UserWhereUniqueInput, 'id'>
+{
+  @Field(() => GraphQLID, { description: 'User identifier' })
+  id!: string;
+}

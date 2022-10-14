@@ -22,9 +22,26 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateDiskInput';
-export * from './CreateInterfaceInput';
-export * from './CreateNodeInput';
-export * from './CreateStatusInput';
-export * from './CreateUserInput';
+import type { Prisma } from '@prisma/client';
+import { ArgsType, Field } from 'type-graphql';
+import { FindManyArgs } from '~/types';
+import { OrderByUserInput, WhereUserInput } from '../../../inputs';
+import { PaginationArgs } from './PaginationArgs';
+
+@ArgsType()
+export class FindManyUserArgs
+  extends PaginationArgs
+  implements FindManyArgs<Prisma.UserFindManyArgs>
+{
+  @Field(() => WhereUserInput, {
+    nullable: true,
+    description: 'Filter options'
+  })
+  where?: WhereUserInput;
+
+  @Field(() => OrderByUserInput, {
+    nullable: true,
+    description: 'Order options'
+  })
+  orderBy?: OrderByUserInput;
+}

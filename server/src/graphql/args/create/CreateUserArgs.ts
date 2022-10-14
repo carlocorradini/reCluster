@@ -22,9 +22,16 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateDiskInput';
-export * from './CreateInterfaceInput';
-export * from './CreateNodeInput';
-export * from './CreateStatusInput';
-export * from './CreateUserInput';
+import type { Prisma } from '@prisma/client';
+import { ArgsType, Field } from 'type-graphql';
+import { ValidateNested } from 'class-validator';
+import { CreateUserInput } from '../../inputs';
+
+type ICreateUserArgs = Pick<Prisma.UserCreateArgs, 'data'>;
+
+@ArgsType()
+export class CreateUserArgs implements ICreateUserArgs {
+  @Field({ description: 'User data' })
+  @ValidateNested()
+  data!: CreateUserInput;
+}

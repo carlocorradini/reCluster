@@ -22,9 +22,41 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateDiskInput';
-export * from './CreateInterfaceInput';
-export * from './CreateNodeInput';
-export * from './CreateStatusInput';
-export * from './CreateUserInput';
+import type { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { NodePermissions } from '../../enums';
+
+@InputType({
+  isAbstract: true,
+  description: 'Node permissions filter'
+})
+export class NodePermissionsListFilter
+  implements Prisma.EnumNodePermissionsNullableListFilter
+{
+  @Field(() => NodePermissions, {
+    nullable: true,
+    description: 'Node permissions exists in the list'
+  })
+  has?: NodePermissions;
+
+  @Field(() => [NodePermissions], {
+    nullable: true,
+    description: 'Every Node permission exists in the list'
+  })
+  hasEvery?: NodePermissions[];
+
+  @Field(() => [NodePermissions], {
+    nullable: true,
+    description: 'At least one Node permission exists in the list'
+  })
+  hasSome?: NodePermissions[];
+
+  @Field({ nullable: true, description: 'List is empty' })
+  isEmpty?: boolean;
+
+  @Field(() => [NodePermissions], {
+    nullable: true,
+    description: 'List matches the given Node permission list exactly'
+  })
+  equals?: NodePermissions[];
+}

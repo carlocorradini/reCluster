@@ -22,9 +22,28 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateDiskInput';
-export * from './CreateInterfaceInput';
-export * from './CreateNodeInput';
-export * from './CreateStatusInput';
-export * from './CreateUserInput';
+import type { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { ArrayUnique } from 'class-validator';
+import { PickRequired } from '~/types';
+import { UserRoles, UserPermissions } from '../../enums';
+
+type ICreateUserInput = PickRequired<Prisma.UserCreateInput>;
+
+@InputType({ description: 'Create User input' })
+export class CreateUserInput implements ICreateUserInput {
+  @Field(() => [UserRoles], {
+    defaultValue: [UserRoles.SIMPLE],
+    description: 'User roles'
+  })
+  @ArrayUnique()
+  roles!: UserRoles[];
+
+  // FIXME Default value
+  @Field(() => [UserPermissions], {
+    defaultValue: [],
+    description: 'User permissions'
+  })
+  @ArrayUnique()
+  permissions!: UserPermissions[];
+}

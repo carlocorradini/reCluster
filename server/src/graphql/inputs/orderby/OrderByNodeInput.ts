@@ -42,6 +42,9 @@ export class OrderByNodeInput
   @Field(() => SortOrders, { nullable: true, description: 'Node roles' })
   roles?: SortOrders;
 
+  @Field(() => SortOrders, { nullable: true, description: 'Node permissions' })
+  permissions?: SortOrders;
+
   @Field(() => SortOrders, { nullable: true, description: 'Node ram' })
   ram?: SortOrders;
 

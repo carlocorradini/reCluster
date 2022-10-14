@@ -71,6 +71,7 @@
     "tsdoc",
     "tsyringe",
     "typedi",
+    "uncompiled",
     "upsert"
   ]
 }

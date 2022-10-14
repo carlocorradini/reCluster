@@ -22,9 +22,31 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateDiskInput';
-export * from './CreateInterfaceInput';
-export * from './CreateNodeInput';
-export * from './CreateStatusInput';
-export * from './CreateUserInput';
+import type { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import {
+  StringFilter,
+  TimestampFilter,
+  UserRolesListFilter,
+  UserPermissionsListFilter
+} from '../filters';
+
+@InputType({ isAbstract: true, description: 'User where input' })
+export class WhereUserInput
+  implements Partial<Omit<Prisma.UserWhereInput, 'AND' | 'OR' | 'NOT'>>
+{
+  @Field({ nullable: true, description: 'User identifier' })
+  id?: StringFilter;
+
+  @Field({ nullable: true, description: 'User roles' })
+  roles?: UserRolesListFilter;
+
+  @Field({ nullable: true, description: 'User permissions' })
+  permissions?: UserPermissionsListFilter;
+
+  @Field({ nullable: true, description: 'Creation timestamp' })
+  createdAt?: TimestampFilter;
+
+  @Field({ nullable: true, description: 'Update timestamp' })
+  updatedAt?: TimestampFilter;
+}

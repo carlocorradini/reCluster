@@ -30,7 +30,8 @@ import {
   BigIntFilter,
   IntFilter,
   IntNullableFilter,
-  NodeRolesListFilter
+  NodeRolesListFilter,
+  NodePermissionsListFilter
 } from '../filters';
 
 @InputType({ isAbstract: true, description: 'Node where input' })
@@ -48,6 +49,9 @@ export class WhereNodeInput
 
   @Field({ nullable: true, description: 'Node roles' })
   roles?: NodeRolesListFilter;
+
+  @Field({ nullable: true, description: 'Node permissions' })
+  permissions?: NodePermissionsListFilter;
 
   @Field({ nullable: true, description: 'Node ram' })
   ram?: BigIntFilter;

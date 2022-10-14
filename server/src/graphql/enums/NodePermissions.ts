@@ -22,9 +22,15 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateDiskInput';
-export * from './CreateInterfaceInput';
-export * from './CreateNodeInput';
-export * from './CreateStatusInput';
-export * from './CreateUserInput';
+import { registerEnumType } from 'type-graphql';
+
+// FIXME
+export enum NodePermissions {
+  UNKNOWN = 'UNKNOWN'
+}
+
+registerEnumType(NodePermissions, {
+  name: 'NodePermissions',
+  description: 'Node permissions',
+  valuesConfig: {}
+});

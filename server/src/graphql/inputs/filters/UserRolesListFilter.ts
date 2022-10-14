@@ -22,9 +22,41 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateDiskInput';
-export * from './CreateInterfaceInput';
-export * from './CreateNodeInput';
-export * from './CreateStatusInput';
-export * from './CreateUserInput';
+import type { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { UserRoles } from '../../enums';
+
+@InputType({
+  isAbstract: true,
+  description: 'User roles filter'
+})
+export class UserRolesListFilter
+  implements Prisma.EnumUserRolesNullableListFilter
+{
+  @Field(() => UserRoles, {
+    nullable: true,
+    description: 'User role exists in the list'
+  })
+  has?: UserRoles;
+
+  @Field(() => [UserRoles], {
+    nullable: true,
+    description: 'Every User role exists in the list'
+  })
+  hasEvery?: UserRoles[];
+
+  @Field(() => [UserRoles], {
+    nullable: true,
+    description: 'At least one User role exists in the list'
+  })
+  hasSome?: UserRoles[];
+
+  @Field({ nullable: true, description: 'List is empty' })
+  isEmpty?: boolean;
+
+  @Field(() => [UserRoles], {
+    nullable: true,
+    description: 'List matches the given User role list exactly'
+  })
+  equals?: UserRoles[];
+}
