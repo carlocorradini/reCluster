@@ -22,5 +22,6 @@
  * SOFTWARE.
  */
 
+export * from './decorators';
 export * from './contextHelper';
 export * from './formatErrorHelper';

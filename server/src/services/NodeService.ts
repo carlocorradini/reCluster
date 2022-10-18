@@ -31,7 +31,8 @@ import type {
   FindUniqueNodeArgs,
   CreateNodeArgs,
   UpdateNodeArgs,
-  NodeRoles
+  NodeRoles,
+  NodePermissions
 } from '~/graphql';
 import { TokenService, TokenTypes } from './TokenService';
 
@@ -92,7 +93,7 @@ export class NodeService {
     // Create
     const node = await prisma.node.create({
       ...args,
-      select: { id: true, roles: true },
+      select: { id: true, roles: true, permissions: true },
       data: {
         ...args.data,
         cpu: { connect: { vendor_family_model } },
@@ -108,8 +109,7 @@ export class NodeService {
       type: TokenTypes.NODE,
       id: node.id,
       roles: node.roles as NodeRoles[],
-      // TODO
-      permissions: []
+      permissions: node.permissions as NodePermissions[]
     });
   }
 

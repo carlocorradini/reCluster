@@ -27,13 +27,13 @@ import { Args, Mutation, Query, Resolver } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import type { TokenPayload } from '~/types';
 import { StatusService, TokenTypes } from '~/services';
+import { Applicant, Auth } from '~/helpers';
 import { Status } from '../../entities';
 import {
   FindUniqueStatusArgs,
   FindManyStatusArgs,
   CreateStatusArgs
 } from '../../args';
-import { Applicant, Auth } from '../../decorators';
 
 @Resolver(Status)
 @injectable()
@@ -44,7 +44,7 @@ export class StatusResolver {
   ) {}
 
   @Query(() => [Status], { description: 'List of Statuses' })
-  async statuses(@Args() args: FindManyStatusArgs): Promise<Prisma.Status[]> {
+  public statuses(@Args() args: FindManyStatusArgs): Promise<Prisma.Status[]> {
     return this.statusService.findMany(args);
   }
 
@@ -52,7 +52,7 @@ export class StatusResolver {
     nullable: true,
     description: 'Status matching the identifier'
   })
-  async status(
+  public status(
     @Args() args: FindUniqueStatusArgs
   ): Promise<Prisma.Status | null> {
     return this.statusService.findUnique(args);
@@ -60,7 +60,7 @@ export class StatusResolver {
 
   @Mutation(() => Status, { description: 'Create a new status' })
   @Auth({ type: TokenTypes.NODE })
-  async createStatus(
+  public createStatus(
     @Args() args: CreateStatusArgs,
     @Applicant() applicant: TokenPayload
   ): Promise<Prisma.Status> {

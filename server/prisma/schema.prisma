@@ -31,8 +31,10 @@ datasource db {
 
 model User {
   id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  roles       UserRoles[]
-  permissions UserPermissions[]
+  username    String            @unique
+  password    String
+  roles       UserRoles[]       @default([SIMPLE])
+  permissions UserPermissions[] @default([])
   createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
 }
@@ -50,7 +52,7 @@ enum UserPermissions {
 model Node {
   id                             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   roles                          NodeRoles[]
-  permissions                    NodePermissions[]
+  permissions                    NodePermissions[] @default([])
   statuses                       Status[]
   cpu                            Cpu               @relation(fields: [cpuId], references: [id], map: "cpu_id")
   cpuId                          String            @db.Uuid

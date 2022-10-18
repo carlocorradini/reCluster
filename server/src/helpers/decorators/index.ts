@@ -22,4 +22,5 @@
  * SOFTWARE.
  */
 
+export * from './Applicant';
 export * from './Auth';

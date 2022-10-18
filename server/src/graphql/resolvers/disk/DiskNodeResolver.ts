@@ -36,7 +36,7 @@ export class DiskNodeResolver {
   ) {}
 
   @FieldResolver(() => Node, { description: 'Disk node' })
-  async node(@Root() disk: Disk): Promise<Prisma.Node | null> {
+  public node(@Root() disk: Disk): Promise<Prisma.Node | null> {
     return this.nodeService.findUnique({ id: disk.nodeId });
   }
 }

@@ -23,15 +23,30 @@
  */
 
 import type * as Prisma from '@prisma/client';
+import { inject, injectable } from 'tsyringe';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
+import { AuthenticationError } from '~/errors';
 import type {
   CreateUserArgs,
   FindManyUserArgs,
-  FindUniqueUserArgs
+  FindUniqueUserArgs,
+  SignInArgs,
+  UserPermissions,
+  UserRoles
 } from '~/graphql';
+import { TokenService, TokenTypes } from './TokenService';
+import { CryptoService } from './CryptoService';
 
+@injectable()
 export class UserService {
+  public constructor(
+    @inject(TokenService)
+    private readonly tokenService: TokenService,
+    @inject(CryptoService)
+    private readonly cryptoService: CryptoService
+  ) {}
+
   public async findMany(args: FindManyUserArgs): Promise<Prisma.User[]> {
     logger.debug(`User service find many: ${JSON.stringify(args)}`);
 
@@ -53,5 +68,30 @@ export class UserService {
     logger.info(`User service create: ${JSON.stringify(args)}`);
 
     return prisma.user.create({ ...args });
+  }
+
+  public async signIn(args: SignInArgs): Promise<string> {
+    logger.info(`User service sign in: ${args.username}`);
+
+    const user = await prisma.user.findUnique({
+      select: { id: true, roles: true, permissions: true, password: true },
+      where: { username: args.username }
+    });
+
+    // Check password
+    if (
+      !user ||
+      !(await this.cryptoService.compare(args.password, user.password))
+    ) {
+      throw new AuthenticationError('Username or password is incorrect');
+    }
+
+    // Generate token
+    return this.tokenService.sign({
+      type: TokenTypes.USER,
+      id: user.id,
+      roles: user.roles as UserRoles[],
+      permissions: user.permissions as UserPermissions[]
+    });
   }
 }

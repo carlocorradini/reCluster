@@ -23,6 +23,7 @@
  */
 
 export * from './CpuService';
+export * from './CryptoService';
 export * from './DiskService';
 export * from './InterfaceService';
 export * from './NodeService';

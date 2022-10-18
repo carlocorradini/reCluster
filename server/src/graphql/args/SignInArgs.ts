@@ -22,4 +22,18 @@
  * SOFTWARE.
  */
 
-export * from './Applicant';
+import { GraphQLNonEmptyString } from 'graphql-scalars';
+import { ArgsType, Field } from 'type-graphql';
+import { MaxLength } from 'class-validator';
+import { config } from '~/config';
+
+@ArgsType()
+export class SignInArgs {
+  @Field(() => GraphQLNonEmptyString, { description: 'User username' })
+  @MaxLength(config.user.maxUsernameLength)
+  username!: string;
+
+  @Field(() => GraphQLNonEmptyString, { description: 'User password' })
+  @MaxLength(config.user.maxPasswordLength)
+  password!: string;
+}

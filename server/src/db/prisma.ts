@@ -28,3 +28,14 @@ import { config } from '~/config';
 export const prisma = new PrismaClient({
   datasources: { db: { url: config.database.url } }
 });
+
+// Exclude user password
+prisma.$use(async (params, next) => {
+  const result = await next(params);
+
+  if (params?.model === 'User' && params?.args?.select?.password !== true) {
+    delete result.password;
+  }
+
+  return result;
+});

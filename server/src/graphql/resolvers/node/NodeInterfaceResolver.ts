@@ -38,7 +38,7 @@ export class NodeInterfaceResolver {
   ) {}
 
   @FieldResolver(() => [Interface], { description: 'Node interfaces' })
-  async interfaces(
+  public interfaces(
     @Root() node: Node,
     @Args() args: FindManyInterfaceArgs
   ): Promise<Prisma.Interface[]> {

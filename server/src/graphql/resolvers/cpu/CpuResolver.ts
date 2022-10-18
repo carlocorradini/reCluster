@@ -40,7 +40,7 @@ export class CpuResolver {
   ) {}
 
   @Query(() => [Cpu], { description: 'List of Cpus' })
-  async cpus(@Args() args: FindManyCpuArgs): Promise<Prisma.Cpu[]> {
+  public cpus(@Args() args: FindManyCpuArgs): Promise<Prisma.Cpu[]> {
     return this.cpuService.findMany(args);
   }
 
@@ -48,12 +48,12 @@ export class CpuResolver {
     nullable: true,
     description: 'Cpu matching the identifier'
   })
-  async cpu(@Args() args: FindUniqueCpuArgs): Promise<Prisma.Cpu | null> {
+  public cpu(@Args() args: FindUniqueCpuArgs): Promise<Prisma.Cpu | null> {
     return this.cpuService.findUnique(args);
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
-  cacheL1d(
+  public cacheL1d(
     @Root() cpu: Cpu,
     @Arg('unit', () => DigitalUnits, {
       defaultValue: DigitalUnits.B,
@@ -65,7 +65,7 @@ export class CpuResolver {
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
-  cacheL1i(
+  public cacheL1i(
     @Root() cpu: Cpu,
     @Arg('unit', () => DigitalUnits, {
       defaultValue: DigitalUnits.B,
@@ -77,7 +77,7 @@ export class CpuResolver {
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
-  cacheL2(
+  public cacheL2(
     @Root() cpu: Cpu,
     @Arg('unit', () => DigitalUnits, {
       defaultValue: DigitalUnits.B,
@@ -89,7 +89,7 @@ export class CpuResolver {
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
-  cacheL3(
+  public cacheL3(
     @Root() cpu: Cpu,
     @Arg('unit', () => DigitalUnits, {
       defaultValue: DigitalUnits.B,

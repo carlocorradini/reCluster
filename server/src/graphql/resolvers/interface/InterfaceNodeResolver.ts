@@ -37,7 +37,7 @@ export class InterfaceNodeResolver {
   ) {}
 
   @FieldResolver(() => Node, { description: 'Interface node' })
-  async node(@Root() inf: Interface): Promise<Prisma.Node | null> {
+  public node(@Root() inf: Interface): Promise<Prisma.Node | null> {
     return this.nodeService.findUnique({ id: inf.nodeId });
   }
 }

@@ -38,6 +38,9 @@ export class WhereUserInput
   @Field({ nullable: true, description: 'User identifier' })
   id?: StringFilter;
 
+  @Field({ nullable: true, description: 'User username' })
+  username?: StringFilter;
+
   @Field({ nullable: true, description: 'User roles' })
   roles?: UserRolesListFilter;
 

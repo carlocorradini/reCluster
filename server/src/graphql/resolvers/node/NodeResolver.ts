@@ -54,7 +54,7 @@ export class NodeResolver {
   ) {}
 
   @Query(() => [Node], { description: 'List of nodes' })
-  async nodes(@Args() args: FindManyNodeArgs): Promise<Prisma.Node[]> {
+  public nodes(@Args() args: FindManyNodeArgs): Promise<Prisma.Node[]> {
     return this.nodeService.findMany(args);
   }
 
@@ -62,22 +62,22 @@ export class NodeResolver {
     nullable: true,
     description: 'Node matching the identifier'
   })
-  async node(@Args() args: FindUniqueNodeArgs): Promise<Prisma.Node | null> {
+  public node(@Args() args: FindUniqueNodeArgs): Promise<Prisma.Node | null> {
     return this.nodeService.findUnique(args);
   }
 
   @Mutation(() => GraphQLJWT, { description: 'Create a new node' })
-  async createNode(@Args() args: CreateNodeArgs): Promise<string> {
+  public createNode(@Args() args: CreateNodeArgs): Promise<string> {
     return this.nodeService.create(args);
   }
 
   @Mutation(() => Node, { description: 'Update node' })
-  async updateNode(@Args() args: UpdateNodeArgs): Promise<Prisma.Node> {
+  public updateNode(@Args() args: UpdateNodeArgs): Promise<Prisma.Node> {
     return this.nodeService.update(args);
   }
 
   @FieldResolver(() => GraphQLBigInt)
-  ram(
+  public ram(
     @Root() node: Node,
     @Arg('unit', () => DigitalUnits, {
       defaultValue: DigitalUnits.B,

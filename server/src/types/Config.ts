@@ -37,4 +37,8 @@ export type Config = {
   token: {
     secret: string;
   };
+  user: {
+    maxUsernameLength: number;
+    maxPasswordLength: number;
+  };
 };

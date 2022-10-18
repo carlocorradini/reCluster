@@ -37,7 +37,7 @@ export class CpuNodeResolver {
   ) {}
 
   @FieldResolver(() => [Node], { description: 'CPU nodes' })
-  async nodes(
+  public nodes(
     @Root() cpu: Cpu,
     @Args() args: FindManyNodeArgs
   ): Promise<Prisma.Node[]> {

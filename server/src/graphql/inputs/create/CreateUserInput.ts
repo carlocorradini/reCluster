@@ -24,26 +24,20 @@
 
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { ArrayUnique } from 'class-validator';
+import { GraphQLNonEmptyString } from 'graphql-scalars';
+import { MaxLength } from 'class-validator';
 import { PickRequired } from '~/types';
-import { UserRoles, UserPermissions } from '../../enums';
+import { config } from '~/config';
 
 type ICreateUserInput = PickRequired<Prisma.UserCreateInput>;
 
 @InputType({ description: 'Create User input' })
 export class CreateUserInput implements ICreateUserInput {
-  @Field(() => [UserRoles], {
-    defaultValue: [UserRoles.SIMPLE],
-    description: 'User roles'
-  })
-  @ArrayUnique()
-  roles!: UserRoles[];
+  @Field(() => GraphQLNonEmptyString, { description: 'User username' })
+  @MaxLength(config.user.maxUsernameLength)
+  username!: string;
 
-  // FIXME Default value
-  @Field(() => [UserPermissions], {
-    defaultValue: [],
-    description: 'User permissions'
-  })
-  @ArrayUnique()
-  permissions!: UserPermissions[];
+  @Field(() => GraphQLNonEmptyString, { description: 'User password' })
+  @MaxLength(config.user.maxPasswordLength)
+  password!: string;
 }

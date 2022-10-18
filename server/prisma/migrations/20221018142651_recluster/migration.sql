@@ -25,8 +25,10 @@ CREATE TYPE "CpuVendors" AS ENUM ('AMD', 'INTEL');
 -- CreateTable
 CREATE TABLE "User" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "roles" "UserRoles"[],
-    "permissions" "UserPermissions"[],
+    "username" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "roles" "UserRoles"[] DEFAULT ARRAY['SIMPLE']::"UserRoles"[],
+    "permissions" "UserPermissions"[] DEFAULT ARRAY[]::"UserPermissions"[],
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -37,7 +39,7 @@ CREATE TABLE "User" (
 CREATE TABLE "Node" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "roles" "NodeRoles"[],
-    "permissions" "NodePermissions"[],
+    "permissions" "NodePermissions"[] DEFAULT ARRAY[]::"NodePermissions"[],
     "cpuId" UUID NOT NULL,
     "ram" BIGINT NOT NULL,
     "min_power_consumption" INTEGER NOT NULL,
@@ -110,6 +112,9 @@ CREATE TABLE "Cpu" (
 
     CONSTRAINT "Cpu_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Disk_nodeId_name_key" ON "Disk"("nodeId", "name");

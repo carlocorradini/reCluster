@@ -37,7 +37,7 @@ export class NodeCpuResolver {
   ) {}
 
   @FieldResolver(() => Cpu, { description: 'Node CPU' })
-  async cpu(@Root() node: Node): Promise<Prisma.Cpu | null> {
+  public cpu(@Root() node: Node): Promise<Prisma.Cpu | null> {
     return this.cpuService.findUnique({ id: node.cpuId });
   }
 }

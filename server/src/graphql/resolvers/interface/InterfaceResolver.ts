@@ -41,7 +41,7 @@ export class InterfaceResolver {
   ) {}
 
   @Query(() => [Interface], { description: 'List of Interfaces' })
-  async interfaces(
+  public interfaces(
     @Args() args: FindManyInterfaceArgs
   ): Promise<Prisma.Interface[]> {
     return this.interfaceService.findMany(args);
@@ -51,14 +51,14 @@ export class InterfaceResolver {
     nullable: true,
     description: 'Interface matching the identifier'
   })
-  async interface(
+  public interface(
     @Args() args: FindUniqueInterfaceArgs
   ): Promise<Prisma.Interface | null> {
     return this.interfaceService.findUnique(args);
   }
 
   @FieldResolver(() => GraphQLBigInt)
-  speed(
+  public speed(
     @Root() inf: Interface,
     @Arg('unit', () => DigitalUnits, {
       defaultValue: DigitalUnits.b,

@@ -39,5 +39,9 @@ export const config: Config = {
   },
   token: {
     secret: env.RECLUSTER_TOKEN_SECRET
+  },
+  user: {
+    maxUsernameLength: 64,
+    maxPasswordLength: 16
   }
 };

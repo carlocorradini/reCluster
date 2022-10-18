@@ -38,7 +38,7 @@ export class NodeStatusResolver {
   ) {}
 
   @FieldResolver(() => [Status], { description: 'Node statuses' })
-  async statuses(
+  public statuses(
     @Root() node: Node,
     @Args() args: FindManyStatusArgs
   ): Promise<Prisma.Status[]> {

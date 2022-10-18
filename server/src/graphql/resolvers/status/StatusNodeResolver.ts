@@ -37,7 +37,7 @@ export class StatusNodeResolver {
   ) {}
 
   @FieldResolver(() => Node, { description: 'Status node' })
-  async node(@Root() status: Status): Promise<Prisma.Node | null> {
+  public node(@Root() status: Status): Promise<Prisma.Node | null> {
     return this.nodeService.findUnique({ id: status.nodeId });
   }
 }

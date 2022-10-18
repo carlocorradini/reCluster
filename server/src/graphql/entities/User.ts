@@ -25,13 +25,16 @@
 import type * as Prisma from '@prisma/client';
 import { GraphQLID } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
-import { GraphQLTimestamp } from 'graphql-scalars';
+import { GraphQLNonEmptyString, GraphQLTimestamp } from 'graphql-scalars';
 import { UserRoles, UserPermissions } from '../enums';
 
 @ObjectType({ description: 'User' })
-export class User implements Prisma.User {
+export class User implements Omit<Prisma.User, 'password'> {
   @Field(() => GraphQLID, { description: 'User identifier' })
   id!: string;
+
+  @Field(() => GraphQLNonEmptyString, { description: 'User username' })
+  username!: string;
 
   @Field(() => [UserRoles], { description: 'User roles' })
   roles!: UserRoles[];

@@ -22,5 +22,16 @@
  * SOFTWARE.
  */
 
-export * from './method';
-export * from './parameter';
+import bcrypt from 'bcrypt';
+
+export class CryptoService {
+  public static readonly SALT_ROUNDS: number = 12;
+
+  public async hash(data: string | Buffer): Promise<string> {
+    return bcrypt.hash(data, CryptoService.SALT_ROUNDS);
+  }
+
+  public compare(data: string | Buffer, encrypted: string): Promise<boolean> {
+    return bcrypt.compare(data, encrypted);
+  }
+}

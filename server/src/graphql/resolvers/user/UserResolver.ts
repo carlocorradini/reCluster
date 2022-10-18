@@ -25,12 +25,14 @@
 import type * as Prisma from '@prisma/client';
 import { Args, Mutation, Query, Resolver } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
+import { GraphQLJWT } from 'graphql-scalars';
 import { UserService } from '~/services';
 import { User } from '../../entities';
 import {
   FindUniqueUserArgs,
   FindManyUserArgs,
-  CreateUserArgs
+  CreateUserArgs,
+  SignInArgs
 } from '../../args';
 
 @Resolver(User)
@@ -42,7 +44,7 @@ export class UserResolver {
   ) {}
 
   @Query(() => [User], { description: 'List of Users' })
-  async users(@Args() args: FindManyUserArgs): Promise<Prisma.User[]> {
+  public users(@Args() args: FindManyUserArgs): Promise<Prisma.User[]> {
     return this.userService.findMany(args);
   }
 
@@ -50,12 +52,17 @@ export class UserResolver {
     nullable: true,
     description: 'User matching the identifier'
   })
-  async user(@Args() args: FindUniqueUserArgs): Promise<Prisma.User | null> {
+  public user(@Args() args: FindUniqueUserArgs): Promise<Prisma.User | null> {
     return this.userService.findUnique(args);
   }
 
   @Mutation(() => User, { description: 'Create a new user' })
-  async createUser(@Args() args: CreateUserArgs): Promise<Prisma.User> {
+  public createUser(@Args() args: CreateUserArgs): Promise<Prisma.User> {
     return this.userService.create(args);
+  }
+
+  @Mutation(() => GraphQLJWT, { description: 'Sign in user' })
+  public signIn(@Args() args: SignInArgs): Promise<string> {
+    return this.userService.signIn(args);
   }
 }

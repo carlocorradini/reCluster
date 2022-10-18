@@ -33,6 +33,9 @@ export class OrderByUserInput
   @Field(() => SortOrders, { nullable: true, description: 'User identifier' })
   id?: SortOrders;
 
+  @Field(() => SortOrders, { nullable: true, description: 'User username' })
+  username?: SortOrders;
+
   @Field(() => SortOrders, { nullable: true, description: 'User roles' })
   roles?: SortOrders;
 

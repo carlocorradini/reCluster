@@ -41,7 +41,7 @@ export class DiskResolver {
   ) {}
 
   @Query(() => [Disk], { description: 'List of Disks' })
-  async disks(@Args() args: FindManyDiskArgs): Promise<Prisma.Disk[]> {
+  public disks(@Args() args: FindManyDiskArgs): Promise<Prisma.Disk[]> {
     return this.diskService.findMany(args);
   }
 
@@ -49,12 +49,12 @@ export class DiskResolver {
     nullable: true,
     description: 'Disk matching the identifier'
   })
-  async disk(@Args() args: FindUniqueDiskArgs): Promise<Prisma.Disk | null> {
+  public disk(@Args() args: FindUniqueDiskArgs): Promise<Prisma.Disk | null> {
     return this.diskService.findUnique(args);
   }
 
   @FieldResolver(() => GraphQLBigInt)
-  size(
+  public size(
     @Root() disk: Disk,
     @Arg('unit', () => DigitalUnits, {
       defaultValue: DigitalUnits.B,

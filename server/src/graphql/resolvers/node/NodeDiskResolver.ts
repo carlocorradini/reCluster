@@ -38,7 +38,7 @@ export class NodeDiskResolver {
   ) {}
 
   @FieldResolver(() => [Disk], { description: 'Node disks' })
-  async disks(
+  public disks(
     @Root() node: Node,
     @Args() args: FindManyDiskArgs
   ): Promise<Prisma.Disk[]> {
