@@ -73,7 +73,7 @@
     "eslint-plugin-tsdoc": "^0.2.17",
     "pino-pretty": "^9.1.1",
     "prettier": "../node_modules/prettier",
-    "prisma": "^4.3.1",
+    "prisma": "^4.5.0",
     "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0",
     "ts-patch": "^2.0.2",
