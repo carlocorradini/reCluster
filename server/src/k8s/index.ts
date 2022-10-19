@@ -23,4 +23,3 @@
  */
 
 export * from './kubeconfig';
-export * from './NodeInformer';

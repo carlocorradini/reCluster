@@ -26,7 +26,7 @@ import { container } from 'tsyringe';
 import type { ExpressContext } from 'apollo-server-express';
 import type { Context, TokenPayload } from '~/types';
 import { TokenService } from '~/services';
-import { AuthenticationError, TokenError } from '~/errors';
+import { AuthenticationError } from '~/errors';
 
 export async function contextHelper({ req }: ExpressContext): Promise<Context> {
   let applicant: TokenPayload | undefined;
@@ -49,8 +49,10 @@ export async function contextHelper({ req }: ExpressContext): Promise<Context> {
         try {
           const decodedToken = await tokenService.verify(token);
           applicant = decodedToken.payload;
-        } catch (error: unknown) {
-          throw new AuthenticationError((error as TokenError).message);
+        } catch (error) {
+          throw new AuthenticationError(
+            error instanceof Error ? error.message : `${error}`
+          );
         }
       }
     } else {

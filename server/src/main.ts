@@ -26,13 +26,12 @@ import 'reflect-metadata';
 import 'json-bigint-patch';
 import 'dotenv/config';
 import { ApolloServer } from 'apollo-server';
-import { container } from 'tsyringe';
 import { logger } from './logger';
 import { contextHelper, formatErrorHelper } from './helpers';
 import { config } from './config';
 import { prisma } from './db';
 import { schema } from './graphql';
-import { kubeconfig, NodeInformer } from './k8s';
+import { kubeconfig } from './k8s';
 
 const server = new ApolloServer({
   schema,
@@ -42,36 +41,19 @@ const server = new ApolloServer({
 
 async function main() {
   // Database
-  try {
-    await prisma.$connect();
-    logger.info(`Database connected`);
-  } catch (error) {
-    logger.fatal(`Database error: ${error}`);
-    throw error;
-  }
+  await prisma.$connect();
+  logger.info(`Database connected`);
 
   // K8s
-  try {
-    kubeconfig.loadFromDefault(); // Always first
-    const nodeInformer = container.resolve(NodeInformer);
-    // FIXME nodeInformer.start();
-    logger.info('K8s configured');
-  } catch (error) {
-    logger.fatal(`K8s error: ${error}`);
-    throw error;
-  }
+  kubeconfig.loadFromDefault(); // Always first
+  logger.info('K8s configured');
 
   // Server
-  try {
-    const serverInfo = await server.listen({
-      port: config.server.port,
-      host: config.server.host
-    });
-    logger.info(`Server started at ${serverInfo.url}`);
-  } catch (error) {
-    logger.fatal(`Server error: ${error}`);
-    throw error;
-  }
+  const serverInfo = await server.listen({
+    port: config.server.port,
+    host: config.server.host
+  });
+  logger.info(`Server started at ${serverInfo.url}`);
 }
 
 async function terminate(signal: NodeJS.Signals) {
@@ -79,8 +61,6 @@ async function terminate(signal: NodeJS.Signals) {
 
   // Database
   await prisma.$disconnect();
-  // K8s
-  await container.resolve(NodeInformer).stop();
   // Server
   await server.stop();
 
@@ -93,7 +73,7 @@ process.once('SIGINT', terminate);
 process.once('SIGQUIT', terminate);
 process.once('SIGHUP', terminate);
 
-main().catch((error: Error) => {
-  logger.fatal(`Error starting: ${error.message}`);
+main().catch((error) => {
+  logger.fatal(error instanceof Error ? error.message : error);
   throw error;
 });

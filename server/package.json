@@ -25,6 +25,7 @@
     "db:generate": "npx prisma generate",
     "db:migrate": "npx prisma migrate dev --name recluster",
     "db:reset": "npx prisma migrate reset",
+    "db:seed": "npx prisma db seed",
     "db:start": "./scripts/database.sh",
     "db:studio": "npx prisma studio",
     "docker": "./scripts/dockerize.sh",

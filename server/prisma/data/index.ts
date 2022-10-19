@@ -22,42 +22,5 @@
  * SOFTWARE.
  */
 
-import { PrismaClient } from '@prisma/client';
-import pino from 'pino';
-import { cpus, nodes } from './data';
-
-const logger = pino({ level: 'debug', name: 'prisma-seed' });
-const prisma = new PrismaClient();
-
-async function main() {
-  logger.debug('Connecting database');
-  await prisma.$connect();
-
-  logger.info('Start seeding');
-
-  logger.debug(`Seeding ${cpus.length} CPUs`);
-  await Promise.all(
-    cpus.map(async (cpu) => {
-      await prisma.cpu.create({ data: cpu });
-    })
-  );
-
-  logger.debug(`Seeding ${nodes.length} Nodes`);
-  await Promise.all(
-    nodes.map(async (node) => {
-      await prisma.node.create({ data: node });
-    })
-  );
-
-  logger.info('Seeding completed');
-}
-
-main()
-  .catch((error) => {
-    logger.error(error instanceof Error ? error.message : error);
-    throw error;
-  })
-  .finally(async () => {
-    logger.debug('Disconnecting database');
-    await prisma.$disconnect();
-  });
+export * from './cpus';
+export * from './nodes';

@@ -1,11 +1,6 @@
 {
   "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "rootDir": ".",
-    "baseUrl": ".",
-    "paths": {
-      "~*": ["./*"]
-    }
-  },
-  "include": ["seed.ts"]
+  "include": [
+    "**/*.ts"
+  ]
 }
