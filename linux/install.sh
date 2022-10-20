@@ -930,6 +930,7 @@ read_cpu_power_consumption() {
 # Register current node
 node_registration() {
   _server_url=$(echo "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires server URL"
+  _server_url="$_server_url/graphql"
   # shellcheck disable=SC2016
   _request_data='
     {
@@ -1741,6 +1742,7 @@ read_node_token() {
 update_node_status() {
   _status="ACTIVE"
   _server_url=\$(echo "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
+  _server_url="\$_server_url/graphql"
   # shellcheck disable=SC2016
   _request_data='
     {
