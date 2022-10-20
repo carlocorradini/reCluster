@@ -39,6 +39,7 @@
     "datasources",
     "deps",
     "envalid",
+    "fastify",
     "funcname",
     "gibibit",
     "gibibyte",

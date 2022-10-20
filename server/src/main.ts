@@ -25,18 +25,31 @@
 import 'reflect-metadata';
 import 'json-bigint-patch';
 import 'dotenv/config';
-import { ApolloServer } from 'apollo-server';
+import { ApolloServer } from 'apollo-server-fastify';
+import {
+  ApolloServerPluginDrainHttpServer,
+  ApolloServerPluginLandingPageLocalDefault
+} from 'apollo-server-core';
+import { fastify } from 'fastify';
 import { logger } from './logger';
-import { contextHelper, formatErrorHelper } from './helpers';
+import { context, formatError, fastifyAppClosePlugin } from './helpers';
 import { config } from './config';
 import { prisma } from './db';
 import { schema } from './graphql';
 import { kubeconfig } from './k8s';
 
-const server = new ApolloServer({
+const server = fastify();
+const apolloServer = new ApolloServer({
   schema,
-  context: contextHelper,
-  formatError: formatErrorHelper
+  context,
+  formatError,
+  csrfPrevention: true,
+  cache: 'bounded',
+  plugins: [
+    fastifyAppClosePlugin(server),
+    ApolloServerPluginDrainHttpServer({ httpServer: server.server }),
+    ApolloServerPluginLandingPageLocalDefault({ embed: true })
+  ]
 });
 
 async function main() {
@@ -45,15 +58,20 @@ async function main() {
   logger.info(`Database connected`);
 
   // K8s
-  kubeconfig.loadFromDefault(); // Always first
+  kubeconfig.loadFromDefault();
   logger.info('K8s configured');
 
+  // Apollo Server
+  await apolloServer.start();
+  server.register(apolloServer.createHandler());
+  logger.info('Apollo server started');
+
   // Server
-  const serverInfo = await server.listen({
+  const url = await server.listen({
     port: config.server.port,
     host: config.server.host
   });
-  logger.info(`Server started at ${serverInfo.url}`);
+  logger.info(`Server started at ${url}`);
 }
 
 async function terminate(signal: NodeJS.Signals) {
@@ -61,8 +79,10 @@ async function terminate(signal: NodeJS.Signals) {
 
   // Database
   await prisma.$disconnect();
+  // Apollo Server
+  await apolloServer.stop();
   // Server
-  await server.stop();
+  await server.close();
 
   process.kill(process.pid, signal);
 }

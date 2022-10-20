@@ -54,7 +54,7 @@
     "**/.eslintrc",
     "**/.gitattributes",
     "**/.gitignore",
-    "**/.lintstagedrc.js",
+    "**/.lintstagedrc",
     "**/.markdownlint.json",
     "**/.markdownlintignore",
     "**/.npmrc",

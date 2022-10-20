@@ -22,7 +22,19 @@
  * SOFTWARE.
  */
 
-export * from './decorators';
-export * from './context';
-export * from './fastifyAppClosePlugin';
-export * from './formatError';
+import type { FastifyInstance } from 'fastify';
+import type { ApolloServerPlugin } from 'apollo-server-plugin-base';
+
+export function fastifyAppClosePlugin(
+  app: FastifyInstance
+): ApolloServerPlugin {
+  return {
+    async serverWillStart() {
+      return {
+        async drainServer() {
+          await app.close();
+        }
+      };
+    }
+  };
+}

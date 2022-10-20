@@ -23,12 +23,14 @@
  */
 
 import { container } from 'tsyringe';
-import type { ExpressContext } from 'apollo-server-express';
+import type { FastifyContext } from 'apollo-server-fastify';
 import type { Context, TokenPayload } from '~/types';
 import { TokenService } from '~/services';
 import { AuthenticationError } from '~/errors';
 
-export async function contextHelper({ req }: ExpressContext): Promise<Context> {
+export async function context({
+  request: req
+}: FastifyContext): Promise<Context> {
   let applicant: TokenPayload | undefined;
   const authorizationHeader =
     req.headers && 'Authorization' in req.headers
