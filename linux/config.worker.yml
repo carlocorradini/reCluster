@@ -22,7 +22,7 @@
 
 k3s:
   kind: agent
-  server: https://10.0.0.10:6443
+  server: https://controller:6443
   token: # Server token
 
 node_exporter:
@@ -32,4 +32,4 @@ node_exporter:
     meminfo: true
 
 recluster:
-  server: http://10.0.0.10:8080
+  server: http://192.168.0.25:8080

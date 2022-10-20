@@ -940,7 +940,7 @@ node_registration() {
   _request_data='
     {
       "query": "mutation ($data: CreateNodeInput!) {
-        createNode(data: $data) { id }
+        createNode(data: $data)
       }",
       "variables": {
         "data": '"$(echo "$NODE_FACTS" | jq --compact-output .)"'
@@ -981,10 +981,11 @@ node_registration() {
   fi
 
   # Extract token
-  _token=$(echo "$_response_data" | jq '.data.createNode')
+  _token=$(echo "$_response_data" | jq --raw-output '.data.createNode')
 
   # Decode token
-  _token_decoded=$(decode_token "$_token")
+  decode_token "$_token"
+  _token_decoded=$RETVAL
 
   # Success
   INFO "Successfully registered node:" "$_token_decoded"
@@ -1421,8 +1422,10 @@ run_benchmarks() {
 
   # Disk(s)
   INFO "Disk(s) benchmark"
-  run_disks_bench
-  _disks_benchmark=$RETVAL
+  # FIXME
+  # run_disks_bench
+  # _disks_benchmark=$RETVAL
+  _disks_benchmark="{}"
   DEBUG "Disk(s) benchmark:" "$_disks_benchmark"
 
   spinner_stop
@@ -1465,12 +1468,34 @@ read_power_consumptions() {
   )
 }
 
-# Print node facts
-print_node_facts() {
-  is_log_level_enabled "$LOG_LEVEL_DEBUG" || return 0
+# Finalize node facts
+finalize_node_facts() {
+  spinner_start "Finalizing node facts"
 
-  DEBUG "Node facts:"
-  echo "$NODE_FACTS" | jq .
+  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind')
+
+  # Roles
+  _roles="[]"
+  if [ "$INIT_CLUSTER" = true ]; then _roles=$(echo "$_roles" | jq '. + ["RECLUSTER_MASTER"]'); fi
+  if [ "$_k3s_kind" = "server" ]; then
+    _roles=$(echo "$_roles" | jq '. + ["K8S_MASTER"]')
+  elif [ "$_k3s_kind" = "agent" ]; then
+    _roles=$(echo "$_roles" | jq '. + ["K8S_WORKER"]')
+  fi
+  DEBUG "Node roles:" "$_roles"
+
+  NODE_FACTS=$(
+    echo "$NODE_FACTS" \
+      | jq \
+        --argjson roles "$_roles" \
+        '
+          .roles = $roles
+        '
+  )
+
+  spinner_stop
+
+  DEBUG "Node facts:" "$NODE_FACTS"
 }
 
 # Install K3s
@@ -1517,7 +1542,7 @@ install_k3s() {
   echo "$_k3s_config" | $SUDO tee "$_k3s_config_file" > /dev/null
 
   # Install
-  INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
+  INSTALL_K3S_SKIP_ENABLE=true \
     INSTALL_K3S_SKIP_START=true \
     INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
     INSTALL_K3S_VERSION="$K3S_VERSION" \
@@ -1599,6 +1624,10 @@ cluster_init() {
     _k3s_kubeconfig_file_name=$(basename "$_k3s_kubeconfig_file")
 
     INFO "Waiting K3s kubeconfig file at '$_k3s_kubeconfig_file'"
+    if [ -f "$_k3s_kubeconfig_file" ]; then
+      DEBUG "K3s kubeconfig file already generated at '$_k3s_kubeconfig_file'"
+      return 0
+    fi
     inotifywait -e create,close_write,moved_to --format '%f' --quiet "$_k3s_kubeconfig_dir" --monitor \
       | while IFS= read -r file; do
         DEBUG "File '$file' notify at '$_k3s_kubeconfig_dir'"
@@ -1744,6 +1773,10 @@ FATAL() {
 # Info log message
 INFO() {
   printf '[INFO ] %s\n' "\$@"
+}
+# Debug log message
+DEBUG() {
+  printf '[DEBUG] %s\n' "\$@"
 }
 
 # ================
@@ -1899,10 +1932,13 @@ STATUS_UPDATER_INTERVAL=$STATUS_UPDATER_INTERVAL
 # Status updater lifetime
 status_updater() {
   INFO "Starting status updater"
-  while sleep "\$STATUS_UPDATER_INTERVAL"; do
+
+  while :; do
     DEBUG "Updating status"
     update_node_status
     DEBUG "Status updated"
+
+    sleep "\$STATUS_UPDATER_INTERVAL"
   done
 }
 
@@ -2041,12 +2077,10 @@ EOF
 
   # etc directory
   INFO "Writing reCluster etc directory '$RECLUSTER_ETC_DIR'"
-  $SUDO mkdir -p "$RECLUSTER_ETC_DIR"
   $SUDO mv "$_etc_dir" "$RECLUSTER_ETC_DIR"
 
   # opt directory
   INFO "Writing reCluster opt directory '$RECLUSTER_OPT_DIR'"
-  $SUDO mkdir -p "$RECLUSTER_OPT_DIR"
   $SUDO mv "$_opt_dir" "$RECLUSTER_OPT_DIR"
 
   spinner_stop
@@ -2057,14 +2091,20 @@ EOF
 
 # Start services
 start_services() {
+  spinner_start "Starting services"
+
   case $INIT_SYSTEM in
     openrc)
+      INFO "openrc: Starting status updater"
+      $SUDO rc-service recluster.status_updater start
       INFO "openrc: Starting Node exporter"
       $SUDO rc-service node_exporter start
       INFO "openrc: Starting K3s"
       $SUDO rc-service k3s-recluster start
       ;;
     systemd)
+      INFO "systemd: Starting status updater"
+      $SUDO systemtcl start recluster.status_updater
       INFO "systemd: Starting Node exporter"
       $SUDO systemtc start node_exporter
       INFO "systemd: Starting K3s"
@@ -2072,6 +2112,8 @@ start_services() {
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
+
+  spinner_stop
 }
 
 # ================
@@ -2127,7 +2169,7 @@ NODE_FACTS="{}"
   read_system_info
   run_benchmarks
   read_power_consumptions
-  print_node_facts
+  finalize_node_facts
   install_k3s
   install_node_exporter
   cluster_init

@@ -37,86 +37,21 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 ## Simulate Cluster
 
-> Simulate cluster with Vagrant
->
-> Same procedures as in a real cluster except for Vagrant commands
+```console
+vagrant plugin install vagrant-hosts
+```
 
-1. Start nodes
+1. Start
 
    ```console
    vagrant up
    ```
 
-1. Controller node
-
-   > 3 terminals are required
+2. Destroy
 
    ```console
-   vagrant ssh controller
+   vagrant destroy --graceful --force
    ```
-
-   1. PostgreSQL database
-
-      1. Start
-
-         > Terminal 1
-
-         ```console
-         /vagrant/server/scripts/database.sh
-         ```
-
-      1. Synchronize
-
-         > Terminal 2
-
-         ```console
-         npm --prefix /vagrant/server run db:migrate
-         ```
-
-   1. Install script
-
-      > Terminal 2
-      >
-      > Wait until it is asked to start reCluster server and go to the next step
-
-      ```console
-      /vagrant/linux/install.sh \
-        --init-cluster \
-        --config /vagrant/linux/config.controller.yaml
-      ```
-
-   1. reCluster server
-
-      > Terminal 3
-
-      1. Build
-
-         ```console
-         npm --prefix /vagrant/server run build
-         ```
-
-      1. Start
-
-         ```console
-         env \
-           NODE_ENV=development \
-           PORT=8080 \
-           DATABASE_URL="postgresql://recluster:password@localhost:5432/recluster?schema=public" \
-           node /vagrant/server/build/main.js
-         ```
-
-1. Worker 0 node
-
-   ```console
-   vagrant ssh worker-0
-   ```
-
-   1. Install script
-
-      ```console
-      /vagrant/linux/install.sh \
-        --config /vagrant/linux/config.worker.yaml
-      ```
 
 ### Scripts
 

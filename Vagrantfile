@@ -23,6 +23,10 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+ENV['VAGRANT_NO_PARALLEL'] = 'yes'
+
+require 'ipaddr'
+
 BOX = "generic/alpine316"
 VM_RAM = 1024
 VM_CPU = 1
@@ -32,17 +36,22 @@ NODES = [
     :ip => "10.0.0.10"
   },
   {
-    :hostname => "worker-0",
+    :hostname => "worker",
     :ip => "10.0.0.100"
-  },
-  {
-    :hostname => "worker-1",
-    :ip => "10.0.0.101"
   }
 ]
 
 $script = <<-SCRIPT
-# Packages
+#!/usr/bin/env sh
+
+# Fail on error
+set -o errexit
+# Disable wildcard character expansion
+set -o noglob
+
+#
+# PACKAGES
+#
 apk add --update --no-cache \
   coreutils \
   ethtool \
@@ -57,59 +66,37 @@ apk add --update --no-cache \
   yq
 SCRIPT
 
-$controller = <<-SCRIPT
-# Packages
-apk add --update --no-cache \
-  bash \
-  docker \
-  docker-compose \
-  nodejs \
-  npm
-
-# === Docker
-# User
-addgroup vagrant docker
-# Service
-rc-update add docker boot
-service docker start
-
-# npm dependencies
-npm --prefix /vagrant/server install --ignore-scripts
-SCRIPT
-
 Vagrant.configure("2") do |config|
+  # Box
+  config.vm.box = BOX
+
+  # Provider
+  config.vm.provider "virtualbox" do |vb|
+    vb.linked_clone = true
+    vb.memory = VM_RAM
+    vb.cpus = VM_CPU
+  end
+
+  # Synced folder
+  config.vm.synced_folder "./", "/vagrant"
+
+  # SSH
+  config.ssh.extra_args = ["-t", "cd /vagrant; bash --login"]
+
+  # Nodes
   NODES.each do |node_config|
-    config.vm.define node_config[:hostname] do |node|
-      # Box
-      node.vm.box = BOX
-
-      # Synced folder
-      config.vm.synced_folder "./", "/vagrant", type: "rsync",
-        rsync__auto: true,
-        rsync__exclude: ['.git/', './node_modules/', './server/node_modules/']
-
+    config.vm.define node_config[:hostname] do |config|
       # Network
-      node.vm.hostname = node_config[:hostname]
-      node.vm.network "private_network", ip: node_config[:ip]
+      config.vm.hostname = "#{node_config[:hostname]}.recluster.local"
+      config.vm.network :private_network, ip: IPAddr.new(node_config[:ip]).to_s, libvirt__forward_mode: 'route', libvirt__dhcp_enabled: false
+      config.vm.provision 'hosts' do |hosts|
+        hosts.autoconfigure = true
+        hosts.sync_hosts = true
+        hosts.add_localhost_hostnames = false
+      end
 
       # Provision
-      node.vm.provision "shell", inline: $script
-
-      # Controller configuration
-      if "controller".eql? node_config[:hostname] then
-        # Provision
-        node.vm.provision "shell", inline: $controller
-      end
-
-      # Provider
-      node.vm.provider "virtualbox" do |v|
-        v.memory = VM_RAM
-        v.cpus = VM_CPU
-      end
-      node.vm.provider "vmware_desktop" do |v|
-        v.vmx["memsize"] = VM_RAM
-        v.vmx["numvcpus"] = VM_CPU
-      end
+      config.vm.provision "shell", inline: $script
     end
   end
 end
