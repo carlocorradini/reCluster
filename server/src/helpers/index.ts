@@ -24,5 +24,4 @@
 
 export * from './decorators';
 export * from './context';
-export * from './fastifyAppClosePlugin';
 export * from './formatError';

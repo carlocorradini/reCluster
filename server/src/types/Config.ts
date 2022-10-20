@@ -37,6 +37,9 @@ export type Config = {
   token: {
     secret: string;
   };
+  graphql: {
+    path: string;
+  };
   user: {
     maxUsernameLength: number;
     maxPasswordLength: number;

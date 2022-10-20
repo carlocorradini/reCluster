@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { UserInputError } from 'apollo-server-errors';
+import { GraphQLError } from 'graphql';
 import type { ValidationError as ClassValidatorValidationError } from 'class-validator';
 
 type IValidationError = Pick<
@@ -48,12 +48,17 @@ function formatValidationErrors(
   };
 }
 
-export class ValidationError extends UserInputError {
+export class ValidationError extends GraphQLError {
   public constructor(validationErrors: ClassValidatorValidationError[]) {
     super('Validation Error', {
-      validationErrors: validationErrors.map((validationError) =>
-        formatValidationErrors(validationError)
-      )
+      extensions: {
+        code: 'BAD_USER_INPUT',
+        validationErrors: validationErrors.map((validationError) =>
+          formatValidationErrors(validationError)
+        )
+      }
     });
+
+    Object.setPrototypeOf(this, ValidationError.prototype);
   }
 }

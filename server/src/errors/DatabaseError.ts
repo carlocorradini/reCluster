@@ -22,15 +22,17 @@
  * SOFTWARE.
  */
 
-import { ApolloError } from 'apollo-server-errors';
+import { InternalServerError } from './InternalServerError';
 
-export class DatabaseError extends ApolloError {
+export class DatabaseError extends InternalServerError {
   public constructor(cause?: string) {
-    super('Internal Server Error', 'INTERNAL_SERVER_ERROR', {
-      kind: 'DB',
-      cause: cause ? cause.replace('P', 'DB') : null
+    super({
+      extensions: {
+        kind: 'DB',
+        cause: cause ? cause.replace('P', 'DB') : null
+      }
     });
 
-    Object.defineProperty(this, 'name', { value: 'DatabaseError' });
+    Object.setPrototypeOf(this, DatabaseError.prototype);
   }
 }

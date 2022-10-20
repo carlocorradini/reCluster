@@ -22,37 +22,47 @@
  * SOFTWARE.
  */
 
-import { GraphQLError } from 'graphql';
+import type { GraphQLFormattedError } from 'graphql';
 import { ArgumentValidationError } from 'type-graphql';
 import { Prisma } from '@prisma/client';
+import { unwrapResolverError } from '@apollo/server/errors';
 import { logger } from '~/logger';
 import { DatabaseError, ValidationError } from '~/errors';
 
-export function formatError(error: GraphQLError) {
+export function formatError(
+  formattedError: GraphQLFormattedError,
+  error: unknown
+): GraphQLFormattedError {
+  const originalError = unwrapResolverError(error);
+
   // Log
-  logger.error(`Server error: ${error}`);
+  logger.error(
+    `Server error: ${
+      originalError instanceof Error ? originalError.message : originalError
+    }`
+  );
 
   // Database
   if (
-    error.originalError instanceof Prisma.PrismaClientKnownRequestError ||
-    error.originalError instanceof Prisma.PrismaClientUnknownRequestError ||
-    error.originalError instanceof Prisma.PrismaClientRustPanicError ||
-    error.originalError instanceof Prisma.PrismaClientInitializationError ||
-    error.originalError instanceof Prisma.PrismaClientValidationError
+    originalError instanceof Prisma.PrismaClientKnownRequestError ||
+    originalError instanceof Prisma.PrismaClientUnknownRequestError ||
+    originalError instanceof Prisma.PrismaClientRustPanicError ||
+    originalError instanceof Prisma.PrismaClientInitializationError ||
+    originalError instanceof Prisma.PrismaClientValidationError
   ) {
     // TODO When PrismaClientRustPanicError occurs restart Node process
     return new DatabaseError(
-      error.originalError instanceof Prisma.PrismaClientKnownRequestError
-        ? error.originalError.code
+      originalError instanceof Prisma.PrismaClientKnownRequestError
+        ? originalError.code
         : undefined
     );
   }
 
   // Validation
-  if (error.originalError instanceof ArgumentValidationError) {
-    return new ValidationError(error.originalError.validationErrors);
+  if (originalError instanceof ArgumentValidationError) {
+    return new ValidationError(originalError.validationErrors);
   }
 
   // Generic
-  return error;
+  return formattedError;
 }

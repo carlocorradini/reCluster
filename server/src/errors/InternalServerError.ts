@@ -22,19 +22,16 @@
  * SOFTWARE.
  */
 
-import type { FastifyInstance } from 'fastify';
-import type { ApolloServerPlugin } from 'apollo-server-plugin-base';
+import { GraphQLError, GraphQLErrorOptions } from 'graphql';
 
-export function fastifyAppClosePlugin(
-  app: FastifyInstance
-): ApolloServerPlugin {
-  return {
-    async serverWillStart() {
-      return {
-        async drainServer() {
-          await app.close();
-        }
-      };
-    }
-  };
+export abstract class InternalServerError extends GraphQLError {
+  constructor(options?: GraphQLErrorOptions) {
+    super('Internal Server Error', {
+      ...options,
+      extensions: {
+        ...options?.extensions,
+        code: 'INTERNAL_SERVER_ERROR'
+      }
+    });
+  }
 }

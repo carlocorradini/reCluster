@@ -22,14 +22,14 @@
  * SOFTWARE.
  */
 
-import { ApolloError } from 'apollo-server-errors';
+import { GraphQLError } from 'graphql';
 
-export class AuthorizationError extends ApolloError {
+export class AuthorizationError extends GraphQLError {
   public constructor(
     message = "Access denied! You don't have permission for this action!"
   ) {
-    super(message, 'UNAUTHORIZED');
+    super(message, { extensions: { code: 'UNAUTHORIZED' } });
 
-    Object.defineProperty(this, 'name', { value: 'AuthorizationError' });
+    Object.setPrototypeOf(this, AuthorizationError.prototype);
   }
 }

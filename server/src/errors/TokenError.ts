@@ -22,15 +22,17 @@
  * SOFTWARE.
  */
 
-import { ApolloError } from 'apollo-server-errors';
+import { InternalServerError } from './InternalServerError';
 
-export class TokenError extends ApolloError {
+export class TokenError extends InternalServerError {
   public constructor(cause?: string) {
-    super('Internal Server Error', 'INTERNAL_SERVER_ERROR', {
-      kind: 'TOKEN',
-      cause: cause || null
+    super({
+      extensions: {
+        kind: 'TOKEN',
+        cause: cause || null
+      }
     });
 
-    Object.defineProperty(this, 'name', { value: 'TokenError' });
+    Object.setPrototypeOf(this, TokenError.prototype);
   }
 }

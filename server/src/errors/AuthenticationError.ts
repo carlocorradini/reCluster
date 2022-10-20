@@ -22,12 +22,14 @@
  * SOFTWARE.
  */
 
-import * as Apollo from 'apollo-server-errors';
+import { GraphQLError } from 'graphql';
 
-export class AuthenticationError extends Apollo.AuthenticationError {
+export class AuthenticationError extends GraphQLError {
   public constructor(
     message = 'Access denied! You need to be authenticated to perform this action!'
   ) {
-    super(message);
+    super(message, { extensions: { code: 'UNAUTHENTICATED' } });
+
+    Object.setPrototypeOf(this, AuthenticationError.prototype);
   }
 }

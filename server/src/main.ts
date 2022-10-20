@@ -25,31 +25,28 @@
 import 'reflect-metadata';
 import 'json-bigint-patch';
 import 'dotenv/config';
-import { ApolloServer } from 'apollo-server-fastify';
-import {
-  ApolloServerPluginDrainHttpServer,
-  ApolloServerPluginLandingPageLocalDefault
-} from 'apollo-server-core';
-import { fastify } from 'fastify';
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
+import compress from '@fastify/compress';
+import rateLimit from '@fastify/rate-limit';
+import fastifyApollo, {
+  fastifyApolloDrainPlugin
+} from '@as-integrations/fastify';
+import { ApolloServer } from '@apollo/server';
 import { logger } from './logger';
-import { context, formatError, fastifyAppClosePlugin } from './helpers';
+import { context, formatError } from './helpers';
 import { config } from './config';
 import { prisma } from './db';
 import { schema } from './graphql';
 import { kubeconfig } from './k8s';
+import { Context } from './types';
 
-const server = fastify();
-const apolloServer = new ApolloServer({
+const server = Fastify();
+const apollo = new ApolloServer<Context>({
   schema,
-  context,
   formatError,
-  csrfPrevention: true,
-  cache: 'bounded',
-  plugins: [
-    fastifyAppClosePlugin(server),
-    ApolloServerPluginDrainHttpServer({ httpServer: server.server }),
-    ApolloServerPluginLandingPageLocalDefault({ embed: true })
-  ]
+  plugins: [fastifyApolloDrainPlugin(server)]
 });
 
 async function main() {
@@ -61,12 +58,22 @@ async function main() {
   kubeconfig.loadFromDefault();
   logger.info('K8s configured');
 
-  // Apollo Server
-  await apolloServer.start();
-  server.register(apolloServer.createHandler());
+  // Apollo
+  await apollo.start();
   logger.info('Apollo server started');
 
   // Server
+  await server.register(rateLimit);
+  await server.register(helmet, {
+    crossOriginEmbedderPolicy: config.node.env !== 'development',
+    contentSecurityPolicy: config.node.env !== 'development'
+  });
+  await server.register(cors);
+  await server.register(compress);
+  await server.register(fastifyApollo(apollo), {
+    path: config.graphql.path,
+    context
+  });
   const url = await server.listen({
     port: config.server.port,
     host: config.server.host
@@ -79,8 +86,8 @@ async function terminate(signal: NodeJS.Signals) {
 
   // Database
   await prisma.$disconnect();
-  // Apollo Server
-  await apolloServer.stop();
+  // Apollo
+  await apollo.stop();
   // Server
   await server.close();
 

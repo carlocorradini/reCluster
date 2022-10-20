@@ -23,22 +23,20 @@
  */
 
 import { container } from 'tsyringe';
-import type { FastifyContext } from 'apollo-server-fastify';
+import type { ApolloFastifyContextFunction } from '@as-integrations/fastify';
 import type { Context, TokenPayload } from '~/types';
 import { TokenService } from '~/services';
 import { AuthenticationError } from '~/errors';
 
-export async function context({
-  request: req
-}: FastifyContext): Promise<Context> {
+export const context: ApolloFastifyContextFunction<Context> = async ({
+  headers
+}): Promise<Context> => {
   let applicant: TokenPayload | undefined;
   const authorizationHeader =
-    req.headers && 'Authorization' in req.headers
-      ? 'Authorization'
-      : 'authorization';
+    headers && 'Authorization' in headers ? 'Authorization' : 'authorization';
 
-  if (req.headers && req.headers[authorizationHeader]) {
-    const parts = (req.headers[authorizationHeader] as string).split(' ');
+  if (headers && headers[authorizationHeader]) {
+    const parts = (headers[authorizationHeader] as string).split(' ');
 
     if (parts.length === 2) {
       const scheme = parts[0];
@@ -64,5 +62,5 @@ export async function context({
     }
   }
 
-  return { applicant };
-}
+  return <Context>{ applicant };
+};
