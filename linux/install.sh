@@ -1250,8 +1250,10 @@ verify_system() {
   # K3s kind
   _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
   [ "$_k3s_kind" = "server" ] || [ "$_k3s_kind" = "agent" ] || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
-  # K3s server and token if agent
-  if [ "$_k3s_kind" = "agent" ] && [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(.server and .token))')" = "false" ]; then FATAL "K3s configuration requires 'server' and 'token' if 'kind' is 'agent'"; fi
+  # K3s server and token if agent or server not init cluster
+  if { [ "$_k3s_kind" = "agent" ] || { [ "$_k3s_kind" = "server" ] && [ "$INIT_CLUSTER" = false ]; }; } && [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(.server and .token))')" = false ]; then
+    FATAL "K3s configuration requires 'server' and 'token'"
+  fi
   # reCluster server URL
   echo "$CONFIG" | jq --exit-status '.recluster.server' > /dev/null 2>&1 || FATAL "reCluster configuration requires 'server'"
 
