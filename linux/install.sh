@@ -1241,8 +1241,24 @@ verify_system() {
   # Directories
   [ ! -d "$RECLUSTER_ETC_DIR" ] || FATAL "reCluster directory '$RECLUSTER_ETC_DIR' already exists"
   [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "reCluster directory '$RECLUSTER_OPT_DIR' already exists"
-  # Configuration file
+
+  # Configuration
   [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' not found"
+  INFO "Reading configuration file '$CONFIG_FILE'"
+  CONFIG=$(yq e --output-format=json --no-colors '.' "$CONFIG_FILE") || FATAL "Error reading configuration file '$CONFIG_FILE'"
+  DEBUG "Configuration:" "$CONFIG"
+  # K3s kind
+  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
+  [ "$_k3s_kind" = "server" ] || [ "$_k3s_kind" = "agent" ] || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
+  # K3s server and token if agent
+  if [ "$_k3s_kind" = "agent" ] && [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(.server and .token))')" = "false" ]; then FATAL "K3s configuration requires 'server' and 'token' if 'kind' is 'agent'"; fi
+  # reCluster server URL
+  echo "$CONFIG" | jq --exit-status '.recluster.server' > /dev/null 2>&1 || FATAL "reCluster configuration requires 'server'"
+
+  # Cluster initialization
+  if [ "$INIT_CLUSTER" = true ]; then
+    [ "$_k3s_kind" = server ] || FATAL "Cluster initialization requires K3s 'kind' to be 'server' but '$_k3s_kind' found"
+  fi
 
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
@@ -1258,24 +1274,17 @@ verify_system() {
 
 # Setup system
 setup_system() {
+  _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
+
   # Temporary directory
   TMP_DIR=$(mktemp --directory -t recluster.XXXXXXXX)
   DEBUG "Created temporary directory '$TMP_DIR'"
 
-  # Configuration
-  INFO "Reading configuration file '$CONFIG_FILE'"
-  CONFIG=$(yq e --output-format=json --no-colors '.' "$CONFIG_FILE") || FATAL "Error reading configuration file '$CONFIG_FILE'"
-  DEBUG "Configuration:" "$CONFIG"
-
-  # Check configuration
-  # K3s kind
-  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
-  # Server URL
-  echo "$CONFIG" | jq --exit-status '.recluster.server' > /dev/null 2>&1 || FATAL "reCluster configuration requires server URL"
-
   # Cluster initialization
   if [ "$INIT_CLUSTER" = true ]; then
-    [ "$_k3s_kind" = server ] || FATAL "Cluster initialization requires K3s 'kind' to be 'server' but '$_k3s_kind' found"
+    # Update configuration
+    DEBUG "Updating K3s configuration"
+    CONFIG=$(echo "$CONFIG" | jq '.k3s."cluster-init" = true')
   fi
 
   # Airgap
@@ -1530,10 +1539,7 @@ install_k3s() {
   { [ -f "$_k3s_install_sh" ] && [ -x "$_k3s_install_sh" ]; } || FATAL "K3s installation script '$_k3s_install_sh' not found or not executable"
 
   # Kind
-  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
-  [ "$_k3s_kind" = "server" ] \
-    || [ "$_k3s_kind" = "agent" ] \
-    || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
+  _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
 
   # Configuration
   _k3s_config=$(echo "$CONFIG" | jq --exit-status '.k3s | del(.kind)' | yq e --exit-status --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
@@ -1616,7 +1622,7 @@ cluster_init() {
   INFO "Cluster initialization"
 
   _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
-  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind')
+  _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
   _kubeconfig_file=~/.kube/config
 
   _wait_k3s_kubeconfig_file_creation() {
