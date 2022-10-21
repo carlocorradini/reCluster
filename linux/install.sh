@@ -1472,14 +1472,14 @@ read_power_consumptions() {
 finalize_node_facts() {
   spinner_start "Finalizing node facts"
 
-  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind')
+  _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
+  _has_taint_no_execute=$(echo "$CONFIG" | jq --raw-output 'any(select(.k3s."node-taint"); .k3s."node-taint"[] | . == "CriticalAddonsOnly=true:NoExecute")')
 
   # Roles
   _roles="[]"
   if [ "$INIT_CLUSTER" = true ]; then _roles=$(echo "$_roles" | jq '. + ["RECLUSTER_MASTER"]'); fi
-  if [ "$_k3s_kind" = "server" ]; then
-    _roles=$(echo "$_roles" | jq '. + ["K8S_MASTER"]')
-  elif [ "$_k3s_kind" = "agent" ]; then
+  if [ "$_k3s_kind" = "server" ]; then _roles=$(echo "$_roles" | jq '. + ["K8S_MASTER"]'); fi
+  if [ "$_k3s_kind" = "agent" ] || { [ "$_k3s_kind" = "server" ] && [ "$_has_taint_no_execute" = false ]; }; then
     _roles=$(echo "$_roles" | jq '. + ["K8S_WORKER"]')
   fi
   DEBUG "Node roles:" "$_roles"
