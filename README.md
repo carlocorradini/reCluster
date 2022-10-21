@@ -47,6 +47,12 @@ reCluster is an architecture for a data center that actively reduces its impact 
    vagrant up
    ```
 
+   1. Destroy machines:
+
+      ```console
+      vagrant destroy --graceful --force
+      ```
+
 ### Master
 
 1. SSH

@@ -1255,6 +1255,10 @@ verify_system() {
   # K3s kind
   _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
   [ "$_k3s_kind" = "server" ] || [ "$_k3s_kind" = "agent" ] || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
+  # K3s kind an init cluster not allowed
+  if [ "$_k3s_kind" = "agent" ] && [ "$INIT_CLUSTER" = true ]; then
+    FATAL "K3s 'agent' are not allowed to initialize cluster"
+  fi
   # K3s server and token if agent or server not init cluster
   if { [ "$_k3s_kind" = "agent" ] || { [ "$_k3s_kind" = "server" ] && [ "$INIT_CLUSTER" = false ]; }; } && [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(.server and .token))')" = false ]; then
     FATAL "K3s configuration requires 'server' and 'token'"
