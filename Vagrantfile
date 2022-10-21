@@ -32,7 +32,7 @@ VM_RAM = 1024
 VM_CPU = 1
 NODES = [
   {
-    :hostname => "controller",
+    :hostname => "master",
     :ip => "10.0.0.10"
   },
   {

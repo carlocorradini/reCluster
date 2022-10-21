@@ -14,8 +14,6 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 ## Development
 
-### Preparation
-
 1. Clone
 
    ```console
@@ -37,20 +35,44 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 ## Simulate Cluster
 
-```console
-vagrant plugin install vagrant-hosts
-```
+1. Install `vagrant-hosts` plugin:
 
-1. Start
+   ```console
+   vagrant plugin install vagrant-hosts
+   ```
+
+1. Creates and configures guest machines
 
    ```console
    vagrant up
    ```
 
-2. Destroy
+### Master
+
+1. SSH
 
    ```console
-   vagrant destroy --graceful --force
+   vagrant ssh master
+   ```
+
+1. Install
+
+   ```console
+   ./linux/install.sh --config ./linux/config.master.yml --pc-device-api "http://192.168.0.61/cm?cmnd=status%2010" --init-cluster
+   ```
+
+### Worker
+
+1. SSH
+
+   ```console
+   vagrant ssh worker
+   ```
+
+1. Install
+
+   ```console
+   ./linux/install.sh --config ./linux/config.worker.yml --pc-device-api "http://192.168.0.61/cm?cmnd=status%2010"
    ```
 
 ### Scripts
