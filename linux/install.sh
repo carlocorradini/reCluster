@@ -398,15 +398,20 @@ assert_downloader() {
 
 # Assert URL address is reachable
 # @param $1 URL address
+# @param $2 Timeout in seconds
 assert_url_reachability() {
   DEBUG "Testing URL address '$1' reachability"
+  # URL address
+  _url_address=$1
+  # Timeout in seconds
+  _timeout=${2:-10}
 
   case $DOWNLOADER in
     curl)
-      curl --fail --silent --show-error "$1" > /dev/null || FATAL "URL address '$1' is unreachable"
+      curl --fail --silent --show-error --max-time "$_timeout" "$_url_address" > /dev/null || FATAL "URL address '$_url_address' is unreachable"
       ;;
     wget)
-      wget --quiet --spider "$1" 2>&1 || FATAL "URL address '$1' is unreachable"
+      wget --quiet --spider --timeout="$_timeout" --tries=1 "$_url_address" 2>&1 || FATAL "URL address '$_url_address' is unreachable"
       ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
