@@ -167,8 +167,8 @@ SPINNER_PID=
 SPINNER_TIME=.1
 # Spinner symbols dots
 SPINNER_SYMBOLS_DOTS="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
-# Spinner symbols greyscale
-SPINNER_SYMBOLS_GREYSCALE="░░░░░░░ ▒░░░░░░ ▒▒░░░░░ ▒▒▒░░░░ ▒▒▒▒░░░ ▒▒▒▒▒░░ ▒▒▒▒▒▒░ ▒▒▒▒▒▒▒ ░▒▒▒▒▒▒ ░░▒▒▒▒▒ ░░░▒▒▒▒ ░░░░▒▒▒ ░░░░░▒▒ ░░░░░░▒"
+# Spinner symbols grayscale
+SPINNER_SYMBOLS_GRAYSCALE="░░░░░░░ ▒░░░░░░ ▒▒░░░░░ ▒▒▒░░░░ ▒▒▒▒░░░ ▒▒▒▒▒░░ ▒▒▒▒▒▒░ ▒▒▒▒▒▒▒ ░▒▒▒▒▒▒ ░░▒▒▒▒▒ ░░░▒▒▒▒ ░░░░▒▒▒ ░░░░░▒▒ ░░░░░░▒"
 # Spinner symbols propeller
 SPINNER_SYMBOLS_PROPELLER="/ - \\ |"
 # Spinner flag
@@ -212,8 +212,8 @@ _spinner() {
       _spinner_ppid=$(ps -p "$$" -o ppid=)
       if [ -n "$_spinner_ppid" ]; then
         # shellcheck disable=SC2086
-        _spinner_parentup=$(ps --no-headers $_spinner_ppid)
-        if [ -z "$_spinner_parentup" ]; then break 2; fi
+        _spinner_parent_up=$(ps --no-headers $_spinner_ppid)
+        if [ -z "$_spinner_parent_up" ]; then break 2; fi
       fi
     done
   done
@@ -341,7 +341,7 @@ Options:
                                        Default: propeller
                                        Values:
                                          dots         Dots spinner
-                                         greyscale    Greyscale spinner
+                                         grayscale    Grayscale spinner
                                          propeller    Propeller spinner
 
   --status-updater-interval <TIME>     Status updater interval time in seconds
@@ -724,12 +724,12 @@ run_cpu_bench() {
   RETVAL=$(
     jq \
       --null-input \
-      --argjson singlethread "$_single_thread" \
-      --argjson multithread "$_multi_thread" \
+      --argjson singleThread "$_single_thread" \
+      --argjson multiThread "$_multi_thread" \
       '
         {
-          "singleThread": $singlethread,
-          "multiThread": $multithread
+          "singleThread": $singleThread,
+          "multiThread": $multiThread
         }
       '
   )
@@ -770,19 +770,19 @@ run_ram_bench() {
   RETVAL=$(
     jq \
       --null-input \
-      --arg readseq "$_read_seq" \
-      --arg readrand "$_read_rand" \
-      --arg writeseq "$_write_seq" \
-      --arg writerand "$_write_rand" \
+      --arg readSeq "$_read_seq" \
+      --arg readRand "$_read_rand" \
+      --arg writeSeq "$_write_seq" \
+      --arg writeRand "$_write_rand" \
       '
         {
           "read": {
-            "sequential": ($readseq | tonumber),
-            "random": ($readrand | tonumber)
+            "sequential": ($readSeq | tonumber),
+            "random": ($readRand | tonumber)
           },
           "write": {
-            "sequential": ($writeseq | tonumber),
-            "random": ($writerand | tonumber)
+            "sequential": ($writeSeq | tonumber),
+            "random": ($writeRand | tonumber)
           }
         }
       '
@@ -867,34 +867,34 @@ run_disks_bench() {
   RETVAL=$(
     jq \
       --null-input \
-      --arg readseqsync "$_read_seq_sync" \
-      --arg readseqasync "$_read_seq_async" \
-      --arg readrandsync "$_read_rand_sync" \
-      --arg readrandasync "$_read_rand_async" \
-      --arg writeseqsync "$_write_seq_sync" \
-      --arg writeseqasync "$_write_seq_async" \
-      --arg writerandsync "$_write_rand_sync" \
-      --arg writerandasync "$_write_rand_async" \
+      --arg readSeqSync "$_read_seq_sync" \
+      --arg readSeqAsync "$_read_seq_async" \
+      --arg readRandSync "$_read_rand_sync" \
+      --arg readRandAsync "$_read_rand_async" \
+      --arg writeSeqSync "$_write_seq_sync" \
+      --arg writeSeqAsync "$_write_seq_async" \
+      --arg writeRandSync "$_write_rand_sync" \
+      --arg writeRandAsync "$_write_rand_async" \
       '
         {
           "read": {
             "sequential": {
-              "synchronous": ($readseqsync | tonumber),
-              "asynchronous": ($readseqasync | tonumber),
+              "synchronous": ($readSeqSync | tonumber),
+              "asynchronous": ($readSeqAsync | tonumber),
             },
             "random": {
-              "synchronous": ($readrandsync | tonumber),
-              "asynchronous": ($readrandasync | tonumber),
+              "synchronous": ($readRandSync | tonumber),
+              "asynchronous": ($readRandAsync | tonumber),
             }
           },
           "write": {
             "sequential": {
-              "synchronous": ($writeseqsync | tonumber),
-              "asynchronous": ($writeseqasync | tonumber),
+              "synchronous": ($writeSeqSync | tonumber),
+              "asynchronous": ($writeSeqAsync | tonumber),
             },
             "random": {
-              "synchronous": ($writerandsync | tonumber),
-              "asynchronous": ($writerandasync | tonumber),
+              "synchronous": ($writeRandSync | tonumber),
+              "asynchronous": ($writeRandAsync | tonumber),
             }
           }
         }
@@ -1141,7 +1141,7 @@ parse_args() {
 
         case $2 in
           dots) _spinner=$SPINNER_SYMBOLS_DOTS ;;
-          greyscale) _spinner=$SPINNER_SYMBOLS_GREYSCALE ;;
+          grayscale) _spinner=$SPINNER_SYMBOLS_GRAYSCALE ;;
           propeller) _spinner=$SPINNER_SYMBOLS_PROPELLER ;;
           *) _parse_args_invalid_value "$1" "$2" ;;
         esac
@@ -1719,7 +1719,7 @@ install_recluster() {
   _bootstrap_service_name=recluster.bootstrap
   _status_updater_service_name=recluster.status_updater
   # Registration data
-  _regitration_data=
+  _registration_data=
   _node_token=
   _node_id=
 
@@ -1737,12 +1737,12 @@ install_recluster() {
 
   # Register node
   node_registration
-  _regitration_data=$RETVAL
+  _registration_data=$RETVAL
 
   # Read node token
-  _node_token=$(echo "$_regitration_data" | jq --raw-output '.token')
+  _node_token=$(echo "$_registration_data" | jq --raw-output '.token')
   # Read node id
-  _node_id=$(echo "$_regitration_data" | jq --raw-output '.decoded.payload.id')
+  _node_id=$(echo "$_registration_data" | jq --raw-output '.decoded.payload.id')
 
   # Write node token
   echo "$_node_token" | tee "$_node_token_file" > /dev/null
@@ -2129,7 +2129,7 @@ start_services() {
       INFO "systemd: Starting status updater"
       $SUDO systemtcl start recluster.status_updater
       INFO "systemd: Starting Node exporter"
-      $SUDO systemtc start node_exporter
+      $SUDO systemtcl start node_exporter
       INFO "systemd: Starting K3s"
       $SUDO systemctl start k3s-recluster
       ;;

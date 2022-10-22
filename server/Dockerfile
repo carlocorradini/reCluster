@@ -41,7 +41,6 @@ WORKDIR $WORKDIR
 
 # Copy build files
 COPY package.json package-lock.json ./
-COPY .npmrc ./
 COPY tsconfig.json ./
 COPY prisma ./prisma
 # Copy source files
