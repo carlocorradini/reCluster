@@ -1271,6 +1271,12 @@ verify_system() {
     [ "$_k3s_kind" = server ] || FATAL "Cluster initialization requires K3s 'kind' to be 'server' but '$_k3s_kind' found"
   fi
 
+  # Airgap
+  if [ "$AIRGAP_ENV" = true ]; then
+    [ "$K3S_VERSION" != latest ] || FATAL "K3s version '$K3S_VERSION' not available in Air-Gap environment"
+    [ "$NODE_EXPORTER_VERSION" != latest ] || FATAL "Node exporter version '$NODE_EXPORTER_VERSION' not available in Air-Gap environment"
+  fi
+
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
     WARN "Already running as 'root'"
@@ -1520,6 +1526,7 @@ finalize_node_facts() {
 
 # Install K3s
 install_k3s() {
+  _k3s_version="$K3S_VERSION"
   _k3s_install_sh=
   _k3s_kind=
   _k3s_config_file=/etc/rancher/k3s/config.yaml
@@ -1539,6 +1546,7 @@ install_k3s() {
     $SUDO mv --force "$AIRGAP_K3S_IMAGES" "$_k3s_airgap_images"
   else
     # Airgap disabled
+    if [ "$_k3s_version" = latest ]; then _k3s_version=; fi
     _k3s_install_sh="$TMP_DIR/install.k3s.sh"
     # Download installer
     DEBUG "Downloading K3s installer"
@@ -1562,7 +1570,7 @@ install_k3s() {
   INSTALL_K3S_SKIP_ENABLE=true \
     INSTALL_K3S_SKIP_START=true \
     INSTALL_K3S_SKIP_DOWNLOAD="$AIRGAP_ENV" \
-    INSTALL_K3S_VERSION="$K3S_VERSION" \
+    INSTALL_K3S_VERSION="$_k3s_version" \
     INSTALL_K3S_NAME=recluster \
     INSTALL_K3S_EXEC="$_k3s_kind" \
     "$_k3s_install_sh" || FATAL "Error installing K3s '$K3S_VERSION'"
@@ -1575,6 +1583,7 @@ install_k3s() {
 
 # Install Node exporter
 install_node_exporter() {
+  _node_exporter_version="$NODE_EXPORTER_VERSION"
   _node_exporter_install_sh=
   _node_exporter_config=
 
@@ -1588,6 +1597,7 @@ install_node_exporter() {
     $SUDO mv --force "$AIRGAP_NODE_EXPORTER_BIN" /usr/local/bin/node_exporter
   else
     # Airgap disabled
+    if [ "$_node_exporter_version" = latest ]; then _node_exporter_version=; fi
     _node_exporter_install_sh="$TMP_DIR/install.node_exporter.sh"
     # Download installer
     DEBUG "Downloading Node exporter installer"
@@ -1616,7 +1626,7 @@ install_node_exporter() {
   INSTALL_NODE_EXPORTER_SKIP_ENABLE=true \
     INSTALL_NODE_EXPORTER_SKIP_START=true \
     INSTALL_NODE_EXPORTER_SKIP_DOWNLOAD="$AIRGAP_ENV" \
-    INSTALL_NODE_EXPORTER_VERSION="$NODE_EXPORTER_VERSION" \
+    INSTALL_NODE_EXPORTER_VERSION="$_node_exporter_version" \
     INSTALL_NODE_EXPORTER_EXEC="$_node_exporter_config" \
     "$_node_exporter_install_sh" || FATAL "Error installing Node exporter '$NODE_EXPORTER_VERSION'"
 
@@ -2148,15 +2158,15 @@ CONFIG_FILE="$DIRNAME/config.yml"
 # Initialize cluster
 INIT_CLUSTER=false
 # K3s version
-K3S_VERSION="v1.25.0+k3s1"
+K3S_VERSION=latest
 # Log color flag
 LOG_COLOR_ENABLE=true
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
 # Node exporter version
-NODE_EXPORTER_VERSION="v1.4.0"
+NODE_EXPORTER_VERSION=latest
 # Power consumption device api url
-PC_DEVICE_API="http://pc.local/cm?cmnd=status%2010"
+PC_DEVICE_API="http://pc.recluster.local/cm?cmnd=status%2010"
 # Power consumption interval in seconds
 PC_INTERVAL=1
 # Power consumption time in seconds
