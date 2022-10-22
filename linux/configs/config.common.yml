@@ -21,9 +21,9 @@
 # SOFTWARE.
 
 k3s:
-  kind: agent
-  server: https://10.0.0.10:6443
   token: 4646f99bc4cbae3d5eceed856b337c9d3284be0d4056a3909f780c0c385fbf93
+  cluster-domain: recluster.local
+  flannel-backend: host-gw
 
 node_exporter:
   collector:

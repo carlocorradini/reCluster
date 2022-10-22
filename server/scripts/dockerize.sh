@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -25,17 +25,17 @@
 # CONFIGURATION
 # ================
 # Current directory
-DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly DIRNAME
+# shellcheck disable=SC1007
+DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # reCluster server Dockerfile
-readonly RECLUSTER_SERVER_DOCKERFILE="$DIRNAME/../Dockerfile"
+RECLUSTER_SERVER_DOCKERFILE="$DIRNAME/../Dockerfile"
 # reCluster server version
-readonly RECLUSTER_SERVER_VERSION="latest"
+RECLUSTER_SERVER_VERSION=latest
 # reCluster server image
-readonly RECLUSTER_SERVER_IMAGE="recluster-server:$RECLUSTER_SERVER_VERSION"
+RECLUSTER_SERVER_IMAGE="recluster-server:$RECLUSTER_SERVER_VERSION"
 
-# Commons
-source "$DIRNAME/../../scripts/__commons.sh"
+# Load commons
+. "$DIRNAME/../../scripts/__commons.sh"
 
 # Assert
 assert_cmd docker

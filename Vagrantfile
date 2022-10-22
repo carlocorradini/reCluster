@@ -23,8 +23,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-ENV['VAGRANT_NO_PARALLEL'] = 'yes'
-
 require 'ipaddr'
 
 BOX = "generic/alpine316"

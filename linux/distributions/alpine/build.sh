@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -25,34 +25,36 @@
 # CONFIGURATION
 # ================
 # Current directory
-DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly DIRNAME
+# shellcheck disable=SC1007
+DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # Alpine Linux version
-readonly ALPINE_VERSION="3.16"
+ALPINE_VERSION=3.16
 # reCluster Alpine Linux image
-readonly RECLUSTER_ALPINE_IMAGE="recluster-alpine:$ALPINE_VERSION"
+RECLUSTER_ALPINE_IMAGE="recluster-alpine:$ALPINE_VERSION"
 # reCluster Alpine Linux Dockerfile
-readonly RECLUSTER_ALPINE_DOCKERFILE="$DIRNAME/Dockerfile"
+RECLUSTER_ALPINE_DOCKERFILE="$DIRNAME/Dockerfile"
 # mkimage profile
 MKIMAGE_PROFILE=$(readlink -f "$DIRNAME/mkimg.recluster.sh")
-readonly MKIMAGE_PROFILE
 # mkimage apkovl
 MKIMAGE_APKOVL=$(readlink -f "$DIRNAME/genapkovl-recluster.sh")
-readonly MKIMAGE_APKOVL
 # mkimage iso directory
 MKIMAGE_ISO_DIR=$(readlink -f "$DIRNAME/iso")
-readonly MKIMAGE_ISO_DIR
 # mkimage architectures
-MKIMAGE_ARCHS=("x86_64")
+MKIMAGE_ARCHS='["x86_64"]'
 # Container identifier
-CONTAINER=
+CONTAINER_ID=
 
-# Commons
-source "$DIRNAME/../../../scripts/__commons.sh"
+# Load commons
+. "$DIRNAME/../../../scripts/__commons.sh"
 
-# Assert
-assert_cmd docker
-assert_docker_image "$RECLUSTER_ALPINE_IMAGE" "$RECLUSTER_ALPINE_DOCKERFILE"
+# Verify system
+verify_system() {
+  assert_cmd docker
+  assert_cmd jq
+  assert_cmd sed
+
+  assert_docker_image "$RECLUSTER_ALPINE_IMAGE" "$RECLUSTER_ALPINE_DOCKERFILE"
+}
 
 # Cleanup
 cleanup() {
@@ -60,9 +62,9 @@ cleanup() {
   _exit_code=$?
 
   # Docker container
-  if [ -n "$CONTAINER" ]; then
-    docker stop "$CONTAINER"
-    docker rm "$CONTAINER"
+  if [ -n "$CONTAINER_ID" ]; then
+    docker stop "$CONTAINER_ID"
+    docker rm "$CONTAINER_ID"
   fi
 
   exit "$_exit_code"
@@ -75,7 +77,7 @@ trap cleanup INT QUIT TERM EXIT
 # FUNCTIONS
 # ================
 # ISO directory
-function iso_dir() {
+iso_dir() {
   if [ -d "$MKIMAGE_ISO_DIR" ]; then
     WARN "Removing ISO directory '$MKIMAGE_ISO_DIR'"
     rm -rf "$MKIMAGE_ISO_DIR"
@@ -86,17 +88,15 @@ function iso_dir() {
 }
 
 # Prepare reCluster container
-function prepare_container() {
-  local profile_file_name
-  local apkovl_file_name
-  profile_file_name=$(basename "$MKIMAGE_PROFILE")
-  apkovl_file_name=$(basename "$MKIMAGE_APKOVL")
+prepare_container() {
+  _profile_file_name=$(basename "$MKIMAGE_PROFILE")
+  _apkovl_file_name=$(basename "$MKIMAGE_APKOVL")
 
   # Start container
-  CONTAINER=$(
+  CONTAINER_ID=$(
     docker run \
-      --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/$profile_file_name" \
-      --volume "$MKIMAGE_APKOVL:/home/build/aports/scripts/$apkovl_file_name" \
+      --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/$_profile_file_name" \
+      --volume "$MKIMAGE_APKOVL:/home/build/aports/scripts/$_apkovl_file_name" \
       --volume "$MKIMAGE_ISO_DIR:/home/build/iso" \
       --detach \
       --interactive \
@@ -105,35 +105,37 @@ function prepare_container() {
   )
 
   # Script permission
-  docker exec "$CONTAINER" chmod +x "/home/build/aports/scripts/$profile_file_name"
+  docker exec "$CONTAINER_ID" chmod +x "/home/build/aports/scripts/$_profile_file_name"
 }
 
 # Build ISO image
-function builder() {
-  local arch
-  local profile_name
-  arch=$1
-  profile_name=$(basename "$MKIMAGE_PROFILE" | sed -E 's/.*mkimg\.(.*)\.sh.*/\1/')
+# @param $1 Architecture
+builder() {
+  _arch=$1
+  _profile_name=$(basename "$MKIMAGE_PROFILE" | sed -E 's/.*mkimg\.(.*)\.sh.*/\1/')
 
-  INFO "Building '$profile_name' architecture '$arch'"
+  INFO "Building '$_profile_name' architecture '$_arch'"
 
-  docker exec "$CONTAINER" \
+  docker exec "$CONTAINER_ID" \
     /home/build/aports/scripts/mkimage.sh \
     --tag "v$ALPINE_VERSION" \
     --outdir /home/build/iso \
-    --arch "$arch" \
+    --arch "$_arch" \
     --repository "http://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/main" \
     --repository "http://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/community" \
-    --profile "$profile_name"
+    --profile "$_profile_name"
 }
 
 # ================
 # MAIN
 # ================
 {
+  verify_system
   iso_dir
   prepare_container
-  for arch in "${MKIMAGE_ARCHS[@]}"; do
-    builder "$arch"
-  done
+  while read -r _arch; do
+    builder "$_arch"
+  done << EOF
+$(echo "$MKIMAGE_ARCHS" | jq --compact-output --raw-output '.[]')
+EOF
 }

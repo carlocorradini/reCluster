@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -21,16 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Current directory
-__DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly __DIRNAME
-
 # Fail on error
 set -o errexit
-# Fail on unset var usage
-set -o nounset
-# Prevents errors in a pipeline from being masked
-set -o pipefail
 # Disable wildcard character expansion
 set -o noglob
 
@@ -38,106 +30,124 @@ set -o noglob
 # LOGGER
 # ================
 # Fatal log level. Cause exit failure
-readonly LOG_LEVEL_FATAL=100
+LOG_LEVEL_FATAL=100
 # Error log level
-readonly LOG_LEVEL_ERROR=200
+LOG_LEVEL_ERROR=200
 # Warning log level
-readonly LOG_LEVEL_WARN=300
+LOG_LEVEL_WARN=300
 # Informational log level
-readonly LOG_LEVEL_INFO=500
+LOG_LEVEL_INFO=500
 # Debug log level
-readonly LOG_LEVEL_DEBUG=600
+LOG_LEVEL_DEBUG=600
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
 # Log color flag
 LOG_COLOR_ENABLE=true
 
+# Check if log level is enabled
+# @param $1 Log level
+is_log_level_enabled() {
+  if [ "$1" -le "$LOG_LEVEL" ]; then
+    # Enabled
+    return 0
+  else
+    # Disabled
+    return 1
+  fi
+}
+
 # Print log message
 # @param $1 Log level
 # @param $2 Message
-function _log_print_message() {
-  local log_level
-  local log_level_name
-  local log_message
-  local log_prefix
-  local log_suffix
-  log_level=${1:-LOG_LEVEL_FATAL}
+_log_print_message() {
+  _log_level=${1:-LOG_LEVEL_FATAL}
   shift
-  log_message=${*:-}
-  log_suffix="\033[0m"
+  _log_level_name=
+  _log_message=${*:-}
+  _log_prefix=
+  _log_suffix="\033[0m"
 
   # Check log level
-  if [ "$log_level" -gt "$LOG_LEVEL" ]; then return; fi
+  is_log_level_enabled "$_log_level" || return 0
 
-  case $log_level in
+  case $_log_level in
     "$LOG_LEVEL_FATAL")
-      log_level_name=FATAL
-      log_prefix="\033[41;37m"
+      _log_level_name=FATAL
+      _log_prefix="\033[41;37m"
       ;;
     "$LOG_LEVEL_ERROR")
-      log_level_name=ERROR
-      log_prefix="\033[1;31m"
+      _log_level_name=ERROR
+      _log_prefix="\033[1;31m"
       ;;
     "$LOG_LEVEL_WARN")
-      log_level_name=WARN
-      log_prefix="\033[1;33m"
+      _log_level_name=WARN
+      _log_prefix="\033[1;33m"
       ;;
     "$LOG_LEVEL_INFO")
-      log_level_name=INFO
-      log_prefix="\033[37m"
+      _log_level_name=INFO
+      _log_prefix="\033[37m"
       ;;
     "$LOG_LEVEL_DEBUG")
-      log_level_name=DEBUG
-      log_prefix="\033[1;34m"
+      _log_level_name=DEBUG
+      _log_prefix="\033[1;34m"
       ;;
   esac
 
   # Check color flag
   if [ "$LOG_COLOR_ENABLE" = false ]; then
-    log_prefix=
-    log_suffix=
+    _log_prefix=
+    _log_suffix=
   fi
 
-  # Output to stdout
-  printf '%b[%-5s][%s:%d] %b%b\n' "$log_prefix" "$log_level_name" "${FUNCNAME[2]}" "${BASH_LINENO[1]}" "$log_message" "$log_suffix"
+  # Log
+  printf '%b[%-5s] %b%b\n' "$_log_prefix" "$_log_level_name" "$_log_message" "$_log_suffix"
 }
 
 # Fatal log message
+# @param $1 Message
 FATAL() {
-  _log_print_message ${LOG_LEVEL_FATAL} "$@"
+  _log_print_message "$LOG_LEVEL_FATAL" "$1" >&2
   exit 1
 }
 # Error log message
-ERROR() { _log_print_message ${LOG_LEVEL_ERROR} "$@"; }
+# @param $1 Message
+ERROR() { _log_print_message "$LOG_LEVEL_ERROR" "$1" >&2; }
 # Warning log message
-WARN() { _log_print_message ${LOG_LEVEL_WARN} "$@"; }
+# @param $1 Message
+WARN() { _log_print_message "$LOG_LEVEL_WARN" "$1" >&2; }
 # Informational log message
-INFO() { _log_print_message ${LOG_LEVEL_INFO} "$@"; }
+# @param $1 Message
+INFO() { _log_print_message "$LOG_LEVEL_INFO" "$1"; }
 # Debug log message
-DEBUG() { _log_print_message ${LOG_LEVEL_DEBUG} "$@"; }
+# @param $1 Message
+# @param $2 JSON value
+DEBUG() {
+  _log_print_message "$LOG_LEVEL_DEBUG" "$1"
+  if [ -n "$2" ] && is_log_level_enabled "$LOG_LEVEL_DEBUG"; then
+    echo "$2" | jq .
+  fi
+}
 
 # ================
 # FUNCTIONS
 # ================
 # Assert command is installed
 # @param $1 Command name
-function assert_cmd() {
-  [ -x "$(command -v "$1")" ] || FATAL "Command '$1' not found"
+assert_cmd() {
+  command -v "$1" > /dev/null 2>&1 || FATAL "Command '$1' not found"
   DEBUG "Command '$1' found at '$(command -v "$1")'"
 }
 
-# Assert downloader (curl or wget) is installed
-function assert_downloader() {
-  [ -n "${DOWNLOADER+x}" ] && return
+# Assert executable downloader
+assert_downloader() {
+  [ -n "$DOWNLOADER" ] && return 0
 
-  # Check and set downloader
   _assert_downloader() {
     # Return failure if it doesn't exist or is no executable
     [ -x "$(command -v "$1")" ] || return 1
-    # Set downloader program and return success
+
+    # Set downloader
     DOWNLOADER=$1
-    readonly DOWNLOADER
-    DEBUG "Downloader is '$DOWNLOADER'"
     return 0
   }
 
@@ -148,21 +158,26 @@ function assert_downloader() {
   DEBUG "Downloader '$DOWNLOADER' found at '$(command -v "$DOWNLOADER")'"
 }
 
-# Check docker image
-function assert_docker_image() {
+# Assert Docker image
+# @param $1 Docker image
+# @param $2 Dockerfile
+# @param $3 Dockerfile context
+assert_docker_image() {
   assert_cmd docker
+  _docker_image=$1
+  _dockerfile=${2:-}
+  _dockerfile_context=${3:-}
 
-  if [[ "$(docker images -q "$1" 2> /dev/null)" == "" ]]; then
-    WARN "Docker image '$1' not found"
+  if [ "$(docker images -q "$_docker_image" 2> /dev/null)" = "" ]; then
+    WARN "Docker image '$_docker_image' not found"
 
-    if [ "$#" -ne 2 ] || [ -z "$2" ]; then
-      FATAL "Unable to build '$1' because no Dockerfile has been provided"
-    fi
+    [ -n "$_dockerfile" ] || FATAL "Unable to build '$_docker_image' because no Dockerfile has been provided"
+    [ -n "$_dockerfile_context" ] || _dockerfile_context=$(dirname "$_dockerfile")
 
-    INFO "Building Docker image '$1' using Dockerfile '$2'"
-    docker build --rm -t "$1" -f "$2" "$__DIRNAME/.." || FATAL "Error building Docker image '$1' using Dockerfile '$2'"
+    INFO "Building Docker image '$_docker_image' using Dockerfile '$_dockerfile' with context '$_dockerfile_context'"
+    docker build --rm -t "$_docker_image" -f "$_dockerfile" "$_dockerfile_context" || FATAL "Error building Docker image '$_docker_image'"
   else
-    DEBUG "Docker image '$1' found"
+    DEBUG "Docker image '$_docker_image' found"
   fi
 }
 

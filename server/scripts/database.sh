@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -25,23 +25,23 @@
 # CONFIGURATION
 # ================
 # Current directory
-DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly DIRNAME
+# shellcheck disable=SC1007
+DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # PostgreSQL version
-readonly POSTGRESQL_VERSION="14.2"
+POSTGRESQL_VERSION=14.2
 # PostgreSQL image
-readonly POSTGRESQL_IMAGE="docker.io/postgres:$POSTGRESQL_VERSION"
+POSTGRESQL_IMAGE="docker.io/postgres:$POSTGRESQL_VERSION"
 # PostgreSQL port
-readonly POSTGRESQL_PORT="5432"
+POSTGRESQL_PORT=5432
 # PostgreSQL user
-readonly POSTGRESQL_USER="recluster"
+POSTGRESQL_USER=recluster
 # PostgreSQL password
-readonly POSTGRESQL_PASSWORD="password"
+POSTGRESQL_PASSWORD=password
 # PostgreSQL database
-readonly POSTGRESQL_DATABASE="recluster"
+POSTGRESQL_DATABASE=recluster
 
-# Commons
-source "$DIRNAME/../../scripts/__commons.sh"
+# Load commons
+. "$DIRNAME/../../scripts/__commons.sh"
 
 # Assert
 assert_cmd docker

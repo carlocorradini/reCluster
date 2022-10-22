@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 k3s:
-  url: https://github.com/k3s-io/k3s
+  url: https://github.com/k3s-io/k3s.git
   assets:
     - k3s
     - k3s-airgap-images-amd64.tar.gz
@@ -31,17 +31,17 @@ k3s:
     install.sh: https://raw.githubusercontent.com/k3s-io/k3s/master/install.sh
 
 node_exporter:
-  url: https://github.com/prometheus/node_exporter
+  url: https://github.com/prometheus/node_exporter.git
   assets:
-    - node_exporter-[0-9].[0-9].[0-9].linux-amd64.tar.gz
+    - node_exporter-[0-9]+.[0-9]+.[0-9]+.linux-amd64.tar.gz
   releases:
     - latest
   files:
     install.sh: https://raw.githubusercontent.com/carlocorradini/node_exporter_installer/main/install.sh
 
 prometheus:
-  url: https://github.com/prometheus/prometheus
+  url: https://github.com/prometheus/prometheus.git
   assets:
-    - prometheus-2.39.0.linux-amd64.tar.gz
+    - prometheus-[0-9]+.[0-9]+.[0-9]+.linux-amd64.tar.gz
   releases:
     - latest

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -25,11 +25,10 @@
 # CONFIGURATION
 # ================
 # Current directory
-DIRNAME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly DIRNAME
+# shellcheck disable=SC1007
+DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # Dependencies configuration file
 DEPS_CONFIG_FILE="$DIRNAME/dependencies.yml"
-readonly DEPS_CONFIG_FILE
 # Dependencies configuration file content
 DEPS=
 # Synchronize flag
@@ -37,8 +36,8 @@ SYNC=false
 # Synchronize force flag
 SYNC_FORCE=false
 
-# Commons
-source "$DIRNAME/../../scripts/__commons.sh"
+# Load commons
+. "$DIRNAME/../../scripts/__commons.sh"
 
 # ================
 # FUNCTIONS
@@ -62,110 +61,101 @@ EOF
 # Assert dependency $1 exists
 # @param $1 Dependency name
 assert_dep() {
-  jq --exit-status --arg name "$1" 'has($name)' <<< "$DEPS" > /dev/null 2>&1 || FATAL "Dependency '$1' does not exists"
+  echo "$DEPS" | jq --exit-status --arg name "$1" 'has($name)' > /dev/null 2>&1 || FATAL "Dependency '$1' does not exists"
 }
 
 # Return dependency configuration
 # @param $1 Dependency name
 dep_config() {
   assert_dep "$1"
-  jq --arg name "$1" '.[$name]' <<< "$DEPS"
+  echo "$DEPS" | jq --arg name "$1" '.[$name]'
 }
 
 # Generate github api url
 # @param $1 Dependency name
 gen_github_api_url() {
-  local config
-  local url
-  config=$(dep_config "$1")
-  url=$(jq --raw-output '.url' <<< "$config")
+  _config=$(dep_config "$1")
+  _url=$(echo "$_config" | jq --raw-output '.url')
+  _owner=$(echo "$_url" | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/' | sed 's#/[^/]*$##') || FATAL "Error reading owner from GitHub URL '$_url'"
+  _repo=$(echo "$_url" | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/' | sed 's#^.*/\([^/]*\)$#\1#') || FATAL "Error reading repository from GitHub URL '$_url'"
 
-  [[ $url =~ ^(https|git)(:\/\/|@)([^\/:]+)[\/:]([^\/:]+)\/(.+)(.git)*$ ]] || FATAL "Error reading owner and repository from GitHub URL '$url'"
-  echo "https://api.github.com/repos/${BASH_REMATCH[4]}/${BASH_REMATCH[5]}/releases"
+  echo "https://api.github.com/repos/$_owner/$_repo/releases"
 }
 
 # Return dependency latest release
 # @param $1 Dependency name
 find_latest_release() {
-  local github_api_url
-  github_api_url=$(gen_github_api_url "$1")
+  _github_api_url=$(gen_github_api_url "$1")
 
-  download_print "$github_api_url/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || FATAL "Download '$github_api_url/latest' failed"
+  download_print "$_github_api_url/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || FATAL "Download '$_github_api_url/latest' failed"
 }
 
 # Clean dependencies environment
 sync_deps_clean() {
-  local -
   set +o noglob
 
-  local dep_fd_basename
-  local fd_basename
-  local ufd_basename
-  local config
-  local latest_release
-
   # Clean dependency directories
-  for dep_fd in "$DIRNAME"/*; do
-    dep_fd_basename=$(basename "$dep_fd")
+  for _dep_fd in "$DIRNAME"/*; do
+    _dep_fd_basename=$(basename "$_dep_fd")
 
-    if [ -f "$dep_fd" ]; then
+    if [ -f "$_dep_fd" ]; then
       # Check files
 
-      case $dep_fd_basename in
+      case $_dep_fd_basename in
         .gitignore | dependencies.sh | dependencies.yml | README.md)
           # Keep
           ;;
         *)
           # Remove dependency file
-          INFO "Removing '$dep_fd_basename' file"
-          rm -f "$dep_fd"
+          INFO "Removing '$_dep_fd_basename' file"
+          rm -f "$_dep_fd"
           ;;
       esac
-    elif [ -d "$dep_fd" ]; then
+    elif [ -d "$_dep_fd" ]; then
       # Check directories
-      if ! jq --exit-status --arg dep "$dep_fd_basename" 'has($dep)' <<< "$DEPS" > /dev/null 2>&1; then
+      if ! echo "$DEPS" | jq --exit-status --arg dep "$_dep_fd_basename" 'has($dep)' > /dev/null 2>&1; then
         # Remove dependency directory
-        INFO "Removing '$dep_fd_basename' dependency directory"
-        rm -rf "$dep_fd"
+        INFO "Removing '$_dep_fd_basename' dependency directory"
+        rm -rf "$_dep_fd"
         continue
       fi
 
       # Dependency configuration
-      config=$(dep_config "$dep_fd_basename")
+      _config=$(dep_config "$_dep_fd_basename")
       # Latest release version
-      latest_release=$(find_latest_release "$dep_fd_basename")
+      _latest_release=$(find_latest_release "$_dep_fd_basename")
 
       # Clean dependency
-      for fd in "$DIRNAME/$dep_fd_basename"/*; do
-        fd_basename=$(basename "$fd")
+      for _fd in "$DIRNAME/$_dep_fd_basename"/*; do
+        _fd_basename=$(basename "$_fd")
 
-        if [ -f "$fd" ]; then
+        if [ -f "$_fd" ]; then
           # Check file
-          if ! jq --exit-status --arg file "$fd_basename" '.files | has($file)' <<< "$config" > /dev/null 2>&1; then
+          if ! echo "$_config" | jq --exit-status --arg file "$_fd_basename" '.files | has($file)' > /dev/null 2>&1; then
             # Remove file
-            INFO "Removing '$dep_fd_basename' file '$fd_basename'"
-            rm -f "$fd"
+            INFO "Removing '$_dep_fd_basename' file '$_fd_basename'"
+            rm -f "$_fd"
             continue
           fi
-        elif [ -d "$fd" ]; then
+        elif [ -d "$_fd" ]; then
           # Skip if 'latest' release and check release directory
-          if ! { jq --exit-status '.releases | any(. == "latest")' <<< "$config" > /dev/null 2>&1 && [ "$fd_basename" = "$latest_release" ]; } && ! jq --exit-status --arg dir "$fd_basename" '.releases | any(. == $dir)' <<< "$config" > /dev/null 2>&1; then
+          if ! { echo "$_config" | jq --exit-status '.releases | any(. == "latest")' > /dev/null 2>&1 && [ "$_fd_basename" = "$_latest_release" ]; } && ! echo "$_config" | jq --exit-status --arg dir "$_fd_basename" '.releases | any(. == $dir)' > /dev/null 2>&1; then
             # Remove release directory
-            INFO "Removing '$dep_fd_basename' release directory '$fd_basename'"
-            rm -rf "$fd"
+            INFO "Removing '$_dep_fd_basename' release directory '$_fd_basename'"
+            rm -rf "$_fd"
             continue
           fi
 
           # Clean remaining
-          for ufd in "$DIRNAME/$dep_fd_basename/$fd_basename"/*; do
-            [ -f "$ufd" ] || [ -d "$ufd" ] || continue
+          for _ufd in "$DIRNAME/$_dep_fd_basename/$_fd_basename"/*; do
+            [ -f "$_ufd" ] || [ -d "$_ufd" ] || continue
 
-            ufd_basename=$(basename "$ufd")
+            _ufd_basename=$(basename "$_ufd")
 
-            if [ "$(jq --raw-output --arg asset "$ufd_basename" 'any(.assets[]; ("^" + . + "$") as $keep | $asset | test($keep))' <<< "$config")" = false ]; then
+            if [ "$(echo "$_config" | jq --raw-output --arg asset "$_ufd_basename" 'any(.assets[]; ("^" + . + "$") as $keep | $asset | test($keep))')" = false ]; then
               # Remove
-              INFO "Removing '$dep_fd_basename' release '$fd_basename' file/directory '$ufd_basename'"
-              rm -rf "$ufd"
+              INFO "Removing '$_dep_fd_basename' release '$_fd_basename' file/directory '$_ufd_basename'"
+              rm -rf "$_ufd"
               continue
             fi
           done
@@ -173,123 +163,114 @@ sync_deps_clean() {
       done
     fi
   done
+
+  set -o noglob
 }
 
 # Synchronize dependency release
-# @param $1 Name
+# @param $1 Dependency name
 # @param $2 Release
 sync_dep_release() {
-  local name
-  local release
-  local is_release_latest
-  local github_api_url
-  local release_id
-  local assets
-  local release_dir
-  local asset_name
-  local asset_url
-  local asset_path
-  name=$1
-  release=$2
-  github_api_url=$(gen_github_api_url "$name")
-  case "$release" in
-    latest) is_release_latest=true ;;
-    *) is_release_latest=false ;;
+  _dep_name=$1
+  _release=$2
+  _github_api_url=$(gen_github_api_url "$_dep_name")
+  case "$_release" in
+    latest) _is_release_latest=true ;;
+    *) _is_release_latest=false ;;
   esac
 
   # If release is 'latest' find tag name
-  if [ $is_release_latest = true ]; then
-    INFO "Finding '$name' latest release"
-    release=$(find_latest_release "$name")
-    INFO "Latest '$name' release is '$release'"
+  if [ $_is_release_latest = true ]; then
+    INFO "Finding '$_dep_name' latest release"
+    _release=$(find_latest_release "$_dep_name")
+    INFO "Latest '$_dep_name' release is '$_release'"
   fi
 
   # Release id
-  release_id=$(download_print "$github_api_url/tags/$release" | jq --raw-output .id) || FATAL "Download '$github_api_url/tags/$release' failed"
-  DEBUG "'$name' release id '$release_id'"
+  _release_id=$(download_print "$_github_api_url/tags/$_release" | jq --raw-output .id) || FATAL "Download '$_github_api_url/tags/$_release' failed"
+  DEBUG "'$_dep_name' release id '$_release_id'"
 
   # Release assets
-  assets=$(download_print "$github_api_url/$release_id/assets" | jq --compact-output 'map({name, "url": .browser_download_url})') || FATAL "Download '$github_api_url/$release_id/assets' failed"
-  DEBUG "'$name' assets:\n$(echo "$assets" | jq .)"
+  _assets=$(download_print "$_github_api_url/$_release_id/assets" | jq --compact-output 'map({name, "url": .browser_download_url})') || FATAL "Download '$_github_api_url/$_release_id/assets' failed"
+  DEBUG "'$_dep_name' assets:\n$(echo "$_assets" | jq .)"
 
   # Create release directory if not exists
-  release_dir="$(readlink -f "$DIRNAME")/$name/$release"
-  if [ ! -d "$release_dir" ]; then
-    INFO "Creating '$name' directory '$release_dir'"
-    mkdir -p "$release_dir"
+  _release_dir="$(readlink -f "$DIRNAME")/$_dep_name/$_release"
+  if [ ! -d "$_release_dir" ]; then
+    INFO "Creating '$_dep_name' directory '$_release_dir'"
+    mkdir -p "$_release_dir"
   fi
 
   # Download assets
-  while read -r asset; do
-    asset_name=$(jq --raw-output .name <<< "$asset")
-    asset_url=$(jq --raw-output .url <<< "$asset")
-    asset_path="$release_dir/$asset_name"
+  while read -r _asset; do
+    _asset_name=$(echo "$_asset" | jq --raw-output '.name')
+    _asset_url=$(echo "$_asset" | jq --raw-output .url)
+    _asset_path="$_release_dir/$_asset_name"
 
     # Skip if not force and asset already exists
-    if [ "$SYNC_FORCE" = false ] && [ -f "$asset_path" ]; then
-      DEBUG "Skipping '$name' release '$release' asset '$asset_name' already exists"
+    if [ "$SYNC_FORCE" = false ] && [ -f "$_asset_path" ]; then
+      DEBUG "Skipping '$_dep_name' release '$_release' asset '$_asset_name' already exists"
       continue
     fi
     # Skip if ignored
-    if [ "$(jq --raw-output --arg asset "$asset_name" 'any(.assets[]; ("^" + . + "$") as $keep | $asset | test($keep))' <<< "$config")" = false ]; then
-      DEBUG "Skipping '$name' release '$release' asset '$asset_name' ignored"
+    if [ "$(echo "$_config" | jq --raw-output --arg asset "$_asset_name" 'any(.assets[]; ("^" + . + "$") as $keep | $asset | test($keep))')" = false ]; then
+      DEBUG "Skipping '$_dep_name' release '$_release' asset '$_asset_name' ignored"
       continue
     fi
 
     # Download
-    INFO "Downloading '$name' release '$release' asset '$asset_name' into '$asset_path'"
-    download "$asset_path" "$asset_url"
-  done <<< "$(jq --compact-output '.[]' <<< "$assets")"
+    INFO "Downloading '$_dep_name' release '$_release' asset '$_asset_name' into '$_asset_path'"
+    download "$_asset_path" "$_asset_url"
+  done << EOF
+$(echo "$_assets" | jq --compact-output '.[]')
+EOF
 }
 
 # Synchronize dependency
-# @param $1 Name
+# @param $1 Dependency name
 sync_dep_files() {
-  local config
-  local name
-  local file_name
-  local file_url
-  local file_path
-  config=$(dep_config "$1")
-  name=$1
+  _config=$(dep_config "$1")
+  _dep_name=$1
 
   # Files
-  while read -r file; do
-    file_name=$(jq --raw-output '.key' <<< "$file")
-    file_url=$(jq --raw-output '.value' <<< "$file")
-    file_path="$(readlink -f "$DIRNAME")/$name/$file_name"
+  while read -r _file; do
+    _file_name=$(echo "$_file" | jq --raw-output '.key')
+    _file_url=$(echo "$_file" | jq --raw-output '.value')
+    _file_path="$(readlink -f "$DIRNAME")/$_dep_name/$_file_name"
 
     # Skip if not force and file already exists
-    if [ "$SYNC_FORCE" = false ] && [ -f "$file_path" ]; then
-      DEBUG "Skipping '$name' file '$file_name' already exists"
+    if [ "$SYNC_FORCE" = false ] && [ -f "$_file_path" ]; then
+      DEBUG "Skipping '$_dep_name' file '$_file_name' already exists"
       continue
     fi
 
     # Download
-    INFO "Downloading '$name' file '$file_name' from '$file_url' into '$file_path'"
-    download "$file_path" "$file_url"
-  done <<< "$(jq --compact-output '.files | to_entries[]' <<< "$config")"
+    INFO "Downloading '$_dep_name' file '$_file_name' from '$_file_url' into '$_file_path'"
+    download "$_file_path" "$_file_url"
+  done << EOF
+$(echo "$_config" | jq --compact-output '.files | to_entries[]')
+EOF
 }
 
 # Synchronize dependency
-# @param $1 Name
+# @param $1 Dependency name
 sync_dep() {
-  local config
-  local name
-  config=$(dep_config "$1")
-  name=$1
+  _config=$(dep_config "$1")
+  _dep_name=$1
 
   # Releases
-  while read -r release; do
-    release=$(jq --raw-output '.' <<< "$release")
-    INFO "Syncing '$name' release '$release'"
-    sync_dep_release "$name" "$release"
-  done <<< "$(jq --compact-output '.releases[]' <<< "$config")"
+  while read -r _release; do
+    _release=$(echo "$_release" | jq --raw-output '.')
+    INFO "Syncing '$_dep_name' release '$_release'"
+    sync_dep_release "$_dep_name" "$_release"
+  done << EOF
+$(echo "$_config" | jq --compact-output '.releases[]')
+EOF
 
   # Files
-  if jq --exit-status 'has("files")' <<< "$config" > /dev/null 2>&1; then
-    INFO "Syncing '$name' files"
-    sync_dep_files "$name"
+  if echo "$_config" | jq --exit-status 'has("files")' > /dev/null 2>&1; then
+    INFO "Syncing '$_dep_name' files"
+    sync_dep_files "$_dep_name"
   fi
 }
 
@@ -348,27 +329,27 @@ read_config() {
 
   # Read config file
   DEPS=$(yq e --output-format=json --no-colors '.' "$DEPS_CONFIG_FILE") || FATAL "Error reading configuration file '$DEPS_CONFIG_FILE'"
-  DEBUG "Configuration:\n$(jq '.' <<< "$DEPS")"
+  DEBUG "Configuration:" "$DEPS"
 }
 
 # Synchronize dependency
 sync_deps() {
-  local num_deps
-  local name
-  num_deps=$(jq --raw-output '. | length' <<< "$DEPS")
+  _num_deps=$(echo "$DEPS" | jq --raw-output '. | length')
 
-  INFO "Syncing $num_deps dependencies"
+  INFO "Syncing $_num_deps dependencies"
 
   # Clean environment
   sync_deps_clean
   # Dependencies
-  while read -r dep; do
-    name=$(jq --raw-output '.key' <<< "$dep")
-    INFO "Syncing '$name'"
-    sync_dep "$name"
-  done <<< "$(jq --compact-output 'to_entries[]' <<< "$DEPS")"
+  while read -r _dep; do
+    _dep_name=$(echo "$_dep" | jq --raw-output '.key')
+    INFO "Syncing '$_dep_name'"
+    sync_dep "$_dep_name"
+  done << EOF
+$(echo "$DEPS" | jq --compact-output 'to_entries[]')
+EOF
 
-  INFO "Successfully synced $num_deps dependencies"
+  INFO "Successfully synced $_num_deps dependencies"
 }
 
 # ================

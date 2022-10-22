@@ -28,7 +28,7 @@ import { GraphQLNonNegativeInt } from 'graphql-scalars';
 import { Max, Min } from 'class-validator';
 
 @ArgsType()
-export class PaginationArgs {
+export abstract class PaginationArgs {
   public static readonly SKIP_DEFAULT_VALUE: number = 0;
 
   public static readonly TAKE_DEFAULT_VALUE: number = 8;

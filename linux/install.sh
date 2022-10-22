@@ -69,10 +69,10 @@ LOG_LEVEL_WARN=300
 LOG_LEVEL_INFO=500
 # Debug log level
 LOG_LEVEL_DEBUG=600
-# Log color flag
-LOG_COLOR_ENABLE=true
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
+# Log color flag
+LOG_COLOR_ENABLE=true
 
 # Check if log level is enabled
 # @param $1 Log level
@@ -286,10 +286,10 @@ Options:
                                        Values:
                                          Any positive number
 
-  --config <PATH>                      Configuration file path
+  --config <PATH>                      Configuration file
                                        Default: $_config_file_name
                                        Values:
-                                         Any valid configuration file path
+                                         Any valid file path
 
   --disable-color                      Disable color
 
@@ -1890,8 +1890,8 @@ EOF
   tee "$_bootstrap_script_file" > /dev/null << EOF
 #!/usr/bin/env sh
 
-# Commons
-source "$_opt_commons_script_file"
+# Load commons
+. "$_opt_commons_script_file"
 
 # ================
 # FUNCTIONS
@@ -1944,8 +1944,8 @@ EOF
   tee "$_status_updater_script_file" > /dev/null << EOF
 #!/usr/bin/env sh
 
-# Commons
-source "$_opt_commons_script_file"
+# Load commons
+. "$_opt_commons_script_file"
 
 # ================
 # CONFIGURATION
@@ -2056,10 +2056,6 @@ error_log="/var/log/$_status_updater_service_name.log"
 pidfile="/var/run/$_status_updater_service_name.pid"
 respawn_delay=1
 respawn_max=0
-
-set -o allexport
-if [ -f /etc/environment ]; then source /etc/environment; fi
-set +o allexport
 EOF
       $SUDO chmod 0755 "$_openrc_status_updater_service_file"
 

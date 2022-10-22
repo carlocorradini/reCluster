@@ -8,10 +8,13 @@
 
 ## :clipboard: Workflow
 
+> **Note**: Type `--help` for more information
+
 1. Edit [dependencies.yml](dependencies.yml)
 
 2. Synchronize
 
    ```console
-   ./dependencies.sh --sync
+   ./dependencies.sh \
+     --sync
    ```
