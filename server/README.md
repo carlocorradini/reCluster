@@ -64,7 +64,7 @@ reCluster server.
 | `db:seed`     | Seed database.                                                                           |
 | `db:start`    | Start a local database.                                                                  |
 | `db:studio`   | Start a local web server with a web app that allows to interact and manage the database. |
-| `docker`      | Generate Docker image.                                                                   |
+| `dockerize`   | Generate Docker image.                                                                   |
 | `fix`         | Fix errors.                                                                              |
 | `fix:db`      | Fix database errors.                                                                     |
 | `fix:lint`    | Fix linting errors.                                                                      |

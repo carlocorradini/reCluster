@@ -20,13 +20,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-name: recluster
-nodes:
-  - role: control-plane
-    labels:
-      recluster.io/id: d4fb717f-e85f-4e16-bb9b-8c777610316b
-  - role: worker
-    labels:
-      recluster.io/id: cfc352b1-ed06-4f85-83f4-3f2382b6cb54
+apiVersion: k3d.io/v1alpha4
+kind: Simple
+metadata:
+  name: recluster
+servers: 1
+agents: 1
+ports:
+  - port: 80:80
+    nodeFilters:
+      - loadbalancer
+  - port: 443:443
+    nodeFilters:
+      - loadbalancer
+options:
+  k3s:
+    nodeLabels:
+      - label: recluster.io/id=d4fb717f-e85f-4e16-bb9b-8c777610316b
+        nodeFilters:
+          - server:0
+      - label: recluster.io/id=cfc352b1-ed06-4f85-83f4-3f2382b6cb54
+        nodeFilters:
+          - agent:0
