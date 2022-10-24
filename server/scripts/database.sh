@@ -27,18 +27,18 @@
 # Current directory
 # shellcheck disable=SC1007
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-# PostgreSQL version
-POSTGRESQL_VERSION=14.2
-# PostgreSQL image
-POSTGRESQL_IMAGE="docker.io/postgres:$POSTGRESQL_VERSION"
-# PostgreSQL port
-POSTGRESQL_PORT=5432
-# PostgreSQL user
-POSTGRESQL_USER=recluster
-# PostgreSQL password
-POSTGRESQL_PASSWORD=password
-# PostgreSQL database
-POSTGRESQL_DATABASE=recluster
+# Postgres version
+POSTGRES_VERSION=15
+# Postgres image
+POSTGRES_IMAGE="docker.io/postgres:$POSTGRES_VERSION-alpine"
+# Postgres port
+POSTGRES_PORT=5432
+# Postgres user
+POSTGRES_USER=recluster
+# Postgres password
+POSTGRES_PASSWORD=password
+# Postgres database
+POSTGRES_DB=recluster
 
 # Load commons
 . "$DIRNAME/../../scripts/__commons.sh"
@@ -50,12 +50,12 @@ assert_cmd docker
 # MAIN
 # ================
 {
-  INFO "Starting PostgreSQL '$POSTGRESQL_IMAGE'"
+  INFO "Starting PostgreSQL '$POSTGRES_IMAGE'"
   docker run \
-    -p "$POSTGRESQL_PORT:5432" \
-    -e POSTGRES_USER="$POSTGRESQL_USER" \
-    -e POSTGRES_PASSWORD="$POSTGRESQL_PASSWORD" \
-    -e POSTGRES_DB="$POSTGRESQL_DATABASE" \
+    -p "$POSTGRES_PORT:5432" \
+    -e POSTGRES_USER="$POSTGRES_USER" \
+    -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+    -e POSTGRES_DB="$POSTGRES_DB" \
     --rm \
-    "$POSTGRESQL_IMAGE"
+    "$POSTGRES_IMAGE"
 }

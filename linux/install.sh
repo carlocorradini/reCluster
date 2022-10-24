@@ -1269,6 +1269,7 @@ verify_system() {
   # Cluster initialization
   if [ "$INIT_CLUSTER" = true ]; then
     [ "$_k3s_kind" = server ] || FATAL "Cluster initialization requires K3s 'kind' to be 'server' but '$_k3s_kind' found"
+    [ "$(echo "$CONFIG" | jq --exit-status 'any(.k3s, ."cluster-init" == true)')" = true ] || WARN "Cluster initialization K3s 'cluster-init' not found or set to 'false'"
   fi
 
   # Airgap
@@ -1291,18 +1292,9 @@ verify_system() {
 
 # Setup system
 setup_system() {
-  _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
-
   # Temporary directory
   TMP_DIR=$(mktemp --directory -t recluster.XXXXXXXX)
   DEBUG "Created temporary directory '$TMP_DIR'"
-
-  # Cluster initialization
-  if [ "$INIT_CLUSTER" = true ]; then
-    # Update configuration
-    DEBUG "Updating K3s configuration"
-    CONFIG=$(echo "$CONFIG" | jq '.k3s."cluster-init" = true')
-  fi
 
   # Airgap
   if [ "$AIRGAP_ENV" = true ]; then
