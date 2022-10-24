@@ -1816,8 +1816,9 @@ read_node_token() {
 }
 
 # Update node status
+# @param \$1 Node status
 update_node_status() {
-  _status="ACTIVE"
+  _status=\${1:-ACTIVE}
   _server_url=\$(echo "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
   _server_url="\$_server_url/graphql"
   # shellcheck disable=SC2016
