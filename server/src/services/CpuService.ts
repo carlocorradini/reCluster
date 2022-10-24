@@ -25,9 +25,42 @@
 import type * as Prisma from '@prisma/client';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
-import type { FindManyCpuArgs, FindUniqueCpuArgs } from '~/graphql';
+import type {
+  CreateCpuInput,
+  FindManyCpuArgs,
+  FindUniqueCpuArgs
+} from '~/graphql';
 
 export class CpuService {
+  public async create(args: CreateCpuInput): Promise<Prisma.Cpu> {
+    logger.debug(`Cpu service create: ${JSON.stringify(args)}`);
+
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const vendor_family_model = {
+      vendor: args.vendor,
+      family: args.family,
+      model: args.model
+    };
+
+    // Find old vulnerabilities (if any)
+    const cpu = await prisma.cpu.findUnique({
+      where: { vendor_family_model },
+      select: { vulnerabilities: true }
+    });
+
+    // Vulnerabilities array (updated if any)
+    const vulnerabilities = [
+      ...new Set([...(cpu?.vulnerabilities ?? []), ...args.vulnerabilities])
+    ];
+
+    // Create or update cpu
+    return prisma.cpu.upsert({
+      where: { vendor_family_model },
+      update: { vulnerabilities },
+      create: args
+    });
+  }
+
   public async findMany(args: FindManyCpuArgs): Promise<Prisma.Cpu[]> {
     logger.debug(`Cpu service find many: ${JSON.stringify(args)}`);
 

@@ -88,8 +88,10 @@ model Status {
 
 enum NodeStatuses {
   ACTIVE
+  ACTIVE_NOT_READY
+  ACTIVE_READY
+  ACTIVE_UNKNOWN
   INACTIVE
-  WORKING
   ERROR
 }
 
@@ -121,21 +123,13 @@ model Interface {
 }
 
 enum InterfaceWoLFlags {
-  // Wake on ARP
   a
-  // Wake on broadcast messages
   b
-  // Disable
   d
-  // Wake on MagicPacket
   g
-  // Wake on multicast messages
   m
-  // Wake on PHY activity
   p
-  // Enable SecureOn password for MagicPacket
   s
-  // Wake on unicast messages
   u
 }
 

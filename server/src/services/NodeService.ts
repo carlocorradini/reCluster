@@ -34,11 +34,15 @@ import type {
   NodeRoles,
   NodePermissions
 } from '~/graphql';
+import { NodeStatuses } from '~/graphql/enums';
 import { TokenService, TokenTypes } from './TokenService';
+import { CpuService } from './CpuService';
 
 @injectable()
 export class NodeService {
   public constructor(
+    @inject(CpuService)
+    private readonly cpuService: CpuService,
     @inject(TokenService)
     private readonly tokenService: TokenService
   ) {}
@@ -63,32 +67,8 @@ export class NodeService {
   public async create(args: CreateNodeArgs): Promise<string> {
     logger.info(`Node service create: ${JSON.stringify(args)}`);
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const vendor_family_model = {
-      vendor: args.data.cpu.vendor,
-      family: args.data.cpu.family,
-      model: args.data.cpu.model
-    };
-
-    // Find old vulnerabilities (if any)
-    // FIXME Should be done in upsert
-    const cpu = await prisma.cpu.findUnique({
-      where: { vendor_family_model },
-      select: { vulnerabilities: true }
-    });
-    const vulnerabilities = Array.from(
-      new Set([
-        ...(cpu?.vulnerabilities ?? []),
-        ...args.data.cpu.vulnerabilities
-      ])
-    );
-
-    // Add or update cpu
-    await prisma.cpu.upsert({
-      where: { vendor_family_model },
-      update: { vulnerabilities },
-      create: args.data.cpu
-    });
+    // Create or update cpu
+    const { id: cpuId } = await this.cpuService.create(args.data.cpu);
 
     // Create
     const node = await prisma.node.create({
@@ -96,11 +76,12 @@ export class NodeService {
       select: { id: true, roles: true, permissions: true },
       data: {
         ...args.data,
-        cpu: { connect: { vendor_family_model } },
+        cpu: { connect: { id: cpuId } },
         disks: { createMany: { data: args.data.disks, skipDuplicates: true } },
         interfaces: {
           createMany: { data: args.data.interfaces, skipDuplicates: true }
-        }
+        },
+        statuses: { create: { status: NodeStatuses.ACTIVE } }
       }
     });
 

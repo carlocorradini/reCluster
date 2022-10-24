@@ -11,7 +11,7 @@ CREATE TYPE "NodeRoles" AS ENUM ('RECLUSTER_MASTER', 'K8S_MASTER', 'K8S_WORKER')
 CREATE TYPE "NodePermissions" AS ENUM ('UNKNOWN');
 
 -- CreateEnum
-CREATE TYPE "NodeStatuses" AS ENUM ('ACTIVE', 'INACTIVE', 'WORKING', 'ERROR');
+CREATE TYPE "NodeStatuses" AS ENUM ('ACTIVE', 'ACTIVE_NOT_READY', 'ACTIVE_READY', 'ACTIVE_UNKNOWN', 'INACTIVE', 'ERROR');
 
 -- CreateEnum
 CREATE TYPE "InterfaceWoLFlags" AS ENUM ('a', 'b', 'd', 'g', 'm', 'p', 's', 'u');

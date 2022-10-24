@@ -67,6 +67,7 @@
     "kubeconfig",
     "kubernetes",
     "linkinfo",
+    "loadbalancer",
     "mebibit",
     "mebibyte",
     "middlewares",
