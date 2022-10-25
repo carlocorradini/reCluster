@@ -37,7 +37,7 @@
     "start:dev": "npx ts-node-dev --respawn --clear --rs --transpile-only --tree-kill --exit-child --require tsconfig-paths/register src/main.ts | npx pino-pretty"
   },
   "dependencies": {
-    "@apollo/server": "^4.0.2",
+    "@apollo/server": "^4.0.3",
     "@as-integrations/fastify": "^1.1.0",
     "@fastify/compress": "^6.1.1",
     "@fastify/cors": "^8.1.0",
