@@ -12,6 +12,19 @@ reCluster is an architecture for a data center that actively reduces its impact 
 | :---: | :-------: | :--------------: | :--------: |
 | Carlo | Corradini | `carlocorradini` | **223811** |
 
+## :file_folder: Directories
+
+> **Note**: Refer to the `README.md` of each directory for more information
+
+| **Name**               | **Description**                                                   |
+| ---------------------- | ----------------------------------------------------------------- |
+| [`.github`](./.github) | [GitHub](https://github.com) configuration                        |
+| [`.husky`](./)         | [husky](https://typicode.github.io/husky) configuration           |
+| [`.vscode`](./)        | [Visual Studio Code](https://code.visualstudio.com) configuration |
+| [`linux`](./)          | `Linux`-related resources                                         |
+| [`scripts`](./)        | `Shell` scripts                                                   |
+| [`server`](./)         | `reCluster` server                                                |
+
 ## Development
 
 ### Requirements
@@ -23,6 +36,8 @@ reCluster is an architecture for a data center that actively reduces its impact 
 | `Node.js` | <https://nodejs.org>        |
 | `npm`     | <https://www.npmjs.com>     |
 | `Vagrant` | <https://www.vagrantup.com> |
+
+### Preparation
 
 1. Clone
 
