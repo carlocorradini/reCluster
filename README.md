@@ -14,6 +14,16 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 ## Development
 
+### Requirements
+
+| **Name**  | **Homepage**                |
+| --------- | --------------------------- |
+| `Docker`  | <https://www.docker.com>    |
+| `K3d`     | <https://k3d.io>            |
+| `Node.js` | <https://nodejs.org>        |
+| `npm`     | <https://www.npmjs.com>     |
+| `Vagrant` | <https://www.vagrantup.com> |
+
 1. Clone
 
    ```console
@@ -85,17 +95,17 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 > **Note**: Execute with `npm run <NAME>`
 
-| **Name** | **Description** |
-| -------- | --------------- |
-| `check` | Check for errors. |
-| `check:format` | Check for format errors. |
-| `check:license` | Check for license errors. |
+| **Name**         | **Description**            |
+| ---------------- | -------------------------- |
+| `check`          | Check for errors.          |
+| `check:format`   | Check for format errors.   |
+| `check:license`  | Check for license errors.  |
 | `check:markdown` | Check for markdown errors. |
-| `check:spell` | Check for spelling errors. |
-| `fix` | Fix errors. |
-| `fix:format` | Fix format errors. |
-| `fix:license` | Fix license errors. |
-| `fix:markdown` | Fix markdown errors. |
+| `check:spell`    | Check for spelling errors. |
+| `fix`            | Fix errors.                |
+| `fix:format`     | Fix format errors.         |
+| `fix:license`    | Fix license errors.        |
+| `fix:markdown`   | Fix markdown errors.       |
 
 ## License
 

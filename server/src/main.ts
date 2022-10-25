@@ -25,6 +25,7 @@
 import 'reflect-metadata';
 import 'json-bigint-patch';
 import 'dotenv/config';
+import { container } from 'tsyringe';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
@@ -39,7 +40,7 @@ import { context, formatError } from './helpers';
 import { config } from './config';
 import { prisma } from './db';
 import { schema } from './graphql';
-import { kubeconfig } from './k8s';
+import { kubeconfig, NodeInformer } from './k8s';
 import { Context } from './types';
 
 const server = Fastify();
@@ -56,6 +57,7 @@ async function main() {
 
   // K8s
   kubeconfig.loadFromDefault();
+  await container.resolve(NodeInformer).start();
   logger.info('K8s configured');
 
   // Apollo
@@ -86,6 +88,8 @@ async function terminate(signal: NodeJS.Signals) {
 
   // Database
   await prisma.$disconnect();
+  // K8s
+  await container.resolve(NodeInformer).stop();
   // Apollo
   await apollo.stop();
   // Server

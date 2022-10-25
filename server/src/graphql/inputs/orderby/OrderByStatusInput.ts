@@ -36,7 +36,7 @@ export class OrderByStatusInput
   @Field(() => SortOrders, { nullable: true, description: 'Status' })
   status?: SortOrders;
 
-  @Field(() => SortOrders, { description: 'Node identifier' })
+  @Field(() => SortOrders, { nullable: true, description: 'Node identifier' })
   nodeId?: SortOrders;
 
   @Field(() => SortOrders, {

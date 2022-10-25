@@ -37,13 +37,18 @@ RECLUSTER_SERVER_IMAGE="recluster-server:$RECLUSTER_SERVER_VERSION"
 # Load commons
 . "$DIRNAME/../../scripts/__commons.sh"
 
-# Assert
-assert_cmd docker
+################################################################################################################################
+
+# Verify system
+verify_system() {
+  assert_cmd docker
+}
 
 # ================
 # MAIN
 # ================
 {
-  INFO "Building Docker image '$RECLUSTER_SERVER_IMAGE' using Dockerfile '$RECLUSTER_SERVER_DOCKERFILE'"
+  verify_system
+  INFO "Building reCluster server Docker image '$RECLUSTER_SERVER_IMAGE' using Dockerfile '$RECLUSTER_SERVER_DOCKERFILE'"
   docker build --rm -t "$RECLUSTER_SERVER_IMAGE" -f "$RECLUSTER_SERVER_DOCKERFILE" "$DIRNAME/.."
 }

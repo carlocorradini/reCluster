@@ -274,7 +274,7 @@ Usage: install.sh [--airgap] [--bench-time <TIME>] [--config <PATH>] [--disable-
                   [--disable-spinner] [--help] [--init-cluster] [--k3s-version <VERSION>]
                   [--log-level <LEVEL>] [--node_exporter-version <VERSION>]
                   [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-                  [--spinner <SPINNER>] [--status-updater-interval <TIME>]
+                  [--spinner <SPINNER>]
 
 reCluster installation script.
 
@@ -297,8 +297,8 @@ Options:
 
   --help                               Show this help message and exit
 
-  --init-cluster                       Initialize cluster components and logic.
-                                       Enable only when bootstrapping for the first time.
+  --init-cluster                       Initialize cluster components and logic
+                                       Enable only when bootstrapping for the first time
 
   --k3s-version <VERSION>              K3s version
                                        Default: $K3S_VERSION
@@ -343,11 +343,6 @@ Options:
                                          dots         Dots spinner
                                          grayscale    Grayscale spinner
                                          propeller    Propeller spinner
-
-  --status-updater-interval <TIME>     Status updater interval time in seconds
-                                       Default: $STATUS_UPDATER_INTERVAL
-                                       Values:
-                                         Any positive number
 EOF
 }
 
@@ -1148,15 +1143,6 @@ parse_args() {
         shift
         shift
         ;;
-      --status-updater-interval)
-        # Status updater interval
-        _parse_args_assert_value "$@"
-        _parse_args_assert_positive_number_integer "$1" "$2"
-
-        _status_updater_interval=$2
-        shift
-        shift
-        ;;
       -*)
         # Unknown argument
         WARN "Unknown argument '$1'"
@@ -1190,8 +1176,6 @@ parse_args() {
   if [ -n "$_pc_warmup" ]; then PC_WARMUP=$_pc_warmup; fi
   # Spinner
   if [ -n "$_spinner" ]; then SPINNER_SYMBOLS=$_spinner; fi
-  # Status updater interval
-  if [ -n "$_status_updater_interval" ]; then STATUS_UPDATER_INTERVAL=$_status_updater_interval; fi
 }
 
 # Verify system
@@ -1705,11 +1689,9 @@ install_recluster() {
   _node_token_file="$_etc_dir/token"
   _commons_script_file="$_opt_dir/__commons.sh"
   _bootstrap_script_file="$_opt_dir/bootstrap.sh"
-  _status_updater_script_file="$_opt_dir/status_updater.sh"
   # Configuration
   _node_label_id="recluster.io/id="
   _bootstrap_service_name=recluster.bootstrap
-  _status_updater_service_name=recluster.status_updater
   # Registration data
   _registration_data=
   _node_token=
@@ -1753,7 +1735,6 @@ install_recluster() {
   _etc_node_token_file="${RECLUSTER_ETC_DIR}$(echo "$_node_token_file" | sed -n -e 's#^.*'"$RECLUSTER_ETC_DIR"'##p')"
   _opt_commons_script_file="${RECLUSTER_OPT_DIR}$(echo "$_commons_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
   _opt_bootstrap_script_file="${RECLUSTER_OPT_DIR}$(echo "$_bootstrap_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
-  _opt_status_updater_script_file="${RECLUSTER_OPT_DIR}$(echo "$_status_updater_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
 
   # Commons script
   INFO "Constructing '$(basename "$_commons_script_file")' script"
@@ -1874,6 +1855,33 @@ EOF
 
   INFO "Successfully updated node status to '\$_status'"
 }
+
+# Start services
+start_services() {
+EOF
+
+  case $INIT_SYSTEM in
+    openrc)
+      tee -a "$_bootstrap_script_file" > /dev/null << EOF
+      INFO "openrc: Starting Node exporter"
+      rc-service node_exporter start
+      INFO "openrc: Starting K3s"
+      rc-service k3s-recluster start
+EOF
+      ;;
+    systemd)
+      tee -a "$_bootstrap_script_file" > /dev/null << EOF
+      INFO "systemd: Starting Node exporter"
+      systemtcl start node_exporter
+      INFO "systemd: Starting K3s"
+      systemctl start k3s-recluster
+EOF
+      ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
+
+  tee -a "$_bootstrap_script_file" > /dev/null << EOF
+}
 EOF
   $SUDO chmod 755 "$_commons_script_file"
   $SUDO chown root:root "$_commons_script_file"
@@ -1887,40 +1895,6 @@ EOF
 . "$_opt_commons_script_file"
 
 # ================
-# FUNCTIONS
-# ================
-# Start services
-start_services() {
-EOF
-
-  case $INIT_SYSTEM in
-    openrc)
-      tee -a "$_bootstrap_script_file" > /dev/null << EOF
-      INFO "openrc: Starting status updater"
-      rc-service "$_status_updater_service_name" start
-      INFO "openrc: Starting Node exporter"
-      rc-service node_exporter start
-      INFO "openrc: Starting K3s"
-      rc-service k3s-recluster start
-EOF
-      ;;
-    systemd)
-      tee -a "$_bootstrap_script_file" > /dev/null << EOF
-      INFO "systemd: Starting status updater"
-      systemtcl start "$_status_updater_service_name"
-      INFO "systemd: Starting Node exporter"
-      systemtcl start node_exporter
-      INFO "systemd: Starting K3s"
-      systemctl start k3s-recluster
-EOF
-      ;;
-    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
-  esac
-
-  tee -a "$_bootstrap_script_file" > /dev/null << EOF
-}
-
-# ================
 # MAIN
 # ================
 {
@@ -1931,48 +1905,6 @@ EOF
 EOF
   $SUDO chmod 755 "$_bootstrap_script_file"
   $SUDO chown root:root "$_bootstrap_script_file"
-
-  # Status updater script
-  INFO "Constructing '$(basename "$_status_updater_script_file")' script"
-  tee "$_status_updater_script_file" > /dev/null << EOF
-#!/usr/bin/env sh
-
-# Load commons
-. "$_opt_commons_script_file"
-
-# ================
-# CONFIGURATION
-# ================
-# Interval
-STATUS_UPDATER_INTERVAL=$STATUS_UPDATER_INTERVAL
-
-# ================
-# FUNCTIONS
-# ================
-# Status updater lifetime
-status_updater() {
-  INFO "Starting status updater"
-
-  while :; do
-    DEBUG "Updating status"
-    update_node_status
-    DEBUG "Status updated"
-
-    sleep "\$STATUS_UPDATER_INTERVAL"
-  done
-}
-
-# ================
-# MAIN
-# ================
-{
-  read_config
-  read_node_token
-  status_updater
-}
-EOF
-  $SUDO chmod 755 "$_status_updater_script_file"
-  $SUDO chown root:root "$_status_updater_script_file"
 
   #
   # Services
@@ -2028,69 +1960,6 @@ EOF
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
-  # Status updater service
-  INFO "Constructing status updater service '$_status_updater_service_name'"
-  case $INIT_SYSTEM in
-    openrc)
-      _openrc_status_updater_service_file="/etc/init.d/$_status_updater_service_name"
-
-      INFO "openrc: Constructing status updater service file '$_openrc_status_updater_service_file'"
-      $SUDO tee "$_openrc_status_updater_service_file" > /dev/null << EOF
-#!/sbin/openrc-run
-
-description="reCluster status updater"
-
-supervisor=supervise-daemon
-command="/usr/bin/env sh $_opt_status_updater_script_file"
-
-output_log="/var/log/$_status_updater_service_name.log"
-error_log="/var/log/$_status_updater_service_name.log"
-
-pidfile="/var/run/$_status_updater_service_name.pid"
-respawn_delay=1
-respawn_max=0
-EOF
-      $SUDO chmod 0755 "$_openrc_status_updater_service_file"
-
-      $SUDO tee "/etc/logrotate.d/$_status_updater_service_name" > /dev/null << EOF
-/var/log/$_status_updater_service_name.log {
-	missingok
-	notifempty
-	copytruncate
-}
-EOF
-      ;;
-    systemd)
-      _systemd_status_updater_service_file="/etc/systemd/system/$_status_updater_service_name.service"
-
-      INFO "systemd: Constructing status updater service file '$_systemd_status_updater_service_file'"
-      $SUDO tee "$_systemd_status_updater_service_file" > /dev/null << EOF
-[Unit]
-Description=reCluster status updater
-
-[Service]
-Type=simple
-EnvironmentFile=-/etc/default/%N
-EnvironmentFile=-/etc/sysconfig/%N
-KillMode=process
-Delegate=yes
-LimitNPROC=infinity
-LimitCORE=infinity
-TasksMax=infinity
-TimeoutStartSec=0
-Restart=always
-RestartSec=1s
-ExecStart=/usr/bin/env sh $_opt_status_updater_script_file
-
-[Install]
-WantedBy=multi-user.target
-EOF
-      $SUDO chmod 0755 "$_systemd_status_updater_service_file"
-      $SUDO systemctl daemon-reload > /dev/null
-      ;;
-    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
-  esac
-
   # etc directory
   INFO "Writing reCluster etc directory '$RECLUSTER_ETC_DIR'"
   $SUDO mv "$_etc_dir" "$RECLUSTER_ETC_DIR"
@@ -2111,16 +1980,12 @@ start_services() {
 
   case $INIT_SYSTEM in
     openrc)
-      INFO "openrc: Starting status updater"
-      $SUDO rc-service recluster.status_updater start
       INFO "openrc: Starting Node exporter"
       $SUDO rc-service node_exporter start
       INFO "openrc: Starting K3s"
       $SUDO rc-service k3s-recluster start
       ;;
     systemd)
-      INFO "systemd: Starting status updater"
-      $SUDO systemtcl start recluster.status_updater
       INFO "systemd: Starting Node exporter"
       $SUDO systemtcl start node_exporter
       INFO "systemd: Starting K3s"
@@ -2170,8 +2035,6 @@ RECLUSTER_OPT_DIR="/opt/recluster"
 SPINNER_ENABLE=true
 # Spinner symbols
 SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
-# Status updater interval in seconds
-STATUS_UPDATER_INTERVAL=30
 # Node facts
 NODE_FACTS="{}"
 

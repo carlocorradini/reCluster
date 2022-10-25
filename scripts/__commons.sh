@@ -131,10 +131,16 @@ DEBUG() {
 # ================
 # FUNCTIONS
 # ================
+# Check command is installed
+# @param $1 Command name
+check_cmd() {
+  command -v "$1" > /dev/null 2>&1
+}
+
 # Assert command is installed
 # @param $1 Command name
 assert_cmd() {
-  command -v "$1" > /dev/null 2>&1 || FATAL "Command '$1' not found"
+  check_cmd "$1" || FATAL "Command '$1' not found"
   DEBUG "Command '$1' found at '$(command -v "$1")'"
 }
 
@@ -168,17 +174,33 @@ assert_docker_image() {
   _dockerfile=${2:-}
   _dockerfile_context=${3:-}
 
-  if [ "$(docker images -q "$_docker_image" 2> /dev/null)" = "" ]; then
-    WARN "Docker image '$_docker_image' not found"
+  if docker image inspect "$_docker_image" > /dev/null 2>&1; then
+    DEBUG "Docker image '$_docker_image' found"
+    return 0
+  fi
 
-    [ -n "$_dockerfile" ] || FATAL "Unable to build '$_docker_image' because no Dockerfile has been provided"
+  WARN "Docker image '$_docker_image' not found"
+
+  if [ -z "$_dockerfile" ]; then
+    INFO "Pulling Docker image '$_docker_image'"
+    docker pull "$_docker_image" || FATAL "Error pulling Docker image '$_docker_image'"
+  else
     [ -n "$_dockerfile_context" ] || _dockerfile_context=$(dirname "$_dockerfile")
-
     INFO "Building Docker image '$_docker_image' using Dockerfile '$_dockerfile' with context '$_dockerfile_context'"
     docker build --rm -t "$_docker_image" -f "$_dockerfile" "$_dockerfile_context" || FATAL "Error building Docker image '$_docker_image'"
-  else
-    DEBUG "Docker image '$_docker_image' found"
   fi
+}
+
+# Destro Docker container
+# @param $1 Container id
+destroy_docker_container() {
+  assert_cmd docker
+  _container_id=$1
+
+  INFO "Stopping Docker container '$_container_id'"
+  docker stop "$_container_id" > /dev/null 2>&1 || return 0
+  INFO "Removing Docker container '$_container_id'"
+  docker rm "$_container_id" > /dev/null 2>&1 || return 0
 }
 
 # Download a file

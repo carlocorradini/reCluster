@@ -41,11 +41,32 @@ MKIMAGE_APKOVL=$(readlink -f "$DIRNAME/genapkovl-recluster.sh")
 MKIMAGE_ISO_DIR=$(readlink -f "$DIRNAME/iso")
 # mkimage architectures
 MKIMAGE_ARCHS='["x86_64"]'
+
+# ================
+# GLOBALS
+# ================
 # Container identifier
 CONTAINER_ID=
 
 # Load commons
 . "$DIRNAME/../../../scripts/__commons.sh"
+
+# Cleanup
+cleanup() {
+  # Exit code
+  _exit_code=$?
+
+  # Docker container
+  # Docker container
+  destroy_docker_container "$CONTAINER_ID"
+
+  exit "$_exit_code"
+}
+
+# Trap
+trap cleanup INT QUIT TERM EXIT
+
+################################################################################################################################
 
 # Verify system
 verify_system() {
@@ -56,26 +77,6 @@ verify_system() {
   assert_docker_image "$RECLUSTER_ALPINE_IMAGE" "$RECLUSTER_ALPINE_DOCKERFILE"
 }
 
-# Cleanup
-cleanup() {
-  # Exit code
-  _exit_code=$?
-
-  # Docker container
-  if [ -n "$CONTAINER_ID" ]; then
-    docker stop "$CONTAINER_ID"
-    docker rm "$CONTAINER_ID"
-  fi
-
-  exit "$_exit_code"
-}
-
-# Trap
-trap cleanup INT QUIT TERM EXIT
-
-# ================
-# FUNCTIONS
-# ================
 # ISO directory
 iso_dir() {
   if [ -d "$MKIMAGE_ISO_DIR" ]; then
@@ -98,6 +99,7 @@ prepare_container() {
       --volume "$MKIMAGE_PROFILE:/home/build/aports/scripts/$_profile_file_name" \
       --volume "$MKIMAGE_APKOVL:/home/build/aports/scripts/$_apkovl_file_name" \
       --volume "$MKIMAGE_ISO_DIR:/home/build/iso" \
+      --rm \
       --detach \
       --interactive \
       --tty \

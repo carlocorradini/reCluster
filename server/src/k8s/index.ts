@@ -22,4 +22,6 @@
  * SOFTWARE.
  */
 
+export * from './K8sNodeStatusesEnum';
 export * from './kubeconfig';
+export * from './NodeInformer';

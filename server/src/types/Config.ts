@@ -40,6 +40,13 @@ export type Config = {
   graphql: {
     path: string;
   };
+  k8s: {
+    label: {
+      node: {
+        id: string;
+      };
+    };
+  };
   user: {
     maxUsernameLength: number;
     maxPasswordLength: number;

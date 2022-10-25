@@ -2,7 +2,6 @@
 **/coverage/
 **/node_modules/
 **/.vagrant/
-**/*.md
 **/package-lock.json
 /.husky/_/
 /.gitattributes

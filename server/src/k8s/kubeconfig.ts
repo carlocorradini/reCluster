@@ -24,4 +24,4 @@
 
 import * as k8s from '@kubernetes/client-node';
 
-export const kubeconfig = new k8s.KubeConfig();
+export const kubeconfig: k8s.KubeConfig = new k8s.KubeConfig();

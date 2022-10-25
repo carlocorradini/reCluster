@@ -4,6 +4,15 @@ reCluster server.
 
 ## Development
 
+### Requirements
+
+| **Name**  | **Homepage**             |
+| --------- | ------------------------ |
+| `Docker`  | <https://www.docker.com> |
+| `K3d`     | <https://k3d.io>         |
+| `Node.js` | <https://nodejs.org>     |
+| `npm`     | <https://www.npmjs.com>  |
+
 ### Preparation
 
 1. Environment
@@ -11,24 +20,12 @@ reCluster server.
    Copy `.env.example` and paste`.env` file. \
    Edit according to your configuration.
 
-1. Database
+1. Start
 
-   Start:
-
-   ```console
-   npm run db:start
-   ```
-
-   Synchronize:
+   > **Note**: Type `-- --help` for more information
 
    ```console
-   npm run db:migrate
-   ```
-
-1. Server
-
-   ```console
-   npm run start:dev
+   npm run dev
    ```
 
 1. Execute Queries
@@ -49,6 +46,8 @@ reCluster server.
 
 > **Note**: Execute with `npm run <NAME>`
 
+> **Warning**: On _Windows_, a script may fail to execute. Run it directly from `scripts` directory
+
 | **Name**      | **Description**                                                                          |
 | ------------- | ---------------------------------------------------------------------------------------- |
 | `build`       | Compile server.                                                                          |
@@ -57,13 +56,13 @@ reCluster server.
 | `check`       | Check for errors.                                                                        |
 | `check:db`    | Check for database errors.                                                               |
 | `check:lint`  | Check for linting errors.                                                                |
+| `dev`         | Prepare and start development environment.                                               |
 | `db:format`   | Format database file.                                                                    |
 | `db:generate` | Generate database assets.                                                                |
-| `db:migrate`  | Updates database using migrations.                                                       |
 | `db:reset`    | Deletes and recreates the database.                                                      |
 | `db:seed`     | Seed database.                                                                           |
-| `db:start`    | Start a local database.                                                                  |
 | `db:studio`   | Start a local web server with a web app that allows to interact and manage the database. |
+| `db:sync`     | Synchronize database using migrations.                                                   |
 | `dockerize`   | Generate Docker image.                                                                   |
 | `fix`         | Fix errors.                                                                              |
 | `fix:db`      | Fix database errors.                                                                     |

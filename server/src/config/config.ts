@@ -41,6 +41,9 @@ export const config: Config = {
     secret: env.RECLUSTER_TOKEN_SECRET
   },
   graphql: { path: '/graphql' },
+  k8s: {
+    label: { node: { id: 'recluster.io/id' } }
+  },
   user: {
     maxUsernameLength: 64,
     maxPasswordLength: 16
