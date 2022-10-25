@@ -63,7 +63,7 @@ cleanup() {
   # Cluster
   if check_cmd k3d; then
     INFO "Deleting cluster"
-    k3d cluster delete --config "$K3D_CONFIG"
+    k3d cluster delete --config "$K3D_CONFIG" || WARN "Cluster deletion failed"
   fi
 
   # Docker container
@@ -159,6 +159,11 @@ verify_system() {
   assert_docker_image "$POSTGRES_IMAGE"
 }
 
+# Check system
+check_system() {
+  [ -f "$K3D_CONFIG" ] || FATAL "K3d configuration file '$K3D_CONFIG' not found"
+}
+
 # Create cluster
 create_cluster() {
   INFO "Creating cluster"
@@ -210,6 +215,7 @@ start_server() {
 {
   parse_args "$@"
   verify_system
+  check_system
   create_cluster
   start_database
   sync_database
