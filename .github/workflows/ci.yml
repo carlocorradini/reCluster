@@ -19,9 +19,10 @@ jobs:
         with:
           configFile: .commitlintrc
       - name: Install dependencies
+        # FIXME Use ci instead of install
         run: |
           npm ci
-          npm --prefix server ci
+          npm --prefix server install
       - name: Check
         run: npm run check
       - name: Build server
