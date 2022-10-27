@@ -78,7 +78,7 @@ export class StatusService {
     data.message = data.message ?? null;
     data.lastHeartbeat = data.lastHeartbeat ?? null;
     if (!data.lastTransition) {
-      const { status: lastStatus } = await this.findUniqueOrThrow({
+      const { status: lastStatus } = await prisma.status.findUniqueOrThrow({
         where: args.where,
         select: { status: true }
       });
