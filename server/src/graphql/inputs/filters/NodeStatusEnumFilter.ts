@@ -22,18 +22,33 @@
  * SOFTWARE.
  */
 
-import { registerEnumType } from 'type-graphql';
+import type { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { NodeStatusEnum } from '~/db';
 
-export enum QueryModeCaseSensitivity {
-  CASE_SENSITIVE = 'default',
-  CASE_INSENSITIVE = 'insensitive'
+@InputType({
+  isAbstract: true,
+  description: 'Node status filter'
+})
+export class NodeStatusEnumFilter implements Prisma.EnumNodeStatusEnumFilter {
+  @Field(() => NodeStatusEnum, {
+    nullable: true,
+    description: 'Node status equals'
+  })
+  equals?: NodeStatusEnum;
+
+  @Field({ nullable: true, description: 'Node status not equals' })
+  not?: NodeStatusEnumFilter;
+
+  @Field(() => [NodeStatusEnum], {
+    nullable: true,
+    description: 'Node status exists in list'
+  })
+  in?: NodeStatusEnum[];
+
+  @Field(() => [NodeStatusEnum], {
+    nullable: true,
+    description: 'Node status does not exists in list'
+  })
+  notIn?: NodeStatusEnum[];
 }
-
-registerEnumType(QueryModeCaseSensitivity, {
-  name: 'QueryMode',
-  description: 'Query mode case sensitivity',
-  valuesConfig: {
-    CASE_SENSITIVE: { description: 'Case-Sensitive mode' },
-    CASE_INSENSITIVE: { description: 'Case-Insensitive mode' }
-  }
-});

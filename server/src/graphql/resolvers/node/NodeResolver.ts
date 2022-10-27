@@ -35,7 +35,7 @@ import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt, GraphQLJWT } from 'graphql-scalars';
 import { convert } from 'convert';
 import { NodeService } from '~/services';
-import { DigitalUnits } from '../../enums';
+import { DigitalUnitEnum } from '../../enums';
 import { Node } from '../../entities';
 import {
   CreateNodeArgs,
@@ -72,12 +72,12 @@ export class NodeResolver {
   @FieldResolver(() => GraphQLBigInt)
   public ram(
     @Root() node: Node,
-    @Arg('unit', () => DigitalUnits, {
-      defaultValue: DigitalUnits.B,
+    @Arg('unit', () => DigitalUnitEnum, {
+      defaultValue: DigitalUnitEnum.B,
       description: 'Digital conversion unit'
     })
-    unit: DigitalUnits
+    unit: DigitalUnitEnum
   ) {
-    return convert(node.ram, DigitalUnits.B).to(unit);
+    return convert(node.ram, DigitalUnitEnum.B).to(unit);
   }
 }

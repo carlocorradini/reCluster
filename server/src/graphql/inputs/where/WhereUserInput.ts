@@ -27,8 +27,8 @@ import { Field, InputType } from 'type-graphql';
 import {
   StringFilter,
   TimestampFilter,
-  UserRolesListFilter,
-  UserPermissionsListFilter,
+  UserRoleEnumListFilter,
+  UserPermissionEnumListFilter,
   UuidFilter
 } from '../filters';
 
@@ -43,10 +43,10 @@ export class WhereUserInput
   username?: StringFilter;
 
   @Field({ nullable: true, description: 'User roles' })
-  roles?: UserRolesListFilter;
+  roles?: UserRoleEnumListFilter;
 
   @Field({ nullable: true, description: 'User permissions' })
-  permissions?: UserPermissionsListFilter;
+  permissions?: UserPermissionEnumListFilter;
 
   @Field({ nullable: true, description: 'Creation timestamp' })
   createdAt?: TimestampFilter;

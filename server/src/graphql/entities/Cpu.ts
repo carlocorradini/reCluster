@@ -31,15 +31,15 @@ import {
   GraphQLPositiveInt,
   GraphQLTimestamp
 } from 'graphql-scalars';
-import { CpuArchitectures, CpuVendors } from '../enums';
+import { CpuArchitectureEnum, CpuVendorEnum } from '~/db';
 
 @ObjectType({ description: 'Cpu' })
 export class Cpu implements Prisma.Cpu {
   @Field(() => GraphQLID, { description: 'Cpu identifier' })
   id!: string;
 
-  @Field(() => CpuArchitectures, { description: 'Cpu architecture' })
-  architecture!: CpuArchitectures;
+  @Field(() => CpuArchitectureEnum, { description: 'Cpu architecture' })
+  architecture!: CpuArchitectureEnum;
 
   @Field(() => [GraphQLNonEmptyString], { description: 'Cpu flags' })
   flags!: string[];
@@ -47,8 +47,8 @@ export class Cpu implements Prisma.Cpu {
   @Field(() => GraphQLPositiveInt, { description: 'Cpu cores' })
   cores!: number;
 
-  @Field(() => CpuVendors, { description: 'Cpu vendor' })
-  vendor!: CpuVendors;
+  @Field(() => CpuVendorEnum, { description: 'Cpu vendor' })
+  vendor!: CpuVendorEnum;
 
   @Field(() => GraphQLPositiveInt, { description: 'Cpu family' })
   family!: number;

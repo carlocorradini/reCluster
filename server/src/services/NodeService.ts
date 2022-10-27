@@ -25,8 +25,7 @@
 import type { Prisma } from '@prisma/client';
 import { inject, injectable } from 'tsyringe';
 import type { CreateNodeInput } from '~/types';
-import { NodeStatuses, NodeRoles, NodePermissions } from '~/graphql/enums';
-import { prisma } from '~/db';
+import { prisma, NodeStatusEnum, NodeRoleEnum, NodePermissionEnum } from '~/db';
 import { logger } from '~/logger';
 import { TokenService, TokenTypes } from './TokenService';
 import { CpuService } from './CpuService';
@@ -69,7 +68,7 @@ export class NodeService {
         ...args.data,
         status: {
           create: {
-            status: NodeStatuses.ACTIVE,
+            status: NodeStatusEnum.ACTIVE,
             reason: 'NodeRegistered',
             message: 'Node registered',
             lastHeartbeat: new Date(),
@@ -88,8 +87,8 @@ export class NodeService {
     return this.tokenService.sign({
       type: TokenTypes.NODE,
       id: node.id,
-      roles: node.roles as NodeRoles[], // FIXME
-      permissions: node.permissions as NodePermissions[] // FIXME
+      roles: node.roles as NodeRoleEnum[], // FIXME
+      permissions: node.permissions as NodePermissionEnum[] // FIXME
     });
   }
 

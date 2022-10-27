@@ -24,15 +24,15 @@
 
 import { Directive } from 'type-graphql';
 import type { AuthData } from '~/types';
-import type { UserRoles, NodeRoles } from '~/graphql';
+import type { UserRoleEnum, NodeRoleEnum } from '~/db';
 import { TokenTypes } from '~/services';
 
 type AuthArgs<T extends TokenTypes> = {
   type?: T;
   roles?: T extends TokenTypes.USER
-    ? UserRoles | UserRoles[]
+    ? UserRoleEnum | UserRoleEnum[]
     : T extends TokenTypes.NODE
-    ? NodeRoles | NodeRoles[]
+    ? NodeRoleEnum | NodeRoleEnum[]
     : never;
 };
 

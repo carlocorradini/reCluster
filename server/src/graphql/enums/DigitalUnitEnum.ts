@@ -24,28 +24,56 @@
 
 import { registerEnumType } from 'type-graphql';
 
-export enum InterfaceWoLFlags {
-  a = 'a',
+export enum DigitalUnitEnum {
   b = 'b',
-  d = 'd',
-  g = 'g',
-  m = 'm',
-  p = 'p',
-  s = 's',
-  u = 'u'
+  Kb = 'Kb',
+  Kib = 'Kib',
+  Mb = 'Mb',
+  Mib = 'Mib',
+  Gb = 'Gb',
+  Gib = 'Gib',
+  Tb = 'Tb',
+  Tib = 'Tib',
+  Pb = 'Pb',
+  Pib = 'Pib',
+  B = 'B',
+  KB = 'KB',
+  KiB = 'KiB',
+  MB = 'MB',
+  MiB = 'MiB',
+  GB = 'GB',
+  GiB = 'GiB',
+  TB = 'TB',
+  TiB = 'TiB',
+  PB = 'PB',
+  PiB = 'PiB'
 }
 
-registerEnumType(InterfaceWoLFlags, {
-  name: 'InterfaceWoLFlags',
-  description: 'Interface Wake-on-Lan flags',
+registerEnumType(DigitalUnitEnum, {
+  name: 'DigitalUnitEnum',
+  description: 'Digital units',
   valuesConfig: {
-    a: { description: 'Wake on ARP' },
-    b: { description: 'Wake on broadcast messages' },
-    d: { description: 'Disable' },
-    g: { description: 'Wake on MagicPacket' },
-    m: { description: 'Wake on multicast messages' },
-    p: { description: 'Wake on PHY activity' },
-    s: { description: 'Enable SecureOn password for MagicPacket' },
-    u: { description: 'Wake on unicast messages' }
+    b: { description: 'Bit' },
+    Kb: { description: 'Kilobit' },
+    Kib: { description: 'Kibibit' },
+    Mb: { description: 'Megabit' },
+    Mib: { description: 'Mebibit' },
+    Gb: { description: 'Gigabit' },
+    Gib: { description: 'Gibibit' },
+    Tb: { description: 'Terabit' },
+    Tib: { description: 'Tebibit' },
+    Pb: { description: 'Petabit' },
+    Pib: { description: 'Pebibit' },
+    B: { description: 'Byte' },
+    KB: { description: 'Kilobyte' },
+    KiB: { description: 'Kibibyte' },
+    MB: { description: 'Megabyte' },
+    MiB: { description: 'Mebibyte' },
+    GB: { description: 'Gigabyte' },
+    GiB: { description: 'Gibibyte' },
+    TB: { description: 'Terabyte' },
+    TiB: { description: 'Tebibyte' },
+    PB: { description: 'Petabyte' },
+    PiB: { description: 'Pebibyte' }
   }
 });

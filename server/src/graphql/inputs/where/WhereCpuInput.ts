@@ -25,8 +25,8 @@
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
 import {
-  CpuArchitecturesFilter,
-  CpuVendorsFilter,
+  CpuArchitectureEnumFilter,
+  CpuVendorEnumFilter,
   IntFilter,
   IntNullableFilter,
   StringFilter,
@@ -44,7 +44,7 @@ export class WhereCpuInput
   id?: UuidFilter;
 
   @Field({ nullable: true, description: 'Cpu architecture' })
-  architecture?: CpuArchitecturesFilter;
+  architecture?: CpuArchitectureEnumFilter;
 
   @Field({ nullable: true, description: 'Cpu flags' })
   flags?: StringListFilter;
@@ -53,7 +53,7 @@ export class WhereCpuInput
   cores?: IntFilter;
 
   @Field({ nullable: true, description: 'Cpu vendor' })
-  vendor?: CpuVendorsFilter;
+  vendor?: CpuVendorEnumFilter;
 
   @Field({ nullable: true, description: 'Cpu family' })
   family?: IntFilter;

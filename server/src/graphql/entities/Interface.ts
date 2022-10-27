@@ -31,7 +31,7 @@ import {
   GraphQLNonEmptyString,
   GraphQLTimestamp
 } from 'graphql-scalars';
-import { InterfaceWoLFlags } from '../enums';
+import { WoLFlagEnum } from '~/db';
 
 @ObjectType({ description: 'Interface' })
 export class Interface implements Prisma.Interface {
@@ -49,10 +49,10 @@ export class Interface implements Prisma.Interface {
   @Field(() => GraphQLBigInt, { description: 'Interface speed' })
   speed!: bigint;
 
-  @Field(() => [InterfaceWoLFlags], {
+  @Field(() => [WoLFlagEnum], {
     description: 'Interface Wake-on-Lan flags'
   })
-  wol!: InterfaceWoLFlags[];
+  wol!: WoLFlagEnum[];
 
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
   createdAt!: Date;

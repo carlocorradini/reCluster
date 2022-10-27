@@ -24,36 +24,42 @@
 
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { SortOrders } from '../../enums';
+import { SortOrderEnum } from '../../enums';
 
 @InputType({ isAbstract: true, description: 'Status order by input' })
 export class OrderByStatusInput
   implements Partial<Omit<Prisma.StatusOrderByWithRelationInput, 'node'>>
 {
-  @Field(() => SortOrders, { nullable: true, description: 'Status identifier' })
-  id?: SortOrders;
+  @Field(() => SortOrderEnum, {
+    nullable: true,
+    description: 'Status identifier'
+  })
+  id?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Status' })
-  status?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Status' })
+  status?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Status reason' })
-  reason?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Status reason' })
+  reason?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Status message' })
-  message?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Status message' })
+  message?: SortOrderEnum;
 
-  @Field(() => SortOrders, {
+  @Field(() => SortOrderEnum, {
     nullable: true,
     description: 'Last heartbeat timestamp'
   })
-  lastHeartbeat?: SortOrders;
+  lastHeartbeat?: SortOrderEnum;
 
-  @Field(() => SortOrders, {
+  @Field(() => SortOrderEnum, {
     nullable: true,
     description: 'Last transition timestamp'
   })
-  lastTransition?: SortOrders;
+  lastTransition?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Update timestamp' })
-  updatedAt?: SortOrders;
+  @Field(() => SortOrderEnum, {
+    nullable: true,
+    description: 'Update timestamp'
+  })
+  updatedAt?: SortOrderEnum;
 }

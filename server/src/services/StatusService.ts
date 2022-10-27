@@ -24,9 +24,8 @@
 
 import type { Prisma } from '@prisma/client';
 import type { UpdateStatusInput } from '~/types';
-import { prisma } from '~/db';
+import { prisma, NodeStatusEnum } from '~/db';
 import { logger } from '~/logger';
-import { NodeStatuses } from '~/graphql/enums';
 
 type FindManyArgs = Omit<Prisma.StatusFindManyArgs, 'include' | 'cursor'> & {
   cursor?: string;
@@ -90,7 +89,7 @@ export class StatusService {
 
     // Update data by status
     switch (data.status) {
-      case NodeStatuses.ACTIVE:
+      case NodeStatusEnum.ACTIVE:
         data.lastHeartbeat = new Date();
         break;
       default:

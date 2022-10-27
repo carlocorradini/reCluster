@@ -22,14 +22,104 @@
  * SOFTWARE.
  */
 
-export * from './CpuArchitectures';
-export * from './CpuVendors';
-export * from './DigitalUnits';
-export * from './InterfaceWoLFlags';
-export * from './NodePermissions';
-export * from './NodeRoles';
-export * from './NodeStatuses';
-export * from './QueryModeCaseSensitivity';
-export * from './SortOrders';
-export * from './UserPermissions';
-export * from './UserRoles';
+import { registerEnumType } from 'type-graphql';
+import {
+  CpuArchitectureEnum,
+  CpuVendorEnum,
+  WoLFlagEnum,
+  NodeRoleEnum,
+  NodePermissionEnum,
+  NodeStatusEnum,
+  UserRoleEnum,
+  UserPermissionEnum
+} from '~/db';
+
+export * from './CaseSensitivityEnum';
+export * from './DigitalUnitEnum';
+export * from './SortOrderEnum';
+
+registerEnumType(CpuArchitectureEnum, {
+  name: 'CpuArchitectureEnum',
+  description: 'Cpu architectures',
+  valuesConfig: {
+    x86_64: {
+      description:
+        '64-bit version of the x86 instruction set. Also known as x64, x86-64, AMD64, and Intel 64'
+    }
+  }
+});
+
+registerEnumType(CpuVendorEnum, {
+  name: 'CpuVendorEnum',
+  description: 'Cpu vendors',
+  valuesConfig: {
+    AMD: { description: 'Advanced Micro Devices' },
+    INTEL: { description: 'Intel' }
+  }
+});
+
+registerEnumType(WoLFlagEnum, {
+  name: 'WoLFlagEnum',
+  description: 'Wake-on-Lan flags',
+  valuesConfig: {
+    a: { description: 'Wake on ARP' },
+    b: { description: 'Wake on broadcast messages' },
+    d: { description: 'Disable' },
+    g: { description: 'Wake on MagicPacket' },
+    m: { description: 'Wake on multicast messages' },
+    p: { description: 'Wake on PHY activity' },
+    s: { description: 'Enable SecureOn password for MagicPacket' },
+    u: { description: 'Wake on unicast messages' }
+  }
+});
+
+registerEnumType(NodeRoleEnum, {
+  name: 'NodeRoleEnum',
+  description: 'Node roles',
+  valuesConfig: {
+    RECLUSTER_MASTER: { description: 'reCluster master' },
+    K8S_MASTER: { description: 'K8s master' },
+    K8S_WORKER: { description: 'K8s worker' }
+  }
+});
+
+registerEnumType(NodePermissionEnum, {
+  name: 'NodePermissionEnum',
+  description: 'Node permissions',
+  valuesConfig: {}
+});
+
+registerEnumType(NodeStatusEnum, {
+  name: 'NodeStatusEnum',
+  description: 'Node statuses',
+  valuesConfig: {
+    ACTIVE: { description: 'Node is active' },
+    ACTIVE_READY: {
+      description: 'Node is active, healthy and ready to accept pods'
+    },
+    ACTIVE_NOT_READY: {
+      description: 'Node is active but not healthy and is not accepting pods'
+    },
+    INACTIVE: {
+      description: 'Node is inactive'
+    },
+    UNKNOWN: {
+      description: 'Unknown'
+    }
+  }
+});
+
+registerEnumType(UserRoleEnum, {
+  name: 'UserRoleEnum',
+  description: 'User roles',
+  valuesConfig: {
+    ADMIN: { description: 'Administrator' },
+    SIMPLE: { description: 'Simple' }
+  }
+});
+
+registerEnumType(UserPermissionEnum, {
+  name: 'UserPermissionEnum',
+  description: 'User permissions',
+  valuesConfig: {}
+});

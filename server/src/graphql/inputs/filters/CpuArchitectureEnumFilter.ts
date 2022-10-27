@@ -24,39 +24,30 @@
 
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { InterfaceWoLFlags } from '../../enums';
+import { CpuArchitectureEnum } from '~/db';
 
-@InputType({
-  isAbstract: true,
-  description: 'Interface Wake-on-Lan flags filter'
-})
-export class InterfaceWoLFlagsListFilter
-  implements Prisma.EnumInterfaceWoLFlagsNullableListFilter
+@InputType({ isAbstract: true, description: 'Cpu architecture filter' })
+export class CpuArchitectureEnumFilter
+  implements Prisma.EnumCpuArchitectureEnumFilter
 {
-  @Field(() => InterfaceWoLFlags, {
+  @Field(() => CpuArchitectureEnum, {
     nullable: true,
-    description: 'Wake-on-Lan flag exists in the list'
+    description: 'Cpu architecture equals'
   })
-  has?: InterfaceWoLFlags;
+  equals?: CpuArchitectureEnum;
 
-  @Field(() => [InterfaceWoLFlags], {
+  @Field({ nullable: true, description: 'Cpu architecture not equals' })
+  not?: CpuArchitectureEnumFilter;
+
+  @Field(() => [CpuArchitectureEnum], {
     nullable: true,
-    description: 'Every Wake-on-Lan flag exists in the list'
+    description: 'Cpu architecture exists in list'
   })
-  hasEvery?: InterfaceWoLFlags[];
+  in?: CpuArchitectureEnum[];
 
-  @Field(() => [InterfaceWoLFlags], {
+  @Field(() => [CpuArchitectureEnum], {
     nullable: true,
-    description: 'At least one Wake-on-Lan flag exists in the list'
+    description: 'Cpu architecture does not exists in list'
   })
-  hasSome?: InterfaceWoLFlags[];
-
-  @Field({ nullable: true, description: 'List is empty' })
-  isEmpty?: boolean;
-
-  @Field(() => [InterfaceWoLFlags], {
-    nullable: true,
-    description: 'List matches the given Wake-on-Lan flag list exactly'
-  })
-  equals?: InterfaceWoLFlags[];
+  notIn?: CpuArchitectureEnum[];
 }

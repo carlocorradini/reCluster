@@ -23,7 +23,7 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import type { NodeRoles, NodePermissions } from '~/graphql';
+import type { NodeRoleEnum, NodePermissionEnum } from '~/db';
 import type { CreateCpuInput } from './CreateCpuInput';
 import type { CreateDiskInput } from './CreateDiskInput';
 import type { CreateInterfaceInput } from './CreateInterfaceInput';
@@ -32,8 +32,8 @@ export type CreateNodeInput = Omit<
   Prisma.NodeCreateInput,
   'roles' | 'permissions' | 'cpu' | 'disks' | 'interfaces'
 > & {
-  roles: NodeRoles[];
-  permissions?: NodePermissions[];
+  roles: NodeRoleEnum[];
+  permissions?: NodePermissionEnum[];
   cpu: CreateCpuInput;
   disks: CreateDiskInput[];
   interfaces: CreateInterfaceInput[];

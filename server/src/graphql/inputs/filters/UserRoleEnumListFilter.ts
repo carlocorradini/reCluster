@@ -22,19 +22,41 @@
  * SOFTWARE.
  */
 
-import { registerEnumType } from 'type-graphql';
+import type { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { UserRoleEnum } from '~/db';
 
-export enum CpuArchitectures {
-  x86_64 = 'x86_64'
+@InputType({
+  isAbstract: true,
+  description: 'User roles filter'
+})
+export class UserRoleEnumListFilter
+  implements Prisma.EnumUserRoleEnumNullableListFilter
+{
+  @Field(() => [UserRoleEnum], {
+    nullable: true,
+    description: 'List matches the given User role list exactly'
+  })
+  equals?: UserRoleEnum[];
+
+  @Field(() => UserRoleEnum, {
+    nullable: true,
+    description: 'User role exists in the list'
+  })
+  has?: UserRoleEnum;
+
+  @Field(() => [UserRoleEnum], {
+    nullable: true,
+    description: 'Every User role exists in the list'
+  })
+  hasEvery?: UserRoleEnum[];
+
+  @Field(() => [UserRoleEnum], {
+    nullable: true,
+    description: 'At least one User role exists in the list'
+  })
+  hasSome?: UserRoleEnum[];
+
+  @Field({ nullable: true, description: 'List is empty' })
+  isEmpty?: boolean;
 }
-
-registerEnumType(CpuArchitectures, {
-  name: 'CpuArchitectures',
-  description: 'Cpu architectures',
-  valuesConfig: {
-    x86_64: {
-      description:
-        '64-bit version of the x86 instruction set. Also known as x64, x86-64, AMD64, and Intel 64'
-    }
-  }
-});

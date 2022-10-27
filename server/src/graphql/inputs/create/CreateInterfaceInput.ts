@@ -30,7 +30,7 @@ import {
 import { Field, InputType } from 'type-graphql';
 import { ArrayUnique } from 'class-validator';
 import type { CreateInterfaceInput as ICreateInterfaceInput } from '~/types';
-import { InterfaceWoLFlags } from '../../enums';
+import { WoLFlagEnum } from '~/db';
 
 @InputType({ description: 'Create Interface input' })
 export class CreateInterfaceInput implements ICreateInterfaceInput {
@@ -43,10 +43,10 @@ export class CreateInterfaceInput implements ICreateInterfaceInput {
   @Field(() => GraphQLBigInt, { description: 'Interface speed' })
   speed!: bigint;
 
-  @Field(() => [InterfaceWoLFlags], {
+  @Field(() => [WoLFlagEnum], {
     nullable: true,
     description: 'Interface Wake-on-Lan flags'
   })
   @ArrayUnique()
-  wol?: InterfaceWoLFlags[];
+  wol?: WoLFlagEnum[];
 }

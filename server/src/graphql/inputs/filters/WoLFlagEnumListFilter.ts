@@ -22,20 +22,41 @@
  * SOFTWARE.
  */
 
-import { registerEnumType } from 'type-graphql';
+import type { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { WoLFlagEnum } from '~/db';
 
-export enum NodeRoles {
-  RECLUSTER_MASTER = 'RECLUSTER_MASTER',
-  K8S_MASTER = 'K8S_MASTER',
-  K8S_WORKER = 'K8S_WORKER'
+@InputType({
+  isAbstract: true,
+  description: 'Interface Wake-on-Lan flags filter'
+})
+export class WoLFlagEnumListFilter
+  implements Prisma.EnumWoLFlagEnumNullableListFilter
+{
+  @Field(() => WoLFlagEnum, {
+    nullable: true,
+    description: 'Wake-on-Lan flag exists in the list'
+  })
+  has?: WoLFlagEnum;
+
+  @Field(() => [WoLFlagEnum], {
+    nullable: true,
+    description: 'Every Wake-on-Lan flag exists in the list'
+  })
+  hasEvery?: WoLFlagEnum[];
+
+  @Field(() => [WoLFlagEnum], {
+    nullable: true,
+    description: 'At least one Wake-on-Lan flag exists in the list'
+  })
+  hasSome?: WoLFlagEnum[];
+
+  @Field({ nullable: true, description: 'List is empty' })
+  isEmpty?: boolean;
+
+  @Field(() => [WoLFlagEnum], {
+    nullable: true,
+    description: 'List matches the given Wake-on-Lan flag list exactly'
+  })
+  equals?: WoLFlagEnum[];
 }
-
-registerEnumType(NodeRoles, {
-  name: 'NodeRoles',
-  description: 'Node roles',
-  valuesConfig: {
-    RECLUSTER_MASTER: { description: 'reCluster master' },
-    K8S_MASTER: { description: 'K8s master' },
-    K8S_WORKER: { description: 'K8s worker' }
-  }
-});

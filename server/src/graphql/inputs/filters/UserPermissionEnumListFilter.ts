@@ -24,25 +24,39 @@
 
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { CpuVendors } from '../../enums';
+import { UserPermissionEnum } from '~/db';
 
-@InputType({ isAbstract: true, description: 'Cpu vendor filter' })
-export class CpuVendorsFilter implements Prisma.EnumCpuVendorsFilter {
-  @Field(() => CpuVendors, { nullable: true, description: 'Cpu vendor equals' })
-  equals?: CpuVendors;
-
-  @Field({ nullable: true, description: 'Cpu vendor not equals' })
-  not?: CpuVendorsFilter;
-
-  @Field(() => [CpuVendors], {
+@InputType({
+  isAbstract: true,
+  description: 'User permissions filter'
+})
+export class UserPermissionEnumListFilter
+  implements Prisma.EnumUserPermissionEnumNullableListFilter
+{
+  @Field(() => [UserPermissionEnum], {
     nullable: true,
-    description: 'Cpu vendor exists in list'
+    description: 'List matches the given User permission list exactly'
   })
-  in?: CpuVendors[];
+  equals?: UserPermissionEnum[];
 
-  @Field(() => [CpuVendors], {
+  @Field(() => UserPermissionEnum, {
     nullable: true,
-    description: 'Cpu vendor does not exists in list'
+    description: 'User permissions exists in the list'
   })
-  notIn?: CpuVendors[];
+  has?: UserPermissionEnum;
+
+  @Field(() => [UserPermissionEnum], {
+    nullable: true,
+    description: 'Every User permission exists in the list'
+  })
+  hasEvery?: UserPermissionEnum[];
+
+  @Field(() => [UserPermissionEnum], {
+    nullable: true,
+    description: 'At least one User permission exists in the list'
+  })
+  hasSome?: UserPermissionEnum[];
+
+  @Field({ nullable: true, description: 'List is empty' })
+  isEmpty?: boolean;
 }

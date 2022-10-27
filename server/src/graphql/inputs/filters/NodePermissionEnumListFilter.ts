@@ -24,39 +24,39 @@
 
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { UserPermissions } from '../../enums';
+import { NodePermissionEnum } from '~/db';
 
 @InputType({
   isAbstract: true,
-  description: 'User permissions filter'
+  description: 'Node permissions filter'
 })
-export class UserPermissionsListFilter
-  implements Prisma.EnumUserPermissionsNullableListFilter
+export class NodePermissionEnumListFilter
+  implements Prisma.EnumNodePermissionEnumNullableListFilter
 {
-  @Field(() => UserPermissions, {
+  @Field(() => NodePermissionEnum, {
     nullable: true,
-    description: 'User permissions exists in the list'
+    description: 'Node permissions exists in the list'
   })
-  has?: UserPermissions;
+  has?: NodePermissionEnum;
 
-  @Field(() => [UserPermissions], {
+  @Field(() => [NodePermissionEnum], {
     nullable: true,
-    description: 'Every User permission exists in the list'
+    description: 'Every Node permission exists in the list'
   })
-  hasEvery?: UserPermissions[];
+  hasEvery?: NodePermissionEnum[];
 
-  @Field(() => [UserPermissions], {
+  @Field(() => [NodePermissionEnum], {
     nullable: true,
-    description: 'At least one User permission exists in the list'
+    description: 'At least one Node permission exists in the list'
   })
-  hasSome?: UserPermissions[];
+  hasSome?: NodePermissionEnum[];
 
   @Field({ nullable: true, description: 'List is empty' })
   isEmpty?: boolean;
 
-  @Field(() => [UserPermissions], {
+  @Field(() => [NodePermissionEnum], {
     nullable: true,
-    description: 'List matches the given User permission list exactly'
+    description: 'List matches the given Node permission list exactly'
   })
-  equals?: UserPermissions[];
+  equals?: NodePermissionEnum[];
 }

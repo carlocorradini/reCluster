@@ -27,7 +27,7 @@ import { Field, InputType } from 'type-graphql';
 import {
   BigIntFilter,
   StringFilter,
-  InterfaceWoLFlagsListFilter,
+  WoLFlagEnumListFilter,
   TimestampFilter,
   UuidFilter
 } from '../filters';
@@ -53,7 +53,7 @@ export class WhereInterfaceInput
   speed?: BigIntFilter;
 
   @Field({ nullable: true, description: 'Interface Wake-on-Lan flags' })
-  wol?: InterfaceWoLFlagsListFilter;
+  wol?: WoLFlagEnumListFilter;
 
   @Field({ nullable: true, description: 'Creation timestamp' })
   createdAt?: TimestampFilter;

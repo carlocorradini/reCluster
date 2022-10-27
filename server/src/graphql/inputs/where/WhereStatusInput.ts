@@ -25,7 +25,7 @@
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
 import {
-  NodeStatusesFilter,
+  NodeStatusEnumFilter,
   TimestampFilter,
   UuidFilter,
   StringNullableFilter,
@@ -41,7 +41,7 @@ export class WhereStatusInput
   id?: UuidFilter;
 
   @Field({ nullable: true, description: 'Status' })
-  status?: NodeStatusesFilter;
+  status?: NodeStatusEnumFilter;
 
   @Field({ nullable: true, description: 'Status reason' })
   reason?: StringNullableFilter;

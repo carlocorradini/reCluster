@@ -24,12 +24,12 @@
 
 import { Args, Mutation, Query, Resolver } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
+import { NodeStatusEnum } from '~/db';
 import { StatusService, TokenTypes } from '~/services';
 import { Applicant, Auth } from '~/helpers';
 import { TokenPayload } from '~/types';
 import { Status } from '../../entities';
 import { FindUniqueStatusArgs, FindManyStatusArgs } from '../../args';
-import { NodeStatuses } from '../../enums';
 
 @Resolver(Status)
 @injectable()
@@ -58,7 +58,7 @@ export class StatusResolver {
     return this.statusService.update({
       where: { id: applicant.id },
       data: {
-        status: NodeStatuses.ACTIVE,
+        status: NodeStatusEnum.ACTIVE,
         reason: 'NodeStatusUpdate',
         message: 'Node sent status update'
       }

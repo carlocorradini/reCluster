@@ -27,7 +27,7 @@
 import type { Prisma } from '@prisma/client';
 import { GraphQLString } from 'graphql';
 import { Field, InputType } from 'type-graphql';
-import { QueryModeCaseSensitivity } from '../../enums';
+import { CaseSensitivityEnum } from '../../enums';
 
 @InputType({ isAbstract: true, description: 'SNested string nullable filter' })
 export class NestedStringNullableFilter
@@ -99,9 +99,9 @@ export class StringNullableFilter
   extends NestedStringNullableFilter
   implements Prisma.StringNullableFilter
 {
-  @Field(() => QueryModeCaseSensitivity, {
+  @Field(() => CaseSensitivityEnum, {
     nullable: true,
     description: 'Case sensitivity'
   })
-  mode?: QueryModeCaseSensitivity;
+  mode?: CaseSensitivityEnum;
 }

@@ -24,30 +24,39 @@
 
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { SortOrders } from '../../enums';
+import { SortOrderEnum } from '../../enums';
 
 @InputType({ isAbstract: true, description: 'User order by input' })
 export class OrderByUserInput
   implements Partial<Prisma.UserOrderByWithRelationInput>
 {
-  @Field(() => SortOrders, { nullable: true, description: 'User identifier' })
-  id?: SortOrders;
+  @Field(() => SortOrderEnum, {
+    nullable: true,
+    description: 'User identifier'
+  })
+  id?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'User username' })
-  username?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'User username' })
+  username?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'User roles' })
-  roles?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'User roles' })
+  roles?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'User permissions' })
-  permissions?: SortOrders;
+  @Field(() => SortOrderEnum, {
+    nullable: true,
+    description: 'User permissions'
+  })
+  permissions?: SortOrderEnum;
 
-  @Field(() => SortOrders, {
+  @Field(() => SortOrderEnum, {
     nullable: true,
     description: 'Creation timestamp'
   })
-  createdAt?: SortOrders;
+  createdAt?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Update timestamp' })
-  updatedAt?: SortOrders;
+  @Field(() => SortOrderEnum, {
+    nullable: true,
+    description: 'Update timestamp'
+  })
+  updatedAt?: SortOrderEnum;
 }

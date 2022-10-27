@@ -32,23 +32,23 @@ import {
   ValidateNested
 } from 'class-validator';
 import type { CreateNodeInput as ICreateNodeInput } from '~/types';
+import { NodeRoleEnum, NodePermissionEnum } from '~/db';
 import { CreateCpuInput } from './CreateCpuInput';
 import { CreateDiskInput } from './CreateDiskInput';
 import { CreateInterfaceInput } from './CreateInterfaceInput';
-import { NodePermissions, NodeRoles } from '../../enums';
 
 @InputType({ description: 'Create Node input' })
 export class CreateNodeInput implements ICreateNodeInput {
-  @Field(() => [NodeRoles], { description: 'Node roles' })
+  @Field(() => [NodeRoleEnum], { description: 'Node roles' })
   @ArrayUnique()
-  roles!: NodeRoles[];
+  roles!: NodeRoleEnum[];
 
-  @Field(() => [NodePermissions], {
+  @Field(() => [NodePermissionEnum], {
     nullable: true,
     description: 'Node permissions'
   })
   @ArrayUnique()
-  permissions?: NodePermissions[];
+  permissions?: NodePermissionEnum[];
 
   @Field(() => GraphQLBigInt, { description: 'Node ram' })
   ram!: bigint;

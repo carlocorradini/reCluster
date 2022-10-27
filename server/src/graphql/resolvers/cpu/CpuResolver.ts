@@ -27,7 +27,7 @@ import { injectable, inject } from 'tsyringe';
 import { GraphQLNonNegativeInt } from 'graphql-scalars';
 import { convert } from 'convert';
 import { CpuService } from '~/services';
-import { DigitalUnits } from '../../enums';
+import { DigitalUnitEnum } from '../../enums';
 import { Cpu } from '../../entities';
 import { FindUniqueCpuArgs, FindManyCpuArgs } from '../../args';
 
@@ -54,48 +54,48 @@ export class CpuResolver {
   @FieldResolver(() => GraphQLNonNegativeInt)
   public cacheL1d(
     @Root() cpu: Cpu,
-    @Arg('unit', () => DigitalUnits, {
-      defaultValue: DigitalUnits.B,
+    @Arg('unit', () => DigitalUnitEnum, {
+      defaultValue: DigitalUnitEnum.B,
       description: 'Digital conversion unit'
     })
-    unit: DigitalUnits
+    unit: DigitalUnitEnum
   ) {
-    return convert(cpu.cacheL1d, DigitalUnits.B).to(unit);
+    return convert(cpu.cacheL1d, DigitalUnitEnum.B).to(unit);
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
   public cacheL1i(
     @Root() cpu: Cpu,
-    @Arg('unit', () => DigitalUnits, {
-      defaultValue: DigitalUnits.B,
+    @Arg('unit', () => DigitalUnitEnum, {
+      defaultValue: DigitalUnitEnum.B,
       description: 'Digital conversion unit'
     })
-    unit: DigitalUnits
+    unit: DigitalUnitEnum
   ) {
-    return convert(cpu.cacheL1i, DigitalUnits.B).to(unit);
+    return convert(cpu.cacheL1i, DigitalUnitEnum.B).to(unit);
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
   public cacheL2(
     @Root() cpu: Cpu,
-    @Arg('unit', () => DigitalUnits, {
-      defaultValue: DigitalUnits.B,
+    @Arg('unit', () => DigitalUnitEnum, {
+      defaultValue: DigitalUnitEnum.B,
       description: 'Digital conversion unit'
     })
-    unit: DigitalUnits
+    unit: DigitalUnitEnum
   ) {
-    return convert(cpu.cacheL2, DigitalUnits.B).to(unit);
+    return convert(cpu.cacheL2, DigitalUnitEnum.B).to(unit);
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
   public cacheL3(
     @Root() cpu: Cpu,
-    @Arg('unit', () => DigitalUnits, {
-      defaultValue: DigitalUnits.B,
+    @Arg('unit', () => DigitalUnitEnum, {
+      defaultValue: DigitalUnitEnum.B,
       description: 'Digital conversion unit'
     })
-    unit: DigitalUnits
+    unit: DigitalUnitEnum
   ) {
-    return convert(cpu.cacheL3, DigitalUnits.B).to(unit);
+    return convert(cpu.cacheL3, DigitalUnitEnum.B).to(unit);
   }
 }

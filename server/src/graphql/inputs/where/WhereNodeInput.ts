@@ -30,8 +30,8 @@ import {
   BigIntFilter,
   IntFilter,
   IntNullableFilter,
-  NodeRolesListFilter,
-  NodePermissionsListFilter,
+  NodeRoleEnumListFilter,
+  NodePermissionEnumListFilter,
   UuidFilter
 } from '../filters';
 
@@ -49,10 +49,10 @@ export class WhereNodeInput
   id?: UuidFilter;
 
   @Field({ nullable: true, description: 'Node roles' })
-  roles?: NodeRolesListFilter;
+  roles?: NodeRoleEnumListFilter;
 
   @Field({ nullable: true, description: 'Node permissions' })
-  permissions?: NodePermissionsListFilter;
+  permissions?: NodePermissionEnumListFilter;
 
   @Field({ nullable: true, description: 'Node ram' })
   ram?: BigIntFilter;

@@ -30,18 +30,18 @@ import {
   GraphQLPositiveInt,
   GraphQLTimestamp
 } from 'graphql-scalars';
-import { NodePermissions, NodeRoles } from '../enums';
+import { NodeRoleEnum, NodePermissionEnum } from '~/db';
 
 @ObjectType({ description: 'Node' })
 export class Node implements Prisma.Node {
   @Field(() => GraphQLID, { description: 'Node identifier' })
   id!: string;
 
-  @Field(() => [NodeRoles], { description: 'Node roles' })
-  roles!: NodeRoles[];
+  @Field(() => [NodeRoleEnum], { description: 'Node roles' })
+  roles!: NodeRoleEnum[];
 
-  @Field(() => [NodePermissions], { description: 'Node permissions' })
-  permissions!: NodePermissions[];
+  @Field(() => [NodePermissionEnum], { description: 'Node permissions' })
+  permissions!: NodePermissionEnum[];
 
   @Field(() => GraphQLBigInt, { description: 'Node ram' })
   ram!: bigint;

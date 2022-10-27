@@ -24,81 +24,87 @@
 
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { SortOrders } from '../../enums';
+import { SortOrderEnum } from '../../enums';
 
 @InputType({ isAbstract: true, description: 'Cpu order by input' })
 export class OrderByCpuInput
   implements Partial<Omit<Prisma.CpuOrderByWithRelationInput, 'nodes'>>
 {
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu identifier' })
-  id?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu identifier' })
+  id?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu architecture' })
-  architecture?: SortOrders;
+  @Field(() => SortOrderEnum, {
+    nullable: true,
+    description: 'Cpu architecture'
+  })
+  architecture?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu flags' })
-  flags?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu flags' })
+  flags?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu cores' })
-  cores?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu cores' })
+  cores?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu vendor' })
-  vendor?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu vendor' })
+  vendor?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu family' })
-  family?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu family' })
+  family?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu model' })
-  model?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu model' })
+  model?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu name' })
-  name?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu name' })
+  name?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu L1d cache' })
-  cacheL1d?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu L1d cache' })
+  cacheL1d?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu L1i cache' })
-  cacheL1i?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu L1i cache' })
+  cacheL1i?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu L2 cache' })
-  cacheL2?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu L2 cache' })
+  cacheL2?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu L3 cache' })
-  cacheL3?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu L3 cache' })
+  cacheL3?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Cpu identifier' })
-  vulnerabilities?: SortOrders;
+  @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu identifier' })
+  vulnerabilities?: SortOrderEnum;
 
-  @Field(() => SortOrders, {
+  @Field(() => SortOrderEnum, {
     nullable: true,
     description: 'Cpu single-thread score'
   })
-  singleThreadScore?: SortOrders;
+  singleThreadScore?: SortOrderEnum;
 
-  @Field(() => SortOrders, {
+  @Field(() => SortOrderEnum, {
     nullable: true,
     description: 'Cpu multi-thread score'
   })
-  multiThreadScore?: SortOrders;
+  multiThreadScore?: SortOrderEnum;
 
-  @Field(() => SortOrders, {
+  @Field(() => SortOrderEnum, {
     nullable: true,
     description: 'Cpu efficiency threshold'
   })
-  efficiencyThreshold?: SortOrders;
+  efficiencyThreshold?: SortOrderEnum;
 
-  @Field(() => SortOrders, {
+  @Field(() => SortOrderEnum, {
     nullable: true,
     description: 'Cpu performance threshold'
   })
-  performanceThreshold?: SortOrders;
+  performanceThreshold?: SortOrderEnum;
 
-  @Field(() => SortOrders, {
+  @Field(() => SortOrderEnum, {
     nullable: true,
     description: 'Creation timestamp'
   })
-  createdAt?: SortOrders;
+  createdAt?: SortOrderEnum;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Update timestamp' })
-  updatedAt?: SortOrders;
+  @Field(() => SortOrderEnum, {
+    nullable: true,
+    description: 'Update timestamp'
+  })
+  updatedAt?: SortOrderEnum;
 }

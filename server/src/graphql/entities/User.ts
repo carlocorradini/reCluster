@@ -26,7 +26,7 @@ import type * as Prisma from '@prisma/client';
 import { GraphQLID } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
 import { GraphQLNonEmptyString, GraphQLTimestamp } from 'graphql-scalars';
-import { UserRoles, UserPermissions } from '../enums';
+import { UserRoleEnum, UserPermissionEnum } from '~/db';
 
 @ObjectType({ description: 'User' })
 export class User implements Omit<Prisma.User, 'password'> {
@@ -36,11 +36,11 @@ export class User implements Omit<Prisma.User, 'password'> {
   @Field(() => GraphQLNonEmptyString, { description: 'User username' })
   username!: string;
 
-  @Field(() => [UserRoles], { description: 'User roles' })
-  roles!: UserRoles[];
+  @Field(() => [UserRoleEnum], { description: 'User roles' })
+  roles!: UserRoleEnum[];
 
-  @Field(() => [UserPermissions], { description: 'User permissions' })
-  permissions!: UserPermissions[];
+  @Field(() => [UserPermissionEnum], { description: 'User permissions' })
+  permissions!: UserPermissionEnum[];
 
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
   createdAt!: Date;

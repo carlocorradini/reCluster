@@ -26,12 +26,12 @@ import { Field, InputType } from 'type-graphql';
 import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
 import { IsDefined, isNotEmpty, ValidateIf } from 'class-validator';
 import type { CreateCpuInput as ICreateCpuInput } from '~/types';
-import { CpuArchitectures, CpuVendors } from '../../enums';
+import { CpuArchitectureEnum, CpuVendorEnum } from '~/db';
 
 @InputType({ description: 'Create Cpu input' })
 export class CreateCpuInput implements ICreateCpuInput {
-  @Field(() => CpuArchitectures, { description: 'Cpu architecture' })
-  architecture!: CpuArchitectures;
+  @Field(() => CpuArchitectureEnum, { description: 'Cpu architecture' })
+  architecture!: CpuArchitectureEnum;
 
   @Field(() => [GraphQLNonEmptyString], {
     nullable: true,
@@ -42,8 +42,8 @@ export class CreateCpuInput implements ICreateCpuInput {
   @Field(() => GraphQLPositiveInt, { description: 'Cpu cores' })
   cores!: number;
 
-  @Field(() => CpuVendors, { description: 'Cpu vendor' })
-  vendor!: CpuVendors;
+  @Field(() => CpuVendorEnum, { description: 'Cpu vendor' })
+  vendor!: CpuVendorEnum;
 
   @Field(() => GraphQLPositiveInt, { description: 'Cpu family' })
   family!: number;

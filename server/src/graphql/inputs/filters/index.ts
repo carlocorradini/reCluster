@@ -23,19 +23,19 @@
  */
 
 export * from './BigIntFilter';
-export * from './CpuArchitecturesFilter';
-export * from './CpuVendorsFilter';
-export * from './InterfaceWoLFlagsListFilter';
+export * from './CpuArchitectureEnumFilter';
+export * from './CpuVendorEnumFilter';
+export * from './WoLFlagEnumListFilter';
 export * from './IntFilter';
 export * from './IntNullableFilter';
-export * from './NodePermissionsListFilter';
-export * from './NodeRolesListFilter';
-export * from './NodeStatusesFilter';
+export * from './NodePermissionEnumListFilter';
+export * from './NodeRoleEnumListFilter';
+export * from './NodeStatusEnumFilter';
 export * from './StringFilter';
 export * from './StringListFilter';
 export * from './StringNullableFilter';
 export * from './TimestampFilter';
 export * from './TimestampNullableFilter';
-export * from './UserPermissionsListFilter';
-export * from './UserRolesListFilter';
+export * from './UserPermissionEnumListFilter';
+export * from './UserRoleEnumListFilter';
 export * from './UuidFilter';

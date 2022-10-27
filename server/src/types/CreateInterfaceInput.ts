@@ -23,11 +23,11 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import type { InterfaceWoLFlags } from '~/graphql';
+import type { WoLFlagEnum } from '~/db';
 
 export type CreateInterfaceInput = Omit<
   Prisma.InterfaceCreateWithoutNodeInput,
   'wol'
 > & {
-  wol?: InterfaceWoLFlags[];
+  wol?: WoLFlagEnum[];
 };

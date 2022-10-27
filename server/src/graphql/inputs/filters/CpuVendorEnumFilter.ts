@@ -24,39 +24,28 @@
 
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { NodeRoles } from '../../enums';
+import { CpuVendorEnum } from '~/db';
 
-@InputType({
-  isAbstract: true,
-  description: 'Node roles filter'
-})
-export class NodeRolesListFilter
-  implements Prisma.EnumNodeRolesNullableListFilter
-{
-  @Field(() => NodeRoles, {
+@InputType({ isAbstract: true, description: 'Cpu vendor filter' })
+export class CpuVendorEnumFilter implements Prisma.EnumCpuVendorEnumFilter {
+  @Field(() => CpuVendorEnum, {
     nullable: true,
-    description: 'Node role exists in the list'
+    description: 'Cpu vendor equals'
   })
-  has?: NodeRoles;
+  equals?: CpuVendorEnum;
 
-  @Field(() => [NodeRoles], {
+  @Field({ nullable: true, description: 'Cpu vendor not equals' })
+  not?: CpuVendorEnumFilter;
+
+  @Field(() => [CpuVendorEnum], {
     nullable: true,
-    description: 'Every Node role exists in the list'
+    description: 'Cpu vendor exists in list'
   })
-  hasEvery?: NodeRoles[];
+  in?: CpuVendorEnum[];
 
-  @Field(() => [NodeRoles], {
+  @Field(() => [CpuVendorEnum], {
     nullable: true,
-    description: 'At least one Node role exists in the list'
+    description: 'Cpu vendor does not exists in list'
   })
-  hasSome?: NodeRoles[];
-
-  @Field({ nullable: true, description: 'List is empty' })
-  isEmpty?: boolean;
-
-  @Field(() => [NodeRoles], {
-    nullable: true,
-    description: 'List matches the given Node role list exactly'
-  })
-  equals?: NodeRoles[];
+  notIn?: CpuVendorEnum[];
 }

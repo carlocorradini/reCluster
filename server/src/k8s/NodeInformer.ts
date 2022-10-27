@@ -29,7 +29,7 @@ import type { UpdateStatusInput } from '~/types';
 import { config } from '~/config';
 import { logger } from '~/logger';
 import { StatusService } from '~/services';
-import { NodeStatuses } from '~/graphql';
+import { NodeStatusEnum } from '~/db';
 import { kubeconfig } from './kubeconfig';
 import { K8sNodeStatusesEnum } from './K8sNodeStatusesEnum';
 
@@ -140,16 +140,16 @@ export class NodeInformer {
     }
 
     // Define status
-    let status: NodeStatuses;
+    let status: NodeStatusEnum;
     switch (ready.status) {
       case K8sNodeStatusesEnum.TRUE:
-        status = NodeStatuses.ACTIVE_READY;
+        status = NodeStatusEnum.ACTIVE_READY;
         break;
       case K8sNodeStatusesEnum.FALSE:
-        status = NodeStatuses.ACTIVE_NOT_READY;
+        status = NodeStatusEnum.ACTIVE_NOT_READY;
         break;
       case K8sNodeStatusesEnum.UNKNOWN:
-        status = NodeStatuses.UNKNOWN;
+        status = NodeStatusEnum.UNKNOWN;
         break;
       default:
         logger.warn(

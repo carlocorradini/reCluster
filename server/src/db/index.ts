@@ -22,4 +22,14 @@
  * SOFTWARE.
  */
 
+export {
+  CpuArchitectureEnum,
+  CpuVendorEnum,
+  WoLFlagEnum,
+  NodeRoleEnum,
+  NodePermissionEnum,
+  NodeStatusEnum,
+  UserRoleEnum,
+  UserPermissionEnum
+} from '@prisma/client';
 export * from './prisma';

@@ -27,7 +27,7 @@
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
 import { GraphQLUUID } from 'graphql-scalars';
-import { QueryModeCaseSensitivity } from '../../enums';
+import { CaseSensitivityEnum } from '../../enums';
 
 @InputType({ isAbstract: true, description: 'Nested UUID filter' })
 class NestedUuidFilter implements Prisma.NestedUuidFilter {
@@ -79,9 +79,9 @@ class NestedUuidFilter implements Prisma.NestedUuidFilter {
 
 @InputType({ isAbstract: true, description: 'UUID filter' })
 export class UuidFilter extends NestedUuidFilter implements Prisma.UuidFilter {
-  @Field(() => QueryModeCaseSensitivity, {
+  @Field(() => CaseSensitivityEnum, {
     nullable: true,
     description: 'Case sensitivity'
   })
-  mode?: QueryModeCaseSensitivity;
+  mode?: CaseSensitivityEnum;
 }

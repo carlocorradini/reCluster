@@ -22,18 +22,41 @@
  * SOFTWARE.
  */
 
-import { registerEnumType } from 'type-graphql';
+import type { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { NodeRoleEnum } from '~/db';
 
-export enum UserRoles {
-  ADMIN = 'ADMIN',
-  SIMPLE = 'SIMPLE'
+@InputType({
+  isAbstract: true,
+  description: 'Node roles filter'
+})
+export class NodeRoleEnumListFilter
+  implements Prisma.EnumNodeRoleEnumNullableListFilter
+{
+  @Field(() => [NodeRoleEnum], {
+    nullable: true,
+    description: 'List matches the given Node role list exactly'
+  })
+  equals?: NodeRoleEnum[];
+
+  @Field(() => NodeRoleEnum, {
+    nullable: true,
+    description: 'Node role exists in the list'
+  })
+  has?: NodeRoleEnum;
+
+  @Field(() => [NodeRoleEnum], {
+    nullable: true,
+    description: 'Every Node role exists in the list'
+  })
+  hasEvery?: NodeRoleEnum[];
+
+  @Field(() => [NodeRoleEnum], {
+    nullable: true,
+    description: 'At least one Node role exists in the list'
+  })
+  hasSome?: NodeRoleEnum[];
+
+  @Field({ nullable: true, description: 'List is empty' })
+  isEmpty?: boolean;
 }
-
-registerEnumType(UserRoles, {
-  name: 'UserRoles',
-  description: 'User roles',
-  valuesConfig: {
-    ADMIN: { description: 'Administrator' },
-    SIMPLE: { description: 'Simple' }
-  }
-});

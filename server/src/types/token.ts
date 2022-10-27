@@ -25,24 +25,24 @@
 import type jwt from 'jsonwebtoken';
 import type { TokenTypes } from '~/services';
 import type {
-  UserRoles,
-  UserPermissions,
-  NodeRoles,
-  NodePermissions
-} from '~/graphql';
+  UserRoleEnum,
+  UserPermissionEnum,
+  NodeRoleEnum,
+  NodePermissionEnum
+} from '~/db';
 
 type ITokenPayload<T extends TokenTypes> = {
   type: T;
   id: string;
   roles: T extends TokenTypes.USER
-    ? UserRoles[]
+    ? UserRoleEnum[]
     : T extends TokenTypes.NODE
-    ? NodeRoles[]
+    ? NodeRoleEnum[]
     : never;
   permissions: T extends TokenTypes.USER
-    ? UserPermissions[]
+    ? UserPermissionEnum[]
     : T extends TokenTypes.NODE
-    ? NodePermissions[]
+    ? NodePermissionEnum[]
     : never;
 };
 export type UserTokenPayload = ITokenPayload<TokenTypes.USER>;
