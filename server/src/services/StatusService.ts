@@ -22,17 +22,29 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
+import type { Prisma } from '@prisma/client';
+import type { UpdateStatusInput } from '~/types';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
-import type {
-  CreateStatusArgs,
-  FindManyStatusArgs,
-  FindUniqueStatusArgs
-} from '~/graphql';
+import { NodeStatuses } from '~/graphql/enums';
+
+type FindManyArgs = Omit<Prisma.StatusFindManyArgs, 'include' | 'cursor'> & {
+  cursor?: string;
+};
+
+type FindUniqueArgs = Omit<Prisma.StatusFindUniqueArgs, 'include'>;
+
+type FindUniqueOrThrowArgs = Omit<
+  Prisma.StatusFindUniqueOrThrowArgs,
+  'include'
+>;
+
+type UpdateArgs = Omit<Prisma.StatusUpdateArgs, 'include' | 'data'> & {
+  data: UpdateStatusInput;
+};
 
 export class StatusService {
-  public async findMany(args: FindManyStatusArgs): Promise<Prisma.Status[]> {
+  public findMany(args: FindManyArgs) {
     logger.debug(`Status service find many: ${JSON.stringify(args)}`);
 
     return prisma.status.findMany({
@@ -41,19 +53,54 @@ export class StatusService {
     });
   }
 
-  public async findUnique(
-    args: FindUniqueStatusArgs
-  ): Promise<Prisma.Status | null> {
+  public findUnique(args: FindUniqueArgs) {
     logger.debug(`Status service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.status.findUnique({ where: { id: args.id } });
+    return prisma.status.findUnique(args);
   }
 
-  public async create(
-    args: CreateStatusArgs & { data: { nodeId: string } }
-  ): Promise<Prisma.Status> {
-    logger.info(`Status service create: ${JSON.stringify(args)}`);
+  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+    logger.debug(
+      `Status service find unique or throw: ${JSON.stringify(args)}`
+    );
 
-    return prisma.status.create({ ...args });
+    return prisma.status.findUniqueOrThrow(args);
+  }
+
+  public async update(args: UpdateArgs) {
+    logger.info(`Status service update: ${JSON.stringify(args)}`);
+
+    // Extract data
+    const { data } = args;
+
+    // Update data
+    data.reason = data.reason ?? null;
+    data.message = data.message ?? null;
+    data.lastHeartbeat = data.lastHeartbeat ?? null;
+    if (!data.lastTransition) {
+      const { status: lastStatus } = await this.findUniqueOrThrow({
+        where: args.where,
+        select: { status: true }
+      });
+
+      if (data.status !== lastStatus) {
+        data.lastTransition = new Date();
+      }
+    }
+
+    // Update data by status
+    switch (data.status) {
+      case NodeStatuses.ACTIVE:
+        data.lastHeartbeat = new Date();
+        break;
+      default:
+        break;
+    }
+
+    // Write data
+    // eslint-disable-next-line no-param-reassign
+    args.data = data;
+
+    return prisma.status.update(args);
   }
 }

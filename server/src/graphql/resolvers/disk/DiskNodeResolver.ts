@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
 import { FieldResolver, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { NodeService } from '~/services';
@@ -36,7 +35,7 @@ export class DiskNodeResolver {
   ) {}
 
   @FieldResolver(() => Node, { description: 'Disk node' })
-  public node(@Root() disk: Disk): Promise<Prisma.Node | null> {
-    return this.nodeService.findUnique({ id: disk.nodeId });
+  public node(@Root() disk: Disk) {
+    return this.nodeService.findUnique({ where: { id: disk.nodeId } });
   }
 }

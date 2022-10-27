@@ -22,19 +22,18 @@
  * SOFTWARE.
  */
 
-import type { Prisma } from '@prisma/client';
-import { ArgsType, Field } from 'type-graphql';
-import { ValidateNested } from 'class-validator';
-import { CreateStatusInput } from '../../inputs';
+import { registerEnumType } from 'type-graphql';
 
-// FIXME Omitting data
-type ICreateStatusArgs = Omit<Prisma.StatusCreateArgs, 'data'> & {
-  data: CreateStatusInput;
-};
-
-@ArgsType()
-export class CreateStatusArgs implements ICreateStatusArgs {
-  @Field({ description: 'Status data' })
-  @ValidateNested()
-  data!: CreateStatusInput;
+export enum QueryModeCaseSensitivity {
+  CASE_SENSITIVE = 'default',
+  CASE_INSENSITIVE = 'insensitive'
 }
+
+registerEnumType(QueryModeCaseSensitivity, {
+  name: 'QueryMode',
+  description: 'Query mode case sensitivity',
+  valuesConfig: {
+    CASE_SENSITIVE: { description: 'Case-Sensitive mode' },
+    CASE_INSENSITIVE: { description: 'Case-Insensitive mode' }
+  }
+});

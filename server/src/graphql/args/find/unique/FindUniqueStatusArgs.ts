@@ -27,9 +27,7 @@ import { GraphQLID } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
 
 @ArgsType()
-export class FindUniqueStatusArgs
-  implements Pick<Prisma.StatusWhereUniqueInput, 'id'>
-{
+export class FindUniqueStatusArgs implements Prisma.StatusWhereUniqueInput {
   @Field(() => GraphQLID, { description: 'Status identifier' })
   id!: string;
 }

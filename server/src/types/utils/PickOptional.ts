@@ -25,6 +25,6 @@
 import type { OptionalKeys } from './OptionalKeys';
 
 /**
- * Optional properties of T
+ * Optional properties of T.
  */
 export type PickOptional<T> = Pick<T, OptionalKeys<T>>;

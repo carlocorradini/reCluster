@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
 import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
 import { injectable, inject } from 'tsyringe';
 import { NodeService } from '~/services';
@@ -37,10 +36,7 @@ export class CpuNodeResolver {
   ) {}
 
   @FieldResolver(() => [Node], { description: 'CPU nodes' })
-  public nodes(
-    @Root() cpu: Cpu,
-    @Args() args: FindManyNodeArgs
-  ): Promise<Prisma.Node[]> {
+  public nodes(@Root() cpu: Cpu, @Args() args: FindManyNodeArgs) {
     return this.nodeService.findMany({
       ...args,
       where: { cpuId: { equals: cpu.id } }

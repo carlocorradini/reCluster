@@ -22,19 +22,21 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { GraphQLNonEmptyString } from 'graphql-scalars';
-import { MaxLength } from 'class-validator';
-import type { CreateUserInput as ICreateUserInput } from '~/types';
-import { config } from '~/config';
+import { Prisma, UserRoles } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
-@InputType({ description: 'Create User input' })
-export class CreateUserInput implements ICreateUserInput {
-  @Field(() => GraphQLNonEmptyString, { description: 'User username' })
-  @MaxLength(config.user.maxUsernameLength)
-  username!: string;
+const SALT_ROUNDS = 10;
 
-  @Field(() => GraphQLNonEmptyString, { description: 'User password' })
-  @MaxLength(config.user.maxPasswordLength)
-  password!: string;
-}
+export const admin: Prisma.UserCreateInput = {
+  username: 'admin',
+  password: bcrypt.hashSync('password', SALT_ROUNDS),
+  roles: [UserRoles.ADMIN, UserRoles.SIMPLE]
+};
+
+export const simple: Prisma.UserCreateInput = {
+  username: 'simple',
+  password: bcrypt.hashSync('password', SALT_ROUNDS),
+  roles: [UserRoles.SIMPLE]
+};
+
+export const users = [admin, simple];

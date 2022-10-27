@@ -28,7 +28,8 @@ import {
   StringFilter,
   TimestampFilter,
   UserRolesListFilter,
-  UserPermissionsListFilter
+  UserPermissionsListFilter,
+  UuidFilter
 } from '../filters';
 
 @InputType({ isAbstract: true, description: 'User where input' })
@@ -36,7 +37,7 @@ export class WhereUserInput
   implements Partial<Omit<Prisma.UserWhereInput, 'AND' | 'OR' | 'NOT'>>
 {
   @Field({ nullable: true, description: 'User identifier' })
-  id?: StringFilter;
+  id?: UuidFilter;
 
   @Field({ nullable: true, description: 'User username' })
   username?: StringFilter;

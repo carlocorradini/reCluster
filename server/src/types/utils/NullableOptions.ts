@@ -27,6 +27,6 @@ import type { PickOptional } from './PickOptional';
 import type { Nullable } from './Nullable';
 
 /**
- * Optional properties of T can be null
+ * Optional properties of T can be null.
  */
 export type NullableOptional<T> = PickRequired<T> & Nullable<PickOptional<T>>;

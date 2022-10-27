@@ -26,22 +26,15 @@ import type { Prisma } from '@prisma/client';
 import { GraphQLID } from 'graphql';
 import { GraphQLNonEmptyString } from 'graphql-scalars';
 import { ArgsType, Field } from 'type-graphql';
-import { IsDefined, isEmpty, ValidateIf } from 'class-validator';
 
 @ArgsType()
-export class FindUniqueUserArgs
-  implements Pick<Prisma.UserWhereUniqueInput, 'id' | 'username'>
-{
+export class FindUniqueUserArgs implements Prisma.UserWhereUniqueInput {
   @Field(() => GraphQLID, { nullable: true, description: 'User identifier' })
-  @ValidateIf((c: FindUniqueUserArgs) => isEmpty(c.username))
-  @IsDefined()
   id?: string;
 
   @Field(() => GraphQLNonEmptyString, {
     nullable: true,
     description: 'User username'
   })
-  @ValidateIf((c: FindUniqueUserArgs) => isEmpty(c.id))
-  @IsDefined()
   username?: string;
 }

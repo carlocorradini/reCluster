@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
 import { FieldResolver, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { NodeService } from '~/services';
@@ -37,7 +36,7 @@ export class StatusNodeResolver {
   ) {}
 
   @FieldResolver(() => Node, { description: 'Status node' })
-  public node(@Root() status: Status): Promise<Prisma.Node | null> {
-    return this.nodeService.findUnique({ id: status.nodeId });
+  public node(@Root() status: Status) {
+    return this.nodeService.findUnique({ where: { id: status.id } });
   }
 }

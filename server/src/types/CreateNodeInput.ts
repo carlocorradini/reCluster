@@ -22,19 +22,19 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { GraphQLNonEmptyString } from 'graphql-scalars';
-import { MaxLength } from 'class-validator';
-import type { CreateUserInput as ICreateUserInput } from '~/types';
-import { config } from '~/config';
+import type { Prisma } from '@prisma/client';
+import type { NodeRoles, NodePermissions } from '~/graphql';
+import type { CreateCpuInput } from './CreateCpuInput';
+import type { CreateDiskInput } from './CreateDiskInput';
+import type { CreateInterfaceInput } from './CreateInterfaceInput';
 
-@InputType({ description: 'Create User input' })
-export class CreateUserInput implements ICreateUserInput {
-  @Field(() => GraphQLNonEmptyString, { description: 'User username' })
-  @MaxLength(config.user.maxUsernameLength)
-  username!: string;
-
-  @Field(() => GraphQLNonEmptyString, { description: 'User password' })
-  @MaxLength(config.user.maxPasswordLength)
-  password!: string;
-}
+export type CreateNodeInput = Omit<
+  Prisma.NodeCreateInput,
+  'roles' | 'permissions' | 'cpu' | 'disks' | 'interfaces'
+> & {
+  roles: NodeRoles[];
+  permissions?: NodePermissions[];
+  cpu: CreateCpuInput;
+  disks: CreateDiskInput[];
+  interfaces: CreateInterfaceInput[];
+};

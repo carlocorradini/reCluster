@@ -31,7 +31,8 @@ import {
   IntFilter,
   IntNullableFilter,
   NodeRolesListFilter,
-  NodePermissionsListFilter
+  NodePermissionsListFilter,
+  UuidFilter
 } from '../filters';
 
 @InputType({ isAbstract: true, description: 'Node where input' })
@@ -40,12 +41,12 @@ export class WhereNodeInput
     Partial<
       Omit<
         Prisma.NodeWhereInput,
-        'AND' | 'OR' | 'NOT' | 'statuses' | 'cpu' | 'disks' | 'interfaces'
+        'AND' | 'OR' | 'NOT' | 'status' | 'cpu' | 'disks' | 'interfaces'
       >
     >
 {
   @Field({ nullable: true, description: 'Node identifier' })
-  id?: StringFilter;
+  id?: UuidFilter;
 
   @Field({ nullable: true, description: 'Node roles' })
   roles?: NodeRolesListFilter;

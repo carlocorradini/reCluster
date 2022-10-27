@@ -22,15 +22,23 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
-import type { FindManyInterfaceArgs, FindUniqueInterfaceArgs } from '~/graphql';
+
+type FindManyArgs = Omit<Prisma.InterfaceFindManyArgs, 'include' | 'cursor'> & {
+  cursor?: string;
+};
+
+type FindUniqueArgs = Omit<Prisma.InterfaceFindUniqueArgs, 'include'>;
+
+type FindUniqueOrThrowArgs = Omit<
+  Prisma.InterfaceFindUniqueOrThrowArgs,
+  'include'
+>;
 
 export class InterfaceService {
-  public async findMany(
-    args: FindManyInterfaceArgs
-  ): Promise<Prisma.Interface[]> {
+  public findMany(args: FindManyArgs) {
     logger.debug(`Interface service find many: ${JSON.stringify(args)}`);
 
     return prisma.interface.findMany({
@@ -39,11 +47,17 @@ export class InterfaceService {
     });
   }
 
-  public async findUnique(
-    args: FindUniqueInterfaceArgs
-  ): Promise<Prisma.Interface | null> {
+  public findUnique(args: FindUniqueArgs) {
     logger.debug(`Interface service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.interface.findUnique({ where: { id: args.id } });
+    return prisma.interface.findUnique(args);
+  }
+
+  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+    logger.debug(
+      `Interface service find unique or throw: ${JSON.stringify(args)}`
+    );
+
+    return prisma.interface.findUniqueOrThrow(args);
   }
 }

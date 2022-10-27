@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Prisma, NodeRoles } from '@prisma/client';
+import { Prisma, NodeRoles, NodeStatuses } from '@prisma/client';
 import { convert } from 'convert';
 import { Intel_I7_6700HQ } from './cpus';
 
@@ -32,6 +32,15 @@ export const master: Prisma.NodeCreateInput = {
   ram: BigInt(convert(8, 'GiB').to('B')),
   minPowerConsumption: 2000,
   maxPowerConsumption: 16000,
+  status: {
+    create: {
+      status: NodeStatuses.ACTIVE,
+      reason: 'NodeRegistered',
+      message: 'Node registered',
+      lastHeartbeat: new Date(),
+      lastTransition: new Date()
+    }
+  },
   cpu: { connect: { id: Intel_I7_6700HQ.id } },
   disks: {
     createMany: { data: [{ name: 'sda', size: convert(250, 'GB').to('B') }] }
@@ -55,6 +64,15 @@ export const worker: Prisma.NodeCreateInput = {
   ram: BigInt(convert(8, 'GiB').to('B')),
   minPowerConsumption: 2000,
   maxPowerConsumption: 16000,
+  status: {
+    create: {
+      status: NodeStatuses.ACTIVE,
+      reason: 'NodeRegistered',
+      message: 'Node registered',
+      lastHeartbeat: new Date(),
+      lastTransition: new Date()
+    }
+  },
   cpu: { connect: { id: Intel_I7_6700HQ.id } },
   disks: {
     createMany: { data: [{ name: 'sda', size: convert(250, 'GB').to('B') }] }

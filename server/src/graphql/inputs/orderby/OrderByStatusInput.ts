@@ -36,12 +36,24 @@ export class OrderByStatusInput
   @Field(() => SortOrders, { nullable: true, description: 'Status' })
   status?: SortOrders;
 
-  @Field(() => SortOrders, { nullable: true, description: 'Node identifier' })
-  nodeId?: SortOrders;
+  @Field(() => SortOrders, { nullable: true, description: 'Status reason' })
+  reason?: SortOrders;
+
+  @Field(() => SortOrders, { nullable: true, description: 'Status message' })
+  message?: SortOrders;
 
   @Field(() => SortOrders, {
     nullable: true,
-    description: 'Creation timestamp'
+    description: 'Last heartbeat timestamp'
   })
-  createdAt?: SortOrders;
+  lastHeartbeat?: SortOrders;
+
+  @Field(() => SortOrders, {
+    nullable: true,
+    description: 'Last transition timestamp'
+  })
+  lastTransition?: SortOrders;
+
+  @Field(() => SortOrders, { nullable: true, description: 'Update timestamp' })
+  updatedAt?: SortOrders;
 }

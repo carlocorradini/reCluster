@@ -23,7 +23,7 @@
  */
 
 /**
- * Required keys of T
+ * Required keys of T.
  */
 export type RequiredKeys<T> = {
   [K in keyof T]-?: Record<string, never> extends { [P in K]: T[K] }

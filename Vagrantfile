@@ -60,8 +60,13 @@ apk add --update --no-cache \
   procps \
   sudo \
   sysbench \
+  tzdata \
   util-linux \
   yq
+
+# Timezone
+cp /usr/share/zoneinfo/Etc/UTC /etc/localtime
+echo "Etc/UTC" > /etc/timezone
 SCRIPT
 
 Vagrant.configure("2") do |config|

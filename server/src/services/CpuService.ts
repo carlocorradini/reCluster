@@ -22,46 +22,60 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
+import type { Cpu as PrismaCpu, Prisma } from '@prisma/client';
+import type { CreateCpuInput } from '~/types';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
-import type {
-  CreateCpuInput,
-  FindManyCpuArgs,
-  FindUniqueCpuArgs
-} from '~/graphql';
+
+type UpsertArgs = Omit<Prisma.CpuCreateArgs, 'include'> & {
+  data: CreateCpuInput;
+};
+
+type FindManyArgs = Omit<Prisma.CpuFindManyArgs, 'include' | 'cursor'> & {
+  cursor?: string;
+};
+
+type FindUniqueArgs = Omit<Prisma.CpuFindUniqueArgs, 'include'>;
+
+type FindUniqueOrThrowArgs = Omit<Prisma.CpuFindUniqueOrThrowArgs, 'include'>;
 
 export class CpuService {
-  public async create(args: CreateCpuInput): Promise<Prisma.Cpu> {
-    logger.debug(`Cpu service create: ${JSON.stringify(args)}`);
+  // FIXME Return type
+  public async upsert(args: UpsertArgs): Promise<PrismaCpu> {
+    logger.info(`Cpu service create: ${JSON.stringify(args)}`);
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const vendor_family_model = {
-      vendor: args.vendor,
-      family: args.family,
-      model: args.model
-    };
+    const vendor_family_model: Prisma.CpuVendorFamilyModelCompoundUniqueInput =
+      {
+        vendor: args.data.vendor,
+        family: args.data.family,
+        model: args.data.model
+      };
 
     // Find old vulnerabilities (if any)
-    const cpu = await prisma.cpu.findUnique({
+    const cpu = await this.findUnique({
       where: { vendor_family_model },
       select: { vulnerabilities: true }
     });
 
     // Vulnerabilities array (updated if any)
     const vulnerabilities = [
-      ...new Set([...(cpu?.vulnerabilities ?? []), ...args.vulnerabilities])
+      ...new Set([
+        ...(cpu?.vulnerabilities ?? []),
+        ...(args.data.vulnerabilities ?? [])
+      ])
     ];
 
     // Create or update cpu
     return prisma.cpu.upsert({
       where: { vendor_family_model },
+      create: args.data,
       update: { vulnerabilities },
-      create: args
-    });
+      select: args.select
+    }) as unknown as Promise<PrismaCpu>; // FIXME Forced correct return type
   }
 
-  public async findMany(args: FindManyCpuArgs): Promise<Prisma.Cpu[]> {
+  public findMany(args: FindManyArgs) {
     logger.debug(`Cpu service find many: ${JSON.stringify(args)}`);
 
     return prisma.cpu.findMany({
@@ -70,9 +84,15 @@ export class CpuService {
     });
   }
 
-  public async findUnique(args: FindUniqueCpuArgs): Promise<Prisma.Cpu | null> {
+  public findUnique(args: FindUniqueArgs) {
     logger.debug(`Cpu service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.cpu.findUnique({ where: { id: args.id } });
+    return prisma.cpu.findUnique(args);
+  }
+
+  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+    logger.debug(`Cpu service find unique or throw: ${JSON.stringify(args)}`);
+
+    return prisma.cpu.findUniqueOrThrow(args);
   }
 }

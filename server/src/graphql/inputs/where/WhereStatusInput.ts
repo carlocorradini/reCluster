@@ -24,7 +24,13 @@
 
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { StringFilter, NodeStatusesFilter, TimestampFilter } from '../filters';
+import {
+  NodeStatusesFilter,
+  TimestampFilter,
+  UuidFilter,
+  StringNullableFilter,
+  TimestampNullableFilter
+} from '../filters';
 
 @InputType({ isAbstract: true, description: 'Status where input' })
 export class WhereStatusInput
@@ -32,14 +38,23 @@ export class WhereStatusInput
     Partial<Omit<Prisma.StatusWhereInput, 'AND' | 'OR' | 'NOT' | 'node'>>
 {
   @Field({ nullable: true, description: 'Status identifier' })
-  id?: StringFilter;
+  id?: UuidFilter;
 
   @Field({ nullable: true, description: 'Status' })
   status?: NodeStatusesFilter;
 
-  @Field({ description: 'Node identifier' })
-  nodeId?: StringFilter;
+  @Field({ nullable: true, description: 'Status reason' })
+  reason?: StringNullableFilter;
 
-  @Field({ nullable: true, description: 'Creation timestamp' })
-  createdAt?: TimestampFilter;
+  @Field({ nullable: true, description: 'Status message' })
+  message?: StringNullableFilter;
+
+  @Field({ nullable: true, description: 'Last heartbeat timestamp' })
+  lastHeartbeat?: TimestampNullableFilter;
+
+  @Field({ nullable: true, description: 'Last transition timestamp' })
+  lastTransition?: TimestampFilter;
+
+  @Field({ nullable: true, description: 'Update timestamp' })
+  updatedAt?: TimestampFilter;
 }

@@ -29,6 +29,7 @@ export * from './InterfaceWoLFlags';
 export * from './NodePermissions';
 export * from './NodeRoles';
 export * from './NodeStatuses';
+export * from './QueryModeCaseSensitivity';
 export * from './SortOrders';
 export * from './UserPermissions';
 export * from './UserRoles';

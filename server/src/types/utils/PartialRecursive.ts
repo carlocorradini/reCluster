@@ -25,6 +25,6 @@
 import type { ExpandRecursively } from './ExpandRecursively';
 
 /**
- * Properties and nested properties of T are optional
+ * Properties and nested properties of T are optional.
  */
 export type PartialRecursive<T> = ExpandRecursively<Partial<T>>;

@@ -191,11 +191,13 @@ assert_docker_image() {
   fi
 }
 
-# Destro Docker container
+# Destroy Docker container
 # @param $1 Container id
 destroy_docker_container() {
   assert_cmd docker
   _container_id=$1
+
+  [ -n "$_container_id" ] || return 0
 
   INFO "Stopping Docker container '$_container_id'"
   docker stop "$_container_id" > /dev/null 2>&1 || return 0

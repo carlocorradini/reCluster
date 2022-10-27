@@ -24,7 +24,12 @@
 
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import { BigIntFilter, StringFilter, TimestampFilter } from '../filters';
+import {
+  BigIntFilter,
+  StringFilter,
+  TimestampFilter,
+  UuidFilter
+} from '../filters';
 
 @InputType({ isAbstract: true, description: 'Disk where input' })
 export class WhereDiskInput
@@ -32,7 +37,7 @@ export class WhereDiskInput
     Partial<Omit<Prisma.DiskWhereInput, 'AND' | 'OR' | 'NOT' | 'node'>>
 {
   @Field({ nullable: true, description: 'Disk identifier' })
-  id?: StringFilter;
+  id?: UuidFilter;
 
   @Field({ nullable: true, description: 'Node identifier' })
   nodeId?: StringFilter;

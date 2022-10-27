@@ -27,9 +27,7 @@ import { GraphQLID } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
 
 @ArgsType()
-export class FindUniqueCpuArgs
-  implements Pick<Prisma.CpuWhereUniqueInput, 'id'>
-{
+export class FindUniqueCpuArgs implements Prisma.CpuWhereUniqueInput {
   @Field(() => GraphQLID, { description: 'Cpu identifier' })
   id!: string;
 }

@@ -23,7 +23,7 @@
  */
 
 /**
- * Optional keys of T
+ * Optional keys of T.
  */
 export type OptionalKeys<T> = {
   [K in keyof T]-?: Record<string, never> extends { [P in K]: T[K] }

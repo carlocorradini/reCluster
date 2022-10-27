@@ -22,11 +22,9 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
-import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
+import { FieldResolver, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { StatusService } from '~/services';
-import { FindManyStatusArgs } from '../../args';
 import { Node, Status } from '../../entities';
 
 @Resolver(() => Node)
@@ -37,14 +35,8 @@ export class NodeStatusResolver {
     private readonly statusService: StatusService
   ) {}
 
-  @FieldResolver(() => [Status], { description: 'Node statuses' })
-  public statuses(
-    @Root() node: Node,
-    @Args() args: FindManyStatusArgs
-  ): Promise<Prisma.Status[]> {
-    return this.statusService.findMany({
-      ...args,
-      where: { nodeId: { equals: node.id } }
-    });
+  @FieldResolver(() => Status, { description: 'Node status' })
+  public status(@Root() node: Node) {
+    return this.statusService.findUnique({ where: { id: node.id } });
   }
 }

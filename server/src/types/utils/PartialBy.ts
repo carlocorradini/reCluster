@@ -23,6 +23,6 @@
  */
 
 /**
- * Set properties K of T to optional
+ * Set properties K of T to optional.
  */
 export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;

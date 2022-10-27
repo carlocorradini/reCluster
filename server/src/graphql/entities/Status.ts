@@ -25,7 +25,7 @@
 import type * as Prisma from '@prisma/client';
 import { GraphQLID } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
-import { GraphQLTimestamp } from 'graphql-scalars';
+import { GraphQLNonEmptyString, GraphQLTimestamp } from 'graphql-scalars';
 import { NodeStatuses } from '../enums';
 
 @ObjectType({ description: 'Status' })
@@ -36,8 +36,27 @@ export class Status implements Prisma.Status {
   @Field(() => NodeStatuses, { description: 'Status' })
   status!: NodeStatuses;
 
-  nodeId!: string;
+  @Field(() => GraphQLNonEmptyString, {
+    nullable: true,
+    description: 'Status reason'
+  })
+  reason!: string | null;
 
-  @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
-  createdAt!: Date;
+  @Field(() => GraphQLNonEmptyString, {
+    nullable: true,
+    description: 'Status message'
+  })
+  message!: string | null;
+
+  @Field(() => GraphQLTimestamp, {
+    nullable: true,
+    description: 'Last heartbeat timestamp'
+  })
+  lastHeartbeat!: Date | null;
+
+  @Field(() => GraphQLTimestamp, { description: 'Last transition timestamp' })
+  lastTransition!: Date;
+
+  @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
+  updatedAt!: Date;
 }

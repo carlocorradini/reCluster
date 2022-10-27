@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
 import { Args, Mutation, Query, Resolver } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { GraphQLJWT } from 'graphql-scalars';
@@ -44,7 +43,7 @@ export class UserResolver {
   ) {}
 
   @Query(() => [User], { description: 'List of Users' })
-  public users(@Args() args: FindManyUserArgs): Promise<Prisma.User[]> {
+  public users(@Args() args: FindManyUserArgs) {
     return this.userService.findMany(args);
   }
 
@@ -52,17 +51,19 @@ export class UserResolver {
     nullable: true,
     description: 'User matching the identifier'
   })
-  public user(@Args() args: FindUniqueUserArgs): Promise<Prisma.User | null> {
-    return this.userService.findUnique(args);
+  public user(@Args() args: FindUniqueUserArgs) {
+    return this.userService.findUnique({
+      where: { id: args.id, username: args.username }
+    });
   }
 
   @Mutation(() => User, { description: 'Create a new user' })
-  public createUser(@Args() args: CreateUserArgs): Promise<Prisma.User> {
+  public createUser(@Args() args: CreateUserArgs) {
     return this.userService.create(args);
   }
 
   @Mutation(() => GraphQLJWT, { description: 'Sign in user' })
-  public signIn(@Args() args: SignInArgs): Promise<string> {
+  public signIn(@Args() args: SignInArgs) {
     return this.userService.signIn(args);
   }
 }

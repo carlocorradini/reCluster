@@ -34,3 +34,4 @@ export * from './PartialRecursive';
 export * from './PickOptional';
 export * from './PickRequired';
 export * from './RequiredKeys';
+export * from './WithRequired';

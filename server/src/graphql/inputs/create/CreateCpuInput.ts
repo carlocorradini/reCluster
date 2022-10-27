@@ -22,27 +22,22 @@
  * SOFTWARE.
  */
 
-import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
 import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
 import { IsDefined, isNotEmpty, ValidateIf } from 'class-validator';
-import { PickRequired } from '~/types';
+import type { CreateCpuInput as ICreateCpuInput } from '~/types';
 import { CpuArchitectures, CpuVendors } from '../../enums';
-
-type ICreateCpuInput = PickRequired<
-  Prisma.CpuCreateWithoutNodesInput & {
-    flags: string[];
-    vulnerabilities: string[];
-  }
->;
 
 @InputType({ description: 'Create Cpu input' })
 export class CreateCpuInput implements ICreateCpuInput {
   @Field(() => CpuArchitectures, { description: 'Cpu architecture' })
   architecture!: CpuArchitectures;
 
-  @Field(() => [GraphQLNonEmptyString], { description: 'Cpu flags' })
-  flags!: string[];
+  @Field(() => [GraphQLNonEmptyString], {
+    nullable: true,
+    description: 'Cpu flags'
+  })
+  flags?: string[];
 
   @Field(() => GraphQLPositiveInt, { description: 'Cpu cores' })
   cores!: number;
@@ -71,8 +66,11 @@ export class CreateCpuInput implements ICreateCpuInput {
   @Field(() => GraphQLPositiveInt, { description: 'Cpu L3 cache' })
   cacheL3!: number;
 
-  @Field(() => [GraphQLNonEmptyString], { description: 'Cpu vulnerabilities' })
-  vulnerabilities!: string[];
+  @Field(() => [GraphQLNonEmptyString], {
+    nullable: true,
+    description: 'Cpu vulnerabilities'
+  })
+  vulnerabilities?: string[];
 
   @Field(() => GraphQLPositiveInt, { description: 'Cpu single-thread score' })
   singleThreadScore!: number;

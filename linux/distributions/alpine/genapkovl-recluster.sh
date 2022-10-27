@@ -53,6 +53,10 @@ rc_add() {
 tmp="$(mktemp -d)"
 trap cleanup EXIT
 
+# Timezone
+cp /usr/share/zoneinfo/Etc/UTC /etc/localtime
+echo "Etc/UTC" > /etc/timezone
+
 mkdir -p "$tmp"/etc
 makefile root:root 0644 "$tmp"/etc/hostname << EOF
 $HOSTNAME

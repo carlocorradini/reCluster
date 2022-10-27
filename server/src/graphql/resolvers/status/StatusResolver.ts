@@ -22,18 +22,14 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
 import { Args, Mutation, Query, Resolver } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
-import type { TokenPayload } from '~/types';
 import { StatusService, TokenTypes } from '~/services';
 import { Applicant, Auth } from '~/helpers';
+import { TokenPayload } from '~/types';
 import { Status } from '../../entities';
-import {
-  FindUniqueStatusArgs,
-  FindManyStatusArgs,
-  CreateStatusArgs
-} from '../../args';
+import { FindUniqueStatusArgs, FindManyStatusArgs } from '../../args';
+import { NodeStatuses } from '../../enums';
 
 @Resolver(Status)
 @injectable()
@@ -44,7 +40,7 @@ export class StatusResolver {
   ) {}
 
   @Query(() => [Status], { description: 'List of Statuses' })
-  public statuses(@Args() args: FindManyStatusArgs): Promise<Prisma.Status[]> {
+  public statuses(@Args() args: FindManyStatusArgs) {
     return this.statusService.findMany(args);
   }
 
@@ -52,20 +48,20 @@ export class StatusResolver {
     nullable: true,
     description: 'Status matching the identifier'
   })
-  public status(
-    @Args() args: FindUniqueStatusArgs
-  ): Promise<Prisma.Status | null> {
-    return this.statusService.findUnique(args);
+  public status(@Args() args: FindUniqueStatusArgs) {
+    return this.statusService.findUnique({ where: { id: args.id } });
   }
 
-  @Mutation(() => Status, { description: 'Create a new status' })
+  @Mutation(() => Status, { description: 'Update Status' })
   @Auth({ type: TokenTypes.NODE })
-  public createStatus(
-    @Args() args: CreateStatusArgs,
-    @Applicant() applicant: TokenPayload
-  ): Promise<Prisma.Status> {
-    return this.statusService.create({
-      data: { ...args.data, nodeId: applicant.id }
+  public updateStatus(@Applicant() applicant: TokenPayload) {
+    return this.statusService.update({
+      where: { id: applicant.id },
+      data: {
+        status: NodeStatuses.ACTIVE,
+        reason: 'NodeStatusUpdate',
+        message: 'Node sent status update'
+      }
     });
   }
 }

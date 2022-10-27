@@ -23,14 +23,11 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import { Field, InputType } from 'type-graphql';
-import { PickRequired } from '~/types';
-import { NodeStatuses } from '../../enums';
 
-type ICreateStatusInput = PickRequired<Prisma.StatusCreateWithoutNodeInput>;
-
-@InputType({ description: 'Create Status input' })
-export class CreateStatusInput implements ICreateStatusInput {
-  @Field(() => NodeStatuses, { description: 'Status' })
-  status!: NodeStatuses;
-}
+export type CreateCpuInput = Omit<
+  Prisma.CpuCreateWithoutNodesInput,
+  'flags' | 'vulnerabilities'
+> & {
+  flags?: string[];
+  vulnerabilities?: string[];
+};

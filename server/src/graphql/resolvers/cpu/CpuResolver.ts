@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
 import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { injectable, inject } from 'tsyringe';
 import { GraphQLNonNegativeInt } from 'graphql-scalars';
@@ -40,7 +39,7 @@ export class CpuResolver {
   ) {}
 
   @Query(() => [Cpu], { description: 'List of Cpus' })
-  public cpus(@Args() args: FindManyCpuArgs): Promise<Prisma.Cpu[]> {
+  public cpus(@Args() args: FindManyCpuArgs) {
     return this.cpuService.findMany(args);
   }
 
@@ -48,8 +47,8 @@ export class CpuResolver {
     nullable: true,
     description: 'Cpu matching the identifier'
   })
-  public cpu(@Args() args: FindUniqueCpuArgs): Promise<Prisma.Cpu | null> {
-    return this.cpuService.findUnique(args);
+  public cpu(@Args() args: FindUniqueCpuArgs) {
+    return this.cpuService.findUnique({ where: { id: args.id } });
   }
 
   @FieldResolver(() => GraphQLNonNegativeInt)
@@ -60,7 +59,7 @@ export class CpuResolver {
       description: 'Digital conversion unit'
     })
     unit: DigitalUnits
-  ): number {
+  ) {
     return convert(cpu.cacheL1d, DigitalUnits.B).to(unit);
   }
 
@@ -72,7 +71,7 @@ export class CpuResolver {
       description: 'Digital conversion unit'
     })
     unit: DigitalUnits
-  ): number {
+  ) {
     return convert(cpu.cacheL1i, DigitalUnits.B).to(unit);
   }
 
@@ -84,7 +83,7 @@ export class CpuResolver {
       description: 'Digital conversion unit'
     })
     unit: DigitalUnits
-  ): number {
+  ) {
     return convert(cpu.cacheL2, DigitalUnits.B).to(unit);
   }
 
@@ -96,7 +95,7 @@ export class CpuResolver {
       description: 'Digital conversion unit'
     })
     unit: DigitalUnits
-  ): number {
+  ) {
     return convert(cpu.cacheL3, DigitalUnits.B).to(unit);
   }
 }

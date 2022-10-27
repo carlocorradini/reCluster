@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
 import {
   Arg,
   Args,
@@ -41,8 +40,7 @@ import { Node } from '../../entities';
 import {
   CreateNodeArgs,
   FindUniqueNodeArgs,
-  FindManyNodeArgs,
-  UpdateNodeArgs
+  FindManyNodeArgs
 } from '../../args';
 
 @Resolver(Node)
@@ -54,7 +52,7 @@ export class NodeResolver {
   ) {}
 
   @Query(() => [Node], { description: 'List of nodes' })
-  public nodes(@Args() args: FindManyNodeArgs): Promise<Prisma.Node[]> {
+  public nodes(@Args() args: FindManyNodeArgs) {
     return this.nodeService.findMany(args);
   }
 
@@ -62,18 +60,13 @@ export class NodeResolver {
     nullable: true,
     description: 'Node matching the identifier'
   })
-  public node(@Args() args: FindUniqueNodeArgs): Promise<Prisma.Node | null> {
-    return this.nodeService.findUnique(args);
+  public node(@Args() args: FindUniqueNodeArgs) {
+    return this.nodeService.findUnique({ where: { id: args.id } });
   }
 
   @Mutation(() => GraphQLJWT, { description: 'Create a new node' })
-  public createNode(@Args() args: CreateNodeArgs): Promise<string> {
+  public createNode(@Args() args: CreateNodeArgs) {
     return this.nodeService.create(args);
-  }
-
-  @Mutation(() => Node, { description: 'Update node' })
-  public updateNode(@Args() args: UpdateNodeArgs): Promise<Prisma.Node> {
-    return this.nodeService.update(args);
   }
 
   @FieldResolver(() => GraphQLBigInt)
@@ -84,7 +77,7 @@ export class NodeResolver {
       description: 'Digital conversion unit'
     })
     unit: DigitalUnits
-  ): bigint {
+  ) {
     return convert(node.ram, DigitalUnits.B).to(unit);
   }
 }

@@ -53,7 +53,7 @@ model Node {
   id                             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   roles                          NodeRoles[]
   permissions                    NodePermissions[] @default([])
-  statuses                       Status[]
+  status                         Status?
   cpu                            Cpu               @relation(fields: [cpuId], references: [id], map: "cpu_id")
   cpuId                          String            @db.Uuid
   ram                            BigInt
@@ -79,20 +79,22 @@ enum NodePermissions {
 }
 
 model Status {
-  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  status    NodeStatuses
-  node      Node         @relation(fields: [nodeId], references: [id], map: "node_id")
-  nodeId    String       @db.Uuid
-  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  id             String       @id @db.Uuid
+  node           Node         @relation(fields: [id], references: [id])
+  status         NodeStatuses
+  reason         String?
+  message        String?
+  lastHeartbeat  DateTime?    @map("last_heartbeat") @db.Timestamptz()
+  lastTransition DateTime     @map("last_transition") @db.Timestamptz()
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
 }
 
 enum NodeStatuses {
   ACTIVE
-  ACTIVE_NOT_READY
   ACTIVE_READY
-  ACTIVE_UNKNOWN
+  ACTIVE_NOT_READY
   INACTIVE
-  ERROR
+  UNKNOWN
 }
 
 model Disk {
@@ -114,7 +116,7 @@ model Interface {
   name      String
   address   String
   speed     BigInt
-  wol       InterfaceWoLFlags[]
+  wol       InterfaceWoLFlags[] @default([])
   createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -136,7 +138,7 @@ enum InterfaceWoLFlags {
 model Cpu {
   id                   String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   architecture         CpuArchitectures
-  flags                String[]
+  flags                String[]         @default([])
   cores                Int
   vendor               CpuVendors
   family               Int
@@ -146,7 +148,7 @@ model Cpu {
   cacheL1i             Int              @map("cache_l1i")
   cacheL2              Int              @map("cache_l2")
   cacheL3              Int              @map("cache_l3")
-  vulnerabilities      String[]
+  vulnerabilities      String[]         @default([])
   singleThreadScore    Int              @map("single_thread_score")
   multiThreadScore     Int              @map("multi_thread_score")
   efficiencyThreshold  Int?             @map("efficiency_threshold")

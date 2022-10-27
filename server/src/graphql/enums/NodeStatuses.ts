@@ -26,11 +26,10 @@ import { registerEnumType } from 'type-graphql';
 
 export enum NodeStatuses {
   ACTIVE = 'ACTIVE',
-  ACTIVE_NOT_READY = 'ACTIVE_NOT_READY',
   ACTIVE_READY = 'ACTIVE_READY',
-  ACTIVE_UNKNOWN = 'ACTIVE_UNKNOWN',
+  ACTIVE_NOT_READY = 'ACTIVE_NOT_READY',
   INACTIVE = 'INACTIVE',
-  ERROR = 'ERROR'
+  UNKNOWN = 'UNKNOWN'
 }
 
 registerEnumType(NodeStatuses, {
@@ -38,18 +37,17 @@ registerEnumType(NodeStatuses, {
   description: 'Node statuses',
   valuesConfig: {
     ACTIVE: { description: 'Node is active' },
-    ACTIVE_NOT_READY: {
-      description:
-        'Node is active and K8s is not healthy and is not accepting pods'
-    },
     ACTIVE_READY: {
-      description: 'Node is active and K8s is healthy and ready to accept pods'
+      description: 'Node is active, healthy and ready to accept pods'
     },
-    ACTIVE_UNKNOWN: {
-      description:
-        'Node is active and K8s has not heard the node in the last node-monitor-grace-period'
+    ACTIVE_NOT_READY: {
+      description: 'Node is active but not healthy and is not accepting pods'
     },
-    INACTIVE: { description: 'Node is inactive' },
-    ERROR: { description: 'Node error' }
+    INACTIVE: {
+      description: 'Node is inactive'
+    },
+    UNKNOWN: {
+      description: 'Unknown'
+    }
   }
 });

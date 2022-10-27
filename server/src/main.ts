@@ -43,7 +43,12 @@ import { schema } from './graphql';
 import { kubeconfig, NodeInformer } from './k8s';
 import { Context } from './types';
 
+// Set timezone to UTC
+process.env.TZ = 'Etc/UTC';
+
+// Server
 const server = Fastify();
+// Apollo
 const apollo = new ApolloServer<Context>({
   schema,
   formatError,

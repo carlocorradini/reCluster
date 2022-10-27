@@ -23,7 +23,7 @@
  */
 
 /**
- * Find many args of T
+ * Find many args of T.
  */
 export type FindManyArgs<T> = Omit<T, 'select' | 'include' | 'distinct'> & {
   cursor?: string;

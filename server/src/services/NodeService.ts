@@ -22,21 +22,26 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { inject, injectable } from 'tsyringe';
+import type { CreateNodeInput } from '~/types';
+import { NodeStatuses, NodeRoles, NodePermissions } from '~/graphql/enums';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
-import type {
-  FindManyNodeArgs,
-  FindUniqueNodeArgs,
-  CreateNodeArgs,
-  UpdateNodeArgs,
-  NodeRoles,
-  NodePermissions
-} from '~/graphql';
-import { NodeStatuses } from '~/graphql/enums';
 import { TokenService, TokenTypes } from './TokenService';
 import { CpuService } from './CpuService';
+
+type CreateArgs = Omit<Prisma.NodeCreateArgs, 'include' | 'data'> & {
+  data: CreateNodeInput;
+};
+
+type FindManyArgs = Omit<Prisma.NodeFindManyArgs, 'include' | 'cursor'> & {
+  cursor?: string;
+};
+
+type FindUniqueArgs = Omit<Prisma.NodeFindUniqueArgs, 'include'>;
+
+type FindUniqueOrThrowArgs = Omit<Prisma.NodeFindUniqueOrThrowArgs, 'include'>;
 
 @injectable()
 export class NodeService {
@@ -47,7 +52,48 @@ export class NodeService {
     private readonly tokenService: TokenService
   ) {}
 
-  public async findMany(args: FindManyNodeArgs): Promise<Prisma.Node[]> {
+  public async create(args: CreateArgs) {
+    logger.info(`Node service create: ${JSON.stringify(args)}`);
+
+    // Create or update cpu
+    const { id: cpuId } = await this.cpuService.upsert({
+      data: args.data.cpu,
+      select: { id: true }
+    });
+
+    // Create
+    const node = await prisma.node.create({
+      ...args,
+      select: { id: true, roles: true, permissions: true },
+      data: {
+        ...args.data,
+        status: {
+          create: {
+            status: NodeStatuses.ACTIVE,
+            reason: 'NodeRegistered',
+            message: 'Node registered',
+            lastHeartbeat: new Date(),
+            lastTransition: new Date()
+          }
+        },
+        cpu: { connect: { id: cpuId } },
+        disks: { createMany: { data: args.data.disks } },
+        interfaces: {
+          createMany: { data: args.data.interfaces }
+        }
+      }
+    });
+
+    // Generate token
+    return this.tokenService.sign({
+      type: TokenTypes.NODE,
+      id: node.id,
+      roles: node.roles as NodeRoles[], // FIXME
+      permissions: node.permissions as NodePermissions[] // FIXME
+    });
+  }
+
+  public findMany(args: FindManyArgs) {
     logger.debug(`Node service find many: ${JSON.stringify(args)}`);
 
     return prisma.node.findMany({
@@ -56,47 +102,15 @@ export class NodeService {
     });
   }
 
-  public async findUnique(
-    args: FindUniqueNodeArgs
-  ): Promise<Prisma.Node | null> {
+  public findUnique(args: FindUniqueArgs) {
     logger.debug(`Node service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.node.findUnique({ where: { id: args.id } });
+    return prisma.node.findUnique(args);
   }
 
-  public async create(args: CreateNodeArgs): Promise<string> {
-    logger.info(`Node service create: ${JSON.stringify(args)}`);
+  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+    logger.debug(`Node service find unique or throw: ${JSON.stringify(args)}`);
 
-    // Create or update cpu
-    const { id: cpuId } = await this.cpuService.create(args.data.cpu);
-
-    // Create
-    const node = await prisma.node.create({
-      ...args,
-      select: { id: true, roles: true, permissions: true },
-      data: {
-        ...args.data,
-        cpu: { connect: { id: cpuId } },
-        disks: { createMany: { data: args.data.disks, skipDuplicates: true } },
-        interfaces: {
-          createMany: { data: args.data.interfaces, skipDuplicates: true }
-        },
-        statuses: { create: { status: NodeStatuses.ACTIVE } }
-      }
-    });
-
-    // Generate token
-    return this.tokenService.sign({
-      type: TokenTypes.NODE,
-      id: node.id,
-      roles: node.roles as NodeRoles[],
-      permissions: node.permissions as NodePermissions[]
-    });
-  }
-
-  public async update(args: UpdateNodeArgs): Promise<Prisma.Node> {
-    logger.info(`Node service update: ${JSON.stringify(args)}`);
-
-    return prisma.node.update({ where: { id: args.id }, data: args.data });
+    return prisma.node.findUniqueOrThrow(args);
   }
 }

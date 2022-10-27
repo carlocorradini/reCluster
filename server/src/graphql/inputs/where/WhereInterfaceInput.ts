@@ -28,7 +28,8 @@ import {
   BigIntFilter,
   StringFilter,
   InterfaceWoLFlagsListFilter,
-  TimestampFilter
+  TimestampFilter,
+  UuidFilter
 } from '../filters';
 
 @InputType({ isAbstract: true, description: 'Interface where input' })
@@ -37,7 +38,7 @@ export class WhereInterfaceInput
     Partial<Omit<Prisma.InterfaceWhereInput, 'AND' | 'OR' | 'NOT' | 'node'>>
 {
   @Field({ nullable: true, description: 'Interface identifier' })
-  id?: StringFilter;
+  id?: UuidFilter;
 
   @Field({ nullable: true, description: 'Node identifier' })
   nodeId?: StringFilter;

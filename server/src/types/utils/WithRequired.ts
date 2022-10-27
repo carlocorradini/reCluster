@@ -22,4 +22,7 @@
  * SOFTWARE.
  */
 
-export * from './UpdateNodeInput';
+/**
+ * Set K properties of T required.
+ */
+export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };

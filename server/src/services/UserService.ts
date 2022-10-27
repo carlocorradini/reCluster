@@ -22,21 +22,29 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
+import type { User as PrismaUser, Prisma } from '@prisma/client';
 import { inject, injectable } from 'tsyringe';
+import type { CreateUserInput } from '~/types';
+import type { UserRoles, UserPermissions } from '~/graphql';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
 import { AuthenticationError } from '~/errors';
-import type {
-  CreateUserArgs,
-  FindManyUserArgs,
-  FindUniqueUserArgs,
-  SignInArgs,
-  UserPermissions,
-  UserRoles
-} from '~/graphql';
 import { TokenService, TokenTypes } from './TokenService';
 import { CryptoService } from './CryptoService';
+
+type CreateArgs = Omit<Prisma.UserCreateArgs, 'include' | 'data'> & {
+  data: CreateUserInput;
+};
+
+type FindManyArgs = Omit<Prisma.UserFindManyArgs, 'include' | 'cursor'> & {
+  cursor?: string;
+};
+
+type FindUniqueArgs = Omit<Prisma.UserFindUniqueArgs, 'include'>;
+
+type FindUniqueOrThrowArgs = Omit<Prisma.UserFindUniqueOrThrowArgs, 'include'>;
+
+type SignInArgs = Required<Pick<PrismaUser, 'username' | 'password'>>;
 
 @injectable()
 export class UserService {
@@ -47,7 +55,13 @@ export class UserService {
     private readonly cryptoService: CryptoService
   ) {}
 
-  public async findMany(args: FindManyUserArgs): Promise<Prisma.User[]> {
+  public create(args: CreateArgs) {
+    logger.info(`User service create: ${JSON.stringify(args)}`);
+
+    return prisma.user.create(args);
+  }
+
+  public findMany(args: FindManyArgs) {
     logger.debug(`User service find many: ${JSON.stringify(args)}`);
 
     return prisma.user.findMany({
@@ -56,21 +70,19 @@ export class UserService {
     });
   }
 
-  public async findUnique(
-    args: FindUniqueUserArgs
-  ): Promise<Prisma.User | null> {
+  public findUnique(args: FindUniqueArgs) {
     logger.debug(`User service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.user.findUnique({ where: { id: args.id } });
+    return prisma.user.findUnique(args);
   }
 
-  public async create(args: CreateUserArgs): Promise<Prisma.User> {
-    logger.info(`User service create: ${JSON.stringify(args)}`);
+  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+    logger.debug(`User service find unique or throw: ${JSON.stringify(args)}`);
 
-    return prisma.user.create({ ...args });
+    return prisma.user.findUniqueOrThrow(args);
   }
 
-  public async signIn(args: SignInArgs): Promise<string> {
+  public async signIn(args: SignInArgs) {
     logger.info(`User service sign in: ${args.username}`);
 
     const user = await prisma.user.findUnique({

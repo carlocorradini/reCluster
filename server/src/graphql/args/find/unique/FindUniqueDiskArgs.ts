@@ -27,9 +27,7 @@ import { GraphQLID } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
 
 @ArgsType()
-export class FindUniqueDiskArgs
-  implements Pick<Prisma.DiskWhereUniqueInput, 'id'>
-{
+export class FindUniqueDiskArgs implements Prisma.DiskWhereUniqueInput {
   @Field(() => GraphQLID, { description: 'Disk identifier' })
   id!: string;
 }

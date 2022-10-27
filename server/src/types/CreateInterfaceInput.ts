@@ -22,4 +22,12 @@
  * SOFTWARE.
  */
 
-export * from './UpdateNodeArgs';
+import type { Prisma } from '@prisma/client';
+import type { InterfaceWoLFlags } from '~/graphql';
+
+export type CreateInterfaceInput = Omit<
+  Prisma.InterfaceCreateWithoutNodeInput,
+  'wol'
+> & {
+  wol?: InterfaceWoLFlags[];
+};

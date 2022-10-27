@@ -25,6 +25,6 @@
 import type { RequiredKeys } from './RequiredKeys';
 
 /**
- * Required properties of T
+ * Required properties of T.
  */
 export type PickRequired<T> = Pick<T, RequiredKeys<T>>;

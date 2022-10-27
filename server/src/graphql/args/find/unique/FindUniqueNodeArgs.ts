@@ -27,9 +27,7 @@ import { GraphQLID } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
 
 @ArgsType()
-export class FindUniqueNodeArgs
-  implements Pick<Prisma.NodeWhereUniqueInput, 'id'>
-{
+export class FindUniqueNodeArgs implements Prisma.NodeWhereUniqueInput {
   @Field(() => GraphQLID, { description: 'Node identifier' })
   id!: string;
 }

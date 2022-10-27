@@ -24,3 +24,4 @@
 
 export * from './cpus';
 export * from './nodes';
+export * from './users';

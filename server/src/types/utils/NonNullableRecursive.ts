@@ -25,6 +25,6 @@
 import type { ExpandRecursively } from './ExpandRecursively';
 
 /**
- * Properties and nested properties of T can not be null
+ * Properties and nested properties of T can not be null.
  */
 export type NonNullableRecursive<T> = ExpandRecursively<NonNullable<T>>;

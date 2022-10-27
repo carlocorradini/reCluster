@@ -373,6 +373,16 @@ assert_init_system() {
   fi
 }
 
+# Assert timezone
+assert_timezone() {
+  _timezone_file="/etc/timezone"
+  _timezone="Etc/UTC"
+
+  [ -f "$_timezone_file" ] || FATAL "Timezone file '$_timezone_file' not found"
+  _current_timezone=$(cat $_timezone_file)
+  [ "$_current_timezone" = "$_timezone" ] || FATAL "Timezone is not '$_timezone' but '$_current_timezone'"
+}
+
 # Assert executable downloader
 assert_downloader() {
   _assert_downloader() {
@@ -1222,6 +1232,8 @@ verify_system() {
 
   # Init system
   assert_init_system
+  # Timezone
+  assert_timezone
   # Downloader command
   assert_downloader
   # Check power consumption device reachability
@@ -1797,25 +1809,20 @@ read_node_token() {
 }
 
 # Update node status
-# @param \$1 Node status
 update_node_status() {
-  _status=\${1:-ACTIVE}
   _server_url=\$(echo "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
   _server_url="\$_server_url/graphql"
   # shellcheck disable=SC2016
   _request_data='
     {
-      "query": "mutation (\$data: CreateStatusInput!) {
-        createStatus(data: \$data) { id }
-      }",
-      "variables": {
-        "data": { "status": "'"\$_status"'" }
-      }
+      "query": "mutation {
+        updateStatus { id }
+      }"
     }
   '
   _response_data=
 
-  INFO "Updating node status '\$_status' at '\$_server_url'"
+  INFO "Updating node status at '\$_server_url'"
 
   # Send update request
 EOF
@@ -1853,7 +1860,7 @@ EOF
     FATAL "Error updating node status at '\$_server_url':\\n\$(echo "\$_response_data" | jq .)"
   fi
 
-  INFO "Successfully updated node status to '\$_status'"
+  INFO "Successfully updated node status"
 }
 
 # Start services
@@ -1900,6 +1907,7 @@ EOF
 {
   read_config
   read_node_token
+  update_node_status
   start_services
 }
 EOF

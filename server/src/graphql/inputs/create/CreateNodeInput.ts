@@ -22,9 +22,8 @@
  * SOFTWARE.
  */
 
-import type { Prisma } from '@prisma/client';
-import { GraphQLBigInt, GraphQLPositiveInt } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
+import { GraphQLBigInt, GraphQLPositiveInt } from 'graphql-scalars';
 import {
   ArrayUnique,
   IsDefined,
@@ -32,17 +31,11 @@ import {
   ValidateIf,
   ValidateNested
 } from 'class-validator';
-import { PickRequired } from '~/types';
+import type { CreateNodeInput as ICreateNodeInput } from '~/types';
 import { CreateCpuInput } from './CreateCpuInput';
 import { CreateDiskInput } from './CreateDiskInput';
 import { CreateInterfaceInput } from './CreateInterfaceInput';
 import { NodePermissions, NodeRoles } from '../../enums';
-
-type ICreateNodeInput = PickRequired<Prisma.NodeCreateInput> & {
-  cpu: CreateCpuInput;
-  disks: CreateDiskInput[];
-  interfaces: CreateInterfaceInput[];
-};
 
 @InputType({ description: 'Create Node input' })
 export class CreateNodeInput implements ICreateNodeInput {
@@ -50,13 +43,12 @@ export class CreateNodeInput implements ICreateNodeInput {
   @ArrayUnique()
   roles!: NodeRoles[];
 
-  // FIXME Default value
   @Field(() => [NodePermissions], {
-    defaultValue: [],
+    nullable: true,
     description: 'Node permissions'
   })
   @ArrayUnique()
-  permissions!: NodePermissions[];
+  permissions?: NodePermissions[];
 
   @Field(() => GraphQLBigInt, { description: 'Node ram' })
   ram!: bigint;
@@ -92,8 +84,10 @@ export class CreateNodeInput implements ICreateNodeInput {
   cpu!: CreateCpuInput;
 
   @Field(() => [CreateDiskInput], { description: 'Node disks' })
+  @ValidateNested()
   disks!: CreateDiskInput[];
 
   @Field(() => [CreateInterfaceInput], { description: 'Node interfaces' })
+  @ValidateNested()
   interfaces!: CreateInterfaceInput[];
 }

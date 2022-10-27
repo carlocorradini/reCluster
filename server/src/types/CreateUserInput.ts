@@ -22,19 +22,6 @@
  * SOFTWARE.
  */
 
-import { Field, InputType } from 'type-graphql';
-import { GraphQLNonEmptyString } from 'graphql-scalars';
-import { MaxLength } from 'class-validator';
-import type { CreateUserInput as ICreateUserInput } from '~/types';
-import { config } from '~/config';
+import type { Prisma } from '@prisma/client';
 
-@InputType({ description: 'Create User input' })
-export class CreateUserInput implements ICreateUserInput {
-  @Field(() => GraphQLNonEmptyString, { description: 'User username' })
-  @MaxLength(config.user.maxUsernameLength)
-  username!: string;
-
-  @Field(() => GraphQLNonEmptyString, { description: 'User password' })
-  @MaxLength(config.user.maxPasswordLength)
-  password!: string;
-}
+export type CreateUserInput = Prisma.UserCreateInput;

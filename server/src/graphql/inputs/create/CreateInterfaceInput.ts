@@ -22,22 +22,15 @@
  * SOFTWARE.
  */
 
-import type { Prisma } from '@prisma/client';
-import { ArrayUnique } from 'class-validator';
 import {
   GraphQLBigInt,
   GraphQLMAC,
   GraphQLNonEmptyString
 } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
-import { PickRequired } from '~/types';
+import { ArrayUnique } from 'class-validator';
+import type { CreateInterfaceInput as ICreateInterfaceInput } from '~/types';
 import { InterfaceWoLFlags } from '../../enums';
-
-type ICreateInterfaceInput = PickRequired<
-  Prisma.InterfaceCreateWithoutNodeInput & {
-    wol: InterfaceWoLFlags[];
-  }
->;
 
 @InputType({ description: 'Create Interface input' })
 export class CreateInterfaceInput implements ICreateInterfaceInput {
@@ -51,8 +44,9 @@ export class CreateInterfaceInput implements ICreateInterfaceInput {
   speed!: bigint;
 
   @Field(() => [InterfaceWoLFlags], {
+    nullable: true,
     description: 'Interface Wake-on-Lan flags'
   })
   @ArrayUnique()
-  wol!: InterfaceWoLFlags[];
+  wol?: InterfaceWoLFlags[];
 }

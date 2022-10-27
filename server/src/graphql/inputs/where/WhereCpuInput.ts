@@ -31,7 +31,8 @@ import {
   IntNullableFilter,
   StringFilter,
   StringListFilter,
-  TimestampFilter
+  TimestampFilter,
+  UuidFilter
 } from '../filters';
 
 @InputType({ isAbstract: true, description: 'Cpu where input' })
@@ -40,7 +41,7 @@ export class WhereCpuInput
     Partial<Omit<Prisma.CpuWhereInput, 'AND' | 'OR' | 'NOT' | 'nodes'>>
 {
   @Field({ nullable: true, description: 'Cpu identifier' })
-  id?: StringFilter;
+  id?: UuidFilter;
 
   @Field({ nullable: true, description: 'Cpu architecture' })
   architecture?: CpuArchitecturesFilter;

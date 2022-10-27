@@ -23,7 +23,7 @@
  */
 
 /**
- * Expand T recursively
+ * Expand T recursively.
  */
 export type ExpandRecursively<T> = T extends object
   ? T extends infer O

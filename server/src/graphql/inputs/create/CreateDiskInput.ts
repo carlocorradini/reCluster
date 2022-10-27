@@ -22,12 +22,9 @@
  * SOFTWARE.
  */
 
-import type { Prisma } from '@prisma/client';
 import { GraphQLBigInt, GraphQLNonEmptyString } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
-import { PickRequired } from '~/types';
-
-type ICreateDiskInput = PickRequired<Prisma.DiskCreateWithoutNodeInput>;
+import type { CreateDiskInput as ICreateDiskInput } from '~/types';
 
 @InputType({ description: 'Create Disk input' })
 export class CreateDiskInput implements ICreateDiskInput {

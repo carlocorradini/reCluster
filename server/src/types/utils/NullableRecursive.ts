@@ -26,6 +26,6 @@ import type { ExpandRecursively } from './ExpandRecursively';
 import type { Nullable } from './Nullable';
 
 /**
- * Properties and nested properties of T can be null
+ * Properties and nested properties of T can be null.
  */
 export type NullableRecursive<T> = ExpandRecursively<Nullable<T>>;

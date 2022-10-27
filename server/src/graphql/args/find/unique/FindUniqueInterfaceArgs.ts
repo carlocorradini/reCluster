@@ -28,7 +28,7 @@ import { ArgsType, Field } from 'type-graphql';
 
 @ArgsType()
 export class FindUniqueInterfaceArgs
-  implements Pick<Prisma.InterfaceWhereUniqueInput, 'id'>
+  implements Prisma.InterfaceWhereUniqueInput
 {
   @Field(() => GraphQLID, { description: 'Interface identifier' })
   id!: string;

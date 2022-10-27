@@ -25,81 +25,60 @@
 /* eslint-disable max-classes-per-file */
 
 import type { Prisma } from '@prisma/client';
-import { GraphQLString } from 'graphql';
 import { Field, InputType } from 'type-graphql';
+import { GraphQLUUID } from 'graphql-scalars';
 import { QueryModeCaseSensitivity } from '../../enums';
 
-@InputType({ isAbstract: true, description: 'Nested string filter' })
-class NestedStringFilter implements Prisma.NestedStringFilter {
-  @Field(() => GraphQLString, { nullable: true, description: 'String equals' })
+@InputType({ isAbstract: true, description: 'Nested UUID filter' })
+class NestedUuidFilter implements Prisma.NestedUuidFilter {
+  @Field(() => GraphQLUUID, { nullable: true, description: 'UUID equals' })
   equals?: string;
 
-  @Field(() => NestedStringFilter, {
+  @Field(() => NestedUuidFilter, {
     nullable: true,
-    description: 'String not equals'
+    description: 'UUID not equals'
   })
-  not?: NestedStringFilter;
+  not?: NestedUuidFilter;
 
-  @Field(() => [GraphQLString], {
+  @Field(() => [GraphQLUUID], {
     nullable: true,
-    description: 'String exists in list'
+    description: 'UUID exists in list'
   })
   in?: string[];
 
-  @Field(() => [GraphQLString], {
+  @Field(() => [GraphQLUUID], {
     nullable: true,
-    description: 'String does not exists in list'
+    description: 'UUID does not exists in list'
   })
   notIn?: string[];
 
-  @Field(() => GraphQLString, {
+  @Field(() => GraphQLUUID, {
     nullable: true,
-    description: 'String is less than'
+    description: 'UUID is less than'
   })
   lt?: string;
 
-  @Field(() => GraphQLString, {
+  @Field(() => GraphQLUUID, {
     nullable: true,
-    description: 'String is less than or equal to'
+    description: 'UUID is less than or equal to'
   })
   lte?: string;
 
-  @Field(() => GraphQLString, {
+  @Field(() => GraphQLUUID, {
     nullable: true,
-    description: 'String is greater than'
+    description: 'UUID is greater than'
   })
   gt?: string;
 
-  @Field(() => GraphQLString, {
+  @Field(() => GraphQLUUID, {
     nullable: true,
-    description: 'String is greater than or equal to'
+    description: 'UUID is greater than or equal to'
   })
   gte?: string;
-
-  @Field(() => GraphQLString, {
-    nullable: true,
-    description: 'String contains'
-  })
-  contains?: string;
-
-  @Field(() => GraphQLString, {
-    nullable: true,
-    description: 'String starts with'
-  })
-  startsWith?: string;
-
-  @Field(() => GraphQLString, {
-    nullable: true,
-    description: 'String ends with'
-  })
-  endsWith?: string;
 }
 
-@InputType({ isAbstract: true, description: 'String filter' })
-export class StringFilter
-  extends NestedStringFilter
-  implements Prisma.StringFilter
-{
+@InputType({ isAbstract: true, description: 'UUID filter' })
+export class UuidFilter extends NestedUuidFilter implements Prisma.UuidFilter {
   @Field(() => QueryModeCaseSensitivity, {
     nullable: true,
     description: 'Case sensitivity'

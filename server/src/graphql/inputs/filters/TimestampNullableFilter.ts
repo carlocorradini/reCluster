@@ -23,15 +23,53 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import { ArrayUnique } from 'class-validator';
 import { Field, InputType } from 'type-graphql';
-import { NodeRoles } from '../../enums';
+import { GraphQLTimestamp } from 'graphql-scalars';
 
-type IUpdateNodeInput = Pick<Prisma.NodeUpdateInput, 'roles'>;
+@InputType({ isAbstract: true, description: 'Timestamp nullable filter' })
+export class TimestampNullableFilter implements Prisma.DateTimeNullableFilter {
+  @Field(() => GraphQLTimestamp, {
+    nullable: true,
+    description: 'Timestamp equals'
+  })
+  equals?: Date | null;
 
-@InputType({ description: 'Update Node input' })
-export class UpdateNodeInput implements IUpdateNodeInput {
-  @Field(() => [NodeRoles], { nullable: true, description: 'Node roles' })
-  @ArrayUnique()
-  roles?: [NodeRoles];
+  @Field({ nullable: true, description: 'Timestamp not equals' })
+  not?: TimestampNullableFilter;
+
+  @Field(() => [GraphQLTimestamp], {
+    nullable: true,
+    description: 'Timestamp exists in list'
+  })
+  in?: Date[] | null;
+
+  @Field(() => [GraphQLTimestamp], {
+    nullable: true,
+    description: 'Timestamp does not exists in list'
+  })
+  notIn?: Date[] | null;
+
+  @Field(() => GraphQLTimestamp, {
+    nullable: true,
+    description: 'Timestamp is less than'
+  })
+  lt?: Date;
+
+  @Field(() => GraphQLTimestamp, {
+    nullable: true,
+    description: 'Timestamp is less than or equal to'
+  })
+  lte?: Date;
+
+  @Field(() => GraphQLTimestamp, {
+    nullable: true,
+    description: 'Timestamp is greater than'
+  })
+  gt?: Date;
+
+  @Field(() => GraphQLTimestamp, {
+    nullable: true,
+    description: 'Timestamp is greater than or equal to'
+  })
+  gte?: Date;
 }

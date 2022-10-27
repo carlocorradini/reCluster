@@ -29,28 +29,27 @@ import { GraphQLString } from 'graphql';
 import { Field, InputType } from 'type-graphql';
 import { QueryModeCaseSensitivity } from '../../enums';
 
-@InputType({ isAbstract: true, description: 'Nested string filter' })
-class NestedStringFilter implements Prisma.NestedStringFilter {
+@InputType({ isAbstract: true, description: 'SNested string nullable filter' })
+export class NestedStringNullableFilter
+  implements Prisma.NestedStringNullableFilter
+{
   @Field(() => GraphQLString, { nullable: true, description: 'String equals' })
-  equals?: string;
+  equals?: string | null;
 
-  @Field(() => NestedStringFilter, {
-    nullable: true,
-    description: 'String not equals'
-  })
-  not?: NestedStringFilter;
+  @Field({ nullable: true, description: 'String not equals' })
+  not?: NestedStringNullableFilter;
 
   @Field(() => [GraphQLString], {
     nullable: true,
     description: 'String exists in list'
   })
-  in?: string[];
+  in?: string[] | null;
 
   @Field(() => [GraphQLString], {
     nullable: true,
     description: 'String does not exists in list'
   })
-  notIn?: string[];
+  notIn?: string[] | null;
 
   @Field(() => GraphQLString, {
     nullable: true,
@@ -95,10 +94,10 @@ class NestedStringFilter implements Prisma.NestedStringFilter {
   endsWith?: string;
 }
 
-@InputType({ isAbstract: true, description: 'String filter' })
-export class StringFilter
-  extends NestedStringFilter
-  implements Prisma.StringFilter
+@InputType({ isAbstract: true, description: 'String nullable filter' })
+export class StringNullableFilter
+  extends NestedStringNullableFilter
+  implements Prisma.StringNullableFilter
 {
   @Field(() => QueryModeCaseSensitivity, {
     nullable: true,

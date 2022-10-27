@@ -11,7 +11,7 @@ CREATE TYPE "NodeRoles" AS ENUM ('RECLUSTER_MASTER', 'K8S_MASTER', 'K8S_WORKER')
 CREATE TYPE "NodePermissions" AS ENUM ('UNKNOWN');
 
 -- CreateEnum
-CREATE TYPE "NodeStatuses" AS ENUM ('ACTIVE', 'ACTIVE_NOT_READY', 'ACTIVE_READY', 'ACTIVE_UNKNOWN', 'INACTIVE', 'ERROR');
+CREATE TYPE "NodeStatuses" AS ENUM ('ACTIVE', 'ACTIVE_READY', 'ACTIVE_NOT_READY', 'INACTIVE', 'UNKNOWN');
 
 -- CreateEnum
 CREATE TYPE "InterfaceWoLFlags" AS ENUM ('a', 'b', 'd', 'g', 'm', 'p', 's', 'u');
@@ -54,10 +54,13 @@ CREATE TABLE "Node" (
 
 -- CreateTable
 CREATE TABLE "Status" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "id" UUID NOT NULL,
     "status" "NodeStatuses" NOT NULL,
-    "nodeId" UUID NOT NULL,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "reason" TEXT,
+    "message" TEXT,
+    "last_heartbeat" TIMESTAMPTZ,
+    "last_transition" TIMESTAMPTZ NOT NULL,
+    "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "Status_pkey" PRIMARY KEY ("id")
 );
@@ -81,7 +84,7 @@ CREATE TABLE "Interface" (
     "name" TEXT NOT NULL,
     "address" TEXT NOT NULL,
     "speed" BIGINT NOT NULL,
-    "wol" "InterfaceWoLFlags"[],
+    "wol" "InterfaceWoLFlags"[] DEFAULT ARRAY[]::"InterfaceWoLFlags"[],
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -92,7 +95,7 @@ CREATE TABLE "Interface" (
 CREATE TABLE "Cpu" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "architecture" "CpuArchitectures" NOT NULL,
-    "flags" TEXT[],
+    "flags" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "cores" INTEGER NOT NULL,
     "vendor" "CpuVendors" NOT NULL,
     "family" INTEGER NOT NULL,
@@ -102,7 +105,7 @@ CREATE TABLE "Cpu" (
     "cache_l1i" INTEGER NOT NULL,
     "cache_l2" INTEGER NOT NULL,
     "cache_l3" INTEGER NOT NULL,
-    "vulnerabilities" TEXT[],
+    "vulnerabilities" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "single_thread_score" INTEGER NOT NULL,
     "multi_thread_score" INTEGER NOT NULL,
     "efficiency_threshold" INTEGER,
@@ -132,7 +135,7 @@ CREATE UNIQUE INDEX "Cpu_vendor_family_model_key" ON "Cpu"("vendor", "family", "
 ALTER TABLE "Node" ADD CONSTRAINT "cpu_id" FOREIGN KEY ("cpuId") REFERENCES "Cpu"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Status" ADD CONSTRAINT "node_id" FOREIGN KEY ("nodeId") REFERENCES "Node"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Status" ADD CONSTRAINT "Status_id_fkey" FOREIGN KEY ("id") REFERENCES "Node"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Disk" ADD CONSTRAINT "node_id" FOREIGN KEY ("nodeId") REFERENCES "Node"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
