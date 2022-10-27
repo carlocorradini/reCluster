@@ -256,6 +256,10 @@ spinner_stop() {
 # ================
 # Show help message
 show_help() {
+  # Script name
+  _script_name=$(basename "$0")
+  # Config file name
+  _config_file_name=$(basename "$CONFIG_FILE")
   # Log level name
   _log_level_name=
   case $LOG_LEVEL in
@@ -266,15 +270,12 @@ show_help() {
     "$LOG_LEVEL_DEBUG") _log_level_name=debug ;;
   esac
 
-  # Config file name
-  _config_file_name=$(basename "$CONFIG_FILE")
-
   cat << EOF
-Usage: install.sh [--airgap] [--bench-time <TIME>] [--config <PATH>] [--disable-color]
-                  [--disable-spinner] [--help] [--init-cluster] [--k3s-version <VERSION>]
-                  [--log-level <LEVEL>] [--node_exporter-version <VERSION>]
-                  [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-                  [--spinner <SPINNER>]
+Usage: $_script_name [--airgap] [--bench-time <TIME>] [--config <PATH>] [--disable-color]
+        [--disable-spinner] [--help] [--init-cluster] [--k3s-version <VERSION>]
+        [--log-level <LEVEL>] [--node_exporter-version <VERSION>]
+        [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
+        [--spinner <SPINNER>]
 
 reCluster installation script.
 

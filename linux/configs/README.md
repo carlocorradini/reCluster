@@ -8,7 +8,7 @@
 
    ```console
    ./configs.sh \
-     --common ./config.common.yml \
-     --merge ./config.master.yml \
+     --common ./common.config.yml \
+     --merge ./master.config.yml \
      --output ./config.yml
    ```

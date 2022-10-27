@@ -28,7 +28,7 @@
 # shellcheck disable=SC1007
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # Configuration common file
-CONFIG_COMMON_FILE="$DIRNAME/config.common.yml"
+CONFIG_COMMON_FILE="$DIRNAME/common.config.yml"
 # Configuration file to merge
 CONFIG_MERGE_FILE="$DIRNAME/config.yml"
 # Configuration output file
@@ -42,8 +42,11 @@ CONFIG_OUTPUT_FILE="$DIRNAME/output.yml"
 # ================
 # Show help message
 show_help() {
+  # Script name
+  _script_name=$(basename "$0")
+
   cat << EOF
-Usage: configs.sh [--common <PATH>] [--help] [--merge <PATH>] [--output <PATH>]
+Usage: $_script_name [--common <PATH>] [--help] [--merge <PATH>] [--output <PATH>]
 
 reCluster configuration management script.
 

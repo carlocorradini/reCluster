@@ -44,8 +44,11 @@ SYNC_FORCE=false
 # ================
 # Show help message
 show_help() {
+  # Script name
+  _script_name=$(basename "$0")
+
   cat << EOF
-Usage: dependencies.sh [--help] [--list] [--release <DEP> <VERSION>] [--update]
+Usage: $_script_name [--help] [--list] [--release <DEP> <VERSION>] [--update]
 
 reCluster dependencies management script.
 

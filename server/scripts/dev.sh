@@ -28,7 +28,7 @@
 # shellcheck disable=SC1007
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # K3d configuration file
-K3D_CONFIG="$DIRNAME/../config.k3d.yml"
+K3D_CONFIG="$DIRNAME/../k3d.config.yml"
 # npm prefix
 NPM_PREFIX="$DIRNAME/.."
 # Postgres version
@@ -80,11 +80,13 @@ trap cleanup INT QUIT TERM EXIT
 # ================
 # Show help message
 show_help() {
+  # Script name
+  _script_name=$(basename "$0")
   # K3d config file name
   _k3d_config_file_name=$(basename "$K3D_CONFIG")
 
   cat << EOF
-Usage: dev.sh [--help] [--k3d-config] [--skip-seed]
+Usage: $_script_name [--help] [--k3d-config] [--skip-seed]
 
 reCluster development server script.
 
