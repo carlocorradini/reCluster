@@ -86,6 +86,7 @@ openssh
 procps
 sudo
 sysbench
+tzdata
 util-linux
 yq
 EOF
