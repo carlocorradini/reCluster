@@ -4,6 +4,7 @@
 **/node_modules/
 **/.vagrant/
 *.iso
+*.graphql
 
 # Logs
 logs

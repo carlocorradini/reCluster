@@ -5,7 +5,11 @@
   },
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": ["tsconfig.json", "prisma/tsconfig.json"],
+    "project": [
+      "tsconfig.json",
+      "prisma/tsconfig.json",
+      "scripts/tsconfig.json"
+    ],
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
@@ -16,7 +20,11 @@
     "import/resolver": {
       "typescript": {
         "alwaysTryTypes": true,
-        "project": ["tsconfig.json", "prisma/tsconfig.json"]
+        "project": [
+          "tsconfig.json",
+          "prisma/tsconfig.json",
+          "scripts/tsconfig.json"
+        ]
       }
     }
   },
