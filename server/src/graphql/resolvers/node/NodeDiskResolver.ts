@@ -28,7 +28,7 @@ import { DiskService } from '~/services';
 import { FindManyDiskArgs } from '../../args';
 import { Node, Disk } from '../../entities';
 
-@Resolver(() => Node)
+@Resolver(Node)
 @injectable()
 export class NodeDiskResolver {
   public constructor(

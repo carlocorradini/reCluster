@@ -27,7 +27,7 @@ import { inject, injectable } from 'tsyringe';
 import { NodeService } from '~/services';
 import { Status, Node } from '../../entities';
 
-@Resolver(() => Status)
+@Resolver(Status)
 @injectable()
 export class StatusNodeResolver {
   public constructor(

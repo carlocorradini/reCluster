@@ -27,7 +27,7 @@ import { inject, injectable } from 'tsyringe';
 import { NodeService } from '~/services';
 import { Disk, Node } from '../../entities';
 
-@Resolver(() => Disk)
+@Resolver(Disk)
 @injectable()
 export class DiskNodeResolver {
   public constructor(

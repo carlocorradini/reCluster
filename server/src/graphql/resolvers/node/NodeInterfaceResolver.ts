@@ -28,7 +28,7 @@ import { InterfaceService } from '~/services';
 import { FindManyInterfaceArgs } from '../../args';
 import { Node, Interface } from '../../entities';
 
-@Resolver(() => Node)
+@Resolver(Node)
 @injectable()
 export class NodeInterfaceResolver {
   public constructor(

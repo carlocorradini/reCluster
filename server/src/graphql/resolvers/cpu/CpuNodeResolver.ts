@@ -28,7 +28,7 @@ import { NodeService } from '~/services';
 import { FindManyNodeArgs } from '../../args';
 import { Cpu, Node } from '../../entities';
 
-@Resolver(() => Cpu)
+@Resolver(Cpu)
 @injectable()
 export class CpuNodeResolver {
   public constructor(

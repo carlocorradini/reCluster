@@ -27,7 +27,7 @@ import { inject, injectable } from 'tsyringe';
 import { CpuService } from '~/services';
 import { Node, Cpu } from '../../entities';
 
-@Resolver(() => Node)
+@Resolver(Node)
 @injectable()
 export class NodeCpuResolver {
   public constructor(
