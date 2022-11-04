@@ -21,7 +21,8 @@
 // SOFTWARE.
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["filteredRelationCount"]
 }
 
 datasource db {
@@ -59,6 +60,9 @@ model Node {
   ram                            BigInt
   disks                          Disk[]
   interfaces                     Interface[]
+  nodePool                       NodePool             @relation(fields: [nodePoolId], references: [id], map: "node_pool_id")
+  nodePoolId                     String               @db.Uuid
+  nodePoolAssigned               Boolean              @default(true) @map("node_pool_assigned")
   minPowerConsumption            Int                  @map("min_power_consumption")
   maxEfficiencyPowerConsumption  Int?                 @map("max_efficiency_power_consumption")
   minPerformancePowerConsumption Int?                 @map("min_performance_power_consumption")
@@ -68,8 +72,8 @@ model Node {
 }
 
 enum NodeRoleEnum {
-  RECLUSTER_MASTER
-  K8S_MASTER
+  RECLUSTER_CONTROLLER
+  K8S_CONTROLLER
   K8S_WORKER
 }
 
@@ -93,6 +97,7 @@ enum NodeStatusEnum {
   ACTIVE
   ACTIVE_READY
   ACTIVE_NOT_READY
+  BOOTING
   INACTIVE
   UNKNOWN
 }
@@ -153,19 +158,29 @@ model Cpu {
   multiThreadScore     Int                 @map("multi_thread_score")
   efficiencyThreshold  Int?                @map("efficiency_threshold")
   performanceThreshold Int?                @map("performance_threshold")
+  nodes                Node[]
   createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt            DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
-
-  nodes Node[]
 
   @@unique([vendor, family, model])
 }
 
 enum CpuArchitectureEnum {
-  x86_64
+  AMD64
+  ARM64
 }
 
 enum CpuVendorEnum {
   AMD
   INTEL
+}
+
+model NodePool {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique
+  autoScale Boolean  @default(true) @map("auto_scale")
+  minNodes  Int      @map("min_nodes")
+  nodes     Node[]
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 }

@@ -33,4 +33,5 @@ export * from './CreateInterfaceInput';
 export * from './CreateUserInput';
 export * from './CreateNodeInput';
 export * from './token';
+export * from './UpdateNodePoolInput';
 export * from './UpdateStatusInput';

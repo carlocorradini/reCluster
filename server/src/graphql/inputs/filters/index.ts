@@ -23,6 +23,7 @@
  */
 
 export * from './BigIntFilter';
+export * from './BoolFilter';
 export * from './CpuArchitectureEnumFilter';
 export * from './CpuVendorEnumFilter';
 export * from './WoLFlagEnumListFilter';

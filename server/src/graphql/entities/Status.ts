@@ -23,9 +23,9 @@
  */
 
 import type * as Prisma from '@prisma/client';
-import { GraphQLID } from 'graphql';
+import { GraphQLID, GraphQLString } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
-import { GraphQLNonEmptyString, GraphQLTimestamp } from 'graphql-scalars';
+import { GraphQLTimestamp } from 'graphql-scalars';
 import { NodeStatusEnum } from '~/db';
 
 @ObjectType({ description: 'Status' })
@@ -36,13 +36,13 @@ export class Status implements Prisma.Status {
   @Field(() => NodeStatusEnum, { description: 'Status' })
   status!: NodeStatusEnum;
 
-  @Field(() => GraphQLNonEmptyString, {
+  @Field(() => GraphQLString, {
     nullable: true,
     description: 'Status reason'
   })
   reason!: string | null;
 
-  @Field(() => GraphQLNonEmptyString, {
+  @Field(() => GraphQLString, {
     nullable: true,
     description: 'Status message'
   })

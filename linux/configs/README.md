@@ -9,6 +9,6 @@
    ```console
    ./configs.sh \
      --common ./common.config.yml \
-     --merge ./master.config.yml \
+     --merge ./controller.config.yml \
      --output ./config.yml
    ```

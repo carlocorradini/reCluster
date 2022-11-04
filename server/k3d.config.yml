@@ -25,7 +25,7 @@ kind: Simple
 metadata:
   name: recluster
 servers: 1
-agents: 1
+agents: 2
 ports:
   - port: 80:80
     nodeFilters:
@@ -42,3 +42,6 @@ options:
       - label: recluster.io/id=cfc352b1-ed06-4f85-83f4-3f2382b6cb54
         nodeFilters:
           - agent:0
+      - label: recluster.io/id=0dafe0a1-beb9-4c30-8834-4e42338ed7b3
+        nodeFilters:
+          - agent:1

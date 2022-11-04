@@ -23,7 +23,7 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import type { UpdateStatusInput } from '~/types';
+import type { UpdateStatusInput, WithRequired } from '~/types';
 import { prisma, NodeStatusEnum } from '~/db';
 import { logger } from '~/logger';
 
@@ -38,7 +38,11 @@ type FindUniqueOrThrowArgs = Omit<
   'include'
 >;
 
-type UpdateArgs = Omit<Prisma.StatusUpdateArgs, 'include' | 'data'> & {
+type UpdateArgs = Omit<
+  Prisma.StatusUpdateArgs,
+  'include' | 'where' | 'data'
+> & {
+  where: WithRequired<Prisma.StatusWhereUniqueInput, 'id'>;
   data: UpdateStatusInput;
 };
 
@@ -90,6 +94,7 @@ export class StatusService {
     // Update data by status
     switch (data.status) {
       case NodeStatusEnum.ACTIVE:
+      case NodeStatusEnum.BOOTING:
         data.lastHeartbeat = new Date();
         break;
       default:

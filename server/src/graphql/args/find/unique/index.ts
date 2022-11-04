@@ -26,5 +26,6 @@ export * from './FindUniqueCpuArgs';
 export * from './FindUniqueDiskArgs';
 export * from './FindUniqueInterfaceArgs';
 export * from './FindUniqueNodeArgs';
+export * from './FindUniqueNodePoolArgs';
 export * from './FindUniqueStatusArgs';
 export * from './FindUniqueUserArgs';

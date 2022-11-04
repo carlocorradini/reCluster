@@ -30,7 +30,13 @@ import type { CreateInterfaceInput } from './CreateInterfaceInput';
 
 export type CreateNodeInput = Omit<
   Prisma.NodeCreateInput,
-  'roles' | 'permissions' | 'cpu' | 'disks' | 'interfaces'
+  | 'roles'
+  | 'permissions'
+  | 'nodePoolAssigned'
+  | 'nodePool'
+  | 'cpu'
+  | 'disks'
+  | 'interfaces'
 > & {
   roles: NodeRoleEnum[];
   permissions?: NodePermissionEnum[];

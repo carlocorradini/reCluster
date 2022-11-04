@@ -32,7 +32,7 @@ export class OrderByNodeInput
     Partial<
       Omit<
         Prisma.NodeOrderByWithRelationInput,
-        'statuses' | 'cpu' | 'disks' | 'interfaces'
+        'nodePool' | 'statuses' | 'cpu' | 'disks' | 'interfaces'
       >
     >
 {
@@ -56,6 +56,18 @@ export class OrderByNodeInput
 
   @Field(() => SortOrderEnum, { nullable: true, description: 'Cpu identifier' })
   cpuId?: SortOrderEnum;
+
+  @Field(() => SortOrderEnum, {
+    nullable: true,
+    description: 'Node pool identifier'
+  })
+  nodePoolId!: SortOrderEnum;
+
+  @Field(() => SortOrderEnum, {
+    nullable: true,
+    description: 'Node assigned to Node pool'
+  })
+  nodePoolAssigned?: SortOrderEnum;
 
   @Field(() => SortOrderEnum, {
     nullable: true,

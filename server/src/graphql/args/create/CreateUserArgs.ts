@@ -22,15 +22,13 @@
  * SOFTWARE.
  */
 
-import type { Prisma } from '@prisma/client';
 import { ArgsType, Field } from 'type-graphql';
 import { ValidateNested } from 'class-validator';
+import type { CreateArgs } from '~/types';
 import { CreateUserInput } from '../../inputs';
 
-type ICreateUserArgs = Pick<Prisma.UserCreateArgs, 'data'>;
-
 @ArgsType()
-export class CreateUserArgs implements ICreateUserArgs {
+export class CreateUserArgs implements CreateArgs<CreateUserInput> {
   @Field({ description: 'User data' })
   @ValidateNested()
   data!: CreateUserInput;

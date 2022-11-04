@@ -26,5 +26,6 @@ export * from './cpu';
 export * from './disk';
 export * from './interface';
 export * from './node';
+export * from './node_pool';
 export * from './status';
 export * from './user';

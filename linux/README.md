@@ -4,11 +4,11 @@
 
 > **Note**: Refer to the `README.md` of each directory for more information
 
-| **Name**                           | **Description** |
-| ---------------------------------- | --------------- |
-| [`configs`](./configs)             | Configurations  |
-| [`dependencies`](./dependencies)   | Dependencies    |
-| [`distributions`](./distributions) | Distributions   |
+| **Name**                            | **Description** |
+| ----------------------------------- | --------------- |
+| [`configs`](./configs/)             | Configurations  |
+| [`dependencies`](./dependencies/)   | Dependencies    |
+| [`distributions`](./distributions/) | Distributions   |
 
 ## `install.sh`
 

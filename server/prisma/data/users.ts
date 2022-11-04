@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Prisma, UserRoles } from '@prisma/client';
+import { Prisma, UserRoleEnum } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 const SALT_ROUNDS = 10;
@@ -30,13 +30,13 @@ const SALT_ROUNDS = 10;
 export const admin: Prisma.UserCreateInput = {
   username: 'admin',
   password: bcrypt.hashSync('password', SALT_ROUNDS),
-  roles: [UserRoles.ADMIN, UserRoles.SIMPLE]
+  roles: [UserRoleEnum.ADMIN, UserRoleEnum.SIMPLE]
 };
 
 export const simple: Prisma.UserCreateInput = {
   username: 'simple',
   password: bcrypt.hashSync('password', SALT_ROUNDS),
-  roles: [UserRoles.SIMPLE]
+  roles: [UserRoleEnum.SIMPLE]
 };
 
 export const users = [admin, simple];

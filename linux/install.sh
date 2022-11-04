@@ -33,6 +33,8 @@ set -o noglob
 RETVAL=
 # Configuration
 CONFIG=
+# Node facts
+NODE_FACTS="{}"
 
 # ================
 # CLEANUP
@@ -40,14 +42,22 @@ CONFIG=
 cleanup() {
   # Exit code
   _exit_code=$?
+  [ $_exit_code = 0 ] || WARN "Cleanup exit code $_exit_code"
+
   # Remove temporary directory
-  if [ -n "$TMP_DIR" ]; then rm -rf "$TMP_DIR"; fi
-  # Reset cursor if spinner enabled and active
+  if [ -n "$TMP_DIR" ]; then
+    DEBUG "Removing temporary directory '$TMP_DIR'"
+    rm -rf "$TMP_DIR"
+    TMP_DIR=
+  fi
+
+  # Reset cursor
   if [ "$SPINNER_ENABLE" = true ] && [ -n "$SPINNER_PID" ]; then
-    # Restore cursor position
+    DEBUG "Resetting cursor"
     tput rc
-    # Cursor normal
     tput cnorm
+    SPINNER_ENABLE=
+    SPINNER_PID=
   fi
 
   exit "$_exit_code"
@@ -258,8 +268,6 @@ spinner_stop() {
 show_help() {
   # Script name
   _script_name=$(basename "$0")
-  # Config file name
-  _config_file_name=$(basename "$CONFIG_FILE")
   # Log level name
   _log_level_name=
   case $LOG_LEVEL in
@@ -288,7 +296,7 @@ Options:
                                          Any positive number
 
   --config <PATH>                      Configuration file
-                                       Default: $_config_file_name
+                                       Default: $CONFIG_FILE
                                        Values:
                                          Any valid file path
 
@@ -600,11 +608,20 @@ read_cpu_info() {
         '
   )
 
+  # Convert architecture
+  _architecture=$(echo "$_cpu_info" | jq --raw-output '.architecture')
+  case $_architecture in
+    x86_64) _architecture=amd64 ;;
+    aarch64) _architecture=arm64 ;;
+    *) FATAL "CPU architecture '$_architecture' is not supported" ;;
+  esac
+  [ "$_architecture" = "$ARCH" ] || FATAL "CPU architecture '$_architecture' does not match architecture '$ARCH'"
+
   # Convert vendor
   _vendor=$(echo "$_cpu_info" | jq --raw-output '.vendor')
   case $_vendor in
-    AuthenticAMD) _vendor=AMD ;;
-    GenuineIntel) _vendor=INTEL ;;
+    AuthenticAMD) _vendor=amd ;;
+    GenuineIntel) _vendor=intel ;;
     *) FATAL "CPU vendor '$_vendor' not supported" ;;
   esac
 
@@ -618,13 +635,15 @@ read_cpu_info() {
   _cpu_info=$(
     echo "$_cpu_info" \
       | jq \
+        --arg architecture "$_architecture" \
         --arg vendor "$_vendor" \
         --arg cachel1d "$_cache_l1d" \
         --arg cachel1i "$_cache_l1i" \
         --arg cachel2 "$_cache_l2" \
         --arg cachel3 "$_cache_l3" \
         '
-          .vendor = $vendor
+          .architecture = ($architecture | ascii_upcase)
+          | .vendor = ($vendor | ascii_upcase)
           | .cacheL1d = ($cachel1d | tonumber)
           | .cacheL1i = ($cachel1i | tonumber)
           | .cacheL2 = ($cachel2 | tonumber)
@@ -1252,16 +1271,18 @@ verify_system() {
   # K3s kind
   _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
   [ "$_k3s_kind" = "server" ] || [ "$_k3s_kind" = "agent" ] || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
-  # K3s kind an init cluster not allowed
-  if [ "$_k3s_kind" = "agent" ] && [ "$INIT_CLUSTER" = true ]; then
-    FATAL "K3s 'agent' are not allowed to initialize cluster"
-  fi
-  # K3s server and token if agent or server not init cluster
+  # K3s kind agent and init cluster not allowed
+  [ "$_k3s_kind" = "agent" ] && [ "$INIT_CLUSTER" = true ] && FATAL "K3s 'agent' are not allowed to initialize cluster"
+  # K3s requires token if not server and not init cluster
   if { [ "$_k3s_kind" = "agent" ] || { [ "$_k3s_kind" = "server" ] && [ "$INIT_CLUSTER" = false ]; }; } && [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(.server and .token))')" = false ]; then
     FATAL "K3s configuration requires 'server' and 'token'"
   fi
+  # K3s node name
+  [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."node-name"))')" = false ] || WARN "K3s 'node-name' ignored"
+  # K3s node id
+  [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."with-node-id"))')" = false ] || WARN "K3s 'with-node-id' ignored"
   # reCluster server URL
-  echo "$CONFIG" | jq --exit-status '.recluster.server' > /dev/null 2>&1 || FATAL "reCluster configuration requires 'server'"
+  [ "$(echo "$CONFIG" | jq --raw-output 'any(.recluster; select(.server))')" = true ] || FATAL "reCluster configuration requires 'server'"
 
   # Cluster initialization
   if [ "$INIT_CLUSTER" = true ]; then
@@ -1492,8 +1513,8 @@ finalize_node_facts() {
 
   # Roles
   _roles="[]"
-  if [ "$INIT_CLUSTER" = true ]; then _roles=$(echo "$_roles" | jq '. + ["RECLUSTER_MASTER"]'); fi
-  if [ "$_k3s_kind" = "server" ]; then _roles=$(echo "$_roles" | jq '. + ["K8S_MASTER"]'); fi
+  if [ "$INIT_CLUSTER" = true ]; then _roles=$(echo "$_roles" | jq '. + ["RECLUSTER_CONTROLLER"]'); fi
+  if [ "$_k3s_kind" = "server" ]; then _roles=$(echo "$_roles" | jq '. + ["K8S_CONTROLLER"]'); fi
   if [ "$_k3s_kind" = "agent" ] || { [ "$_k3s_kind" = "server" ] && [ "$_has_taint_no_execute" = false ]; }; then
     _roles=$(echo "$_roles" | jq '. + ["K8S_WORKER"]')
   fi
@@ -1518,6 +1539,7 @@ install_k3s() {
   _k3s_version="$K3S_VERSION"
   _k3s_install_sh=
   _k3s_kind=
+  _k3s_node_name=
   _k3s_config_file=/etc/rancher/k3s/config.yaml
   _k3s_config=
 
@@ -1549,7 +1571,17 @@ install_k3s() {
   # Kind
   _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
 
-  # Configuration
+  # Node name
+  case $_k3s_kind in
+    server) _k3s_node_name=controller ;;
+    agent) _k3s_node_name=worker ;;
+    *) FATAL "Unknown K3s kind '$_k3s_kind'" ;;
+  esac
+
+  # Update configuration
+  CONFIG=$(echo "$CONFIG" | jq --arg name "$_k3s_node_name" '.k3s."node-name" = $name')
+
+  # Write Configuration
   _k3s_config=$(echo "$CONFIG" | jq --exit-status '.k3s | del(.kind)' | yq e --exit-status --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
   INFO "Writing K3s configuration to '$_k3s_config_file'"
   $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
@@ -1734,12 +1766,13 @@ install_recluster() {
   # Write node token
   echo "$_node_token" | tee "$_node_token_file" > /dev/null
 
-  # Update node label
+  # Update K3s configuration
   _node_label_id="${_node_label_id}${_node_id}"
-  INFO "Updating K3s configuration '$_k3s_config_file' adding 'node-label: - $_node_label_id'"
+  INFO "Updating K3s configuration '$_k3s_config_file'"
   $SUDO \
-    node_label="$_node_label_id" \
-    yq e '.node-label += [env(node_label)]' -i "$_k3s_config_file"
+    k3s_node_id="$_node_id" \
+    k3s_label_id="$_node_label_id" \
+    yq e '.with-node-id = env(k3s_node_id) | .node-label += [env(k3s_label_id)]' -i "$_k3s_config_file"
 
   #
   # Scripts
@@ -2017,7 +2050,7 @@ AIRGAP_ENV=false
 # Benchmark time in seconds
 BENCH_TIME=30
 # Configuration file
-CONFIG_FILE="$DIRNAME/config.yml"
+CONFIG_FILE="config.yml"
 # Initialize cluster
 INIT_CLUSTER=false
 # K3s version
@@ -2044,8 +2077,6 @@ RECLUSTER_OPT_DIR="/opt/recluster"
 SPINNER_ENABLE=true
 # Spinner symbols
 SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
-# Node facts
-NODE_FACTS="{}"
 
 # ================
 # MAIN

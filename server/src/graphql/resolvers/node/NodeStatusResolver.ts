@@ -37,6 +37,6 @@ export class NodeStatusResolver {
 
   @FieldResolver(() => Status, { description: 'Node status' })
   public status(@Root() node: Node) {
-    return this.statusService.findUnique({ where: { id: node.id } });
+    return this.statusService.findUniqueOrThrow({ where: { id: node.id } });
   }
 }

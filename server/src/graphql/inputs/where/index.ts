@@ -26,5 +26,6 @@ export * from './WhereCpuInput';
 export * from './WhereDiskInput';
 export * from './WhereInterfaceInput';
 export * from './WhereNodeInput';
+export * from './WhereNodePoolInput';
 export * from './WhereStatusInput';
 export * from './WhereUserInput';

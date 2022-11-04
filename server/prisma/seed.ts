@@ -24,7 +24,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import pino from 'pino';
-import { users, cpus, nodes } from './data';
+import { users, cpus, nodes, nodePools } from './data';
 
 const logger = pino({ level: 'debug', name: 'prisma-seed' });
 const prisma = new PrismaClient();
@@ -46,6 +46,13 @@ async function main() {
   await Promise.all(
     cpus.map(async (cpu) => {
       await prisma.cpu.create({ data: cpu });
+    })
+  );
+
+  logger.debug(`Seeding ${nodePools.length} Node pools`);
+  await Promise.all(
+    nodePools.map(async (nodePool) => {
+      await prisma.nodePool.create({ data: nodePool });
     })
   );
 

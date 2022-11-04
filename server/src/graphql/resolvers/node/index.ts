@@ -25,5 +25,6 @@
 export * from './NodeCpuResolver';
 export * from './NodeDiskResolver';
 export * from './NodeInterfaceResolver';
+export * from './NodeNodePoolResolver';
 export * from './NodeResolver';
 export * from './NodeStatusResolver';

@@ -23,13 +23,9 @@
  */
 
 import type * as Prisma from '@prisma/client';
-import { GraphQLID } from 'graphql';
+import { GraphQLID, GraphQLString } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
-import {
-  GraphQLBigInt,
-  GraphQLNonEmptyString,
-  GraphQLTimestamp
-} from 'graphql-scalars';
+import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
 
 @ObjectType({ description: 'Disk' })
 export class Disk implements Prisma.Disk {
@@ -38,7 +34,7 @@ export class Disk implements Prisma.Disk {
 
   nodeId!: string;
 
-  @Field(() => GraphQLNonEmptyString, { description: 'Disk name' })
+  @Field(() => GraphQLString, { description: 'Disk name' })
   name!: string;
 
   @Field(() => GraphQLBigInt, { description: 'Disk size' })

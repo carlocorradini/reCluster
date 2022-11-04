@@ -39,7 +39,7 @@ export class CpuNodeResolver {
   public nodes(@Root() cpu: Cpu, @Args() args: FindManyNodeArgs) {
     return this.nodeService.findMany({
       ...args,
-      where: { cpuId: { equals: cpu.id } }
+      where: { ...args.where, cpuId: cpu.id }
     });
   }
 }

@@ -23,14 +23,9 @@
  */
 
 import type * as Prisma from '@prisma/client';
-import { GraphQLID } from 'graphql';
+import { GraphQLID, GraphQLString } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
-import {
-  GraphQLBigInt,
-  GraphQLMAC,
-  GraphQLNonEmptyString,
-  GraphQLTimestamp
-} from 'graphql-scalars';
+import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
 import { WoLFlagEnum } from '~/db';
 
 @ObjectType({ description: 'Interface' })
@@ -40,10 +35,10 @@ export class Interface implements Prisma.Interface {
 
   nodeId!: string;
 
-  @Field(() => GraphQLNonEmptyString, { description: 'Interface name' })
+  @Field(() => GraphQLString, { description: 'Interface name' })
   name!: string;
 
-  @Field(() => GraphQLMAC, { description: 'Interface MAC address' })
+  @Field(() => GraphQLString, { description: 'Interface MAC address' })
   address!: string;
 
   @Field(() => GraphQLBigInt, { description: 'Interface speed' })

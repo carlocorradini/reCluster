@@ -36,8 +36,11 @@ import {
   NodeCpuResolver,
   NodeDiskResolver,
   NodeInterfaceResolver,
+  NodeNodePoolResolver,
   NodeStatusResolver,
   NodeResolver,
+  NodePoolNodeResolver,
+  NodePoolResolver,
   StatusNodeResolver,
   StatusResolver,
   UserResolver
@@ -59,7 +62,10 @@ const { typeDefs, resolvers } = buildTypeDefsAndResolversSync({
     NodeCpuResolver,
     NodeDiskResolver,
     NodeInterfaceResolver,
+    NodeNodePoolResolver,
     NodeStatusResolver,
+    NodePoolResolver,
+    NodePoolNodeResolver,
     StatusResolver,
     StatusNodeResolver,
     UserResolver

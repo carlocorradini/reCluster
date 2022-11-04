@@ -28,11 +28,11 @@
 # shellcheck disable=SC1007
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # Configuration common file
-CONFIG_COMMON_FILE="$DIRNAME/common.config.yml"
+CONFIG_COMMON_FILE="common.config.yml"
 # Configuration file to merge
-CONFIG_MERGE_FILE="$DIRNAME/config.yml"
+CONFIG_MERGE_FILE="config.yml"
 # Configuration output file
-CONFIG_OUTPUT_FILE="$DIRNAME/output.yml"
+CONFIG_OUTPUT_FILE="output.yml"
 
 # Load commons
 . "$DIRNAME/../../scripts/__commons.sh"

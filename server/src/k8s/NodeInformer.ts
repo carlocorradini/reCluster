@@ -28,7 +28,7 @@ import convert from 'convert';
 import type { UpdateStatusInput } from '~/types';
 import { config } from '~/config';
 import { logger } from '~/logger';
-import { StatusService } from '~/services';
+import { StatusService } from '~/services/StatusService';
 import { NodeStatusEnum } from '~/db';
 import { kubeconfig } from './kubeconfig';
 import { K8sNodeStatusesEnum } from './K8sNodeStatusesEnum';
@@ -43,16 +43,18 @@ type K8sNode = {
 export class NodeInformer {
   public static readonly RESTART_TIME: number = convert(3, 's').to('ms');
 
+  private readonly api: k8s.CoreV1Api;
+
   private readonly informer: k8s.Informer<k8s.V1Node>;
 
   public constructor(
     @inject(StatusService)
     private readonly statusService: StatusService
   ) {
-    const api = kubeconfig.makeApiClient(k8s.CoreV1Api);
+    this.api = kubeconfig.makeApiClient(k8s.CoreV1Api);
 
     this.informer = k8s.makeInformer(kubeconfig, '/api/v1/nodes', () =>
-      api.listNode()
+      this.api.listNode()
     );
 
     this.informer.on(k8s.ADD, (node: k8s.V1Node) => this.on(k8s.ADD, node));
@@ -119,7 +121,16 @@ export class NodeInformer {
   private onDelete(node: K8sNode) {
     logger.debug(`K8s node deleted: ${JSON.stringify(node)}`);
 
-    this.statusService.update({ where: { id: node.id }, data: node.status });
+    this.statusService.update({
+      where: { id: node.id },
+      data: {
+        status: NodeStatusEnum.ACTIVE,
+        reason: 'NodeDeleted',
+        message: 'Node deleted'
+      }
+    });
+
+    // TODO Turn off node
   }
 
   private on(verb: k8s.ADD | k8s.UPDATE | k8s.DELETE, node: k8s.V1Node) {

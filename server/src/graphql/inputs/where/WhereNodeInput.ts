@@ -25,14 +25,14 @@
 import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
 import {
-  StringFilter,
   TimestampFilter,
   BigIntFilter,
   IntFilter,
   IntNullableFilter,
   NodeRoleEnumListFilter,
   NodePermissionEnumListFilter,
-  UuidFilter
+  UuidFilter,
+  BoolFilter
 } from '../filters';
 
 @InputType({ isAbstract: true, description: 'Node where input' })
@@ -41,7 +41,14 @@ export class WhereNodeInput
     Partial<
       Omit<
         Prisma.NodeWhereInput,
-        'AND' | 'OR' | 'NOT' | 'status' | 'cpu' | 'disks' | 'interfaces'
+        | 'AND'
+        | 'OR'
+        | 'NOT'
+        | 'nodePool'
+        | 'status'
+        | 'cpu'
+        | 'disks'
+        | 'interfaces'
       >
     >
 {
@@ -58,7 +65,13 @@ export class WhereNodeInput
   ram?: BigIntFilter;
 
   @Field({ nullable: true, description: 'Cpu identifier' })
-  cpuId?: StringFilter;
+  cpuId?: UuidFilter;
+
+  @Field({ nullable: true, description: 'Node pool identifier' })
+  nodePoolId?: UuidFilter;
+
+  @Field({ nullable: true, description: 'Node assigned to Node pool' })
+  nodePoolAssigned?: BoolFilter;
 
   @Field({ nullable: true, description: 'Minimum power consumption' })
   minPowerConsumption?: IntFilter;

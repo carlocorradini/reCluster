@@ -23,12 +23,14 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import { inject, injectable } from 'tsyringe';
+import { delay, inject, injectable } from 'tsyringe';
 import type { CreateNodeInput } from '~/types';
 import { prisma, NodeStatusEnum, NodeRoleEnum, NodePermissionEnum } from '~/db';
 import { logger } from '~/logger';
 import { TokenService, TokenTypes } from './TokenService';
 import { CpuService } from './CpuService';
+// eslint-disable-next-line import/no-cycle
+import { NodePoolService } from './NodePoolService';
 
 type CreateArgs = Omit<Prisma.NodeCreateArgs, 'include' | 'data'> & {
   data: CreateNodeInput;
@@ -42,11 +44,15 @@ type FindUniqueArgs = Omit<Prisma.NodeFindUniqueArgs, 'include'>;
 
 type FindUniqueOrThrowArgs = Omit<Prisma.NodeFindUniqueOrThrowArgs, 'include'>;
 
+type UpdateArgs = Omit<Prisma.NodeUpdateArgs, 'include'>;
+
 @injectable()
 export class NodeService {
   public constructor(
     @inject(CpuService)
     private readonly cpuService: CpuService,
+    @inject(delay(() => NodePoolService))
+    private readonly nodePoolService: NodePoolService,
     @inject(TokenService)
     private readonly tokenService: TokenService
   ) {}
@@ -57,6 +63,12 @@ export class NodeService {
     // Create or update cpu
     const { id: cpuId } = await this.cpuService.upsert({
       data: args.data.cpu,
+      select: { id: true }
+    });
+
+    // Create or update node pool
+    const { id: nodePoolId } = await this.nodePoolService.upsert({
+      data: { cpu: args.data.cpu.cores, memory: args.data.ram },
       select: { id: true }
     });
 
@@ -75,6 +87,7 @@ export class NodeService {
             lastTransition: new Date()
           }
         },
+        nodePool: { connect: { id: nodePoolId } },
         cpu: { connect: { id: cpuId } },
         disks: { createMany: { data: args.data.disks } },
         interfaces: {
@@ -111,5 +124,11 @@ export class NodeService {
     logger.debug(`Node service find unique or throw: ${JSON.stringify(args)}`);
 
     return prisma.node.findUniqueOrThrow(args);
+  }
+
+  public update(args: UpdateArgs) {
+    logger.info(`Node service update: ${JSON.stringify(args)}`);
+
+    return prisma.node.update(args);
   }
 }

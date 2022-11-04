@@ -23,14 +23,9 @@
  */
 
 import type * as Prisma from '@prisma/client';
-import { GraphQLID } from 'graphql';
+import { GraphQLID, GraphQLInt, GraphQLString } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
-import {
-  GraphQLNonEmptyString,
-  GraphQLNonNegativeInt,
-  GraphQLPositiveInt,
-  GraphQLTimestamp
-} from 'graphql-scalars';
+import { GraphQLTimestamp } from 'graphql-scalars';
 import { CpuArchitectureEnum, CpuVendorEnum } from '~/db';
 
 @ObjectType({ description: 'Cpu' })
@@ -41,52 +36,52 @@ export class Cpu implements Prisma.Cpu {
   @Field(() => CpuArchitectureEnum, { description: 'Cpu architecture' })
   architecture!: CpuArchitectureEnum;
 
-  @Field(() => [GraphQLNonEmptyString], { description: 'Cpu flags' })
+  @Field(() => [GraphQLString], { description: 'Cpu flags' })
   flags!: string[];
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu cores' })
+  @Field(() => GraphQLInt, { description: 'Cpu cores' })
   cores!: number;
 
   @Field(() => CpuVendorEnum, { description: 'Cpu vendor' })
   vendor!: CpuVendorEnum;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu family' })
+  @Field(() => GraphQLInt, { description: 'Cpu family' })
   family!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu model' })
+  @Field(() => GraphQLInt, { description: 'Cpu model' })
   model!: number;
 
-  @Field(() => GraphQLNonEmptyString, { description: 'Cpu name' })
+  @Field(() => GraphQLString, { description: 'Cpu name' })
   name!: string;
 
-  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L1d cache' })
+  @Field(() => GraphQLInt, { description: 'Cpu L1d cache' })
   cacheL1d!: number;
 
-  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L1i cache' })
+  @Field(() => GraphQLInt, { description: 'Cpu L1i cache' })
   cacheL1i!: number;
 
-  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L2 cache' })
+  @Field(() => GraphQLInt, { description: 'Cpu L2 cache' })
   cacheL2!: number;
 
-  @Field(() => GraphQLNonNegativeInt, { description: 'Cpu L3 cache' })
+  @Field(() => GraphQLInt, { description: 'Cpu L3 cache' })
   cacheL3!: number;
 
-  @Field(() => [GraphQLNonEmptyString], { description: 'Cpu vulnerabilities' })
+  @Field(() => [GraphQLString], { description: 'Cpu vulnerabilities' })
   vulnerabilities!: string[];
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu single-thread score' })
+  @Field(() => GraphQLInt, { description: 'Cpu single-thread score' })
   singleThreadScore!: number;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Cpu multi-thread score' })
+  @Field(() => GraphQLInt, { description: 'Cpu multi-thread score' })
   multiThreadScore!: number;
 
-  @Field(() => GraphQLPositiveInt, {
+  @Field(() => GraphQLInt, {
     nullable: true,
     description: 'Cpu efficiency threshold'
   })
   efficiencyThreshold!: number | null;
 
-  @Field(() => GraphQLPositiveInt, {
+  @Field(() => GraphQLInt, {
     nullable: true,
     description: 'Cpu performance threshold'
   })

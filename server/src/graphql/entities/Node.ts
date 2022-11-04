@@ -23,13 +23,9 @@
  */
 
 import type * as Prisma from '@prisma/client';
-import { GraphQLID } from 'graphql';
+import { GraphQLBoolean, GraphQLID, GraphQLInt } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
-import {
-  GraphQLBigInt,
-  GraphQLPositiveInt,
-  GraphQLTimestamp
-} from 'graphql-scalars';
+import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
 import { NodeRoleEnum, NodePermissionEnum } from '~/db';
 
 @ObjectType({ description: 'Node' })
@@ -48,22 +44,27 @@ export class Node implements Prisma.Node {
 
   cpuId!: string;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Minimum power consumption' })
+  nodePoolId!: string;
+
+  @Field(() => GraphQLBoolean, { description: 'Node assigned to Node pool' })
+  nodePoolAssigned!: boolean;
+
+  @Field(() => GraphQLInt, { description: 'Minimum power consumption' })
   minPowerConsumption!: number;
 
-  @Field(() => GraphQLPositiveInt, {
+  @Field(() => GraphQLInt, {
     nullable: true,
     description: 'Maximum efficiency power consumption'
   })
   maxEfficiencyPowerConsumption!: number | null;
 
-  @Field(() => GraphQLPositiveInt, {
+  @Field(() => GraphQLInt, {
     nullable: true,
     description: 'Minimum performance power consumption'
   })
   minPerformancePowerConsumption!: number | null;
 
-  @Field(() => GraphQLPositiveInt, { description: 'Maximum power consumption' })
+  @Field(() => GraphQLInt, { description: 'Maximum power consumption' })
   maxPowerConsumption!: number;
 
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })

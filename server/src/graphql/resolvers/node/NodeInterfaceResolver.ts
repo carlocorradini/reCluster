@@ -40,7 +40,7 @@ export class NodeInterfaceResolver {
   public interfaces(@Root() node: Node, @Args() args: FindManyInterfaceArgs) {
     return this.interfaceService.findMany({
       ...args,
-      where: { ...args.where, nodeId: { equals: node.id } }
+      where: { ...args.where, nodeId: node.id }
     });
   }
 }

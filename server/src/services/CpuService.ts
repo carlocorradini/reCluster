@@ -42,7 +42,7 @@ type FindUniqueOrThrowArgs = Omit<Prisma.CpuFindUniqueOrThrowArgs, 'include'>;
 export class CpuService {
   // FIXME Return type
   public async upsert(args: UpsertArgs): Promise<PrismaCpu> {
-    logger.info(`Cpu service create: ${JSON.stringify(args)}`);
+    logger.info(`Cpu service upsert: ${JSON.stringify(args)}`);
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const vendor_family_model: Prisma.CpuVendorFamilyModelCompoundUniqueInput =

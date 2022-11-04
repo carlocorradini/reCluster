@@ -24,13 +24,13 @@
 
 /* eslint-disable @typescript-eslint/naming-convention */
 
-import { Prisma, CpuArchitectures, CpuVendors } from '@prisma/client';
+import { Prisma, CpuArchitectureEnum, CpuVendorEnum } from '@prisma/client';
 
 export const Intel_I7_6700HQ: Prisma.CpuCreateInput = {
   id: 'ab93a663-7e31-479a-8711-78bbc636a841',
-  vendor: CpuVendors.INTEL,
+  vendor: CpuVendorEnum.INTEL,
   name: 'Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz',
-  architecture: CpuArchitectures.x86_64,
+  architecture: CpuArchitectureEnum.x86_64,
   family: 1,
   model: 94,
   cores: 8,

@@ -23,5 +23,6 @@
  */
 
 export * from './cpus';
+export * from './nodePools';
 export * from './nodes';
 export * from './users';

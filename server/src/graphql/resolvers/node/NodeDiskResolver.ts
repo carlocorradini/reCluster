@@ -40,7 +40,7 @@ export class NodeDiskResolver {
   public disks(@Root() node: Node, @Args() args: FindManyDiskArgs) {
     return this.diskService.findMany({
       ...args,
-      where: { ...args.where, nodeId: { equals: node.id } }
+      where: { ...args.where, nodeId: node.id }
     });
   }
 }

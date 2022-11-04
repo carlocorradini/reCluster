@@ -42,9 +42,13 @@ registerEnumType(CpuArchitectureEnum, {
   name: 'CpuArchitectureEnum',
   description: 'Cpu architectures',
   valuesConfig: {
-    x86_64: {
+    AMD64: {
       description:
-        '64-bit version of the x86 instruction set. Also known as x64, x86-64, AMD64, and Intel 64'
+        '64-bit version of the x86 instruction set. Also known as x64, x86-64, x86_64, AMD64, and Intel 64'
+    },
+    ARM64: {
+      description:
+        '64-bit extension of the ARM architecture family. Also known as AArch64 and ARM64'
     }
   }
 });
@@ -77,8 +81,8 @@ registerEnumType(NodeRoleEnum, {
   name: 'NodeRoleEnum',
   description: 'Node roles',
   valuesConfig: {
-    RECLUSTER_MASTER: { description: 'reCluster master' },
-    K8S_MASTER: { description: 'K8s master' },
+    RECLUSTER_CONTROLLER: { description: 'reCluster controller' },
+    K8S_CONTROLLER: { description: 'K8s controller' },
     K8S_WORKER: { description: 'K8s worker' }
   }
 });
@@ -99,6 +103,9 @@ registerEnumType(NodeStatusEnum, {
     },
     ACTIVE_NOT_READY: {
       description: 'Node is active but not healthy and is not accepting pods'
+    },
+    BOOTING: {
+      description: 'Node is booting'
     },
     INACTIVE: {
       description: 'Node is inactive'

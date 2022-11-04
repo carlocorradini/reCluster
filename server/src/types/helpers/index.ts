@@ -22,5 +22,6 @@
  * SOFTWARE.
  */
 
+export * from './CreateArgs';
 export * from './FindManyArgs';
 export * from './ResolverData';

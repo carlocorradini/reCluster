@@ -1,7 +1,7 @@
 *
 !/.gitignore
 !/common.config.yml
-!/master.config.yml
+!/controller.config.yml
 !/worker.config.yml
 !/configs.sh
 !/README.md
