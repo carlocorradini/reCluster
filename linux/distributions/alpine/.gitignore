@@ -1,1 +1,7 @@
-/iso/
+*
+!/.gitignore
+!/build.sh
+!/Dockerfile
+!/genapkovl-recluster.sh
+!/mkimg.recluster.sh
+!/README.md

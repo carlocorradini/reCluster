@@ -23,9 +23,12 @@
  */
 
 import type { Prisma } from '@prisma/client';
+import { inject, injectable } from 'tsyringe';
 import type { UpdateStatusInput, WithRequired } from '~/types';
 import { prisma, NodeStatusEnum } from '~/db';
 import { logger } from '~/logger';
+// eslint-disable-next-line import/no-cycle
+import { NodeService } from './NodeService';
 
 type FindManyArgs = Omit<Prisma.StatusFindManyArgs, 'include' | 'cursor'> & {
   cursor?: string;
@@ -46,7 +49,13 @@ type UpdateArgs = Omit<
   data: UpdateStatusInput;
 };
 
+@injectable()
 export class StatusService {
+  public constructor(
+    @inject(NodeService)
+    private readonly nodeService: NodeService
+  ) {}
+
   public findMany(args: FindManyArgs) {
     logger.debug(`Status service find many: ${JSON.stringify(args)}`);
 
@@ -91,11 +100,17 @@ export class StatusService {
       }
     }
 
-    // Update data by status
+    // Logic by status
     switch (data.status) {
       case NodeStatusEnum.ACTIVE:
       case NodeStatusEnum.BOOTING:
+        // Update last heartbeat
         data.lastHeartbeat = new Date();
+        // Node assigned to node pool
+        await this.nodeService.update({
+          where: { id: args.where.id },
+          data: { nodePoolAssigned: true }
+        });
         break;
       default:
         break;

@@ -53,10 +53,6 @@ rc_add() {
 tmp="$(mktemp -d)"
 trap cleanup EXIT
 
-# Timezone
-cp /usr/share/zoneinfo/Etc/UTC /etc/localtime
-echo "Etc/UTC" > /etc/timezone
-
 mkdir -p "$tmp"/etc
 makefile root:root 0644 "$tmp"/etc/hostname << EOF
 $HOSTNAME
@@ -75,8 +71,6 @@ mkdir -p "$tmp"/etc/apk
 makefile root:root 0644 "$tmp"/etc/apk/world << EOF
 alpine-base
 coreutils
-docker
-docker-compose
 ethtool
 inotify-tools
 iproute2
@@ -97,21 +91,26 @@ https://dl-cdn.alpinelinux.org/alpine/v3.16/community
 EOF
 
 mkdir -p "$tmp"/etc/local.d
-#makefile root:root 0744 "$tmp"/etc/local.d/set_bash.start <<EOF
-##!/usr/bin/env sh
-#sed -i 's|root:/bin/ash|root:/bin/bash|' /etc/passwd
-#EOF
-
 makefile root:root 0744 "$tmp"/etc/local.d/recluster.start << EOF
 #!/usr/bin/env sh
-user="recluster"
-echo -e "\$user\n\$user" | adduser \$user -s /bin/sh
-mkdir /etc/sudoers.d
-echo "\$user ALL=(ALL) ALL" > /etc/sudoers.d/\$user && chmod 0440 /etc/sudoers.d/\$user
 
-addgroup recluster docker
-rc-update add docker boot
-service docker start
+# Fail on error
+set -o errexit
+# Disable wildcard character expansion
+set -o noglob
+
+# ================
+# CONFIGURATION
+# ================
+
+# ================
+# MAIN
+# ================
+{
+  # Timezone
+  cp /usr/share/zoneinfo/Etc/UTC /etc/localtime
+  echo "Etc/UTC" > /etc/timezone
+}
 EOF
 
 rc_add devfs sysinit
@@ -129,7 +128,6 @@ rc_add syslog boot
 rc_add networking boot
 rc_add local boot
 
-rc_add docker default
 rc_add sshd default
 
 rc_add mount-ro shutdown

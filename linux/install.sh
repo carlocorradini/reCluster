@@ -460,7 +460,7 @@ download_print() {
       curl --fail --silent --location --show-error "$1" || FATAL "Download print '$1' failed"
       ;;
     wget)
-      wget --quiet ---output-document=- "$1" 2>&1 || FATAL "Download print '$1' failed"
+      wget --quiet --output-document=- "$1" 2>&1 || FATAL "Download print '$1' failed"
       ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
@@ -1681,7 +1681,7 @@ cluster_init() {
         DEBUG "File '$file' notify at '$_k3s_kubeconfig_dir'"
         if [ "$file" = "$_k3s_kubeconfig_file_name" ]; then
           DEBUG "K3s kubeconfig file generated"
-          break
+          return 0
         fi
       done
   }
@@ -1769,10 +1769,7 @@ install_recluster() {
   # Update K3s configuration
   _node_label_id="${_node_label_id}${_node_id}"
   INFO "Updating K3s configuration '$_k3s_config_file'"
-  $SUDO \
-    k3s_node_id="$_node_id" \
-    k3s_label_id="$_node_label_id" \
-    yq e '.with-node-id = env(k3s_node_id) | .node-label += [env(k3s_label_id)]' -i "$_k3s_config_file"
+  $SUDO k3s_node_id="$_node_id" k3s_label_id="$_node_label_id" yq e '.with-node-id = env(k3s_node_id) | .node-label += [env(k3s_label_id)]' -i "$_k3s_config_file"
 
   #
   # Scripts

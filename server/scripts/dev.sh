@@ -59,14 +59,15 @@ POSTGRES_CONTAINER_ID=
 cleanup() {
   # Exit code
   _exit_code=$?
+  [ $_exit_code = 0 ] || WARN "Cleanup exit code $_exit_code"
 
   # Cluster
   if check_cmd k3d; then
-    INFO "Deleting cluster"
+    DEBUG "Deleting cluster"
     k3d cluster delete --config "$K3D_CONFIG" || WARN "Cluster deletion failed"
   fi
 
-  # Docker container
+  # Destroy Docker container
   destroy_docker_container "$POSTGRES_CONTAINER_ID"
 
   exit "$_exit_code"

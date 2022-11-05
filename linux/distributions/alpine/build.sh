@@ -55,9 +55,16 @@ CONTAINER_ID=
 cleanup() {
   # Exit code
   _exit_code=$?
+  [ $_exit_code = 0 ] || WARN "Cleanup exit code $_exit_code"
 
-  # Docker container
-  # Docker container
+  # Remove iso directory
+  if [ -n "$MKIMAGE_ISO_DIR" ] && [ -d "$MKIMAGE_ISO_DIR" ] && [ $_exit_code -ne 0 ]; then
+    DEBUG "Removing ISO directory '$MKIMAGE_ISO_DIR'"
+    rm -rf "$MKIMAGE_ISO_DIR"
+    MKIMAGE_ISO_DIR=
+  fi
+
+  # Destroy Docker container
   destroy_docker_container "$CONTAINER_ID"
 
   exit "$_exit_code"
@@ -82,9 +89,6 @@ iso_dir() {
   if [ -d "$MKIMAGE_ISO_DIR" ]; then
     WARN "Removing ISO directory '$MKIMAGE_ISO_DIR'"
     rm -rf "$MKIMAGE_ISO_DIR"
-  else
-    INFO "Creating ISO directory '$MKIMAGE_ISO_DIR'"
-    mkdir "$MKIMAGE_ISO_DIR"
   fi
 }
 
@@ -123,8 +127,8 @@ builder() {
     --tag "v$ALPINE_VERSION" \
     --outdir /home/build/iso \
     --arch "$_arch" \
-    --repository "http://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/main" \
-    --repository "http://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/community" \
+    --repository "https://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/main" \
+    --repository "https://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/community" \
     --profile "$_profile_name"
 }
 

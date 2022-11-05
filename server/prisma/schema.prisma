@@ -62,7 +62,7 @@ model Node {
   interfaces                     Interface[]
   nodePool                       NodePool             @relation(fields: [nodePoolId], references: [id], map: "node_pool_id")
   nodePoolId                     String               @db.Uuid
-  nodePoolAssigned               Boolean              @default(true) @map("node_pool_assigned")
+  nodePoolAssigned               Boolean              @default(false) @map("node_pool_assigned")
   minPowerConsumption            Int                  @map("min_power_consumption")
   maxEfficiencyPowerConsumption  Int?                 @map("max_efficiency_power_consumption")
   minPerformancePowerConsumption Int?                 @map("min_performance_power_consumption")
