@@ -33,3 +33,6 @@ node_exporter:
 
 recluster:
   server: http://192.168.0.25:8080
+
+ssh_authorized_keys:
+  - ssh-rsa ... # Change with SSH public key

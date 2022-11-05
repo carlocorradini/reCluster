@@ -283,7 +283,7 @@ Usage: $_script_name [--airgap] [--bench-time <TIME>] [--config <PATH>] [--disab
         [--disable-spinner] [--help] [--init-cluster] [--k3s-version <VERSION>]
         [--log-level <LEVEL>] [--node_exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-        [--spinner <SPINNER>]
+        [--spinner <SPINNER>] [--ssh-authorized-keys <PATH>]
 
 reCluster installation script.
 
@@ -352,6 +352,11 @@ Options:
                                          dots         Dots spinner
                                          grayscale    Grayscale spinner
                                          propeller    Propeller spinner
+
+  --ssh-authorized-keys <PATH>         SSH authorized keys file
+                                       Default: $SSH_AUTHORIZED_KEYS_FILE
+                                       Values:
+                                         Any valid file path
 EOF
 }
 
@@ -1173,6 +1178,14 @@ parse_args() {
         shift
         shift
         ;;
+      --ssh-authorized-keys)
+        # SSH authorized keys file
+        _parse_args_assert_value "$@"
+
+        _ssh_authorized_keys=$2
+        shift
+        shift
+        ;;
       -*)
         # Unknown argument
         WARN "Unknown argument '$1'"
@@ -1206,6 +1219,8 @@ parse_args() {
   if [ -n "$_pc_warmup" ]; then PC_WARMUP=$_pc_warmup; fi
   # Spinner
   if [ -n "$_spinner" ]; then SPINNER_SYMBOLS=$_spinner; fi
+  # SSH authorized keys file
+  if [ -n "$_ssh_authorized_keys" ]; then SSH_AUTHORIZED_KEYS_FILE=$_ssh_authorized_keys; fi
 }
 
 # Verify system
@@ -1268,11 +1283,10 @@ verify_system() {
   INFO "Reading configuration file '$CONFIG_FILE'"
   CONFIG=$(yq e --output-format=json --no-colors '.' "$CONFIG_FILE") || FATAL "Error reading configuration file '$CONFIG_FILE'"
   DEBUG "Configuration:" "$CONFIG"
+
   # K3s kind
   _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
   [ "$_k3s_kind" = "server" ] || [ "$_k3s_kind" = "agent" ] || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
-  # K3s kind agent and init cluster not allowed
-  [ "$_k3s_kind" = "agent" ] && [ "$INIT_CLUSTER" = true ] && FATAL "K3s 'agent' are not allowed to initialize cluster"
   # K3s requires token if not server and not init cluster
   if { [ "$_k3s_kind" = "agent" ] || { [ "$_k3s_kind" = "server" ] && [ "$INIT_CLUSTER" = false ]; }; } && [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(.server and .token))')" = false ]; then
     FATAL "K3s configuration requires 'server' and 'token'"
@@ -1281,8 +1295,19 @@ verify_system() {
   [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."node-name"))')" = false ] || WARN "K3s 'node-name' ignored"
   # K3s node id
   [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."with-node-id"))')" = false ] || WARN "K3s 'with-node-id' ignored"
+
   # reCluster server URL
   [ "$(echo "$CONFIG" | jq --raw-output 'any(.recluster; select(.server))')" = true ] || FATAL "reCluster configuration requires 'server'"
+
+  # SSH
+  _ssh_authorized_keys=$(echo "$CONFIG" | jq --exit-status '.ssh_authorized_keys') || FATAL "Configuration requires 'ssh_authorized_keys' array"
+  [ "$(echo "$_ssh_authorized_keys" | jq --raw-output 'type == "array"')" = true ] || FATAL "'ssh_authorized_keys' is not an array"
+  [ "$(echo "$_ssh_authorized_keys" | jq --raw-output 'length')" -ge 1 ] || FATAL "'ssh_authorized_keys' is empty"
+  while read -r _pub_key; do
+    echo "$_pub_key" | ssh-keygen -l -f - > /dev/null 2>&1 || FATAL "'$_pub_key' is not a public key"
+  done << EOF
+$(echo "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
+EOF
 
   # Cluster initialization
   if [ "$INIT_CLUSTER" = true ]; then
@@ -1313,6 +1338,15 @@ setup_system() {
   # Temporary directory
   TMP_DIR=$(mktemp --directory -t recluster.XXXXXXXX)
   DEBUG "Created temporary directory '$TMP_DIR'"
+
+  # SSH
+  _ssh_authorized_keys=$(echo "$CONFIG" | jq '.ssh_authorized_keys')
+  while read -r _pub_key; do
+    DEBUG "Adding public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
+    $SUDO echo "$_pub_key" >> "$SSH_AUTHORIZED_KEYS_FILE" || FATAL "Error adding public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
+  done << EOF
+$(echo "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
+EOF
 
   # Airgap
   if [ "$AIRGAP_ENV" = true ]; then
@@ -1676,10 +1710,10 @@ cluster_init() {
       DEBUG "K3s kubeconfig file already generated at '$_k3s_kubeconfig_file'"
       return 0
     fi
-    inotifywait -e create,close_write,moved_to --format '%f' --quiet "$_k3s_kubeconfig_dir" --monitor \
-      | while IFS= read -r file; do
-        DEBUG "File '$file' notify at '$_k3s_kubeconfig_dir'"
-        if [ "$file" = "$_k3s_kubeconfig_file_name" ]; then
+    inotifywait -e create,close_write,moved_to --monitor --quiet "$_k3s_kubeconfig_dir" \
+      | while read -r _dir _action _file; do
+        DEBUG "File '$_file' notify '$_action' at '$_dir'"
+        if [ "$_file" = "$_k3s_kubeconfig_file_name" ]; then
           DEBUG "K3s kubeconfig file generated"
           return 0
         fi
@@ -2074,6 +2108,8 @@ RECLUSTER_OPT_DIR="/opt/recluster"
 SPINNER_ENABLE=true
 # Spinner symbols
 SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
+# SSH authorized keys file
+SSH_AUTHORIZED_KEYS_FILE="$HOME/.ssh/authorized_keys"
 
 # ================
 # MAIN

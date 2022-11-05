@@ -236,7 +236,7 @@ download_print() {
       curl --fail --silent --location --show-error "$1" || FATAL "Download '$1' failed"
       ;;
     wget)
-      wget --quiet ---output-document=- "$1" 2>&1 || FATAL "Download '$1' failed"
+      wget --quiet --output-document=- "$1" 2>&1 || FATAL "Download '$1' failed"
       ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
