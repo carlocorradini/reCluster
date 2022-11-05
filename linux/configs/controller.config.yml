@@ -22,7 +22,7 @@
 
 k3s:
   kind: server
-  cluster-init: true # First server only !
+  cluster-init: true # TODO First server only !
   write-kubeconfig-mode: 644
   node-taint:
     - CriticalAddonsOnly=true:NoExecute
