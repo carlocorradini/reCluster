@@ -25,7 +25,7 @@
 import { Args, Mutation, Query, Resolver } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { NodeStatusEnum } from '~/db';
-import { StatusService, TokenTypes } from '~/services';
+import { NodeService, StatusService, TokenTypes } from '~/services';
 import { Applicant, Auth } from '~/helpers';
 import { TokenPayload } from '~/types';
 import { Status } from '../../entities';
@@ -36,7 +36,9 @@ import { FindUniqueStatusArgs, FindManyStatusArgs } from '../../args';
 export class StatusResolver {
   public constructor(
     @inject(StatusService)
-    private readonly statusService: StatusService
+    private readonly statusService: StatusService,
+    @inject(NodeService)
+    private readonly nodeService: NodeService
   ) {}
 
   @Query(() => [Status], { description: 'List of Statuses' })
@@ -55,12 +57,15 @@ export class StatusResolver {
   @Mutation(() => Status, { description: 'Update Status' })
   @Auth({ type: TokenTypes.NODE })
   public updateStatus(@Applicant() applicant: TokenPayload) {
-    return this.statusService.update({
+    return this.nodeService.update({
       where: { id: applicant.id },
       data: {
-        status: NodeStatusEnum.ACTIVE,
-        reason: 'NodeStatusUpdate',
-        message: 'Node sent status update'
+        nodePoolAssigned: true,
+        status: {
+          status: NodeStatusEnum.ACTIVE,
+          reason: 'NodeStatusUpdate',
+          message: 'Node sent status update'
+        }
       }
     });
   }

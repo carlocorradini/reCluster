@@ -33,9 +33,8 @@ import {
 } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { NodePoolService } from '~/services';
-import { NodePool, Node } from '../../entities';
+import { NodePool } from '../../entities';
 import {
-  DeleteNodePoolNodeArgs,
   FindManyNodePoolArgs,
   FindUniqueNodePoolArgs,
   UpdateNodePoolArgs
@@ -67,14 +66,6 @@ export class NodePoolResolver {
     return this.nodePoolService.update({
       where: { id: args.id },
       data: args.data
-    });
-  }
-
-  @Mutation(() => Node, { description: 'Delete Node from Node pool' })
-  public deleteNodePoolNode(@Args() args: DeleteNodePoolNodeArgs) {
-    return this.nodePoolService.deleteNode({
-      id: args.id,
-      nodeId: args.nodeId
     });
   }
 

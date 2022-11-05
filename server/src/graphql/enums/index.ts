@@ -104,6 +104,9 @@ registerEnumType(NodeStatusEnum, {
     ACTIVE_NOT_READY: {
       description: 'Node is active but not healthy and is not accepting pods'
     },
+    ACTIVE_DELETE: {
+      description: 'Node is active and delete'
+    },
     BOOTING: {
       description: 'Node is booting'
     },

@@ -23,7 +23,7 @@
  */
 
 import * as k8s from '@kubernetes/client-node';
-import { kubeconfig } from '~/k8s';
+import { kubeconfig } from '~/k8s/kubeconfig';
 import { logger } from '~/logger';
 import { config } from '~/config';
 
@@ -61,7 +61,7 @@ export class K8sService {
   }
 
   public async deleteNode(args: DeleteNodeArgs): Promise<k8s.V1Status> {
-    logger.info(`K8s service delete node: ${JSON.stringify(args)}`);
+    logger.info(`K8s service del ete node: ${JSON.stringify(args)}`);
 
     // TODO Drain node
 

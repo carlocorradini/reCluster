@@ -40,7 +40,8 @@ import { Node } from '../../entities';
 import {
   CreateNodeArgs,
   FindUniqueNodeArgs,
-  FindManyNodeArgs
+  FindManyNodeArgs,
+  UnassignNodeArgs
 } from '../../args';
 
 @Resolver(Node)
@@ -67,6 +68,11 @@ export class NodeResolver {
   @Mutation(() => GraphQLJWT, { description: 'Create a new node' })
   public createNode(@Args() args: CreateNodeArgs) {
     return this.nodeService.create(args);
+  }
+
+  @Mutation(() => Node, { description: 'Unassign node from node pool' })
+  public unassignNode(@Args() args: UnassignNodeArgs) {
+    return this.nodeService.unassign({ where: { id: args.id } });
   }
 
   @FieldResolver(() => GraphQLBigInt)

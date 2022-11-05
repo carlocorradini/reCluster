@@ -23,14 +23,16 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import { delay, inject, injectable } from 'tsyringe';
-import type { CreateNodeInput } from '~/types';
+import { inject, injectable } from 'tsyringe';
+import type { CreateNodeInput, UpdateStatusInput, WithRequired } from '~/types';
 import { prisma, NodeStatusEnum, NodeRoleEnum, NodePermissionEnum } from '~/db';
 import { logger } from '~/logger';
+import { SSH } from '~/ssh';
 import { TokenService, TokenTypes } from './TokenService';
 import { CpuService } from './CpuService';
-// eslint-disable-next-line import/no-cycle
 import { NodePoolService } from './NodePoolService';
+import { StatusService } from './StatusService';
+import { K8sService } from './K8sService';
 
 type CreateArgs = Omit<Prisma.NodeCreateArgs, 'include' | 'data'> & {
   data: CreateNodeInput;
@@ -44,15 +46,33 @@ type FindUniqueArgs = Omit<Prisma.NodeFindUniqueArgs, 'include'>;
 
 type FindUniqueOrThrowArgs = Omit<Prisma.NodeFindUniqueOrThrowArgs, 'include'>;
 
-type UpdateArgs = Omit<Prisma.NodeUpdateArgs, 'include'>;
+type UpdateArgs = Omit<Prisma.NodeUpdateArgs, 'include' | 'where' | 'data'> & {
+  where: WithRequired<Prisma.NodeWhereUniqueInput, 'id'>;
+  data: Omit<Prisma.NodeUpdateInput, 'status'> & {
+    status?: UpdateStatusInput;
+  };
+};
+
+type UnassignArgs = {
+  where: WithRequired<Prisma.NodeWhereUniqueInput, 'id'>;
+};
+
+type ShutdownArgs = {
+  where: WithRequired<Prisma.NodeWhereUniqueInput, 'id'>;
+  status?: Pick<UpdateStatusInput, 'reason' | 'message'>;
+};
 
 @injectable()
 export class NodeService {
   public constructor(
     @inject(CpuService)
     private readonly cpuService: CpuService,
-    @inject(delay(() => NodePoolService))
+    @inject(NodePoolService)
     private readonly nodePoolService: NodePoolService,
+    @inject(StatusService)
+    private readonly statusService: StatusService,
+    @inject(K8sService)
+    private readonly k8sService: K8sService,
     @inject(TokenService)
     private readonly tokenService: TokenService
   ) {}
@@ -126,9 +146,82 @@ export class NodeService {
     return prisma.node.findUniqueOrThrow(args);
   }
 
-  public update(args: UpdateArgs) {
+  public async update(args: UpdateArgs) {
     logger.info(`Node service update: ${JSON.stringify(args)}`);
 
-    return prisma.node.update(args);
+    // Extract data
+    const { data } = args;
+
+    if (data.status) {
+      await this.statusService.update({
+        where: { id: args.where.id },
+        data: data.status
+      });
+
+      delete data.status;
+    }
+
+    // Write data
+    // eslint-disable-next-line no-param-reassign
+    args.data = data;
+
+    return prisma.node.update({
+      ...args,
+      data: { ...args.data, status: undefined }
+    });
+  }
+
+  public async unassign(args: UnassignArgs) {
+    logger.info(`Node service unassign: ${JSON.stringify(args)}`);
+
+    // Check if node exists and assigned to node pool
+    const count = await prisma.node.count({
+      where: {
+        id: args.where.id,
+        nodePoolAssigned: true
+      }
+    });
+    if (count !== 1) {
+      // FIXME Error
+      throw new Error(`Cannot unassign node ${args.where.id}`);
+    }
+
+    // Delete K8s node
+    await this.k8sService.deleteNode({ id: args.where.id });
+
+    // Unassign node
+    return this.update({
+      where: { id: args.where.id },
+      data: {
+        nodePoolAssigned: false,
+        status: {
+          status: NodeStatusEnum.ACTIVE_DELETE,
+          reason: 'NodeUnassign',
+          message: 'Node unassign'
+        }
+      }
+    });
+  }
+
+  public async shutdown(args: ShutdownArgs) {
+    logger.info(`Node service shutdown: ${JSON.stringify(args)}`);
+
+    // FIXME Node host
+    const host = '';
+
+    const ssh = await new SSH().connect({ host });
+
+    await ssh.execCommand({
+      command: 'shutdown -h now',
+      disconnect: true
+    });
+    await this.statusService.update({
+      where: { id: args.where.id },
+      data: {
+        status: NodeStatusEnum.INACTIVE,
+        reason: args.status?.reason ?? 'NodeShutdown',
+        message: args.status?.message ?? 'Node shutdown'
+      }
+    });
   }
 }

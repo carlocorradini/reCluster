@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import convert from 'convert';
 import type { Config } from '~/types';
 import { env } from './env';
 
@@ -37,8 +38,19 @@ export const config: Config = {
   database: {
     url: env.DATABASE_URL
   },
+  ssh: {
+    username: env.SSH_USERNAME,
+    key: {
+      private: env.SSH_PRIVATE_KEY
+    }
+  },
   token: {
-    secret: env.RECLUSTER_TOKEN_SECRET
+    algorithm: 'RS256',
+    expiration: convert(365, 'd').to('s'),
+    key: {
+      private: env.TOKEN_PRIVATE_KEY,
+      public: env.TOKEN_PUBLIC_KEY
+    }
   },
   graphql: { path: '/graphql' },
   k8s: {

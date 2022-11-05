@@ -22,4 +22,4 @@
  * SOFTWARE.
  */
 
-export * from './DeleteNodePoolNodeArgs';
+export * from './SSH';

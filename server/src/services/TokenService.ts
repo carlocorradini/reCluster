@@ -34,10 +34,12 @@ export enum TokenTypes {
 
 export class TokenService {
   public static readonly SIGN_OPTIONS: jwt.SignOptions = {
-    expiresIn: '365 days'
+    algorithm: config.token.algorithm,
+    expiresIn: config.token.expiration
   };
 
   public static readonly VERIFY_OPTIONS: jwt.VerifyOptions = {
+    algorithms: [config.token.algorithm],
     complete: true
   };
 
@@ -45,7 +47,7 @@ export class TokenService {
     return new Promise((resolve, reject) => {
       jwt.sign(
         payload,
-        config.token.secret,
+        config.token.key.private,
         TokenService.SIGN_OPTIONS,
         (error, encoded) => {
           if (error) reject(new TokenError(error.message));
@@ -60,7 +62,7 @@ export class TokenService {
     return new Promise((resolve, reject) => {
       jwt.verify(
         token,
-        config.token.secret,
+        config.token.key.public,
         TokenService.VERIFY_OPTIONS,
         (error, decoded) => {
           if (error) reject(new TokenError(error.message));

@@ -23,13 +23,9 @@
  */
 
 import { NodePool as PrismaNodePool, Prisma } from '@prisma/client';
-import { injectable, inject, delay } from 'tsyringe';
 import type { UpdateNodePoolInput, WithRequired } from '~/types';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
-// eslint-disable-next-line import/no-cycle
-import { NodeService } from './NodeService';
-import { K8sService } from './K8sService';
 
 type UpsertArgs = {
   data: { cpu: number; memory: number | bigint };
@@ -55,11 +51,6 @@ type UpdateArgs = Omit<
   data: UpdateNodePoolInput;
 };
 
-type DeleteNodeArgs = {
-  id: string;
-  nodeId: string;
-};
-
 type CountArgs = {
   id: string;
 };
@@ -68,15 +59,7 @@ type MaxNodesArgs = {
   id: string;
 };
 
-@injectable()
 export class NodePoolService {
-  public constructor(
-    @inject(delay(() => NodeService))
-    private readonly nodeService: NodeService,
-    @inject(K8sService)
-    private readonly k8sService: K8sService
-  ) {}
-
   // FIXME Return type
   public async upsert(args: UpsertArgs): Promise<PrismaNodePool> {
     logger.info(`Node pool service upsert: ${JSON.stringify(args)}`);
@@ -151,44 +134,15 @@ export class NodePoolService {
       } else if (newCount > oldCount) {
         // TODO Increase
       }
+
+      delete data.count;
     }
 
-    // Fix data for Prisma
-    data.count = undefined;
     // Write data
     // eslint-disable-next-line no-param-reassign
     args.data = data;
 
     return prisma.nodePool.update(args);
-  }
-
-  public async deleteNode(args: DeleteNodeArgs) {
-    logger.info(`Node pool service delete node: ${JSON.stringify(args)}`);
-
-    // Check if node pool exists and node exists and assigned
-    const count = await prisma.nodePool.count({
-      where: {
-        id: args.id,
-        nodes: { some: { id: args.nodeId, nodePoolAssigned: true } }
-      }
-    });
-    if (count !== 1) {
-      // FIXME Error
-      throw new Error(
-        `Cannot find Node ${args.nodeId} assigned to Node pool ${args.id}`
-      );
-    }
-
-    // Unassign node
-    const node = await this.nodeService.update({
-      where: { id: args.nodeId },
-      data: { nodePoolAssigned: false }
-    });
-
-    // Delete K8s node
-    await this.k8sService.deleteNode({ id: args.nodeId });
-
-    return node;
   }
 
   public async count(args: CountArgs): Promise<number> {

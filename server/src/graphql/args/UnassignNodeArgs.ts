@@ -26,10 +26,7 @@ import { GraphQLID } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
 
 @ArgsType()
-export class DeleteNodePoolNodeArgs {
-  @Field(() => GraphQLID, { description: 'Node pool identifier' })
-  id!: string;
-
+export class UnassignNodeArgs {
   @Field(() => GraphQLID, { description: 'Node identifier' })
-  nodeId!: string;
+  id!: string;
 }

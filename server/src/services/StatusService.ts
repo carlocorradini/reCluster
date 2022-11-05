@@ -23,12 +23,9 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import { inject, injectable } from 'tsyringe';
 import type { UpdateStatusInput, WithRequired } from '~/types';
 import { prisma, NodeStatusEnum } from '~/db';
 import { logger } from '~/logger';
-// eslint-disable-next-line import/no-cycle
-import { NodeService } from './NodeService';
 
 type FindManyArgs = Omit<Prisma.StatusFindManyArgs, 'include' | 'cursor'> & {
   cursor?: string;
@@ -49,13 +46,7 @@ type UpdateArgs = Omit<
   data: UpdateStatusInput;
 };
 
-@injectable()
 export class StatusService {
-  public constructor(
-    @inject(NodeService)
-    private readonly nodeService: NodeService
-  ) {}
-
   public findMany(args: FindManyArgs) {
     logger.debug(`Status service find many: ${JSON.stringify(args)}`);
 
@@ -90,7 +81,7 @@ export class StatusService {
     data.message = data.message ?? null;
     data.lastHeartbeat = data.lastHeartbeat ?? null;
     if (!data.lastTransition) {
-      const { status: lastStatus } = await prisma.status.findUniqueOrThrow({
+      const { status: lastStatus } = await this.findUniqueOrThrow({
         where: args.where,
         select: { status: true }
       });
@@ -103,14 +94,13 @@ export class StatusService {
     // Logic by status
     switch (data.status) {
       case NodeStatusEnum.ACTIVE:
+      case NodeStatusEnum.ACTIVE_READY:
+      case NodeStatusEnum.ACTIVE_NOT_READY:
+      case NodeStatusEnum.ACTIVE_DELETE:
       case NodeStatusEnum.BOOTING:
+      case NodeStatusEnum.INACTIVE:
         // Update last heartbeat
-        data.lastHeartbeat = new Date();
-        // Node assigned to node pool
-        await this.nodeService.update({
-          where: { id: args.where.id },
-          data: { nodePoolAssigned: true }
-        });
+        data.lastHeartbeat = data.lastHeartbeat ?? new Date();
         break;
       default:
         break;

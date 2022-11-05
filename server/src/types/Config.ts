@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+import type jwt from 'jsonwebtoken';
+
 export type Config = {
   app: string;
   node: {
@@ -35,7 +37,16 @@ export type Config = {
     url: string;
   };
   token: {
-    secret: string;
+    expiration: number;
+    algorithm: jwt.Algorithm;
+    key: {
+      private: string;
+      public: string;
+    };
+  };
+  ssh: {
+    username: string;
+    key: { private: string };
   };
   graphql: {
     path: string;

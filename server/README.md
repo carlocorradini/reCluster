@@ -54,10 +54,7 @@ reCluster server.
 | `build:clean`    | Clean compilation directory.                                                             |
 | `build:watch`    | Compile server every time a file is updated.                                             |
 | `check`          | Check for errors.                                                                        |
-| `check:db`       | Check for database errors.                                                               |
-| `check:lint`     | Check for linting errors.                                                                |
 | `dev`            | Prepare and start development environment.                                               |
-| `db:format`      | Format database file.                                                                    |
 | `db:generate`    | Generate database assets.                                                                |
 | `db:reset`       | Deletes and recreates the database.                                                      |
 | `db:seed`        | Seed database.                                                                           |
@@ -65,8 +62,6 @@ reCluster server.
 | `db:sync`        | Synchronize database using migrations.                                                   |
 | `dockerize`      | Generate Docker image.                                                                   |
 | `fix`            | Fix errors.                                                                              |
-| `fix:db`         | Fix database errors.                                                                     |
-| `fix:lint`       | Fix linting errors.                                                                      |
 | `graphql:schema` | Save GraphQL schema to file.                                                             |
 | `start`          | Start compiled server.                                                                   |
 | `start:dev`      | Start development/uncompiled server.                                                     |

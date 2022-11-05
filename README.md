@@ -112,17 +112,10 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 > **Note**: Execute with `npm run <NAME>`
 
-| **Name**         | **Description**            |
-| ---------------- | -------------------------- |
-| `check`          | Check for errors.          |
-| `check:format`   | Check for format errors.   |
-| `check:license`  | Check for license errors.  |
-| `check:markdown` | Check for markdown errors. |
-| `check:spell`    | Check for spelling errors. |
-| `fix`            | Fix errors.                |
-| `fix:format`     | Fix format errors.         |
-| `fix:license`    | Fix license errors.        |
-| `fix:markdown`   | Fix markdown errors.       |
+| **Name** | **Description**   |
+| -------- | ----------------- |
+| `check`  | Check for errors. |
+| `fix`    | Fix errors.       |
 
 ## License
 

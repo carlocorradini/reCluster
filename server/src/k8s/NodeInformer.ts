@@ -28,7 +28,7 @@ import convert from 'convert';
 import type { UpdateStatusInput } from '~/types';
 import { config } from '~/config';
 import { logger } from '~/logger';
-import { StatusService } from '~/services/StatusService';
+import { NodeService } from '~/services/NodeService';
 import { NodeStatusEnum } from '~/db';
 import { kubeconfig } from './kubeconfig';
 import { K8sNodeStatusesEnum } from './K8sNodeStatusesEnum';
@@ -48,8 +48,8 @@ export class NodeInformer {
   private readonly informer: k8s.Informer<k8s.V1Node>;
 
   public constructor(
-    @inject(StatusService)
-    private readonly statusService: StatusService
+    @inject(NodeService)
+    private readonly nodeService: NodeService
   ) {
     this.api = kubeconfig.makeApiClient(k8s.CoreV1Api);
 
@@ -109,28 +109,28 @@ export class NodeInformer {
   private async onAdd(node: K8sNode) {
     logger.debug(`K8s node added: ${JSON.stringify(node)}`);
 
-    this.statusService.update({ where: { id: node.id }, data: node.status });
+    await this.nodeService.update({
+      where: { id: node.id },
+      data: { status: node.status }
+    });
   }
 
   private async onUpdate(node: K8sNode) {
     logger.debug(`K8s node updated: ${JSON.stringify(node)}`);
 
-    this.statusService.update({ where: { id: node.id }, data: node.status });
+    await this.nodeService.update({
+      where: { id: node.id },
+      data: { status: node.status }
+    });
   }
 
-  private onDelete(node: K8sNode) {
+  private async onDelete(node: K8sNode) {
     logger.debug(`K8s node deleted: ${JSON.stringify(node)}`);
 
-    this.statusService.update({
+    await this.nodeService.shutdown({
       where: { id: node.id },
-      data: {
-        status: NodeStatusEnum.ACTIVE,
-        reason: 'NodeDeleted',
-        message: 'Node deleted'
-      }
+      status: { reason: 'NodeDeleted', message: 'Node deleted' }
     });
-
-    // TODO Turn off node
   }
 
   private on(verb: k8s.ADD | k8s.UPDATE | k8s.DELETE, node: k8s.V1Node) {
@@ -181,6 +181,7 @@ export class NodeInformer {
       }
     };
 
+    // TODO Add try catch
     switch (verb) {
       case k8s.ADD:
         this.onAdd(k8sNode);

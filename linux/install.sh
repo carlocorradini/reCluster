@@ -1250,6 +1250,7 @@ verify_system() {
   assert_cmd numfmt
   assert_cmd read
   assert_cmd sed
+  assert_cmd ssh-keygen
   assert_cmd sudo
   assert_cmd sysbench
   assert_cmd tar

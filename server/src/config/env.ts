@@ -22,7 +22,12 @@
  * SOFTWARE.
  */
 
-import { host, port, str, url, cleanEnv } from 'envalid';
+import fs from 'fs';
+import { host, port, str, url, cleanEnv, makeValidator } from 'envalid';
+
+const fileValidator = makeValidator((file) => {
+  return fs.readFileSync(file, { encoding: 'utf8', flag: 'r' });
+});
 
 export const env = cleanEnv(process.env, {
   NODE_ENV: str({
@@ -33,5 +38,8 @@ export const env = cleanEnv(process.env, {
   HOST: host({ default: '0.0.0.0', desc: 'Server host' }),
   PORT: port({ default: 80, desc: 'Server port' }),
   DATABASE_URL: url({ desc: 'Database URL' }),
-  RECLUSTER_TOKEN_SECRET: str({ desc: 'Token secret' })
+  SSH_USERNAME: str({ default: 'root', desc: 'SSH username' }),
+  SSH_PRIVATE_KEY: fileValidator({ desc: 'SSH private key' }),
+  TOKEN_PRIVATE_KEY: fileValidator({ desc: 'Token private key' }),
+  TOKEN_PUBLIC_KEY: fileValidator({ desc: 'Token public key' })
 });
