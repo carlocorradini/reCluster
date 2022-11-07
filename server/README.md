@@ -2,6 +2,29 @@
 
 reCluster server.
 
+## Certificates
+
+> **Note**: In development, _dummy_ certificates are automatically generated
+
+### SSH
+
+```console
+password="password" # Edit
+filename="ssh"      # Edit
+
+ssh-keygen -b 2048 -t rsa -f "$filename" -N "$password"
+```
+
+### Token
+
+```console
+password="password" # Edit
+filename="token"    # Edit
+
+ssh-keygen -b 4096 -t rsa -f "$filename" -N "$password" -m PEM
+ssh-keygen -e -m PEM -f "$filename" > "$filename.pub"
+```
+
 ## Development
 
 ### Requirements
@@ -13,12 +36,28 @@ reCluster server.
 | `Node.js` | <https://nodejs.org>     |
 | `npm`     | <https://www.npmjs.com>  |
 
+### Environment
+
+> **Note**: Copy `.env.example` and paste `.env`
+
+| **Name**            | **Description**   | **Choices**                             | **Default**  |
+| ------------------- | ----------------- | --------------------------------------- | ------------ |
+| `NODE_ENV`          | Node environment  | `development` \| `production` \| `test` | `production` |
+| `HOST`              | Server host       |                                         | `0.0.0.0`    |
+| `PORT`              | Server port       |                                         | `80`         |
+| `DATABASE_URL`      | Database URL      |                                         |              |
+| `SSH_USERNAME`      | SSH username      |                                         | `root`       |
+| `SSH_PRIVATE_KEY`   | SSH private key   |                                         |              |
+| `TOKEN_PRIVATE_KEY` | Token private key |                                         |              |
+| `TOKEN_PUBLIC_KEY`  | Token public key  |                                         |              |
+
 ### Preparation
 
 1. Environment
 
-   Copy `.env.example` and paste`.env` file. \
-   Edit according to your configuration.
+   > **Note**: See [Environment](#environment) for more information
+
+   Edit `.env` according to your configuration.
 
 1. Start
 

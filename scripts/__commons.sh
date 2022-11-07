@@ -241,3 +241,18 @@ download_print() {
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
 }
+
+# Remove and create directory
+# @param $1 Directory path
+recreate_dir() {
+  _dir=$1
+  DEBUG "Recreating directory '$_dir'"
+
+  if [ -d "$_dir" ]; then
+    WARN "Removing directory '$_dir'"
+    rm -rf "$_dir" || FATAL "Error removing directory '$_dir'"
+  fi
+
+  INFO "Creating directory '$_dir'"
+  mkdir -p "$_dir" || FATAL "Error creating directory '$_dir'"
+}

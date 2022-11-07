@@ -84,14 +84,6 @@ verify_system() {
   assert_docker_image "$RECLUSTER_ALPINE_IMAGE" "$RECLUSTER_ALPINE_DOCKERFILE"
 }
 
-# ISO directory
-iso_dir() {
-  if [ -d "$MKIMAGE_ISO_DIR" ]; then
-    WARN "Removing ISO directory '$MKIMAGE_ISO_DIR'"
-    rm -rf "$MKIMAGE_ISO_DIR"
-  fi
-}
-
 # Prepare reCluster container
 prepare_container() {
   _profile_file_name=$(basename "$MKIMAGE_PROFILE")
@@ -137,7 +129,7 @@ builder() {
 # ================
 {
   verify_system
-  iso_dir
+  recreate_dir "$MKIMAGE_ISO_DIR"
   prepare_container
   while read -r _arch; do
     builder "$_arch"

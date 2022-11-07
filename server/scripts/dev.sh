@@ -45,6 +45,12 @@ POSTGRES_PASSWORD=password
 POSTGRES_DB=recluster
 # Database seeding flag
 DB_SEED=true
+# Execute flag
+EXEC=true
+# Certificates directory
+CERTS_DIR="$DIRNAME/../certs"
+# Certificates password
+CERTS_PASSWORD=password
 
 # ================
 # GLOBALS
@@ -87,7 +93,7 @@ show_help() {
   _k3d_config_file_name=$(basename "$K3D_CONFIG")
 
   cat << EOF
-Usage: $_script_name [--help] [--k3d-config] [--skip-seed]
+Usage: $_script_name [--help] [--k3d-config] [--skip-exec] [--skip-seed]
 
 reCluster development server script.
 
@@ -99,8 +105,21 @@ Options:
                   Values:
                     Any valid file path
 
+  --skip-exec     Prepare environment skipping the execution
+
   --skip-seed     Skip database seeding
 EOF
+}
+
+# Check if can execute via setup env
+# @param $1 Message
+can_exec() {
+  if [ "$EXEC" = true ]; then
+    return 0
+  else
+    WARN "${1:-"Skipping"}"
+    return 1
+  fi
 }
 
 ################################################################################################################################
@@ -126,6 +145,11 @@ parse_args() {
 
         _k3d_config=$2
         shift
+        shift
+        ;;
+      --skip-exec)
+        # Skip execution
+        EXEC=false
         shift
         ;;
       --skip-seed)
@@ -156,6 +180,7 @@ verify_system() {
   assert_cmd k3d
   assert_cmd node
   assert_cmd npm
+  assert_cmd ssh-keygen
   assert_cmd timeout
   assert_cmd until
 
@@ -165,16 +190,36 @@ verify_system() {
 # Check system
 check_system() {
   [ -f "$K3D_CONFIG" ] || FATAL "K3d configuration file '$K3D_CONFIG' not found"
+  recreate_dir "$CERTS_DIR" || FATAL "Error recreating certificates directory '$CERTS_DIR'"
 }
 
-# Create cluster
-create_cluster() {
+# Setup certificates
+setup_certs() {
+  _ssh_key_name=ssh
+  _token_key_name=token
+
+  INFO "Generating SSH certificate"
+  ssh-keygen -b 2048 -t rsa -f "$CERTS_DIR/$_ssh_key_name.key" -N "$CERTS_PASSWORD"
+  mv "$CERTS_DIR/$_ssh_key_name.key.pub" "$CERTS_DIR/$_ssh_key_name.pub"
+
+  INFO "Generating Token certificate"
+  ssh-keygen -b 4096 -t rsa -f "$CERTS_DIR/$_token_key_name.key" -N "$CERTS_PASSWORD" -m PEM
+  ssh-keygen -e -m PEM -f "$CERTS_DIR/$_token_key_name.key" > "$CERTS_DIR/$_token_key_name.pub"
+  rm "$CERTS_DIR/$_token_key_name.key.pub"
+}
+
+# Setup cluster
+setup_cluster() {
+  can_exec "Skipping cluster" || return 0
+
   INFO "Creating cluster"
   k3d cluster create --config "$K3D_CONFIG"
 }
 
-# Start database
-start_database() {
+# Setup database
+setup_database() {
+  can_exec "Skipping database" || return 0
+
   INFO "Starting Postgres '$POSTGRES_IMAGE'"
   POSTGRES_CONTAINER_ID=$(
     docker run \
@@ -193,23 +238,20 @@ start_database() {
 
   INFO "Waiting Postgres is ready"
   timeout 30s sh -c "until docker exec $POSTGRES_CONTAINER_ID pg_isready ; do sleep 3 ; done" || FATAL "Timed out waiting Postgres to be ready"
-}
 
-# Synchronize database
-sync_database() {
   INFO "Synchronizing database"
   npm run --prefix "$NPM_PREFIX" db:sync
+
+  if [ "$DB_SEED" = true ]; then
+    INFO "Seeding database"
+    npm run --prefix "$NPM_PREFIX" db:seed
+  fi
 }
 
-# Seed database
-seed_database() {
-  [ "$DB_SEED" = true ] || return 0
-  INFO "Seeding database"
-  npm run --prefix "$NPM_PREFIX" db:seed
-}
+# Setup server
+setup_server() {
+  can_exec "Skipping server" || return 0
 
-# Start server
-start_server() {
   INFO "Starting server"
   npm run --prefix "$NPM_PREFIX" start:dev
 }
@@ -221,9 +263,8 @@ start_server() {
   parse_args "$@"
   verify_system
   check_system
-  create_cluster
-  start_database
-  sync_database
-  seed_database
-  start_server
+  setup_certs
+  setup_cluster
+  setup_database
+  setup_server
 }
