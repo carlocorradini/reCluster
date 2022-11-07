@@ -55,22 +55,46 @@ export class CpuService {
     // Find old vulnerabilities (if any)
     const cpu = await this.findUnique({
       where: { vendor_family_model },
-      select: { vulnerabilities: true }
+      select: {
+        vulnerabilities: true,
+        singleThreadScore: true,
+        multiThreadScore: true,
+        efficiencyThreshold: true,
+        performanceThreshold: true
+      }
     });
 
-    // Vulnerabilities array (updated if any)
-    const vulnerabilities = [
-      ...new Set([
-        ...(cpu?.vulnerabilities ?? []),
-        ...(args.data.vulnerabilities ?? [])
-      ])
-    ];
+    // Update if cpu exists
+    if (cpu) {
+      cpu.vulnerabilities = [
+        ...new Set([
+          ...cpu.vulnerabilities,
+          ...(args.data.vulnerabilities ?? [])
+        ])
+      ];
+      cpu.singleThreadScore =
+        (cpu.singleThreadScore + args.data.singleThreadScore) / 2;
+      cpu.multiThreadScore =
+        (cpu.multiThreadScore + args.data.multiThreadScore) / 2;
+      if (cpu.efficiencyThreshold || args.data.efficiencyThreshold) {
+        cpu.efficiencyThreshold =
+          ((cpu.efficiencyThreshold ?? 0) +
+            (args.data.efficiencyThreshold ?? 0)) /
+          (cpu.efficiencyThreshold && args.data.efficiencyThreshold ? 2 : 1);
+      }
+      if (cpu.performanceThreshold || args.data.performanceThreshold) {
+        cpu.performanceThreshold =
+          ((cpu.performanceThreshold ?? 0) +
+            (args.data.performanceThreshold ?? 0)) /
+          (cpu.performanceThreshold && args.data.performanceThreshold ? 2 : 1);
+      }
+    }
 
     // Create or update cpu
     return prisma.cpu.upsert({
       where: { vendor_family_model },
       create: args.data,
-      update: { vulnerabilities },
+      update: { ...cpu },
       select: args.select
     }) as unknown as Promise<PrismaCpu>; // FIXME Forced correct return type
   }
