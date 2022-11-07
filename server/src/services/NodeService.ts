@@ -189,7 +189,7 @@ export class NodeService {
     // Delete K8s node
     await this.k8sService.deleteNode({ id: args.where.id });
 
-    // Unassign node
+    // Update node
     return this.update({
       where: { id: args.where.id },
       data: {

@@ -181,20 +181,27 @@ export class NodeInformer {
       }
     };
 
-    // TODO Add try catch
-    switch (verb) {
-      case k8s.ADD:
-        this.onAdd(k8sNode);
-        break;
-      case k8s.UPDATE:
-        this.onUpdate(k8sNode);
-        break;
-      case k8s.DELETE:
-        this.onDelete(k8sNode);
-        break;
-      default:
-        logger.warn(`Node informer unknown verb '${verb}'`);
-        break;
+    try {
+      switch (verb) {
+        case k8s.ADD:
+          this.onAdd(k8sNode);
+          break;
+        case k8s.UPDATE:
+          this.onUpdate(k8sNode);
+          break;
+        case k8s.DELETE:
+          this.onDelete(k8sNode);
+          break;
+        default:
+          logger.warn(`Node informer unknown verb '${verb}'`);
+          break;
+      }
+    } catch (error) {
+      logger.error(
+        `Node informer caught error: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
     }
   }
 }
