@@ -209,7 +209,7 @@ export class NodeService {
     // FIXME Node host
     const host = '';
 
-    const ssh = await new SSH().connect({ host });
+    const ssh = await SSH.connect({ host });
 
     await ssh.execCommand({
       command: 'shutdown -h now',

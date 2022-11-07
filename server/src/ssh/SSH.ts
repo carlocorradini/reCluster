@@ -47,18 +47,20 @@ type ExecCommandArgs = Exec & {
 export class SSH {
   private readonly ssh: NodeSSH;
 
-  public constructor() {
+  private constructor() {
     this.ssh = new NodeSSH();
   }
 
-  public async connect(args: ConnectArgs) {
-    await this.ssh.connect({
+  public static async connect(args: ConnectArgs) {
+    const instance = new SSH();
+
+    await instance.ssh.connect({
       host: args.host,
       username: args.username ?? config.ssh.username,
       privateKey: config.ssh.key.private
     });
 
-    return this;
+    return instance;
   }
 
   public disconnect() {
