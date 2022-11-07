@@ -1862,6 +1862,8 @@ DEBUG() {
 # ================
 # Read configuration file
 read_config() {
+  [ -z "\$RECLUSTER_CONFIG_FILE" ] || return 0
+
   INFO "Reading reCluster configuration file '\$RECLUSTER_CONFIG_FILE'"
   [ -f \$RECLUSTER_CONFIG_FILE ] || FATAL "reCluster configuration file '\$RECLUSTER_CONFIG_FILE' not found"
   RECLUSTER_CONFIG=\$(yq e --output-format=json --no-colors '.' "\$RECLUSTER_CONFIG_FILE") || FATAL "Error reading reCluster configuration file '\$RECLUSTER_CONFIG_FILE'"
@@ -1869,6 +1871,8 @@ read_config() {
 
 # Read node token file
 read_node_token() {
+  [ -z "\$RECLUSTER_NODE_TOKEN" ] || return 0
+
   INFO "Reading node token file '\$RECLUSTER_NODE_TOKEN_FILE'"
   [ -f \$RECLUSTER_NODE_TOKEN_FILE ] || FATAL "Node token file '\$RECLUSTER_NODE_TOKEN_FILE' not found"
   RECLUSTER_NODE_TOKEN=\$(cat "\$RECLUSTER_NODE_TOKEN_FILE") || FATAL "Error reading node token file '\$RECLUSTER_NODE_TOKEN_FILE'"
@@ -1876,6 +1880,9 @@ read_node_token() {
 
 # Update node status
 update_node_status() {
+  read_config
+  read_node_token
+
   _server_url=\$(echo "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
   _server_url="\$_server_url/graphql"
   # shellcheck disable=SC2016
@@ -1971,8 +1978,6 @@ EOF
 # MAIN
 # ================
 {
-  read_config
-  read_node_token
   update_node_status
   start_services
 }
@@ -2048,22 +2053,18 @@ EOF
   INFO "Successfully installed reCluster"
 }
 
-# Start services
-start_services() {
-  spinner_start "Starting services"
+# Start recluster
+start_recluster() {
+  spinner_start "Starting reCluster"
 
   case $INIT_SYSTEM in
     openrc)
-      INFO "openrc: Starting Node exporter"
-      $SUDO rc-service node_exporter start
-      INFO "openrc: Starting K3s"
-      $SUDO rc-service k3s-recluster start
+      INFO "openrc: Starting reCluster"
+      $SUDO rc-service recluster.bootstrap start
       ;;
     systemd)
-      INFO "systemd: Starting Node exporter"
-      $SUDO systemtcl start node_exporter
-      INFO "systemd: Starting K3s"
-      $SUDO systemctl start k3s-recluster
+      INFO "systemd: Starting reCluster"
+      $SUDO systemtcl start recluster.bootstrap
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
@@ -2127,5 +2128,5 @@ SSH_AUTHORIZED_KEYS_FILE="$HOME/.ssh/authorized_keys"
   install_node_exporter
   cluster_init
   install_recluster
-  start_services
+  start_recluster
 }
