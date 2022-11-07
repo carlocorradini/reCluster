@@ -43,14 +43,18 @@ POSTGRES_USER=recluster
 POSTGRES_PASSWORD=password
 # Postgres database
 POSTGRES_DB=recluster
-# Database seeding flag
-DB_SEED=true
-# Execute flag
-EXEC=true
 # Certificates directory
 CERTS_DIR="$DIRNAME/../certs"
-# Certificates password
-CERTS_PASSWORD=password
+# Skip certificates
+SKIP_CERTS=false
+# Skip cluster
+SKIP_CLUSTER=false
+# Skip database
+SKIP_DB=false
+# Skip database seeding
+SKIP_DB_SEED=false
+# Skip server
+SKIP_SERVER=false
 
 # ================
 # GLOBALS
@@ -66,6 +70,12 @@ cleanup() {
   # Exit code
   _exit_code=$?
   [ $_exit_code = 0 ] || WARN "Cleanup exit code $_exit_code"
+
+  # Certificates
+  if [ -d "$CERTS_DIR" ]; then
+    DEBUG "Removing certificates directory '$CERTS_DIR'"
+    rm -rf "$CERTS_DIR"
+  fi
 
   # Cluster
   if check_cmd k3d; then
@@ -89,37 +99,31 @@ trap cleanup INT QUIT TERM EXIT
 show_help() {
   # Script name
   _script_name=$(basename "$0")
-  # K3d config file name
-  _k3d_config_file_name=$(basename "$K3D_CONFIG")
 
   cat << EOF
-Usage: $_script_name [--help] [--k3d-config] [--skip-exec] [--skip-seed]
+Usage: $_script_name [--help] [--k3d-config <PATH>] [--skip-certs]
+        [--skip-cluster] [--skip-db] [--skip-db-seed] [--skip-server]
 
 reCluster development server script.
 
 Options:
-  --help          Show this help message and exit
+  --help                Show this help message and exit
 
-  --k3d-config    K3d configuration file
-                  Default: $_k3d_config_file_name
-                  Values:
-                    Any valid file path
+  --k3d-config <PATH>   K3d configuration file
+                        Default: $K3D_CONFIG
+                        Values:
+                          Any valid file path
 
-  --skip-exec     Prepare environment skipping the execution
+  --skip-certs          Skip certificates
 
-  --skip-seed     Skip database seeding
+  --skip-cluster        Skip cluster
+
+  --skip-db             Skip database
+
+  --skip-db-seed        Skip database seed
+
+  --skip-server         Skip server
 EOF
-}
-
-# Check if can execute via setup env
-# @param $1 Message
-can_exec() {
-  if [ "$EXEC" = true ]; then
-    return 0
-  else
-    WARN "${1:-"Skipping"}"
-    return 1
-  fi
 }
 
 ################################################################################################################################
@@ -147,14 +151,29 @@ parse_args() {
         shift
         shift
         ;;
-      --skip-exec)
-        # Skip execution
-        EXEC=false
+      --skip-certs)
+        # Skip certificates
+        SKIP_CERTS=true
         shift
         ;;
-      --skip-seed)
-        # Skip database seeding
-        DB_SEED=false
+      --skip-cluster)
+        # Skip cluster
+        SKIP_CLUSTER=true
+        shift
+        ;;
+      --skip-db)
+        # Skip database
+        SKIP_DB=true
+        shift
+        ;;
+      --skip-db-seed)
+        # Skip database seed
+        SKIP_DB_SEED=true
+        shift
+        ;;
+      --skip-server)
+        # Skip server
+        SKIP_SERVER=true
         shift
         ;;
       -*)
@@ -176,6 +195,7 @@ parse_args() {
 
 # Verify system
 verify_system() {
+  assert_cmd chmod
   assert_cmd docker
   assert_cmd k3d
   assert_cmd node
@@ -195,22 +215,26 @@ check_system() {
 
 # Setup certificates
 setup_certs() {
+  [ "$SKIP_CERTS" = false ] || { WARN "Skipping certificates" && return 0; }
+
   _ssh_key_name=ssh
   _token_key_name=token
 
   INFO "Generating SSH certificate"
-  ssh-keygen -b 2048 -t rsa -f "$CERTS_DIR/$_ssh_key_name.key" -N "$CERTS_PASSWORD"
+  ssh-keygen -b 2048 -t rsa -f "$CERTS_DIR/$_ssh_key_name.key" -N ""
   mv "$CERTS_DIR/$_ssh_key_name.key.pub" "$CERTS_DIR/$_ssh_key_name.pub"
+  chmod 600 "$CERTS_DIR/$_ssh_key_name.key" "$CERTS_DIR/$_ssh_key_name.pub"
 
   INFO "Generating Token certificate"
-  ssh-keygen -b 4096 -t rsa -f "$CERTS_DIR/$_token_key_name.key" -N "$CERTS_PASSWORD" -m PEM
+  ssh-keygen -b 4096 -t rsa -f "$CERTS_DIR/$_token_key_name.key" -N "" -m PEM
   ssh-keygen -e -m PEM -f "$CERTS_DIR/$_token_key_name.key" > "$CERTS_DIR/$_token_key_name.pub"
   rm "$CERTS_DIR/$_token_key_name.key.pub"
+  chmod 600 "$CERTS_DIR/$_token_key_name.key" "$CERTS_DIR/$_token_key_name.pub"
 }
 
 # Setup cluster
 setup_cluster() {
-  can_exec "Skipping cluster" || return 0
+  [ "$SKIP_CLUSTER" = false ] || { WARN "Skipping cluster" && return 0; }
 
   INFO "Creating cluster"
   k3d cluster create --config "$K3D_CONFIG"
@@ -218,7 +242,7 @@ setup_cluster() {
 
 # Setup database
 setup_database() {
-  can_exec "Skipping database" || return 0
+  [ "$SKIP_DB" = false ] || { WARN "Skipping database" && return 0; }
 
   INFO "Starting Postgres '$POSTGRES_IMAGE'"
   POSTGRES_CONTAINER_ID=$(
@@ -242,15 +266,17 @@ setup_database() {
   INFO "Synchronizing database"
   npm run --prefix "$NPM_PREFIX" db:sync
 
-  if [ "$DB_SEED" = true ]; then
+  if [ "$SKIP_DB_SEED" = false ]; then
     INFO "Seeding database"
     npm run --prefix "$NPM_PREFIX" db:seed
+  else
+    WARN "Skipping database seed"
   fi
 }
 
 # Setup server
 setup_server() {
-  can_exec "Skipping server" || return 0
+  [ "$SKIP_SERVER" = false ] || { WARN "Skipping server" && return 0; }
 
   INFO "Starting server"
   npm run --prefix "$NPM_PREFIX" start:dev

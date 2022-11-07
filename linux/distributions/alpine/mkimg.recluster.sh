@@ -30,6 +30,6 @@ profile_recluster() {
   arch="x86_64 aarch64 armv7 s390x"
   output_format="iso"
   kernel_addons="xtables-addons"
-  apks="$apks coreutils ethtool inotify-tools iproute2 jq ncurses procps sudo sysbench tzdata util-linux yq"
+  apks="$apks coreutils ethtool inotify-tools iproute2 jq ncurses openssh-keygen procps sudo sysbench tzdata util-linux yq"
   apkovl="genapkovl-recluster.sh"
 }

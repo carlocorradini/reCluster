@@ -62,23 +62,19 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 ## Simulate Cluster
 
+> **Note**: Destroy machines with `vagrant destroy --graceful --force`
+
 1. Install `vagrant-hosts` plugin:
 
    ```console
    vagrant plugin install vagrant-hosts
    ```
 
-1. Creates and configures guest machines
+1. Creates and configures machines
 
    ```console
    vagrant up
    ```
-
-   1. Destroy machines:
-
-      ```console
-      vagrant destroy --graceful --force
-      ```
 
 ### Controller
 

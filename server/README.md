@@ -9,20 +9,20 @@ reCluster server.
 ### SSH
 
 ```console
-password="password" # Edit
-filename="ssh"      # Edit
+filename="ssh" # Edit
 
-ssh-keygen -b 2048 -t rsa -f "$filename" -N "$password"
+ssh-keygen -b 2048 -t rsa -f "$filename" -N ""
+chmod 600 "$filename" "$filename.pub"
 ```
 
 ### Token
 
 ```console
-password="password" # Edit
-filename="token"    # Edit
+filename="token" # Edit
 
-ssh-keygen -b 4096 -t rsa -f "$filename" -N "$password" -m PEM
+ssh-keygen -b 4096 -t rsa -f "$filename" -N "" -m PEM
 ssh-keygen -e -m PEM -f "$filename" > "$filename.pub"
+chmod 600 "$filename" "$filename.pub"
 ```
 
 ## Development

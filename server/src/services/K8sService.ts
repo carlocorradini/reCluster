@@ -61,7 +61,7 @@ export class K8sService {
   }
 
   public async deleteNode(args: DeleteNodeArgs): Promise<k8s.V1Status> {
-    logger.info(`K8s service del ete node: ${JSON.stringify(args)}`);
+    logger.info(`K8s service delete node: ${JSON.stringify(args)}`);
 
     // TODO Drain node
 

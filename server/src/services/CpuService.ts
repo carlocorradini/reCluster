@@ -72,21 +72,25 @@ export class CpuService {
           ...(args.data.vulnerabilities ?? [])
         ])
       ];
-      cpu.singleThreadScore =
-        (cpu.singleThreadScore + args.data.singleThreadScore) / 2;
-      cpu.multiThreadScore =
-        (cpu.multiThreadScore + args.data.multiThreadScore) / 2;
+      cpu.singleThreadScore = Math.round(
+        (cpu.singleThreadScore + args.data.singleThreadScore) / 2
+      );
+      cpu.multiThreadScore = Math.round(
+        (cpu.multiThreadScore + args.data.multiThreadScore) / 2
+      );
       if (cpu.efficiencyThreshold || args.data.efficiencyThreshold) {
-        cpu.efficiencyThreshold =
+        cpu.efficiencyThreshold = Math.round(
           ((cpu.efficiencyThreshold ?? 0) +
             (args.data.efficiencyThreshold ?? 0)) /
-          (cpu.efficiencyThreshold && args.data.efficiencyThreshold ? 2 : 1);
+            (cpu.efficiencyThreshold && args.data.efficiencyThreshold ? 2 : 1)
+        );
       }
       if (cpu.performanceThreshold || args.data.performanceThreshold) {
-        cpu.performanceThreshold =
+        cpu.performanceThreshold = Math.round(
           ((cpu.performanceThreshold ?? 0) +
             (args.data.performanceThreshold ?? 0)) /
-          (cpu.performanceThreshold && args.data.performanceThreshold ? 2 : 1);
+            (cpu.performanceThreshold && args.data.performanceThreshold ? 2 : 1)
+        );
       }
     }
 

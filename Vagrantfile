@@ -30,12 +30,16 @@ VM_RAM = 1024
 VM_CPU = 1
 NODES = [
   {
-    :hostname => "controller",
+    :hostname => "controller-0",
     :ip => "10.0.0.10"
   },
   {
-    :hostname => "worker",
+    :hostname => "worker-0",
     :ip => "10.0.0.100"
+  },
+  {
+    :hostname => "worker-1",
+    :ip => "10.0.0.101"
   }
 ]
 
@@ -57,6 +61,7 @@ apk add --update --no-cache \
   iproute2 \
   jq \
   ncurses \
+  openssh-keygen \
   procps \
   sudo \
   sysbench \

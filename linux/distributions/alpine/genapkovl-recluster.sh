@@ -76,7 +76,7 @@ inotify-tools
 iproute2
 jq
 ncurses
-openssh
+openssh-keygen
 procps
 sudo
 sysbench

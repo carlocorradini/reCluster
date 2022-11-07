@@ -31,6 +31,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import compress from '@fastify/compress';
 import rateLimit from '@fastify/rate-limit';
+import healthCheck from 'fastify-healthcheck';
 import fastifyApollo, {
   fastifyApolloDrainPlugin
 } from '@as-integrations/fastify';
@@ -77,6 +78,7 @@ async function main() {
   });
   await server.register(cors);
   await server.register(compress);
+  await server.register(healthCheck);
   await server.register(fastifyApollo(apollo), {
     path: config.graphql.path,
     context

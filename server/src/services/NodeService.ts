@@ -207,14 +207,14 @@ export class NodeService {
     logger.info(`Node service shutdown: ${JSON.stringify(args)}`);
 
     // FIXME Node host
-    const host = '';
+    const host = '10.0.0.100';
 
     const ssh = await SSH.connect({ host });
-
     await ssh.execCommand({
-      command: 'shutdown -h now',
+      command: 'sudo shutdown -h now',
       disconnect: true
     });
+
     await this.statusService.update({
       where: { id: args.where.id },
       data: {

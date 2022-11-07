@@ -60,6 +60,7 @@
     "graphqlmac",
     "graphqluuid",
     "gsub",
+    "healthcheck",
     "ireduce",
     "ifname",
     "iname",

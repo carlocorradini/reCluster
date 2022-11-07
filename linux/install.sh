@@ -490,7 +490,7 @@ read_power_consumption() {
     _pc=$(_read_power_consumption)
     DEBUG "Reading power consumption: ${_pc}W"
     # Add current power consumption to list
-    _pcs=$(echo "$_pcs" | jq --arg pc "$_pc" '. |= . + [$pc|tonumber]')
+    _pcs=$(echo "$_pcs" | jq --arg pc "$_pc" '. |= . + [$pc | tonumber]')
     # Sleep
     sleep "$PC_INTERVAL"
   done
@@ -503,8 +503,9 @@ read_power_consumption() {
     wait "$_pid" || :
   fi
 
-  # Check pcs length
-  [ "$(echo "$_pcs" | jq --raw-output 'length')" -ge 2 ] || FATAL "Not enough power consumption readings"
+  # Check pcs
+  [ "$(echo "$_pcs" | jq --raw-output 'length')" -ge 2 ] || FATAL "Power consumption readings do not have enough data"
+  [ "$(echo "$_pcs" | jq --raw-output 'add')" -ge 1 ] || FATAL "Power consumption readings are below 1W"
 
   # Calculate mean
   _mean=$(
@@ -1293,12 +1294,13 @@ verify_system() {
     FATAL "K3s configuration requires 'server' and 'token'"
   fi
   # K3s node name
-  [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."node-name"))')" = false ] || WARN "K3s 'node-name' ignored"
+  [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."node-name"))')" = false ] || FATAL "K3s 'node-name' must not be provided"
   # K3s node id
-  [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."with-node-id"))')" = false ] || WARN "K3s 'with-node-id' ignored"
+  [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."with-node-id"))')" = false ] || FATAL "K3s 'with-node-id' must not be provided"
 
   # reCluster server URL
-  [ "$(echo "$CONFIG" | jq --raw-output 'any(.recluster; select(.server))')" = true ] || FATAL "reCluster configuration requires 'server'"
+  _recluster_server_url=$(echo "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires 'server'"
+  assert_url_reachability "$_recluster_server_url/health"
 
   # SSH
   _ssh_authorized_keys=$(echo "$CONFIG" | jq --exit-status '.ssh_authorized_keys') || FATAL "Configuration requires 'ssh_authorized_keys' array"
@@ -1606,16 +1608,6 @@ install_k3s() {
   # Kind
   _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
 
-  # Node name
-  case $_k3s_kind in
-    server) _k3s_node_name=controller ;;
-    agent) _k3s_node_name=worker ;;
-    *) FATAL "Unknown K3s kind '$_k3s_kind'" ;;
-  esac
-
-  # Update configuration
-  CONFIG=$(echo "$CONFIG" | jq --arg name "$_k3s_node_name" '.k3s."node-name" = $name')
-
   # Write Configuration
   _k3s_config=$(echo "$CONFIG" | jq --exit-status '.k3s | del(.kind)' | yq e --exit-status --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
   INFO "Writing K3s configuration to '$_k3s_config_file'"
@@ -1776,6 +1768,8 @@ install_recluster() {
   _registration_data=
   _node_token=
   _node_id=
+  _node_name=
+  _k3s_kind=
 
   spinner_start "Installing reCluster"
 
@@ -1801,10 +1795,20 @@ install_recluster() {
   # Write node token
   echo "$_node_token" | tee "$_node_token_file" > /dev/null
 
-  # Update K3s configuration
+  # K3s node name
+  _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
+  case $_k3s_kind in
+    server) _node_name="controller.$_node_id" ;;
+    agent) _node_name="worker.$_node_id" ;;
+    *) FATAL "Unknown K3s kind '$_k3s_kind'" ;;
+  esac
+
+  # K3s label
   _node_label_id="${_node_label_id}${_node_id}"
+
+  # Update K3s configuration
   INFO "Updating K3s configuration '$_k3s_config_file'"
-  $SUDO k3s_node_id="$_node_id" k3s_label_id="$_node_label_id" yq e '.with-node-id = env(k3s_node_id) | .node-label += [env(k3s_label_id)]' -i "$_k3s_config_file"
+  $SUDO k3s_node_name="$_node_name" k3s_label_id="$_node_label_id" yq e '.node-name = env(k3s_node_name) | .node-label += [env(k3s_label_id)]' -i "$_k3s_config_file"
 
   #
   # Scripts
@@ -1862,7 +1866,7 @@ DEBUG() {
 # ================
 # Read configuration file
 read_config() {
-  [ -z "\$RECLUSTER_CONFIG_FILE" ] || return 0
+  [ -z "\$RECLUSTER_CONFIG" ] || return 0
 
   INFO "Reading reCluster configuration file '\$RECLUSTER_CONFIG_FILE'"
   [ -f \$RECLUSTER_CONFIG_FILE ] || FATAL "reCluster configuration file '\$RECLUSTER_CONFIG_FILE' not found"
@@ -1932,8 +1936,6 @@ EOF
   if echo "\$_response_data" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
     FATAL "Error updating node status at '\$_server_url':\\n\$(echo "\$_response_data" | jq .)"
   fi
-
-  INFO "Successfully updated node status"
 }
 
 # Start services
@@ -1942,7 +1944,7 @@ EOF
 
   case $INIT_SYSTEM in
     openrc)
-      tee -a "$_bootstrap_script_file" > /dev/null << EOF
+      tee -a "$_commons_script_file" > /dev/null << EOF
       INFO "openrc: Starting Node exporter"
       rc-service node_exporter start
       INFO "openrc: Starting K3s"
@@ -1950,7 +1952,7 @@ EOF
 EOF
       ;;
     systemd)
-      tee -a "$_bootstrap_script_file" > /dev/null << EOF
+      tee -a "$_commons_script_file" > /dev/null << EOF
       INFO "systemd: Starting Node exporter"
       systemtcl start node_exporter
       INFO "systemd: Starting K3s"
@@ -1960,7 +1962,7 @@ EOF
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
-  tee -a "$_bootstrap_script_file" > /dev/null << EOF
+  tee -a "$_commons_script_file" > /dev/null << EOF
 }
 EOF
   $SUDO chmod 755 "$_commons_script_file"
@@ -2060,11 +2062,11 @@ start_recluster() {
   case $INIT_SYSTEM in
     openrc)
       INFO "openrc: Starting reCluster"
-      $SUDO rc-service recluster.bootstrap start
+      $SUDO rc-service recluster.bootstrap restart
       ;;
     systemd)
       INFO "systemd: Starting reCluster"
-      $SUDO systemtcl start recluster.bootstrap
+      $SUDO systemtcl restart recluster.bootstrap
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac

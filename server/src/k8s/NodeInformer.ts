@@ -141,12 +141,16 @@ export class NodeInformer {
 
     if (!id) {
       logger.error(
-        `Node informer unknown node with uid '${node?.metadata?.uid ?? ''}`
+        `Node informer on '${verb}' node with uid '${
+          node?.metadata?.uid ?? ''
+        } is missing label '${config.k8s.label.node.id}'`
       );
       return;
     }
     if (!ready) {
-      logger.error(`Node informer node '${id}' ready status not found`);
+      logger.error(
+        `Node informer on '${verb}' node '${id}' ready status not found`
+      );
       return;
     }
 
@@ -164,7 +168,7 @@ export class NodeInformer {
         break;
       default:
         logger.warn(
-          `Node informer node '${id}' unknown ready status '${ready.status}'`
+          `Node informer on '${verb}' node '${id}' unknown ready status '${ready.status}'`
         );
         return;
     }
@@ -198,7 +202,7 @@ export class NodeInformer {
       }
     } catch (error) {
       logger.error(
-        `Node informer caught error: ${
+        `Node informer on '${verb}' caught error: ${
           error instanceof Error ? error.message : error
         }`
       );
