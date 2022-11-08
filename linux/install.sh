@@ -1609,10 +1609,13 @@ install_k3s() {
   _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
 
   # Write Configuration
-  _k3s_config=$(echo "$CONFIG" | jq --exit-status '.k3s | del(.kind)' | yq e --exit-status --prettyPrint --no-colors '.' -) || FATAL "Error reading K3s configuration"
+  # FIXME yq style
   INFO "Writing K3s configuration to '$_k3s_config_file'"
   $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
-  echo "$_k3s_config" | $SUDO tee "$_k3s_config_file" > /dev/null
+  echo "$CONFIG" \
+    | jq '.k3s | del(.kind)' \
+    | yq e --no-colors '.. style="double"' - \
+    | $SUDO tee "$_k3s_config_file" > /dev/null
 
   # Install
   INSTALL_K3S_SKIP_ENABLE=true \
@@ -1778,9 +1781,10 @@ install_recluster() {
   mkdir -p "$_opt_dir"
 
   # Write configuration
+  # FIXME yq style
   echo "$CONFIG" \
     | jq '.recluster' \
-    | yq e --prettyPrint --no-colors '.' - \
+    | yq e --no-colors '.. style="double"' - \
     | tee "$_recluster_config_file" > /dev/null
 
   # Register node
@@ -1807,8 +1811,9 @@ install_recluster() {
   _node_label_id="${_node_label_id}${_node_id}"
 
   # Update K3s configuration
+  # FIXME yq style
   INFO "Updating K3s configuration '$_k3s_config_file'"
-  $SUDO k3s_node_name="$_node_name" k3s_label_id="$_node_label_id" yq e '.node-name = env(k3s_node_name) | .node-label += [env(k3s_label_id)]' -i "$_k3s_config_file"
+  $SUDO k3s_node_name="$_node_name" k3s_label_id="$_node_label_id" yq e '.node-name = env(k3s_node_name) | .node-label += [env(k3s_label_id)] | .. style="double"' -i "$_k3s_config_file"
 
   #
   # Scripts
