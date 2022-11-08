@@ -48,7 +48,7 @@ import { Context } from './types';
 process.env.TZ = 'Etc/UTC';
 
 // Server
-const server = Fastify();
+const server = Fastify({ logger });
 // Apollo
 const apollo = new ApolloServer<Context>({
   schema,
