@@ -22,7 +22,7 @@
 
 k3s:
   kind: server
-  cluster-init: true # TODO First server only !
+  cluster-init: true # TODO First controller only !
   cluster-domain: recluster.local
   flannel-backend: host-gw
   write-kubeconfig-mode: 644
