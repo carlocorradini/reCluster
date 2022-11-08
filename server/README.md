@@ -22,8 +22,8 @@ chmod 600 "$filename" "$filename.pub"
 filename="token"
 passphrase="password"
 
-ssh-keygen -b 4096 -t rsa -f "$filename" -N "passphrase" -m PEM
-ssh-keygen -e -m PEM -f "$filename" > "$filename.pub"
+ssh-keygen -b 4096 -t rsa -f "$filename" -N "$passphrase" -m PEM
+ssh-keygen -e -m PEM -f "$filename" -P "$passphrase" > "$filename.pub"
 chmod 600 "$filename" "$filename.pub"
 ```
 

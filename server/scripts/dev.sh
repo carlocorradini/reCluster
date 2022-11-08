@@ -229,7 +229,7 @@ setup_certs() {
 
   INFO "Generating Token certificate"
   ssh-keygen -b 4096 -t rsa -f "$CERTS_DIR/$_token_key_name.key" -N "$CERTS_PASSPHRASE" -m PEM
-  ssh-keygen -e -m PEM -f "$CERTS_DIR/$_token_key_name.key" > "$CERTS_DIR/$_token_key_name.pub"
+  ssh-keygen -e -m PEM -f "$CERTS_DIR/$_token_key_name.key" -P "$CERTS_PASSPHRASE" > "$CERTS_DIR/$_token_key_name.pub"
   rm "$CERTS_DIR/$_token_key_name.key.pub"
   chmod 600 "$CERTS_DIR/$_token_key_name.key" "$CERTS_DIR/$_token_key_name.pub"
 }
