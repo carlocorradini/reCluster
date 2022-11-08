@@ -45,6 +45,8 @@ POSTGRES_PASSWORD=password
 POSTGRES_DB=recluster
 # Certificates directory
 CERTS_DIR="$DIRNAME/../certs"
+# Certificates passphrase
+CERTS_PASSPHRASE=password
 # Skip certificates
 SKIP_CERTS=false
 # Skip cluster
@@ -221,12 +223,12 @@ setup_certs() {
   _token_key_name=token
 
   INFO "Generating SSH certificate"
-  ssh-keygen -b 2048 -t rsa -f "$CERTS_DIR/$_ssh_key_name.key" -N ""
+  ssh-keygen -b 2048 -t rsa -f "$CERTS_DIR/$_ssh_key_name.key" -N "$CERTS_PASSPHRASE"
   mv "$CERTS_DIR/$_ssh_key_name.key.pub" "$CERTS_DIR/$_ssh_key_name.pub"
   chmod 600 "$CERTS_DIR/$_ssh_key_name.key" "$CERTS_DIR/$_ssh_key_name.pub"
 
   INFO "Generating Token certificate"
-  ssh-keygen -b 4096 -t rsa -f "$CERTS_DIR/$_token_key_name.key" -N "" -m PEM
+  ssh-keygen -b 4096 -t rsa -f "$CERTS_DIR/$_token_key_name.key" -N "$CERTS_PASSPHRASE" -m PEM
   ssh-keygen -e -m PEM -f "$CERTS_DIR/$_token_key_name.key" > "$CERTS_DIR/$_token_key_name.pub"
   rm "$CERTS_DIR/$_token_key_name.key.pub"
   chmod 600 "$CERTS_DIR/$_token_key_name.key" "$CERTS_DIR/$_token_key_name.pub"

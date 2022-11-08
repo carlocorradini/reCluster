@@ -40,17 +40,15 @@ export const config: Config = {
   },
   ssh: {
     username: env.SSH_USERNAME,
-    key: {
-      private: env.SSH_PRIVATE_KEY
-    }
+    passphrase: env.SSH_PASSPHRASE,
+    privateKey: env.SSH_PRIVATE_KEY
   },
   token: {
     algorithm: 'RS256',
     expiration: convert(365, 'd').to('s'),
-    key: {
-      private: env.TOKEN_PRIVATE_KEY,
-      public: env.TOKEN_PUBLIC_KEY
-    }
+    passphrase: env.TOKEN_PASSPHRASE,
+    privateKey: env.TOKEN_PRIVATE_KEY,
+    publicKey: env.TOKEN_PUBLIC_KEY
   },
   graphql: { path: '/graphql' },
   k8s: {

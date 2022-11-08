@@ -57,7 +57,8 @@ export class SSH {
     await instance.ssh.connect({
       host: args.host,
       username: args.username ?? config.ssh.username,
-      privateKey: config.ssh.key.private
+      privateKey: config.ssh.privateKey,
+      passphrase: config.ssh.passphrase
     });
 
     return instance;

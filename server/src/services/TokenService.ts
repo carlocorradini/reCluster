@@ -47,7 +47,7 @@ export class TokenService {
     return new Promise((resolve, reject) => {
       jwt.sign(
         payload,
-        config.token.key.private,
+        { key: config.token.privateKey, passphrase: config.token.passphrase },
         TokenService.SIGN_OPTIONS,
         (error, encoded) => {
           if (error) reject(new TokenError(error.message));
@@ -62,7 +62,7 @@ export class TokenService {
     return new Promise((resolve, reject) => {
       jwt.verify(
         token,
-        config.token.key.public,
+        config.token.publicKey,
         TokenService.VERIFY_OPTIONS,
         (error, decoded) => {
           if (error) reject(new TokenError(error.message));

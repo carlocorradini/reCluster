@@ -39,14 +39,14 @@ export type Config = {
   token: {
     expiration: number;
     algorithm: jwt.Algorithm;
-    key: {
-      private: string;
-      public: string;
-    };
+    passphrase: string;
+    privateKey: string;
+    publicKey: string;
   };
   ssh: {
     username: string;
-    key: { private: string };
+    passphrase: string;
+    privateKey: string;
   };
   graphql: {
     path: string;
