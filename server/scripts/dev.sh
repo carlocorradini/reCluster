@@ -76,13 +76,13 @@ cleanup() {
   # Certificates
   if [ -d "$CERTS_DIR" ]; then
     DEBUG "Removing certificates directory '$CERTS_DIR'"
-    rm -rf "$CERTS_DIR"
+    rm -rf "$CERTS_DIR" || WARN "Failed to remove certificates directory '$CERTS_DIR'"
   fi
 
   # Cluster
   if check_cmd k3d; then
     DEBUG "Deleting cluster"
-    k3d cluster delete --config "$K3D_CONFIG" || WARN "Cluster deletion failed"
+    k3d cluster delete --config "$K3D_CONFIG" || WARN "Failed to delete cluster"
   fi
 
   # Destroy Docker container
