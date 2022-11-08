@@ -61,96 +61,124 @@ type MaxNodesArgs = {
 
 export class NodePoolService {
   // FIXME Return type
-  public async upsert(args: UpsertArgs): Promise<PrismaNodePool> {
-    logger.info(`Node pool service upsert: ${JSON.stringify(args)}`);
+  public upsert(
+    args: UpsertArgs,
+    prismaTxn?: Prisma.TransactionClient
+  ): Promise<PrismaNodePool> {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`Node pool service upsert: ${JSON.stringify(args)}`);
 
-    const nodePool = await prisma.nodePool.findFirst({
-      where: {
-        nodes: {
-          some: { cpu: { cores: args.data.cpu }, ram: args.data.memory }
-        }
-      },
-      select: args.select
-    });
-    if (nodePool) return nodePool as PrismaNodePool;
+      const nodePool = await prisma.nodePool.findFirst({
+        where: {
+          nodes: {
+            some: { cpu: { cores: args.data.cpu }, ram: args.data.memory }
+          }
+        },
+        select: args.select
+      });
+      if (nodePool) return nodePool as PrismaNodePool;
 
-    return prisma.nodePool.create({
-      data: {
-        name: `CPU${args.data.cpu}.MEMORY${args.data.memory}`,
-        minNodes: 1
-      },
-      select: args.select
-    }) as unknown as Promise<PrismaNodePool>;
+      return prisma.nodePool.create({
+        data: {
+          name: `CPU${args.data.cpu}.MEMORY${args.data.memory}`,
+          minNodes: 1
+        },
+        select: args.select
+      }) as unknown as Promise<PrismaNodePool>;
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
   }
 
-  public findMany(args: FindManyArgs) {
+  public findMany(
+    args: FindManyArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Node pool service find many: ${JSON.stringify(args)}`);
 
-    return prisma.nodePool.findMany({
+    return prismaTxn.nodePool.findMany({
       ...args,
       cursor: args.cursor ? { id: args.cursor } : undefined
     });
   }
 
-  public findUnique(args: FindUniqueArgs) {
+  public findUnique(
+    args: FindUniqueArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Node pool service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.nodePool.findUnique(args);
+    return prismaTxn.nodePool.findUnique(args);
   }
 
-  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+  public findUniqueOrThrow(
+    args: FindUniqueOrThrowArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(
       `Node pool service find unique or throw: ${JSON.stringify(args)}`
     );
 
-    return prisma.nodePool.findUniqueOrThrow(args);
+    return prismaTxn.nodePool.findUniqueOrThrow(args);
   }
 
-  public async update(args: UpdateArgs) {
-    logger.info(`Node pool service update: ${JSON.stringify(args)}`);
+  public update(args: UpdateArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`Node pool service update: ${JSON.stringify(args)}`);
 
-    // Extract data
-    const { data } = args;
+      // Extract data
+      const { data } = args;
 
-    if (data.count) {
-      const newCount = data.count;
-      const { minNodes } = await this.findUniqueOrThrow({
-        where: args.where,
-        select: { minNodes: true }
-      });
-      const maxNodes = await this.maxNodes({ id: args.where.id });
-
-      if (newCount < minNodes || newCount > maxNodes) {
-        // FIXME Error
-        throw new Error(
-          `Count ${newCount} is invalid because exceeds min ${minNodes} or max ${maxNodes} limits`
+      if (data.count) {
+        const newCount = data.count;
+        const { minNodes } = await this.findUniqueOrThrow(
+          {
+            where: args.where,
+            select: { minNodes: true }
+          },
+          prisma
         );
+        const maxNodes = await this.maxNodes({ id: args.where.id }, prisma);
+
+        if (newCount < minNodes || newCount > maxNodes) {
+          // FIXME Error
+          throw new Error(
+            `Count ${newCount} is invalid because exceeds min ${minNodes} or max ${maxNodes} limits`
+          );
+        }
+
+        const oldCount = await this.count({ id: args.where.id }, prisma);
+
+        if (newCount < oldCount) {
+          // TODO Decrease
+        } else if (newCount > oldCount) {
+          // TODO Increase
+        }
+
+        delete data.count;
       }
 
-      const oldCount = await this.count({ id: args.where.id });
+      // Write data
+      // eslint-disable-next-line no-param-reassign
+      args.data = data;
 
-      if (newCount < oldCount) {
-        // TODO Decrease
-      } else if (newCount > oldCount) {
-        // TODO Increase
-      }
+      return prisma.nodePool.update(args);
+    };
 
-      delete data.count;
-    }
-
-    // Write data
-    // eslint-disable-next-line no-param-reassign
-    args.data = data;
-
-    return prisma.nodePool.update(args);
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
   }
 
-  public async count(args: CountArgs): Promise<number> {
+  public async count(
+    args: CountArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ): Promise<number> {
     logger.debug(`Node pool service count: ${JSON.stringify(args)}`);
 
     const {
       _count: { nodes }
-    } = await prisma.nodePool.findUniqueOrThrow({
+    } = await prismaTxn.nodePool.findUniqueOrThrow({
       where: { id: args.id },
       select: {
         _count: {
@@ -164,12 +192,15 @@ export class NodePoolService {
     return nodes;
   }
 
-  public async maxNodes(args: MaxNodesArgs): Promise<number> {
+  public async maxNodes(
+    args: MaxNodesArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ): Promise<number> {
     logger.debug(`Node pool service max nodes: ${JSON.stringify(args)}`);
 
     const {
       _count: { nodes }
-    } = await prisma.nodePool.findUniqueOrThrow({
+    } = await prismaTxn.nodePool.findUniqueOrThrow({
       where: { id: args.id },
       select: { _count: { select: { nodes: true } } }
     });

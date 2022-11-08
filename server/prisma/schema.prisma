@@ -22,7 +22,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["filteredRelationCount"]
+  previewFeatures = ["filteredRelationCount", "interactiveTransactions"]
 }
 
 datasource db {

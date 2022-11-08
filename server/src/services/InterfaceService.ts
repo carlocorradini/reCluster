@@ -38,26 +38,35 @@ type FindUniqueOrThrowArgs = Omit<
 >;
 
 export class InterfaceService {
-  public findMany(args: FindManyArgs) {
+  public findMany(
+    args: FindManyArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Interface service find many: ${JSON.stringify(args)}`);
 
-    return prisma.interface.findMany({
+    return prismaTxn.interface.findMany({
       ...args,
       cursor: args.cursor ? { id: args.cursor } : undefined
     });
   }
 
-  public findUnique(args: FindUniqueArgs) {
+  public findUnique(
+    args: FindUniqueArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Interface service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.interface.findUnique(args);
+    return prismaTxn.interface.findUnique(args);
   }
 
-  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+  public findUniqueOrThrow(
+    args: FindUniqueOrThrowArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(
       `Interface service find unique or throw: ${JSON.stringify(args)}`
     );
 
-    return prisma.interface.findUniqueOrThrow(args);
+    return prismaTxn.interface.findUniqueOrThrow(args);
   }
 }

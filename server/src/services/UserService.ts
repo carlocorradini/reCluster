@@ -54,55 +54,77 @@ export class UserService {
     private readonly cryptoService: CryptoService
   ) {}
 
-  public create(args: CreateArgs) {
-    logger.info(`User service create: ${JSON.stringify(args)}`);
+  public create(args: CreateArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`User service create: ${JSON.stringify(args)}`);
 
-    return prisma.user.create(args);
+      return prisma.user.create(args);
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
   }
 
-  public findMany(args: FindManyArgs) {
+  public findMany(
+    args: FindManyArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`User service find many: ${JSON.stringify(args)}`);
 
-    return prisma.user.findMany({
+    return prismaTxn.user.findMany({
       ...args,
       cursor: args.cursor ? { id: args.cursor } : undefined
     });
   }
 
-  public findUnique(args: FindUniqueArgs) {
+  public findUnique(
+    args: FindUniqueArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`User service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.user.findUnique(args);
+    return prismaTxn.user.findUnique(args);
   }
 
-  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+  public findUniqueOrThrow(
+    args: FindUniqueOrThrowArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`User service find unique or throw: ${JSON.stringify(args)}`);
 
-    return prisma.user.findUniqueOrThrow(args);
+    return prismaTxn.user.findUniqueOrThrow(args);
   }
 
-  public async signIn(args: SignInArgs) {
-    logger.info(`User service sign in: ${args.username}`);
+  public signIn(args: SignInArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`User service sign in: ${args.username}`);
 
-    const user = await prisma.user.findUnique({
-      select: { id: true, roles: true, permissions: true, password: true },
-      where: { username: args.username }
-    });
+      const user = await this.findUnique(
+        {
+          select: { id: true, roles: true, permissions: true, password: true },
+          where: { username: args.username }
+        },
+        prisma
+      );
 
-    // Check password
-    if (
-      !user ||
-      !(await this.cryptoService.compare(args.password, user.password))
-    ) {
-      throw new AuthenticationError('Username or password is incorrect');
-    }
+      // Check password
+      if (
+        !user ||
+        !(await this.cryptoService.compare(args.password, user.password))
+      ) {
+        throw new AuthenticationError('Username or password is incorrect');
+      }
 
-    // Generate token
-    return this.tokenService.sign({
-      type: TokenTypes.USER,
-      id: user.id,
-      roles: user.roles as UserRoleEnum[],
-      permissions: user.permissions as UserPermissionEnum[]
-    });
+      // Generate token
+      return this.tokenService.sign({
+        type: TokenTypes.USER,
+        id: user.id,
+        roles: user.roles as UserRoleEnum[],
+        permissions: user.permissions as UserPermissionEnum[]
+      });
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
   }
 }

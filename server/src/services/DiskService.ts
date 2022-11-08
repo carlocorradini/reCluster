@@ -35,24 +35,33 @@ type FindUniqueArgs = Omit<Prisma.DiskFindUniqueArgs, 'include'>;
 type FindUniqueOrThrowArgs = Omit<Prisma.DiskFindUniqueOrThrowArgs, 'include'>;
 
 export class DiskService {
-  public findMany(args: FindManyArgs) {
+  public findMany(
+    args: FindManyArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Disk service find many: ${JSON.stringify(args)}`);
 
-    return prisma.disk.findMany({
+    return prismaTxn.disk.findMany({
       ...args,
       cursor: args.cursor ? { id: args.cursor } : undefined
     });
   }
 
-  public findUnique(args: FindUniqueArgs) {
+  public findUnique(
+    args: FindUniqueArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Disk service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.disk.findUnique(args);
+    return prismaTxn.disk.findUnique(args);
   }
 
-  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+  public findUniqueOrThrow(
+    args: FindUniqueOrThrowArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Disk service find unique or throw: ${JSON.stringify(args)}`);
 
-    return prisma.disk.findUniqueOrThrow(args);
+    return prismaTxn.disk.findUniqueOrThrow(args);
   }
 }

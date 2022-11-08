@@ -47,69 +47,86 @@ type UpdateArgs = Omit<
 };
 
 export class StatusService {
-  public findMany(args: FindManyArgs) {
+  public findMany(
+    args: FindManyArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Status service find many: ${JSON.stringify(args)}`);
 
-    return prisma.status.findMany({
+    return prismaTxn.status.findMany({
       ...args,
       cursor: args.cursor ? { id: args.cursor } : undefined
     });
   }
 
-  public findUnique(args: FindUniqueArgs) {
+  public findUnique(
+    args: FindUniqueArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Status service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.status.findUnique(args);
+    return prismaTxn.status.findUnique(args);
   }
 
-  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+  public findUniqueOrThrow(
+    args: FindUniqueOrThrowArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(
       `Status service find unique or throw: ${JSON.stringify(args)}`
     );
 
-    return prisma.status.findUniqueOrThrow(args);
+    return prismaTxn.status.findUniqueOrThrow(args);
   }
 
-  public async update(args: UpdateArgs) {
-    logger.info(`Status service update: ${JSON.stringify(args)}`);
+  public update(args: UpdateArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`Status service update: ${JSON.stringify(args)}`);
 
-    // Extract data
-    const { data } = args;
+      // Extract data
+      const { data } = args;
 
-    // Update data
-    data.reason = data.reason ?? null;
-    data.message = data.message ?? null;
-    data.lastHeartbeat = data.lastHeartbeat ?? null;
-    if (!data.lastTransition) {
-      const { status: lastStatus } = await this.findUniqueOrThrow({
-        where: args.where,
-        select: { status: true }
-      });
+      // Update data
+      data.reason = data.reason ?? null;
+      data.message = data.message ?? null;
+      data.lastHeartbeat = data.lastHeartbeat ?? null;
+      if (!data.lastTransition) {
+        const { status: lastStatus } = await this.findUniqueOrThrow(
+          {
+            where: args.where,
+            select: { status: true }
+          },
+          prisma
+        );
 
-      if (data.status !== lastStatus) {
-        data.lastTransition = new Date();
+        if (data.status !== lastStatus) {
+          data.lastTransition = new Date();
+        }
       }
-    }
 
-    // Logic by status
-    switch (data.status) {
-      case NodeStatusEnum.ACTIVE:
-      case NodeStatusEnum.ACTIVE_READY:
-      case NodeStatusEnum.ACTIVE_NOT_READY:
-      case NodeStatusEnum.ACTIVE_DELETE:
-      case NodeStatusEnum.BOOTING:
-      case NodeStatusEnum.INACTIVE:
-        // Update last heartbeat
-        data.lastHeartbeat = data.lastHeartbeat ?? new Date();
-        break;
-      default:
-        break;
-    }
+      // Logic by status
+      switch (data.status) {
+        case NodeStatusEnum.ACTIVE:
+        case NodeStatusEnum.ACTIVE_READY:
+        case NodeStatusEnum.ACTIVE_NOT_READY:
+        case NodeStatusEnum.ACTIVE_DELETE:
+        case NodeStatusEnum.BOOTING:
+        case NodeStatusEnum.INACTIVE:
+          // Update last heartbeat
+          data.lastHeartbeat = data.lastHeartbeat ?? new Date();
+          break;
+        default:
+          break;
+      }
 
-    // Write data
-    // eslint-disable-next-line no-param-reassign
-    args.data = data;
+      // Write data
+      // eslint-disable-next-line no-param-reassign
+      args.data = data;
 
-    return prisma.status.update(args);
+      return prisma.status.update(args);
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
   }
 }

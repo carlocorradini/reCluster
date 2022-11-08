@@ -41,86 +41,108 @@ type FindUniqueOrThrowArgs = Omit<Prisma.CpuFindUniqueOrThrowArgs, 'include'>;
 
 export class CpuService {
   // FIXME Return type
-  public async upsert(args: UpsertArgs): Promise<PrismaCpu> {
-    logger.info(`Cpu service upsert: ${JSON.stringify(args)}`);
+  public upsert(
+    args: UpsertArgs,
+    prismaTxn?: Prisma.TransactionClient
+  ): Promise<PrismaCpu> {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`Cpu service upsert: ${JSON.stringify(args)}`);
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const vendor_family_model: Prisma.CpuVendorFamilyModelCompoundUniqueInput =
-      {
-        vendor: args.data.vendor,
-        family: args.data.family,
-        model: args.data.model
-      };
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      const vendor_family_model: Prisma.CpuVendorFamilyModelCompoundUniqueInput =
+        {
+          vendor: args.data.vendor,
+          family: args.data.family,
+          model: args.data.model
+        };
 
-    // Find old vulnerabilities (if any)
-    const cpu = await this.findUnique({
-      where: { vendor_family_model },
-      select: {
-        vulnerabilities: true,
-        singleThreadScore: true,
-        multiThreadScore: true,
-        efficiencyThreshold: true,
-        performanceThreshold: true
-      }
-    });
-
-    // Update if cpu exists
-    if (cpu) {
-      cpu.vulnerabilities = [
-        ...new Set([
-          ...cpu.vulnerabilities,
-          ...(args.data.vulnerabilities ?? [])
-        ])
-      ];
-      cpu.singleThreadScore = Math.round(
-        (cpu.singleThreadScore + args.data.singleThreadScore) / 2
+      // Find old vulnerabilities (if any)
+      const cpu = await this.findUnique(
+        {
+          where: { vendor_family_model },
+          select: {
+            vulnerabilities: true,
+            singleThreadScore: true,
+            multiThreadScore: true,
+            efficiencyThreshold: true,
+            performanceThreshold: true
+          }
+        },
+        prisma
       );
-      cpu.multiThreadScore = Math.round(
-        (cpu.multiThreadScore + args.data.multiThreadScore) / 2
-      );
-      if (cpu.efficiencyThreshold || args.data.efficiencyThreshold) {
-        cpu.efficiencyThreshold = Math.round(
-          ((cpu.efficiencyThreshold ?? 0) +
-            (args.data.efficiencyThreshold ?? 0)) /
-            (cpu.efficiencyThreshold && args.data.efficiencyThreshold ? 2 : 1)
-        );
-      }
-      if (cpu.performanceThreshold || args.data.performanceThreshold) {
-        cpu.performanceThreshold = Math.round(
-          ((cpu.performanceThreshold ?? 0) +
-            (args.data.performanceThreshold ?? 0)) /
-            (cpu.performanceThreshold && args.data.performanceThreshold ? 2 : 1)
-        );
-      }
-    }
 
-    // Create or update cpu
-    return prisma.cpu.upsert({
-      where: { vendor_family_model },
-      create: args.data,
-      update: { ...cpu },
-      select: args.select
-    }) as unknown as Promise<PrismaCpu>; // FIXME Forced correct return type
+      // Update if cpu exists
+      if (cpu) {
+        cpu.vulnerabilities = [
+          ...new Set([
+            ...cpu.vulnerabilities,
+            ...(args.data.vulnerabilities ?? [])
+          ])
+        ];
+        cpu.singleThreadScore = Math.round(
+          (cpu.singleThreadScore + args.data.singleThreadScore) / 2
+        );
+        cpu.multiThreadScore = Math.round(
+          (cpu.multiThreadScore + args.data.multiThreadScore) / 2
+        );
+        if (cpu.efficiencyThreshold || args.data.efficiencyThreshold) {
+          cpu.efficiencyThreshold = Math.round(
+            ((cpu.efficiencyThreshold ?? 0) +
+              (args.data.efficiencyThreshold ?? 0)) /
+              (cpu.efficiencyThreshold && args.data.efficiencyThreshold ? 2 : 1)
+          );
+        }
+        if (cpu.performanceThreshold || args.data.performanceThreshold) {
+          cpu.performanceThreshold = Math.round(
+            ((cpu.performanceThreshold ?? 0) +
+              (args.data.performanceThreshold ?? 0)) /
+              (cpu.performanceThreshold && args.data.performanceThreshold
+                ? 2
+                : 1)
+          );
+        }
+      }
+
+      // Create or update cpu
+      return prisma.cpu.upsert({
+        where: { vendor_family_model },
+        create: args.data,
+        update: { ...cpu },
+        select: args.select
+      }) as unknown as Promise<PrismaCpu>; // FIXME Forced correct return type
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
   }
 
-  public findMany(args: FindManyArgs) {
+  public findMany(
+    args: FindManyArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Cpu service find many: ${JSON.stringify(args)}`);
 
-    return prisma.cpu.findMany({
+    return prismaTxn.cpu.findMany({
       ...args,
       cursor: args.cursor ? { id: args.cursor } : undefined
     });
   }
 
-  public findUnique(args: FindUniqueArgs) {
+  public findUnique(
+    args: FindUniqueArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Cpu service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.cpu.findUnique(args);
+    return prismaTxn.cpu.findUnique(args);
   }
 
-  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+  public findUniqueOrThrow(
+    args: FindUniqueOrThrowArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Cpu service find unique or throw: ${JSON.stringify(args)}`);
 
-    return prisma.cpu.findUniqueOrThrow(args);
+    return prismaTxn.cpu.findUniqueOrThrow(args);
   }
 }

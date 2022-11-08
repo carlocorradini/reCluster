@@ -77,151 +77,195 @@ export class NodeService {
     private readonly tokenService: TokenService
   ) {}
 
-  public async create(args: CreateArgs) {
-    logger.info(`Node service create: ${JSON.stringify(args)}`);
+  public create(args: CreateArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`Node service create: ${JSON.stringify(args)}`);
 
-    // Create or update cpu
-    const { id: cpuId } = await this.cpuService.upsert({
-      data: args.data.cpu,
-      select: { id: true }
-    });
-
-    // Create or update node pool
-    const { id: nodePoolId } = await this.nodePoolService.upsert({
-      data: { cpu: args.data.cpu.cores, memory: args.data.ram },
-      select: { id: true }
-    });
-
-    // Create
-    const node = await prisma.node.create({
-      ...args,
-      select: { id: true, roles: true, permissions: true },
-      data: {
-        ...args.data,
-        status: {
-          create: {
-            status: NodeStatusEnum.ACTIVE,
-            reason: 'NodeRegistered',
-            message: 'Node registered',
-            lastHeartbeat: new Date(),
-            lastTransition: new Date()
-          }
+      // Create or update cpu
+      const { id: cpuId } = await this.cpuService.upsert(
+        {
+          data: args.data.cpu,
+          select: { id: true }
         },
-        nodePool: { connect: { id: nodePoolId } },
-        cpu: { connect: { id: cpuId } },
-        disks: { createMany: { data: args.data.disks } },
-        interfaces: {
-          createMany: { data: args.data.interfaces }
-        }
-      }
-    });
+        prisma
+      );
 
-    // Generate token
-    return this.tokenService.sign({
-      type: TokenTypes.NODE,
-      id: node.id,
-      roles: node.roles as NodeRoleEnum[], // FIXME
-      permissions: node.permissions as NodePermissionEnum[] // FIXME
-    });
+      // Create or update node pool
+      const { id: nodePoolId } = await this.nodePoolService.upsert(
+        {
+          data: { cpu: args.data.cpu.cores, memory: args.data.ram },
+          select: { id: true }
+        },
+        prisma
+      );
+
+      // Create
+      const node = await prisma.node.create({
+        ...args,
+        select: { id: true, roles: true, permissions: true },
+        data: {
+          ...args.data,
+          status: {
+            create: {
+              status: NodeStatusEnum.ACTIVE,
+              reason: 'NodeRegistered',
+              message: 'Node registered',
+              lastHeartbeat: new Date(),
+              lastTransition: new Date()
+            }
+          },
+          nodePool: { connect: { id: nodePoolId } },
+          cpu: { connect: { id: cpuId } },
+          disks: { createMany: { data: args.data.disks } },
+          interfaces: {
+            createMany: { data: args.data.interfaces }
+          }
+        }
+      });
+
+      // Generate token
+      return this.tokenService.sign({
+        type: TokenTypes.NODE,
+        id: node.id,
+        roles: node.roles as NodeRoleEnum[], // FIXME
+        permissions: node.permissions as NodePermissionEnum[] // FIXME
+      });
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
   }
 
-  public findMany(args: FindManyArgs) {
+  public findMany(
+    args: FindManyArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Node service find many: ${JSON.stringify(args)}`);
 
-    return prisma.node.findMany({
+    return prismaTxn.node.findMany({
       ...args,
       cursor: args.cursor ? { id: args.cursor } : undefined
     });
   }
 
-  public findUnique(args: FindUniqueArgs) {
+  public findUnique(
+    args: FindUniqueArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Node service find unique: ${JSON.stringify(args)}`);
 
-    return prisma.node.findUnique(args);
+    return prismaTxn.node.findUnique(args);
   }
 
-  public findUniqueOrThrow(args: FindUniqueOrThrowArgs) {
+  public findUniqueOrThrow(
+    args: FindUniqueOrThrowArgs,
+    prismaTxn: Prisma.TransactionClient = prisma
+  ) {
     logger.debug(`Node service find unique or throw: ${JSON.stringify(args)}`);
 
-    return prisma.node.findUniqueOrThrow(args);
+    return prismaTxn.node.findUniqueOrThrow(args);
   }
 
-  public async update(args: UpdateArgs) {
-    logger.info(`Node service update: ${JSON.stringify(args)}`);
+  public update(args: UpdateArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`Node service update: ${JSON.stringify(args)}`);
 
-    // Extract data
-    const { data } = args;
+      // Extract data
+      const { data } = args;
 
-    if (data.status) {
-      await this.statusService.update({
-        where: { id: args.where.id },
-        data: data.status
+      if (data.status) {
+        await this.statusService.update(
+          {
+            where: { id: args.where.id },
+            data: data.status
+          },
+          prisma
+        );
+
+        delete data.status;
+      }
+
+      // Write data
+      // eslint-disable-next-line no-param-reassign
+      args.data = data;
+
+      return prisma.node.update({
+        ...args,
+        data: { ...args.data, status: undefined }
+      });
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
+  }
+
+  public unassign(args: UnassignArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`Node service unassign: ${JSON.stringify(args)}`);
+
+      // Check if node exists and assigned to node pool
+      const count = await prisma.node.count({
+        where: {
+          id: args.where.id,
+          nodePoolAssigned: true
+        }
+      });
+      if (count !== 1) {
+        // FIXME Error
+        throw new Error(`Cannot unassign node ${args.where.id}`);
+      }
+
+      // Delete K8s node
+      await this.k8sService.deleteNode({ id: args.where.id });
+
+      // Update node
+      return this.update(
+        {
+          where: { id: args.where.id },
+          data: {
+            nodePoolAssigned: false,
+            status: {
+              status: NodeStatusEnum.ACTIVE_DELETE,
+              reason: 'NodeUnassign',
+              message: 'Node unassign'
+            }
+          }
+        },
+        prisma
+      );
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
+  }
+
+  public shutdown(args: ShutdownArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`Node service shutdown: ${JSON.stringify(args)}`);
+
+      // FIXME Node host
+      const host = '10.0.0.100';
+
+      const ssh = await SSH.connect({ host });
+      await ssh.execCommand({
+        command: 'sudo shutdown -h now',
+        disconnect: true
       });
 
-      delete data.status;
-    }
+      await this.statusService.update(
+        {
+          where: { id: args.where.id },
+          data: {
+            status: NodeStatusEnum.INACTIVE,
+            reason: args.status?.reason ?? 'NodeShutdown',
+            message: args.status?.message ?? 'Node shutdown'
+          }
+        },
+        prisma
+      );
+    };
 
-    // Write data
-    // eslint-disable-next-line no-param-reassign
-    args.data = data;
-
-    return prisma.node.update({
-      ...args,
-      data: { ...args.data, status: undefined }
-    });
-  }
-
-  public async unassign(args: UnassignArgs) {
-    logger.info(`Node service unassign: ${JSON.stringify(args)}`);
-
-    // Check if node exists and assigned to node pool
-    const count = await prisma.node.count({
-      where: {
-        id: args.where.id,
-        nodePoolAssigned: true
-      }
-    });
-    if (count !== 1) {
-      // FIXME Error
-      throw new Error(`Cannot unassign node ${args.where.id}`);
-    }
-
-    // Delete K8s node
-    await this.k8sService.deleteNode({ id: args.where.id });
-
-    // Update node
-    return this.update({
-      where: { id: args.where.id },
-      data: {
-        nodePoolAssigned: false,
-        status: {
-          status: NodeStatusEnum.ACTIVE_DELETE,
-          reason: 'NodeUnassign',
-          message: 'Node unassign'
-        }
-      }
-    });
-  }
-
-  public async shutdown(args: ShutdownArgs) {
-    logger.info(`Node service shutdown: ${JSON.stringify(args)}`);
-
-    // FIXME Node host
-    const host = '10.0.0.100';
-
-    const ssh = await SSH.connect({ host });
-    await ssh.execCommand({
-      command: 'sudo shutdown -h now',
-      disconnect: true
-    });
-
-    await this.statusService.update({
-      where: { id: args.where.id },
-      data: {
-        status: NodeStatusEnum.INACTIVE,
-        reason: args.status?.reason ?? 'NodeShutdown',
-        message: args.status?.message ?? 'Node shutdown'
-      }
-    });
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
   }
 }
