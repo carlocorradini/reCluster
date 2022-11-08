@@ -23,6 +23,7 @@
  */
 
 import convert from 'convert';
+import type pino from 'pino';
 import type { Config } from '~/types';
 import { env } from './env';
 
@@ -34,6 +35,9 @@ export const config: Config = {
   server: {
     host: env.HOST,
     port: env.PORT
+  },
+  logger: {
+    level: env.LOGGER_LEVEL as pino.LevelWithSilent
   },
   database: {
     url: env.DATABASE_URL

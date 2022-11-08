@@ -23,7 +23,10 @@
  */
 
 import * as k8s from '@kubernetes/client-node';
+import type { K8sNode } from '~/types';
+import { NodeStatusEnum } from '~/db';
 import { kubeconfig } from '~/k8s/kubeconfig';
+import { K8sNodeStatusEnum } from '~/k8s/K8sNodeStatusEnum';
 import { logger } from '~/logger';
 import { config } from '~/config';
 
@@ -38,7 +41,7 @@ export class K8sService {
     this.api = kubeconfig.makeApiClient(k8s.CoreV1Api);
   }
 
-  public async findUniqueNode(args: FindUniqueNodeArgs): Promise<k8s.V1Node> {
+  public async findUniqueNode(args: FindUniqueNodeArgs): Promise<K8sNode> {
     const label = `${config.k8s.label.node.id}=${args.id}`;
 
     const {
@@ -52,12 +55,10 @@ export class K8sService {
       1
     );
 
-    if (nodes.length !== 1) {
-      // FIXME Error
-      throw new Error(`K8s node '${args.id}' not found`);
-    }
+    // FIXME Custom error
+    if (nodes.length !== 1) throw new Error(`K8s node '${args.id}' not found`);
 
-    return nodes[0];
+    return K8sService.toK8sNode(nodes[0]);
   }
 
   public async deleteNode(args: DeleteNodeArgs): Promise<k8s.V1Status> {
@@ -66,12 +67,64 @@ export class K8sService {
     // TODO Drain node
 
     const node = await this.findUniqueNode({ id: args.id });
-    if (!node.metadata || !node.metadata.name) {
-      // FIXME Error
-      throw new Error(`K8s node '${args.id}' missing name metadata`);
+    const { body: status } = await this.api.deleteNode(node.name);
+
+    return status;
+  }
+
+  public static toK8sNode(node: k8s.V1Node): K8sNode {
+    const id: string | undefined =
+      node?.metadata?.labels?.[config.k8s.label.node.id];
+    const name: string | undefined = node.metadata?.name;
+    const address: string | undefined = node.status?.addresses?.find(
+      (a) => a.type === 'InternalIP'
+    )?.address;
+    const hostname: string | undefined = node.status?.addresses?.find(
+      (a) => a.type === 'HostName'
+    )?.address;
+    const ready: k8s.V1NodeCondition | undefined =
+      node?.status?.conditions?.find((c) => c.type === 'Ready');
+
+    // FIXME Use custom error
+    if (!id)
+      throw new Error(
+        `K8s node uid '${node?.metadata?.uid ?? ''} id label '${
+          config.k8s.label.node.id
+        }' not found`
+      );
+    if (!name) throw new Error(`K8s node '${id}' name not found`);
+    if (!address) throw new Error(`K8s node '${id}' address not found`);
+    if (!hostname) throw new Error(`K8s node '${id}' hostname not found`);
+    if (!ready) throw new Error(`K8s node '${id}' ready condition not found`);
+
+    let status: NodeStatusEnum;
+    switch (ready.status) {
+      case K8sNodeStatusEnum.TRUE:
+        status = NodeStatusEnum.ACTIVE_READY;
+        break;
+      case K8sNodeStatusEnum.FALSE:
+        status = NodeStatusEnum.ACTIVE_NOT_READY;
+        break;
+      case K8sNodeStatusEnum.UNKNOWN:
+        status = NodeStatusEnum.UNKNOWN;
+        break;
+      default:
+        // FIXME Use custom error
+        throw new Error(`Node '${id}' unknown ready status '${ready.status}'`);
     }
 
-    const { body: status } = await this.api.deleteNode(node.metadata.name);
-    return status;
+    return <K8sNode>{
+      id,
+      name,
+      address,
+      hostname,
+      status: {
+        status,
+        reason: ready.reason,
+        message: ready.message,
+        lastHeartbeat: ready.lastHeartbeatTime,
+        lastTransition: ready.lastTransitionTime
+      }
+    };
   }
 }

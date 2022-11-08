@@ -37,6 +37,12 @@ export const env = cleanEnv(process.env, {
   }),
   HOST: host({ default: '0.0.0.0', desc: 'Server host' }),
   PORT: port({ default: 80, desc: 'Server port' }),
+  LOGGER_LEVEL: str({
+    choices: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'],
+    default: 'info',
+    devDefault: 'debug',
+    desc: 'Logger level'
+  }),
   DATABASE_URL: url({ desc: 'Database URL' }),
   SSH_USERNAME: str({ default: 'root', desc: 'SSH username' }),
   SSH_PRIVATE_KEY: fileValidator({ desc: 'SSH private key' }),

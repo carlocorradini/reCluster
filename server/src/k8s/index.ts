@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-export * from './K8sNodeStatusesEnum';
+export * from './K8sNodeStatusEnum';
 export * from './kubeconfig';
 // eslint-disable-next-line import/no-cycle
 export * from './NodeInformer';

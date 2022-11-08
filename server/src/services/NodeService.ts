@@ -244,15 +244,19 @@ export class NodeService {
     const fn = async (prisma: Prisma.TransactionClient) => {
       logger.info(`Node service shutdown: ${JSON.stringify(args)}`);
 
-      // FIXME Node host
-      const host = '10.0.0.100';
+      // Find node
+      const node = await this.k8sService.findUniqueNode({
+        id: args.where.id
+      });
 
-      const ssh = await SSH.connect({ host });
+      // Shutdown
+      const ssh = await SSH.connect({ host: node.address });
       await ssh.execCommand({
         command: 'sudo shutdown -h now',
         disconnect: true
       });
 
+      // Update
       await this.statusService.update(
         {
           where: { id: args.where.id },

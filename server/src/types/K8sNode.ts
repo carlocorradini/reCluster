@@ -22,11 +22,12 @@
  * SOFTWARE.
  */
 
-export * from './helpers';
-export * from './utils';
-export * from './AuthData';
-export * from './Config';
-export * from './Context';
-export * from './db';
-export * from './K8sNode';
-export * from './token';
+import type { UpdateStatusInput } from './db';
+
+export type K8sNode = {
+  id: string;
+  name: string;
+  address: string;
+  hostname: string;
+  status: UpdateStatusInput;
+};

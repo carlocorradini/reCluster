@@ -25,18 +25,11 @@
 import * as k8s from '@kubernetes/client-node';
 import { inject, injectable, singleton } from 'tsyringe';
 import convert from 'convert';
-import type { UpdateStatusInput } from '~/types';
-import { config } from '~/config';
+import type { K8sNode } from '~/types';
 import { logger } from '~/logger';
 import { NodeService } from '~/services/NodeService';
-import { NodeStatusEnum } from '~/db';
+import { K8sService } from '~/services/K8sService';
 import { kubeconfig } from './kubeconfig';
-import { K8sNodeStatusesEnum } from './K8sNodeStatusesEnum';
-
-type K8sNode = {
-  id: string;
-  status: UpdateStatusInput;
-};
 
 @singleton()
 @injectable()
@@ -134,58 +127,9 @@ export class NodeInformer {
   }
 
   private on(verb: k8s.ADD | k8s.UPDATE | k8s.DELETE, node: k8s.V1Node) {
-    const id: string | undefined =
-      node?.metadata?.labels?.[config.k8s.label.node.id];
-    const ready: k8s.V1NodeCondition | undefined =
-      node?.status?.conditions?.find((c) => c.type === 'Ready');
-
-    if (!id) {
-      logger.error(
-        `Node informer on '${verb}' node with uid '${
-          node?.metadata?.uid ?? ''
-        } is missing label '${config.k8s.label.node.id}'`
-      );
-      return;
-    }
-    if (!ready) {
-      logger.error(
-        `Node informer on '${verb}' node '${id}' ready status not found`
-      );
-      return;
-    }
-
-    // Define status
-    let status: NodeStatusEnum;
-    switch (ready.status) {
-      case K8sNodeStatusesEnum.TRUE:
-        status = NodeStatusEnum.ACTIVE_READY;
-        break;
-      case K8sNodeStatusesEnum.FALSE:
-        status = NodeStatusEnum.ACTIVE_NOT_READY;
-        break;
-      case K8sNodeStatusesEnum.UNKNOWN:
-        status = NodeStatusEnum.UNKNOWN;
-        break;
-      default:
-        logger.warn(
-          `Node informer on '${verb}' node '${id}' unknown ready status '${ready.status}'`
-        );
-        return;
-    }
-
-    // Construct K8s node
-    const k8sNode: K8sNode = {
-      id,
-      status: {
-        status,
-        reason: ready.reason,
-        message: ready.message,
-        lastHeartbeat: ready.lastHeartbeatTime,
-        lastTransition: ready.lastTransitionTime
-      }
-    };
-
     try {
+      const k8sNode = K8sService.toK8sNode(node);
+
       switch (verb) {
         case k8s.ADD:
           this.onAdd(k8sNode);

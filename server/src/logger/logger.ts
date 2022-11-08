@@ -27,5 +27,5 @@ import { config } from '~/config';
 
 export const logger = pino({
   name: config.app,
-  level: config.node.env === 'development' ? 'debug' : 'info'
+  level: config.logger.level
 });

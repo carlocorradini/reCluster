@@ -22,10 +22,10 @@
  * SOFTWARE.
  */
 
-import type { Prisma } from '@prisma/client';
-import type { WithRequired } from './utils';
-
-export type UpdateStatusInput = WithRequired<
-  Omit<Prisma.StatusUpdateWithoutNodeInput, 'updatedAt'>,
-  'status'
->;
+export * from './CreateCpuInput';
+export * from './CreateDiskInput';
+export * from './CreateInterfaceInput';
+export * from './CreateUserInput';
+export * from './CreateNodeInput';
+export * from './UpdateNodePoolInput';
+export * from './UpdateStatusInput';

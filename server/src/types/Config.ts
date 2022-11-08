@@ -23,6 +23,7 @@
  */
 
 import type jwt from 'jsonwebtoken';
+import type pino from 'pino';
 
 export type Config = {
   app: string;
@@ -32,6 +33,9 @@ export type Config = {
   server: {
     host: string;
     port: number;
+  };
+  logger: {
+    level: pino.LevelWithSilent;
   };
   database: {
     url: string;
