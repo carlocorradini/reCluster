@@ -26,22 +26,25 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
 
-type FindManyArgs = Omit<Prisma.DiskFindManyArgs, 'include' | 'cursor'> & {
+type FindManyArgs = Omit<Prisma.StorageFindManyArgs, 'include' | 'cursor'> & {
   cursor?: string;
 };
 
-type FindUniqueArgs = Omit<Prisma.DiskFindUniqueArgs, 'include'>;
+type FindUniqueArgs = Omit<Prisma.StorageFindUniqueArgs, 'include'>;
 
-type FindUniqueOrThrowArgs = Omit<Prisma.DiskFindUniqueOrThrowArgs, 'include'>;
+type FindUniqueOrThrowArgs = Omit<
+  Prisma.StorageFindUniqueOrThrowArgs,
+  'include'
+>;
 
-export class DiskService {
+export class StorageService {
   public findMany(
     args: FindManyArgs,
     prismaTxn: Prisma.TransactionClient = prisma
   ) {
-    logger.debug(`Disk service find many: ${JSON.stringify(args)}`);
+    logger.debug(`Storage service find many: ${JSON.stringify(args)}`);
 
-    return prismaTxn.disk.findMany({
+    return prismaTxn.storage.findMany({
       ...args,
       cursor: args.cursor ? { id: args.cursor } : undefined
     });
@@ -51,17 +54,19 @@ export class DiskService {
     args: FindUniqueArgs,
     prismaTxn: Prisma.TransactionClient = prisma
   ) {
-    logger.debug(`Disk service find unique: ${JSON.stringify(args)}`);
+    logger.debug(`Storage service find unique: ${JSON.stringify(args)}`);
 
-    return prismaTxn.disk.findUnique(args);
+    return prismaTxn.storage.findUnique(args);
   }
 
   public findUniqueOrThrow(
     args: FindUniqueOrThrowArgs,
     prismaTxn: Prisma.TransactionClient = prisma
   ) {
-    logger.debug(`Disk service find unique or throw: ${JSON.stringify(args)}`);
+    logger.debug(
+      `Storage service find unique or throw: ${JSON.stringify(args)}`
+    );
 
-    return prismaTxn.disk.findUniqueOrThrow(args);
+    return prismaTxn.storage.findUniqueOrThrow(args);
   }
 }

@@ -23,34 +23,5 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import { Field, InputType } from 'type-graphql';
-import { SortOrderEnum } from '../../enums';
 
-@InputType({ isAbstract: true, description: 'Disk order by input' })
-export class OrderByDiskInput
-  implements Partial<Omit<Prisma.DiskOrderByWithRelationInput, 'node'>>
-{
-  @Field(() => SortOrderEnum, { description: 'Disk identifier' })
-  id?: SortOrderEnum;
-
-  @Field(() => SortOrderEnum, { description: 'Node identifier' })
-  nodeId?: SortOrderEnum;
-
-  @Field(() => SortOrderEnum, { description: 'Disk name' })
-  name?: SortOrderEnum;
-
-  @Field(() => SortOrderEnum, { description: 'Disk size' })
-  size?: SortOrderEnum;
-
-  @Field(() => SortOrderEnum, {
-    nullable: true,
-    description: 'Creation timestamp'
-  })
-  createdAt?: SortOrderEnum;
-
-  @Field(() => SortOrderEnum, {
-    nullable: true,
-    description: 'Update timestamp'
-  })
-  updatedAt?: SortOrderEnum;
-}
+export type CreateStorageInput = Prisma.StorageCreateWithoutNodeInput;

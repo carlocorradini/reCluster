@@ -22,25 +22,45 @@
  * SOFTWARE.
  */
 
-import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
+import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
-import { DiskService } from '~/services';
-import { FindManyDiskArgs } from '../../args';
-import { Node, Disk } from '../../entities';
+import { GraphQLBigInt } from 'graphql-scalars';
+import { convert } from 'convert';
+import { StorageService } from '~/services';
+import { DigitalUnitEnum } from '../../enums';
+import { Storage } from '../../entities';
+import { FindUniqueStorageArgs, FindManyStorageArgs } from '../../args';
 
-@Resolver(Node)
+@Resolver(Storage)
 @injectable()
-export class NodeDiskResolver {
+export class StorageResolver {
   public constructor(
-    @inject(DiskService)
-    private readonly diskService: DiskService
+    @inject(StorageService)
+    private readonly storageService: StorageService
   ) {}
 
-  @FieldResolver(() => [Disk], { description: 'Node disks' })
-  public disks(@Root() node: Node, @Args() args: FindManyDiskArgs) {
-    return this.diskService.findMany({
-      ...args,
-      where: { ...args.where, nodeId: node.id }
-    });
+  @Query(() => [Storage], { description: 'List of Storages' })
+  public storages(@Args() args: FindManyStorageArgs) {
+    return this.storageService.findMany(args);
+  }
+
+  @Query(() => Storage, {
+    nullable: true,
+    description: 'Storage matching the identifier'
+  })
+  public storage(@Args() args: FindUniqueStorageArgs) {
+    return this.storageService.findUnique({ where: { id: args.id } });
+  }
+
+  @FieldResolver(() => GraphQLBigInt)
+  public size(
+    @Root() storage: Storage,
+    @Arg('unit', () => DigitalUnitEnum, {
+      defaultValue: DigitalUnitEnum.B,
+      description: 'Digital conversion unit'
+    })
+    unit: DigitalUnitEnum
+  ) {
+    return convert(storage.size, DigitalUnitEnum.B).to(unit);
   }
 }

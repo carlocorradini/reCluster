@@ -23,7 +23,12 @@
  */
 
 import { Field, InputType } from 'type-graphql';
-import { GraphQLBigInt, GraphQLPositiveInt } from 'graphql-scalars';
+import {
+  GraphQLBigInt,
+  GraphQLIP,
+  GraphQLNonEmptyString,
+  GraphQLPositiveInt
+} from 'graphql-scalars';
 import {
   ArrayUnique,
   IsDefined,
@@ -34,11 +39,13 @@ import {
 import type { CreateNodeInput as ICreateNodeInput } from '~/types';
 import { NodeRoleEnum, NodePermissionEnum } from '~/db';
 import { CreateCpuInput } from './CreateCpuInput';
-import { CreateDiskInput } from './CreateDiskInput';
+import { CreateStorageInput } from './CreateStorageInput';
 import { CreateInterfaceInput } from './CreateInterfaceInput';
 
 @InputType({ description: 'Create Node input' })
-export class CreateNodeInput implements ICreateNodeInput {
+export class CreateNodeInput
+  implements Omit<ICreateNodeInput, 'name' | 'address' | 'hostname'>
+{
   @Field(() => [NodeRoleEnum], { description: 'Node roles' })
   @ArrayUnique()
   roles!: NodeRoleEnum[];
@@ -50,8 +57,8 @@ export class CreateNodeInput implements ICreateNodeInput {
   @ArrayUnique()
   permissions?: NodePermissionEnum[];
 
-  @Field(() => GraphQLBigInt, { description: 'Node ram' })
-  ram!: bigint;
+  @Field(() => GraphQLBigInt, { description: 'Node memory' })
+  memory!: bigint;
 
   @Field(() => GraphQLPositiveInt, { description: 'Minimum power consumption' })
   minPowerConsumption!: number;
@@ -83,9 +90,9 @@ export class CreateNodeInput implements ICreateNodeInput {
   @ValidateNested()
   cpu!: CreateCpuInput;
 
-  @Field(() => [CreateDiskInput], { description: 'Node disks' })
+  @Field(() => [CreateStorageInput], { description: 'Node storages' })
   @ValidateNested()
-  disks!: CreateDiskInput[];
+  storages!: CreateStorageInput[];
 
   @Field(() => [CreateInterfaceInput], { description: 'Node interfaces' })
   @ValidateNested()

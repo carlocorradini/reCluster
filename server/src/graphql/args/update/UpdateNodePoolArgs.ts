@@ -28,7 +28,7 @@ import { ArgsType, Field } from 'type-graphql';
 import { ValidateNested } from 'class-validator';
 import { UpdateNodePoolInput } from '../../inputs';
 
-type IUpdateNodePoolArgs = Pick<Prisma.NodePoolUpdateArgs, 'data'>;
+type IUpdateNodePoolArgs = Required<Pick<Prisma.NodePoolUpdateArgs, 'data'>>;
 
 @ArgsType()
 export class UpdateNodePoolArgs implements IUpdateNodePoolArgs {

@@ -32,7 +32,8 @@ import {
   NodeRoleEnumListFilter,
   NodePermissionEnumListFilter,
   UuidFilter,
-  BoolFilter
+  BoolFilter,
+  StringFilter
 } from '../filters';
 
 @InputType({ isAbstract: true, description: 'Node where input' })
@@ -47,7 +48,7 @@ export class WhereNodeInput
         | 'nodePool'
         | 'status'
         | 'cpu'
-        | 'disks'
+        | 'storages'
         | 'interfaces'
       >
     >
@@ -55,14 +56,23 @@ export class WhereNodeInput
   @Field({ nullable: true, description: 'Node identifier' })
   id?: UuidFilter;
 
+  @Field({ nullable: true, description: 'Node name' })
+  name?: StringFilter;
+
   @Field({ nullable: true, description: 'Node roles' })
   roles?: NodeRoleEnumListFilter;
 
   @Field({ nullable: true, description: 'Node permissions' })
   permissions?: NodePermissionEnumListFilter;
 
-  @Field({ nullable: true, description: 'Node ram' })
-  ram?: BigIntFilter;
+  @Field({ nullable: true, description: 'Node IP address' })
+  address?: StringFilter;
+
+  @Field({ nullable: true, description: 'Node hostname' })
+  hostname?: StringFilter;
+
+  @Field({ nullable: true, description: 'Node memory' })
+  memory?: BigIntFilter;
 
   @Field({ nullable: true, description: 'Cpu identifier' })
   cpuId?: UuidFilter;

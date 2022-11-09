@@ -72,7 +72,7 @@ export class NodePoolService {
       const nodePool = await prisma.nodePool.findFirst({
         where: {
           nodes: {
-            some: { cpu: { cores: args.data.cpu }, ram: args.data.memory }
+            some: { cpu: { cores: args.data.cpu }, memory: args.data.memory }
           }
         },
         select: args.select

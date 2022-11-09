@@ -22,15 +22,35 @@
  * SOFTWARE.
  */
 
-import { GraphQLBigInt, GraphQLNonEmptyString } from 'graphql-scalars';
+import type { Prisma } from '@prisma/client';
 import { Field, InputType } from 'type-graphql';
-import type { CreateDiskInput as ICreateDiskInput } from '~/types';
+import {
+  BigIntFilter,
+  StringFilter,
+  TimestampFilter,
+  UuidFilter
+} from '../filters';
 
-@InputType({ description: 'Create Disk input' })
-export class CreateDiskInput implements ICreateDiskInput {
-  @Field(() => GraphQLNonEmptyString, { description: 'Disk name' })
-  name!: string;
+@InputType({ isAbstract: true, description: 'Storage where input' })
+export class WhereStorageInput
+  implements
+    Partial<Omit<Prisma.StorageWhereInput, 'AND' | 'OR' | 'NOT' | 'node'>>
+{
+  @Field({ nullable: true, description: 'Storage identifier' })
+  id?: UuidFilter;
 
-  @Field(() => GraphQLBigInt, { description: 'Disk size' })
-  size!: bigint;
+  @Field({ nullable: true, description: 'Node identifier' })
+  nodeId?: StringFilter;
+
+  @Field({ nullable: true, description: 'Storage name' })
+  name?: StringFilter;
+
+  @Field({ nullable: true, description: 'Storage size' })
+  size?: BigIntFilter;
+
+  @Field({ nullable: true, description: 'Creation timestamp' })
+  createdAt?: TimestampFilter;
+
+  @Field({ nullable: true, description: 'Update timestamp' })
+  updatedAt?: TimestampFilter;
 }

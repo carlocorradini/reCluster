@@ -22,45 +22,22 @@
  * SOFTWARE.
  */
 
-import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { FieldResolver, Resolver, Root } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
-import { GraphQLBigInt } from 'graphql-scalars';
-import { convert } from 'convert';
-import { DiskService } from '~/services';
-import { DigitalUnitEnum } from '../../enums';
-import { Disk } from '../../entities';
-import { FindUniqueDiskArgs, FindManyDiskArgs } from '../../args';
+import { NodeService } from '~/services';
+import { Storage, Node } from '../../entities';
 
-@Resolver(Disk)
+@Resolver(Storage)
 @injectable()
-export class DiskResolver {
+export class StorageNodeResolver {
   public constructor(
-    @inject(DiskService)
-    private readonly diskService: DiskService
+    @inject(NodeService) private readonly nodeService: NodeService
   ) {}
 
-  @Query(() => [Disk], { description: 'List of Disks' })
-  public disks(@Args() args: FindManyDiskArgs) {
-    return this.diskService.findMany(args);
-  }
-
-  @Query(() => Disk, {
-    nullable: true,
-    description: 'Disk matching the identifier'
-  })
-  public disk(@Args() args: FindUniqueDiskArgs) {
-    return this.diskService.findUnique({ where: { id: args.id } });
-  }
-
-  @FieldResolver(() => GraphQLBigInt)
-  public size(
-    @Root() disk: Disk,
-    @Arg('unit', () => DigitalUnitEnum, {
-      defaultValue: DigitalUnitEnum.B,
-      description: 'Digital conversion unit'
-    })
-    unit: DigitalUnitEnum
-  ) {
-    return convert(disk.size, DigitalUnitEnum.B).to(unit);
+  @FieldResolver(() => Node, { description: 'Storage node' })
+  public node(@Root() storage: Storage) {
+    return this.nodeService.findUniqueOrThrow({
+      where: { id: storage.nodeId }
+    });
   }
 }

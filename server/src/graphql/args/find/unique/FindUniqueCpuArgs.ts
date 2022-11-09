@@ -25,9 +25,12 @@
 import type { Prisma } from '@prisma/client';
 import { GraphQLID } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
+import type { WithRequired } from '~/types';
 
 @ArgsType()
-export class FindUniqueCpuArgs implements Prisma.CpuWhereUniqueInput {
+export class FindUniqueCpuArgs
+  implements WithRequired<Prisma.CpuWhereUniqueInput, 'id'>
+{
   @Field(() => GraphQLID, { description: 'Cpu identifier' })
   id!: string;
 }

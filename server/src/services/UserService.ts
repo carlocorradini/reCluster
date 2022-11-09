@@ -25,7 +25,7 @@
 import type { User as PrismaUser, Prisma } from '@prisma/client';
 import { inject, injectable } from 'tsyringe';
 import type { CreateUserInput } from '~/types';
-import { prisma, UserRoleEnum, UserPermissionEnum } from '~/db';
+import { prisma } from '~/db';
 import { logger } from '~/logger';
 import { AuthenticationError } from '~/errors';
 import { TokenService, TokenTypes } from './TokenService';
@@ -120,8 +120,8 @@ export class UserService {
       return this.tokenService.sign({
         type: TokenTypes.USER,
         id: user.id,
-        roles: user.roles as UserRoleEnum[],
-        permissions: user.permissions as UserPermissionEnum[]
+        roles: user.roles,
+        permissions: user.permissions
       });
     };
 

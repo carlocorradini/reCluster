@@ -23,7 +23,7 @@
  */
 
 export * from './cpu';
-export * from './disk';
+export * from './storage';
 export * from './interface';
 export * from './node';
 export * from './node_pool';

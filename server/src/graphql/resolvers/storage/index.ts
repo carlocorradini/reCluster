@@ -22,6 +22,5 @@
  * SOFTWARE.
  */
 
-import type { Prisma } from '@prisma/client';
-
-export type CreateDiskInput = Prisma.DiskCreateWithoutNodeInput;
+export * from './StorageResolver';
+export * from './StorageNodeResolver';

@@ -23,7 +23,7 @@
  */
 
 export * from './WhereCpuInput';
-export * from './WhereDiskInput';
+export * from './WhereStorageInput';
 export * from './WhereInterfaceInput';
 export * from './WhereNodeInput';
 export * from './WhereNodePoolInput';

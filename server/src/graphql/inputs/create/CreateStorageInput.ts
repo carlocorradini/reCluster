@@ -22,12 +22,15 @@
  * SOFTWARE.
  */
 
-import type { Prisma } from '@prisma/client';
-import { GraphQLID } from 'graphql';
-import { ArgsType, Field } from 'type-graphql';
+import { GraphQLBigInt, GraphQLNonEmptyString } from 'graphql-scalars';
+import { Field, InputType } from 'type-graphql';
+import type { CreateStorageInput as ICreateStorageInput } from '~/types';
 
-@ArgsType()
-export class FindUniqueDiskArgs implements Prisma.DiskWhereUniqueInput {
-  @Field(() => GraphQLID, { description: 'Disk identifier' })
-  id!: string;
+@InputType({ description: 'Create Storage input' })
+export class CreateStorageInput implements ICreateStorageInput {
+  @Field(() => GraphQLNonEmptyString, { description: 'Storage name' })
+  name!: string;
+
+  @Field(() => GraphQLBigInt, { description: 'Storage size' })
+  size!: bigint;
 }

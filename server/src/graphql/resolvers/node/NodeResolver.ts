@@ -25,6 +25,7 @@
 import {
   Arg,
   Args,
+  Ctx,
   FieldResolver,
   Mutation,
   Query,
@@ -34,6 +35,7 @@ import {
 import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt, GraphQLJWT } from 'graphql-scalars';
 import { convert } from 'convert';
+import type { Context } from '~/types';
 import { NodeService } from '~/services';
 import { DigitalUnitEnum } from '../../enums';
 import { Node } from '../../entities';
@@ -66,8 +68,11 @@ export class NodeResolver {
   }
 
   @Mutation(() => GraphQLJWT, { description: 'Create a new node' })
-  public createNode(@Args() args: CreateNodeArgs) {
-    return this.nodeService.create(args);
+  public createNode(@Args() args: CreateNodeArgs, @Ctx() context: Context) {
+    return this.nodeService.create({
+      ...args,
+      data: { ...args.data, address: context.ip, hostname: context.hostname }
+    });
   }
 
   @Mutation(() => Node, { description: 'Unassign node from node pool' })
@@ -76,7 +81,7 @@ export class NodeResolver {
   }
 
   @FieldResolver(() => GraphQLBigInt)
-  public ram(
+  public memory(
     @Root() node: Node,
     @Arg('unit', () => DigitalUnitEnum, {
       defaultValue: DigitalUnitEnum.B,
@@ -84,6 +89,6 @@ export class NodeResolver {
     })
     unit: DigitalUnitEnum
   ) {
-    return convert(node.ram, DigitalUnitEnum.B).to(unit);
+    return convert(node.memory, DigitalUnitEnum.B).to(unit);
   }
 }

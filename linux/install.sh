@@ -661,9 +661,9 @@ read_cpu_info() {
   RETVAL=$_cpu_info
 }
 
-# Read RAM information
-read_ram_info() {
-  _ram_info=$(
+# Read memory information
+read_memory_info() {
+  _memory_info=$(
     grep MemTotal /proc/meminfo \
       | sed 's/MemTotal://g' \
       | sed 's/[[:space:]]*//g' \
@@ -673,12 +673,12 @@ read_ram_info() {
   )
 
   # Return
-  RETVAL=$_ram_info
+  RETVAL=$_memory_info
 }
 
-# Read Disk(s) information
-read_disks_info() {
-  _disks_info=$(
+# Read storage(s) information
+read_storages_info() {
+  _storages_info=$(
     lsblk --bytes --json \
       | jq \
         '
@@ -689,10 +689,10 @@ read_disks_info() {
   )
 
   # Return
-  RETVAL=$_disks_info
+  RETVAL=$_storages_info
 }
 
-# Read Interface(s) information
+# Read interface(s) information
 read_interfaces_info() {
   _interfaces_info=$(
     ip -details -json link show \
@@ -766,36 +766,36 @@ run_cpu_bench() {
   )
 }
 
-# Execute RAM benchmark
-run_ram_bench() {
-  _run_ram_bench() {
-    _ram_output=$(sysbench --time="$BENCH_TIME" --memory-oper="$1" --memory-access-mode="$2" memory run \
+# Execute memory benchmark
+run_memory_bench() {
+  _run_memory_bench() {
+    _memory_output=$(sysbench --time="$BENCH_TIME" --memory-oper="$1" --memory-access-mode="$2" memory run \
       | grep 'transferred' \
       | sed 's/.*(\(.*\))/\1/' \
       | sed 's/B.*//' \
       | sed 's/[[:space:]]*//g' \
       | numfmt --from=iec-i)
-    echo $((_ram_output * 8))
+    echo $((_memory_output * 8))
   }
 
   # Read sequential
-  DEBUG "Running RAM benchmark in read sequential"
-  _read_seq=$(_run_ram_bench read seq)
-  DEBUG "RAM benchmark in read sequential: $_read_seq"
+  DEBUG "Running memory benchmark in read sequential"
+  _read_seq=$(_run_memory_bench read seq)
+  DEBUG "Memory benchmark in read sequential: $_read_seq"
 
   # Read random
-  DEBUG "Running RAM benchmark in read random"
-  _read_rand=$(_run_ram_bench read rnd)
-  DEBUG "RAM benchmark in read random: $_read_rand"
+  DEBUG "Running memory benchmark in read random"
+  _read_rand=$(_run_memory_bench read rnd)
+  DEBUG "Memory benchmark in read random: $_read_rand"
 
   # Write sequential
-  DEBUG "Running RAM benchmark in write sequential"
-  _write_seq=$(_run_ram_bench write seq)
-  DEBUG "RAM benchmark in write sequential: $_write_seq"
+  DEBUG "Running memory benchmark in write sequential"
+  _write_seq=$(_run_memory_bench write seq)
+  DEBUG "Memory benchmark in write sequential: $_write_seq"
   # Write random
-  DEBUG "Running RAM benchmark in write random"
-  _write_rand=$(_run_ram_bench write rnd)
-  DEBUG "RAM benchmark in write random: $_write_rand"
+  DEBUG "Running memory benchmark in write random"
+  _write_rand=$(_run_memory_bench write rnd)
+  DEBUG "Memory benchmark in write random: $_write_rand"
 
   # Return
   RETVAL=$(
@@ -820,9 +820,9 @@ run_ram_bench() {
   )
 }
 
-# Execute disk(s) benchmark
-run_disks_bench() {
-  _run_disks_bench() {
+# Execute storage(s) benchmark
+run_storages_bench() {
+  _run_storages_bench() {
     # Io operation
     _io_opt=
     case $1 in
@@ -843,55 +843,55 @@ run_disks_bench() {
     echo $((_io_throughput * 8))
   }
 
-  # TODO Benchmark per disk
+  # TODO Benchmark per storage
 
   # Prepare read benchmark
-  DEBUG "Preparing disk(s) read benchmark"
+  DEBUG "Preparing storage(s) read benchmark"
   sysbench fileio cleanup > /dev/null
   sysbench fileio prepare > /dev/null
 
   # Read sequential synchronous
-  DEBUG "Running disk(s) benchmark in read sequential synchronous"
-  _read_seq_sync=$(_run_disks_bench read seqrd sync)
-  DEBUG "Disk(s) benchmark in read sequential synchronous: $_read_seq_sync"
+  DEBUG "Running storage(s) benchmark in read sequential synchronous"
+  _read_seq_sync=$(_run_storages_bench read seqrd sync)
+  DEBUG "Storage(s) benchmark in read sequential synchronous: $_read_seq_sync"
 
   # Read sequential asynchronous
-  DEBUG "Running disk(s) benchmark in read sequential asynchronous"
-  _read_seq_async=$(_run_disks_bench read seqrd async)
-  DEBUG "Disk(s) benchmark in read sequential asynchronous: $_read_seq_async"
+  DEBUG "Running storage(s) benchmark in read sequential asynchronous"
+  _read_seq_async=$(_run_storages_bench read seqrd async)
+  DEBUG "Storage(s) benchmark in read sequential asynchronous: $_read_seq_async"
 
   # Read random synchronous
-  DEBUG "Running disk(s) benchmark in read random synchronous"
-  _read_rand_sync=$(_run_disks_bench read rndrd sync)
-  DEBUG "Disk(s) benchmark in read random synchronous: $_read_rand_sync"
+  DEBUG "Running storage(s) benchmark in read random synchronous"
+  _read_rand_sync=$(_run_storages_bench read rndrd sync)
+  DEBUG "Storage(s) benchmark in read random synchronous: $_read_rand_sync"
 
   # Read random asynchronous
-  DEBUG "Running disk(s) benchmark in read random asynchronous"
-  _read_rand_async=$(_run_disks_bench read rndrd async)
-  DEBUG "Disk(s) benchmark in read random asynchronous: $_read_rand_async"
+  DEBUG "Running storage(s) benchmark in read random asynchronous"
+  _read_rand_async=$(_run_storages_bench read rndrd async)
+  DEBUG "Storage(s) benchmark in read random asynchronous: $_read_rand_async"
 
   # Write sequential synchronous
-  DEBUG "Running disk(s) benchmark in write sequential synchronous"
-  _write_seq_sync=$(_run_disks_bench write seqwr sync)
-  DEBUG "Disk(s) benchmark in write sequential synchronous: $_write_seq_sync"
+  DEBUG "Running storage(s) benchmark in write sequential synchronous"
+  _write_seq_sync=$(_run_storages_bench write seqwr sync)
+  DEBUG "Storage(s) benchmark in write sequential synchronous: $_write_seq_sync"
 
   # Write sequential asynchronous
-  DEBUG "Running disk(s) benchmark in write sequential asynchronous"
-  _write_seq_async=$(_run_disks_bench write seqwr async)
-  DEBUG "Disk(s) benchmark in write sequential asynchronous: $_write_seq_async"
+  DEBUG "Running storage(s) benchmark in write sequential asynchronous"
+  _write_seq_async=$(_run_storages_bench write seqwr async)
+  DEBUG "Storage(s) benchmark in write sequential asynchronous: $_write_seq_async"
 
   # Write random synchronous
-  DEBUG "Running disk(s) benchmark in write random synchronous"
-  _write_rand_sync=$(_run_disks_bench write rndwr sync)
-  DEBUG "Disk(s) benchmark in write random synchronous: $_write_rand_sync"
+  DEBUG "Running storage(s) benchmark in write random synchronous"
+  _write_rand_sync=$(_run_storages_bench write rndwr sync)
+  DEBUG "Storage(s) benchmark in write random synchronous: $_write_rand_sync"
 
   # Write random asynchronous
-  DEBUG "Running disk(s) benchmark in write random asynchronous"
-  _write_rand_async=$(_run_disks_bench write rndwr async)
-  DEBUG "Disk(s) benchmark in write random asynchronous: $_write_rand_async"
+  DEBUG "Running storage(s) benchmark in write random asynchronous"
+  _write_rand_async=$(_run_storages_bench write rndwr async)
+  DEBUG "Storage(s) benchmark in write random asynchronous: $_write_rand_async"
 
   # Clean
-  DEBUG "Cleaning disk(s) benchmark"
+  DEBUG "Cleaning storage(s) benchmark"
   sysbench fileio cleanup > /dev/null
 
   # Return
@@ -1434,22 +1434,22 @@ read_system_info() {
   DEBUG "CPU info:" "$_cpu_info"
   INFO "CPU is '$(echo "$_cpu_info" | jq --raw-output .name)'"
 
-  # RAM
-  read_ram_info
-  _ram_info=$RETVAL
-  INFO "RAM is '$(echo "$_ram_info" | numfmt --to=iec-i)B'"
+  # Memory
+  read_memory_info
+  _memory_info=$RETVAL
+  INFO "Memory is '$(echo "$_memory_info" | numfmt --to=iec-i)B'"
 
-  # Disk(s)
-  read_disks_info
-  _disks_info=$RETVAL
-  DEBUG "Disk(s) info:" "$_disks_info"
-  _disks_info_msg="Disk(s) found $(echo "$_disks_info" | jq --raw-output 'length'):"
-  while read -r _disk_info; do
-    _disks_info_msg="$_disks_info_msg\n\t'$(echo "$_disk_info" | jq --raw-output .name)' of '$(echo "$_disk_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
+  # Storage(s)
+  read_storages_info
+  _storages_info=$RETVAL
+  DEBUG "Storage(s) info:" "$_storages_info"
+  _storages_info_msg="Storage(s) found $(echo "$_storages_info" | jq --raw-output 'length'):"
+  while read -r _storage_info; do
+    _storages_info_msg="$_storages_info_msg\n\t'$(echo "$_storage_info" | jq --raw-output .name)' of '$(echo "$_storage_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
   done << EOF
-$(echo "$_disks_info" | jq --compact-output '.[]')
+$(echo "$_storages_info" | jq --compact-output '.[]')
 EOF
-  INFO "$_disks_info_msg"
+  INFO "$_storages_info_msg"
 
   # Interface(s)
   read_interfaces_info
@@ -1465,13 +1465,13 @@ EOF
     echo "$NODE_FACTS" \
       | jq \
         --argjson cpu "$_cpu_info" \
-        --argjson ram "$_ram_info" \
-        --argjson disks "$_disks_info" \
+        --argjson memory "$_memory_info" \
+        --argjson storages "$_storages_info" \
         --argjson interfaces "$_interfaces_info" \
         '
           .cpu = $cpu
-          | .ram = $ram
-          | .disks = $disks
+          | .memory = $memory
+          | .storages = $storages
           | .interfaces = $interfaces
         '
   )
@@ -1487,19 +1487,19 @@ run_benchmarks() {
   _cpu_benchmark=$RETVAL
   DEBUG "CPU benchmark:" "$_cpu_benchmark"
 
-  # RAM
-  INFO "RAM benchmark"
-  run_ram_bench
-  _ram_benchmark=$RETVAL
-  DEBUG "RAM benchmark:" "$_ram_benchmark"
+  # Memory
+  INFO "Memory benchmark"
+  run_memory_bench
+  _memory_benchmark=$RETVAL
+  DEBUG "Memory benchmark:" "$_memory_benchmark"
 
-  # Disk(s)
-  INFO "Disk(s) benchmark"
+  # Storage(s)
+  INFO "Storage(s) benchmark"
   # FIXME
-  # run_disks_bench
-  # _disks_benchmark=$RETVAL
-  _disks_benchmark="{}"
-  DEBUG "Disk(s) benchmark:" "$_disks_benchmark"
+  # run_storages_bench
+  # _storages_benchmark=$RETVAL
+  _storages_benchmark="{}"
+  DEBUG "Storage(s) benchmark:" "$_storages_benchmark"
 
   spinner_stop
 
@@ -1508,8 +1508,8 @@ run_benchmarks() {
     echo "$NODE_FACTS" \
       | jq \
         --argjson cpu "$_cpu_benchmark" \
-        --argjson ram "$_ram_benchmark" \
-        --argjson disks "$_disks_benchmark" \
+        --argjson memory "$_memory_benchmark" \
+        --argjson storages "$_storages_benchmark" \
         '
           .cpu.singleThreadScore = $cpu.singleThread
           | .cpu.multiThreadScore = $cpu.multiThread

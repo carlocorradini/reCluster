@@ -23,7 +23,7 @@
  */
 
 export * from './FindManyCpuArgs';
-export * from './FindManyDiskArgs';
+export * from './FindManyStorageArgs';
 export * from './FindManyInterfaceArgs';
 export * from './FindManyNodeArgs';
 export * from './FindManyNodePoolArgs';

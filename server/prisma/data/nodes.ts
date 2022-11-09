@@ -30,8 +30,11 @@ import { node_pool_controllers, node_pool_workers } from './nodePools';
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const controller_0: Prisma.NodeCreateInput = {
   id: 'd4fb717f-e85f-4e16-bb9b-8c777610316b',
+  name: 'controller.d4fb717f-e85f-4e16-bb9b-8c777610316b',
   roles: [NodeRoleEnum.K8S_CONTROLLER, NodeRoleEnum.RECLUSTER_CONTROLLER],
-  ram: BigInt(convert(2, 'GiB').to('B')),
+  address: '127.0.0.1',
+  hostname: 'localhost.controller.0',
+  memory: BigInt(convert(2, 'GiB').to('B')),
   minPowerConsumption: 2000,
   maxPowerConsumption: 16000,
   status: {
@@ -44,7 +47,7 @@ export const controller_0: Prisma.NodeCreateInput = {
     }
   },
   cpu: { connect: { id: Intel_I7_6700HQ.id } },
-  disks: {
+  storages: {
     createMany: { data: [{ name: 'sda', size: convert(250, 'GB').to('B') }] }
   },
   interfaces: {
@@ -64,8 +67,11 @@ export const controller_0: Prisma.NodeCreateInput = {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const worker_0: Prisma.NodeCreateInput = {
   id: 'cfc352b1-ed06-4f85-83f4-3f2382b6cb54',
+  name: 'worker.cfc352b1-ed06-4f85-83f4-3f2382b6cb54',
   roles: [NodeRoleEnum.K8S_WORKER],
-  ram: BigInt(convert(2, 'GiB').to('B')),
+  address: '127.0.0.2',
+  hostname: 'localhost.worker.0',
+  memory: BigInt(convert(2, 'GiB').to('B')),
   minPowerConsumption: 2000,
   maxPowerConsumption: 16000,
   status: {
@@ -78,7 +84,7 @@ export const worker_0: Prisma.NodeCreateInput = {
     }
   },
   cpu: { connect: { id: Intel_I7_6700HQ.id } },
-  disks: {
+  storages: {
     createMany: { data: [{ name: 'sda', size: convert(250, 'GB').to('B') }] }
   },
   interfaces: {
@@ -98,8 +104,11 @@ export const worker_0: Prisma.NodeCreateInput = {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const worker_1: Prisma.NodeCreateInput = {
   id: '0dafe0a1-beb9-4c30-8834-4e42338ed7b3',
+  name: 'worker.0dafe0a1-beb9-4c30-8834-4e42338ed7b3',
   roles: [NodeRoleEnum.K8S_WORKER],
-  ram: BigInt(convert(2, 'GiB').to('B')),
+  address: '127.0.0.3',
+  hostname: 'localhost.worker.1',
+  memory: BigInt(convert(2, 'GiB').to('B')),
   minPowerConsumption: 2000,
   maxPowerConsumption: 16000,
   status: {
@@ -112,7 +121,7 @@ export const worker_1: Prisma.NodeCreateInput = {
     }
   },
   cpu: { connect: { id: Intel_I7_6700HQ.id } },
-  disks: {
+  storages: {
     createMany: { data: [{ name: 'sda', size: convert(250, 'GB').to('B') }] }
   },
   interfaces: {

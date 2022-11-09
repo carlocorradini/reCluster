@@ -22,27 +22,35 @@
  * SOFTWARE.
  */
 
-import type * as Prisma from '@prisma/client';
-import { GraphQLID, GraphQLString } from 'graphql';
-import { Field, ObjectType } from 'type-graphql';
-import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
+import type { Prisma } from '@prisma/client';
+import { Field, InputType } from 'type-graphql';
+import { SortOrderEnum } from '../../enums';
 
-@ObjectType({ description: 'Disk' })
-export class Disk implements Prisma.Disk {
-  @Field(() => GraphQLID, { description: 'Disk identifier' })
-  id!: string;
+@InputType({ isAbstract: true, description: 'Storage order by input' })
+export class OrderByStorageInput
+  implements Partial<Omit<Prisma.StorageOrderByWithRelationInput, 'node'>>
+{
+  @Field(() => SortOrderEnum, { description: 'Storage identifier' })
+  id?: SortOrderEnum;
 
-  nodeId!: string;
+  @Field(() => SortOrderEnum, { description: 'Node identifier' })
+  nodeId?: SortOrderEnum;
 
-  @Field(() => GraphQLString, { description: 'Disk name' })
-  name!: string;
+  @Field(() => SortOrderEnum, { description: 'Storage name' })
+  name?: SortOrderEnum;
 
-  @Field(() => GraphQLBigInt, { description: 'Disk size' })
-  size!: bigint;
+  @Field(() => SortOrderEnum, { description: 'Storage size' })
+  size?: SortOrderEnum;
 
-  @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
-  createdAt!: Date;
+  @Field(() => SortOrderEnum, {
+    nullable: true,
+    description: 'Creation timestamp'
+  })
+  createdAt?: SortOrderEnum;
 
-  @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
-  updatedAt!: Date;
+  @Field(() => SortOrderEnum, {
+    nullable: true,
+    description: 'Update timestamp'
+  })
+  updatedAt?: SortOrderEnum;
 }

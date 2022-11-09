@@ -23,7 +23,7 @@
  */
 
 export * from './CreateCpuInput';
-export * from './CreateDiskInput';
+export * from './CreateStorageInput';
 export * from './CreateInterfaceInput';
 export * from './CreateNodeInput';
 export * from './CreateUserInput';

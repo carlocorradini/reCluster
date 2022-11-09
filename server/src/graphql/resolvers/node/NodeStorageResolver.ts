@@ -22,5 +22,25 @@
  * SOFTWARE.
  */
 
-export * from './DiskResolver';
-export * from './DiskNodeResolver';
+import { Args, FieldResolver, Resolver, Root } from 'type-graphql';
+import { inject, injectable } from 'tsyringe';
+import { StorageService } from '~/services';
+import { FindManyStorageArgs } from '../../args';
+import { Node, Storage } from '../../entities';
+
+@Resolver(Node)
+@injectable()
+export class NodeStorageResolver {
+  public constructor(
+    @inject(StorageService)
+    private readonly storageService: StorageService
+  ) {}
+
+  @FieldResolver(() => [Storage], { description: 'Node storages' })
+  public storages(@Root() node: Node, @Args() args: FindManyStorageArgs) {
+    return this.storageService.findMany({
+      ...args,
+      where: { ...args.where, nodeId: node.id }
+    });
+  }
+}

@@ -24,12 +24,22 @@
 
 import type { Prisma } from '@prisma/client';
 import { GraphQLID } from 'graphql';
+import { GraphQLMAC } from 'graphql-scalars';
 import { ArgsType, Field } from 'type-graphql';
 
 @ArgsType()
 export class FindUniqueInterfaceArgs
   implements Prisma.InterfaceWhereUniqueInput
 {
-  @Field(() => GraphQLID, { description: 'Interface identifier' })
-  id!: string;
+  @Field(() => GraphQLID, {
+    nullable: true,
+    description: 'Interface identifier'
+  })
+  id?: string;
+
+  @Field(() => GraphQLMAC, {
+    nullable: true,
+    description: 'Interface MAC address'
+  })
+  address?: string;
 }

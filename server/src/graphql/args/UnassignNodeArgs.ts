@@ -22,11 +22,15 @@
  * SOFTWARE.
  */
 
+import type { Prisma } from '@prisma/client';
 import { GraphQLID } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
+import type { WithRequired } from '~/types';
 
 @ArgsType()
-export class UnassignNodeArgs {
+export class UnassignNodeArgs
+  implements WithRequired<Prisma.NodeWhereUniqueInput, 'id'>
+{
   @Field(() => GraphQLID, { description: 'Node identifier' })
   id!: string;
 }

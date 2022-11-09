@@ -23,11 +23,21 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import { GraphQLID } from 'graphql';
+import { GraphQLID, GraphQLString } from 'graphql';
+import { GraphQLIP } from 'graphql-scalars';
 import { ArgsType, Field } from 'type-graphql';
 
 @ArgsType()
 export class FindUniqueNodeArgs implements Prisma.NodeWhereUniqueInput {
-  @Field(() => GraphQLID, { description: 'Node identifier' })
-  id!: string;
+  @Field(() => GraphQLID, { nullable: true, description: 'Node identifier' })
+  id?: string;
+
+  @Field(() => GraphQLString, { nullable: true, description: 'Node name' })
+  name?: string;
+
+  @Field(() => GraphQLIP, { nullable: true, description: 'Node IP address' })
+  address?: string;
+
+  @Field(() => GraphQLID, { nullable: true, description: 'Node hostname' })
+  hostname?: string;
 }

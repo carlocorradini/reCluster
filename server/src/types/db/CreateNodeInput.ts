@@ -25,22 +25,23 @@
 import type { Prisma } from '@prisma/client';
 import type { NodeRoleEnum, NodePermissionEnum } from '~/db';
 import type { CreateCpuInput } from './CreateCpuInput';
-import type { CreateDiskInput } from './CreateDiskInput';
+import type { CreateStorageInput } from './CreateStorageInput';
 import type { CreateInterfaceInput } from './CreateInterfaceInput';
 
 export type CreateNodeInput = Omit<
   Prisma.NodeCreateInput,
+  | 'name'
   | 'roles'
   | 'permissions'
   | 'nodePoolAssigned'
   | 'nodePool'
   | 'cpu'
-  | 'disks'
+  | 'storages'
   | 'interfaces'
 > & {
   roles: NodeRoleEnum[];
   permissions?: NodePermissionEnum[];
   cpu: CreateCpuInput;
-  disks: CreateDiskInput[];
+  storages: CreateStorageInput[];
   interfaces: CreateInterfaceInput[];
 };

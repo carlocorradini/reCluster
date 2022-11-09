@@ -23,11 +23,17 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import { GraphQLID } from 'graphql';
+import { GraphQLID, GraphQLString } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
 
 @ArgsType()
 export class FindUniqueNodePoolArgs implements Prisma.NodePoolWhereUniqueInput {
-  @Field(() => GraphQLID, { description: 'Node pool identifier' })
-  id!: string;
+  @Field(() => GraphQLID, {
+    nullable: true,
+    description: 'Node pool identifier'
+  })
+  id?: string;
+
+  @Field(() => GraphQLString, { nullable: true, description: 'Node pool name' })
+  name?: string;
 }

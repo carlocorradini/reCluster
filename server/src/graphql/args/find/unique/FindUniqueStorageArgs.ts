@@ -23,25 +23,14 @@
  */
 
 import type { Prisma } from '@prisma/client';
+import { GraphQLID } from 'graphql';
 import { ArgsType, Field } from 'type-graphql';
-import { FindManyArgs } from '~/types';
-import { OrderByDiskInput, WhereDiskInput } from '../../../inputs';
-import { PaginationArgs } from './PaginationArgs';
+import type { WithRequired } from '~/types';
 
 @ArgsType()
-export class FindManyDiskArgs
-  extends PaginationArgs
-  implements FindManyArgs<Prisma.DiskFindManyArgs>
+export class FindUniqueStorageArgs
+  implements WithRequired<Prisma.StorageWhereUniqueInput, 'id'>
 {
-  @Field(() => WhereDiskInput, {
-    nullable: true,
-    description: 'Filter options'
-  })
-  where?: WhereDiskInput;
-
-  @Field(() => OrderByDiskInput, {
-    nullable: true,
-    description: 'Order options'
-  })
-  orderBy?: OrderByDiskInput;
+  @Field(() => GraphQLID, { description: 'Storage identifier' })
+  id!: string;
 }

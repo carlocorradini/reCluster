@@ -23,7 +23,7 @@
  */
 
 export * from './FindUniqueCpuArgs';
-export * from './FindUniqueDiskArgs';
+export * from './FindUniqueStorageArgs';
 export * from './FindUniqueInterfaceArgs';
 export * from './FindUniqueNodeArgs';
 export * from './FindUniqueNodePoolArgs';

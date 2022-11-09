@@ -52,13 +52,16 @@ enum UserPermissionEnum {
 
 model Node {
   id                             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                           String               @unique
   roles                          NodeRoleEnum[]
   permissions                    NodePermissionEnum[] @default([])
+  address                        String               @unique
+  hostname                       String               @unique
   status                         Status?
   cpu                            Cpu                  @relation(fields: [cpuId], references: [id], map: "cpu_id")
   cpuId                          String               @db.Uuid
-  ram                            BigInt
-  disks                          Disk[]
+  memory                         BigInt
+  storages                       Storage[]
   interfaces                     Interface[]
   nodePool                       NodePool             @relation(fields: [nodePoolId], references: [id], map: "node_pool_id")
   nodePoolId                     String               @db.Uuid
@@ -103,7 +106,7 @@ enum NodeStatusEnum {
   UNKNOWN
 }
 
-model Disk {
+model Storage {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   node      Node     @relation(fields: [nodeId], references: [id], map: "node_id")
   nodeId    String   @db.Uuid

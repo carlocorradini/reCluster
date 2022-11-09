@@ -22,20 +22,27 @@
  * SOFTWARE.
  */
 
-import { FieldResolver, Resolver, Root } from 'type-graphql';
-import { inject, injectable } from 'tsyringe';
-import { NodeService } from '~/services';
-import { Disk, Node } from '../../entities';
+import type * as Prisma from '@prisma/client';
+import { GraphQLID, GraphQLString } from 'graphql';
+import { Field, ObjectType } from 'type-graphql';
+import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
 
-@Resolver(Disk)
-@injectable()
-export class DiskNodeResolver {
-  public constructor(
-    @inject(NodeService) private readonly nodeService: NodeService
-  ) {}
+@ObjectType({ description: 'Storage' })
+export class Storage implements Prisma.Storage {
+  @Field(() => GraphQLID, { description: 'Storage identifier' })
+  id!: string;
 
-  @FieldResolver(() => Node, { description: 'Disk node' })
-  public node(@Root() disk: Disk) {
-    return this.nodeService.findUniqueOrThrow({ where: { id: disk.nodeId } });
-  }
+  nodeId!: string;
+
+  @Field(() => GraphQLString, { description: 'Storage name' })
+  name!: string;
+
+  @Field(() => GraphQLBigInt, { description: 'Storage size' })
+  size!: bigint;
+
+  @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
+  createdAt!: Date;
+
+  @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
+  updatedAt!: Date;
 }

@@ -25,7 +25,7 @@
 import type { Prisma } from '@prisma/client';
 import { inject, injectable } from 'tsyringe';
 import type { CreateNodeInput, UpdateStatusInput, WithRequired } from '~/types';
-import { prisma, NodeStatusEnum, NodeRoleEnum, NodePermissionEnum } from '~/db';
+import { prisma, NodeStatusEnum, NodeRoleEnum } from '~/db';
 import { logger } from '~/logger';
 import { SSH } from '~/ssh';
 import { TokenService, TokenTypes } from './TokenService';
@@ -94,18 +94,19 @@ export class NodeService {
       // Create or update node pool
       const { id: nodePoolId } = await this.nodePoolService.upsert(
         {
-          data: { cpu: args.data.cpu.cores, memory: args.data.ram },
+          data: { cpu: args.data.cpu.cores, memory: args.data.memory },
           select: { id: true }
         },
         prisma
       );
 
       // Create
-      const node = await prisma.node.create({
+      const { id, roles } = await prisma.node.create({
         ...args,
-        select: { id: true, roles: true, permissions: true },
+        select: { id: true, roles: true },
         data: {
           ...args.data,
+          name: `dummy.${args.data.hostname}`,
           status: {
             create: {
               status: NodeStatusEnum.ACTIVE,
@@ -117,19 +118,35 @@ export class NodeService {
           },
           nodePool: { connect: { id: nodePoolId } },
           cpu: { connect: { id: cpuId } },
-          disks: { createMany: { data: args.data.disks } },
+          storages: { createMany: { data: args.data.storages } },
           interfaces: {
             createMany: { data: args.data.interfaces }
           }
         }
       });
 
+      // Update name
+      const node = await this.update(
+        {
+          where: { id },
+          select: { id: true, roles: true, permissions: true },
+          data: {
+            name: `${
+              roles.some((role) => role === NodeRoleEnum.K8S_WORKER)
+                ? 'controller'
+                : 'worker'
+            }.${id}`
+          }
+        },
+        prisma
+      );
+
       // Generate token
       return this.tokenService.sign({
         type: TokenTypes.NODE,
         id: node.id,
-        roles: node.roles as NodeRoleEnum[], // FIXME
-        permissions: node.permissions as NodePermissionEnum[] // FIXME
+        roles: node.roles,
+        permissions: node.permissions
       });
     };
 

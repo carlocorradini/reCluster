@@ -23,34 +23,25 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import { Field, InputType } from 'type-graphql';
-import {
-  BigIntFilter,
-  StringFilter,
-  TimestampFilter,
-  UuidFilter
-} from '../filters';
+import { ArgsType, Field } from 'type-graphql';
+import { FindManyArgs } from '~/types';
+import { OrderByStorageInput, WhereStorageInput } from '../../../inputs';
+import { PaginationArgs } from './PaginationArgs';
 
-@InputType({ isAbstract: true, description: 'Disk where input' })
-export class WhereDiskInput
-  implements
-    Partial<Omit<Prisma.DiskWhereInput, 'AND' | 'OR' | 'NOT' | 'node'>>
+@ArgsType()
+export class FindManyStorageArgs
+  extends PaginationArgs
+  implements FindManyArgs<Prisma.StorageFindManyArgs>
 {
-  @Field({ nullable: true, description: 'Disk identifier' })
-  id?: UuidFilter;
+  @Field(() => WhereStorageInput, {
+    nullable: true,
+    description: 'Filter options'
+  })
+  where?: WhereStorageInput;
 
-  @Field({ nullable: true, description: 'Node identifier' })
-  nodeId?: StringFilter;
-
-  @Field({ nullable: true, description: 'Disk name' })
-  name?: StringFilter;
-
-  @Field({ nullable: true, description: 'Disk size' })
-  size?: BigIntFilter;
-
-  @Field({ nullable: true, description: 'Creation timestamp' })
-  createdAt?: TimestampFilter;
-
-  @Field({ nullable: true, description: 'Update timestamp' })
-  updatedAt?: TimestampFilter;
+  @Field(() => OrderByStorageInput, {
+    nullable: true,
+    description: 'Order options'
+  })
+  orderBy?: OrderByStorageInput;
 }

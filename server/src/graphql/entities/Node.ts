@@ -23,9 +23,9 @@
  */
 
 import type * as Prisma from '@prisma/client';
-import { GraphQLBoolean, GraphQLID, GraphQLInt } from 'graphql';
+import { GraphQLBoolean, GraphQLID, GraphQLInt, GraphQLString } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
-import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
+import { GraphQLBigInt, GraphQLIP, GraphQLTimestamp } from 'graphql-scalars';
 import { NodeRoleEnum, NodePermissionEnum } from '~/db';
 
 @ObjectType({ description: 'Node' })
@@ -33,14 +33,23 @@ export class Node implements Prisma.Node {
   @Field(() => GraphQLID, { description: 'Node identifier' })
   id!: string;
 
+  @Field(() => GraphQLString, { description: 'Node name' })
+  name!: string;
+
   @Field(() => [NodeRoleEnum], { description: 'Node roles' })
   roles!: NodeRoleEnum[];
 
   @Field(() => [NodePermissionEnum], { description: 'Node permissions' })
   permissions!: NodePermissionEnum[];
 
-  @Field(() => GraphQLBigInt, { description: 'Node ram' })
-  ram!: bigint;
+  @Field(() => GraphQLIP, { description: 'Node IP address' })
+  address!: string;
+
+  @Field(() => GraphQLString, { description: 'Node hostname' })
+  hostname!: string;
+
+  @Field(() => GraphQLBigInt, { description: 'Node memory' })
+  memory!: bigint;
 
   cpuId!: string;
 

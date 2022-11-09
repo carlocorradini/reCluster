@@ -24,7 +24,7 @@
 
 export * from './CpuService';
 export * from './CryptoService';
-export * from './DiskService';
+export * from './StorageService';
 export * from './InterfaceService';
 export * from './K8sService';
 export * from './NodePoolService';

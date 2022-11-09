@@ -23,7 +23,7 @@
  */
 
 export * from './OrderByCpuInput';
-export * from './OrderByDiskInput';
+export * from './OrderByStorageInput';
 export * from './OrderByInterfaceInput';
 export * from './OrderByNodeInput';
 export * from './OrderByNodePoolInput';
