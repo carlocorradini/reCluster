@@ -23,12 +23,18 @@
  */
 
 import { NodePool as PrismaNodePool, Prisma } from '@prisma/client';
-import type { UpdateNodePoolInput, WithRequired } from '~/types';
-import { prisma } from '~/db';
+import type {
+  CreateNodeInput,
+  UpdateNodePoolInput,
+  WithRequired
+} from '~/types';
+import { NodePoolError } from '~/errors';
+import { config } from '~/config';
+import { prisma, NodeRoleEnum } from '~/db';
 import { logger } from '~/logger';
 
 type UpsertArgs = {
-  data: { cpu: number; memory: number | bigint };
+  data: Pick<CreateNodeInput, 'memory' | 'roles'> & { cpu: number };
   select?: Prisma.NodePoolSelect | null;
 };
 
@@ -47,16 +53,16 @@ type UpdateArgs = Omit<
   Prisma.NodePoolUpdateArgs,
   'include' | 'where' | 'data'
 > & {
-  where: WithRequired<Prisma.NodePoolWhereUniqueInput, 'id'>;
+  where: WithRequired<Pick<Prisma.NodePoolWhereUniqueInput, 'id'>, 'id'>;
   data: UpdateNodePoolInput;
 };
 
 type CountArgs = {
-  id: string;
+  where: WithRequired<Pick<Prisma.NodePoolWhereUniqueInput, 'id'>, 'id'>;
 };
 
 type MaxNodesArgs = {
-  id: string;
+  where: WithRequired<Pick<Prisma.NodePoolWhereUniqueInput, 'id'>, 'id'>;
 };
 
 export class NodePoolService {
@@ -69,20 +75,46 @@ export class NodePoolService {
     const fn = async (prisma: Prisma.TransactionClient) => {
       logger.info(`Node pool service upsert: ${JSON.stringify(args)}`);
 
-      const nodePool = await prisma.nodePool.findFirst({
-        where: {
-          nodes: {
-            some: { cpu: { cores: args.data.cpu }, memory: args.data.memory }
-          }
-        },
-        select: args.select
-      });
-      if (nodePool) return nodePool as PrismaNodePool;
+      const isWorker = args.data.roles.some(
+        (role) => role === NodeRoleEnum.K8S_WORKER
+      );
+      let nodePool: PrismaNodePool | null = null;
 
+      if (isWorker) {
+        // Worker
+        nodePool = (await prisma.nodePool.findFirst({
+          where: {
+            nodes: {
+              some: {
+                cpu: { cores: args.data.cpu },
+                memory: args.data.memory
+              }
+            }
+          },
+          select: args.select
+        })) as PrismaNodePool;
+      } else {
+        // Controller
+        nodePool = await this.findUnique(
+          {
+            where: { name: config.nodePool.controller.name },
+            select: args.select
+          },
+          prisma
+        );
+      }
+
+      // Return if found
+      if (nodePool) return nodePool;
+
+      // Create if not found
       return prisma.nodePool.create({
         data: {
-          name: `CPU${args.data.cpu}.MEMORY${args.data.memory}`,
-          minNodes: 1
+          name: isWorker
+            ? `cpu${args.data.cpu}.memory${args.data.memory}`
+            : config.nodePool.controller.name,
+          minNodes: 1,
+          ...(!isWorker && { autoScale: false })
         },
         select: args.select
       }) as unknown as Promise<PrismaNodePool>;
@@ -140,16 +172,20 @@ export class NodePoolService {
           },
           prisma
         );
-        const maxNodes = await this.maxNodes({ id: args.where.id }, prisma);
+        const maxNodes = await this.maxNodes(
+          { where: { id: args.where.id } },
+          prisma
+        );
 
-        if (newCount < minNodes || newCount > maxNodes) {
-          // FIXME Error
-          throw new Error(
-            `Count ${newCount} is invalid because exceeds min ${minNodes} or max ${maxNodes} limits`
+        if (newCount < minNodes || newCount > maxNodes)
+          throw new NodePoolError(
+            `Node pool '${args.where.id}' count ${newCount} is invalid because exceeds min ${minNodes} or max ${maxNodes} limits`
           );
-        }
 
-        const oldCount = await this.count({ id: args.where.id }, prisma);
+        const oldCount = await this.count(
+          { where: { id: args.where.id } },
+          prisma
+        );
 
         if (newCount < oldCount) {
           // TODO Decrease
@@ -179,7 +215,7 @@ export class NodePoolService {
     const {
       _count: { nodes }
     } = await prismaTxn.nodePool.findUniqueOrThrow({
-      where: { id: args.id },
+      where: { id: args.where.id },
       select: {
         _count: {
           select: {
@@ -201,7 +237,7 @@ export class NodePoolService {
     const {
       _count: { nodes }
     } = await prismaTxn.nodePool.findUniqueOrThrow({
-      where: { id: args.id },
+      where: { id: args.where.id },
       select: { _count: { select: { nodes: true } } }
     });
 

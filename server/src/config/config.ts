@@ -61,5 +61,6 @@ export const config: Config = {
   user: {
     maxUsernameLength: 64,
     maxPasswordLength: 16
-  }
+  },
+  nodePool: { controller: { name: 'controllers' } }
 };

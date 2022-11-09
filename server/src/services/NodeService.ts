@@ -24,7 +24,13 @@
 
 import type { Prisma } from '@prisma/client';
 import { inject, injectable } from 'tsyringe';
-import type { CreateNodeInput, UpdateStatusInput, WithRequired } from '~/types';
+import type {
+  CreateNodeInput,
+  UpdateNodeInput,
+  UpdateStatusInput,
+  WithRequired
+} from '~/types';
+import { NodeError } from '~/errors';
 import { prisma, NodeStatusEnum, NodeRoleEnum } from '~/db';
 import { logger } from '~/logger';
 import { SSH } from '~/ssh';
@@ -47,18 +53,16 @@ type FindUniqueArgs = Omit<Prisma.NodeFindUniqueArgs, 'include'>;
 type FindUniqueOrThrowArgs = Omit<Prisma.NodeFindUniqueOrThrowArgs, 'include'>;
 
 type UpdateArgs = Omit<Prisma.NodeUpdateArgs, 'include' | 'where' | 'data'> & {
-  where: WithRequired<Prisma.NodeWhereUniqueInput, 'id'>;
-  data: Omit<Prisma.NodeUpdateInput, 'status'> & {
-    status?: UpdateStatusInput;
-  };
+  where: WithRequired<Pick<Prisma.NodeWhereUniqueInput, 'id'>, 'id'>;
+  data: UpdateNodeInput;
 };
 
 type UnassignArgs = {
-  where: WithRequired<Prisma.NodeWhereUniqueInput, 'id'>;
+  where: WithRequired<Pick<Prisma.NodeWhereUniqueInput, 'id'>, 'id'>;
 };
 
 type ShutdownArgs = {
-  where: WithRequired<Prisma.NodeWhereUniqueInput, 'id'>;
+  where: WithRequired<Pick<Prisma.NodeWhereUniqueInput, 'id'>, 'id'>;
   status?: Pick<UpdateStatusInput, 'reason' | 'message'>;
 };
 
@@ -94,7 +98,11 @@ export class NodeService {
       // Create or update node pool
       const { id: nodePoolId } = await this.nodePoolService.upsert(
         {
-          data: { cpu: args.data.cpu.cores, memory: args.data.memory },
+          data: {
+            cpu: args.data.cpu.cores,
+            memory: args.data.memory,
+            roles: args.data.roles
+          },
           select: { id: true }
         },
         prisma
@@ -133,8 +141,8 @@ export class NodeService {
           data: {
             name: `${
               roles.some((role) => role === NodeRoleEnum.K8S_WORKER)
-                ? 'controller'
-                : 'worker'
+                ? 'worker'
+                : 'controller'
             }.${id}`
           }
         },
@@ -222,16 +230,14 @@ export class NodeService {
       logger.info(`Node service unassign: ${JSON.stringify(args)}`);
 
       // Check if node exists and assigned to node pool
-      const count = await prisma.node.count({
-        where: {
-          id: args.where.id,
-          nodePoolAssigned: true
-        }
+      const { nodePoolAssigned } = await this.findUniqueOrThrow({
+        where: { id: args.where.id },
+        select: { nodePoolAssigned: true }
       });
-      if (count !== 1) {
-        // FIXME Error
-        throw new Error(`Cannot unassign node ${args.where.id}`);
-      }
+      if (!nodePoolAssigned)
+        throw new NodeError(
+          `Node '${args.where.id}' is not assigned to any node pool`
+        );
 
       // Delete K8s node
       await this.k8sService.deleteNode({ id: args.where.id });
@@ -262,9 +268,10 @@ export class NodeService {
       logger.info(`Node service shutdown: ${JSON.stringify(args)}`);
 
       // Find node
-      const node = await this.k8sService.findUniqueNode({
-        id: args.where.id
-      });
+      const node = await this.findUniqueOrThrow(
+        { where: { id: args.where.id }, select: { address: true } },
+        prisma
+      );
 
       // Shutdown
       const ssh = await SSH.connect({ host: node.address });

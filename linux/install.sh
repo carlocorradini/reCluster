@@ -1495,7 +1495,7 @@ run_benchmarks() {
 
   # Storage(s)
   INFO "Storage(s) benchmark"
-  # FIXME
+  # FIXME Execute
   # run_storages_bench
   # _storages_benchmark=$RETVAL
   _storages_benchmark="{}"

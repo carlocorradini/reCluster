@@ -22,12 +22,13 @@
  * SOFTWARE.
  */
 
-import type { UpdateStatusInput } from './db/update';
+import type { Prisma } from '@prisma/client';
+import type { UpdateInput } from '../../helpers';
+import type { UpdateStatusInput } from './UpdateStatusInput';
 
-export type K8sNode = {
-  id: string;
-  name: string;
-  address: string;
-  hostname: string;
-  status: UpdateStatusInput;
+export type UpdateNodeInput = Omit<
+  UpdateInput<Prisma.NodeUpdateInput>,
+  'status'
+> & {
+  status?: UpdateStatusInput;
 };

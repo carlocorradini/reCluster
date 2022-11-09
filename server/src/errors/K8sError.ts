@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
-import type { UpdateStatusInput } from './db/update';
+import { InternalServerError } from './InternalServerError';
 
-export type K8sNode = {
-  id: string;
-  name: string;
-  address: string;
-  hostname: string;
-  status: UpdateStatusInput;
-};
+export class K8sError extends InternalServerError {
+  public constructor(cause?: string) {
+    super({ extensions: { kind: 'K8S', cause: cause || null } });
+
+    Object.setPrototypeOf(this, K8sError.prototype);
+  }
+}

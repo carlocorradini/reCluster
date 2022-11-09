@@ -104,7 +104,12 @@ export class NodeInformer {
 
     await this.nodeService.update({
       where: { id: node.id },
-      data: { status: node.status }
+      data: {
+        name: node.name,
+        address: node.address,
+        hostname: node.hostname,
+        status: node.status
+      }
     });
   }
 
@@ -113,7 +118,12 @@ export class NodeInformer {
 
     await this.nodeService.update({
       where: { id: node.id },
-      data: { status: node.status }
+      data: {
+        name: node.name,
+        address: node.address,
+        hostname: node.hostname,
+        status: node.status
+      }
     });
   }
 

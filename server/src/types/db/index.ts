@@ -22,10 +22,5 @@
  * SOFTWARE.
  */
 
-export * from './CreateCpuInput';
-export * from './CreateStorageInput';
-export * from './CreateInterfaceInput';
-export * from './CreateUserInput';
-export * from './CreateNodeInput';
-export * from './UpdateNodePoolInput';
-export * from './UpdateStatusInput';
+export * from './create';
+export * from './update';

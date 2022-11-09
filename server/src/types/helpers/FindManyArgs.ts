@@ -25,6 +25,9 @@
 /**
  * Find many args of T.
  */
-export type FindManyArgs<T> = Omit<T, 'select' | 'include' | 'distinct'> & {
-  cursor?: string;
+export type FindManyArgs<T, TCursor = string> = Omit<
+  T,
+  'select' | 'include' | 'distinct'
+> & {
+  cursor?: TCursor;
 };

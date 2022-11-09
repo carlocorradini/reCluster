@@ -25,6 +25,7 @@
 import * as k8s from '@kubernetes/client-node';
 import type { K8sNode } from '~/types';
 import { NodeStatusEnum } from '~/db';
+import { K8sError } from '~/errors';
 import { kubeconfig } from '~/k8s/kubeconfig';
 import { K8sNodeStatusEnum } from '~/k8s/K8sNodeStatusEnum';
 import { logger } from '~/logger';
@@ -55,8 +56,8 @@ export class K8sService {
       1
     );
 
-    // FIXME Custom error
-    if (nodes.length !== 1) throw new Error(`K8s node '${args.id}' not found`);
+    if (nodes.length !== 1)
+      throw new K8sError(`K8s node '${args.id}' not found`);
 
     return K8sService.toK8sNode(nodes[0]);
   }
@@ -85,17 +86,17 @@ export class K8sService {
     const ready: k8s.V1NodeCondition | undefined =
       node?.status?.conditions?.find((c) => c.type === 'Ready');
 
-    // FIXME Use custom error
     if (!id)
-      throw new Error(
+      throw new K8sError(
         `K8s node uid '${node?.metadata?.uid ?? ''} id label '${
           config.k8s.label.node.id
         }' not found`
       );
-    if (!name) throw new Error(`K8s node '${id}' name not found`);
-    if (!address) throw new Error(`K8s node '${id}' address not found`);
-    if (!hostname) throw new Error(`K8s node '${id}' hostname not found`);
-    if (!ready) throw new Error(`K8s node '${id}' ready condition not found`);
+    if (!name) throw new K8sError(`K8s node '${id}' name not found`);
+    if (!address) throw new K8sError(`K8s node '${id}' address not found`);
+    if (!hostname) throw new K8sError(`K8s node '${id}' hostname not found`);
+    if (!ready)
+      throw new K8sError(`K8s node '${id}' ready condition not found`);
 
     let status: NodeStatusEnum;
     switch (ready.status) {
@@ -109,8 +110,9 @@ export class K8sService {
         status = NodeStatusEnum.UNKNOWN;
         break;
       default:
-        // FIXME Use custom error
-        throw new Error(`Node '${id}' unknown ready status '${ready.status}'`);
+        throw new K8sError(
+          `Node '${id}' unknown ready status '${ready.status}'`
+        );
     }
 
     return <K8sNode>{

@@ -66,4 +66,9 @@ export type Config = {
     maxUsernameLength: number;
     maxPasswordLength: number;
   };
+  nodePool: {
+    controller: {
+      name: string;
+    };
+  };
 };

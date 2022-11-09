@@ -26,5 +26,8 @@ export * from './AuthenticationError';
 export * from './AuthorizationError';
 export * from './DatabaseError';
 export * from './InternalServerError';
+export * from './K8sError';
+export * from './NodeError';
+export * from './NodePoolError';
 export * from './TokenError';
 export * from './ValidationError';

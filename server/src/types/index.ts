@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
+export * from './db';
 export * from './helpers';
 export * from './utils';
 export * from './AuthData';
 export * from './Config';
 export * from './Context';
-export * from './db';
 export * from './k8s';
 export * from './token';

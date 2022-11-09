@@ -22,12 +22,4 @@
  * SOFTWARE.
  */
 
-import type { UpdateStatusInput } from './db/update';
-
-export type K8sNode = {
-  id: string;
-  name: string;
-  address: string;
-  hostname: string;
-  status: UpdateStatusInput;
-};
+export type UpdateInput<T> = Omit<T, 'id' | 'createdAt' | 'updatedAt'>;

@@ -22,9 +22,8 @@
  * SOFTWARE.
  */
 
-import type { Prisma } from '@prisma/client';
-
-export type UpdateNodePoolInput = Omit<
-  Prisma.NodePoolUpdateWithoutNodesInput,
-  'id' | 'createdAt' | 'updatedAt'
-> & { count?: number };
+export * from './CreateCpuInput';
+export * from './CreateInterfaceInput';
+export * from './CreateNodeInput';
+export * from './CreateStorageInput';
+export * from './CreateUserInput';

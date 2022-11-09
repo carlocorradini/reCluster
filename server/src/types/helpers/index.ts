@@ -25,3 +25,4 @@
 export * from './CreateArgs';
 export * from './FindManyArgs';
 export * from './ResolverData';
+export * from './UpdateInput';

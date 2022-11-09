@@ -71,13 +71,13 @@ export class NodePoolResolver {
 
   @FieldResolver(() => GraphQLInt, { description: 'Node pool node count' })
   public count(@Root() nodePool: NodePool) {
-    return this.nodePoolService.count({ id: nodePool.id });
+    return this.nodePoolService.count({ where: { id: nodePool.id } });
   }
 
   @FieldResolver(() => GraphQLInt, {
     description: 'Node pool maximum number of nodes'
   })
   public maxNodes(@Root() nodePool: NodePool) {
-    return this.nodePoolService.maxNodes({ id: nodePool.id });
+    return this.nodePoolService.maxNodes({ where: { id: nodePool.id } });
   }
 }

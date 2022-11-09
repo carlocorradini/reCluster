@@ -22,12 +22,6 @@
  * SOFTWARE.
  */
 
-import type { UpdateStatusInput } from './db/update';
-
-export type K8sNode = {
-  id: string;
-  name: string;
-  address: string;
-  hostname: string;
-  status: UpdateStatusInput;
-};
+export * from './UpdateNodeInput';
+export * from './UpdateNodePoolInput';
+export * from './UpdateStatusInput';

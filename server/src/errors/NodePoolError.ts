@@ -22,10 +22,12 @@
  * SOFTWARE.
  */
 
-import type { Prisma } from '@prisma/client';
-import type { WithRequired } from '../utils';
+import { InternalServerError } from './InternalServerError';
 
-export type UpdateStatusInput = WithRequired<
-  Omit<Prisma.StatusUpdateWithoutNodeInput, 'updatedAt'>,
-  'status'
->;
+export class NodePoolError extends InternalServerError {
+  public constructor(cause?: string) {
+    super({ extensions: { kind: 'NODE_POOL', cause: cause || null } });
+
+    Object.setPrototypeOf(this, NodePoolError.prototype);
+  }
+}

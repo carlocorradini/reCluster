@@ -22,12 +22,8 @@
  * SOFTWARE.
  */
 
-import type { UpdateStatusInput } from './db/update';
+import type { Prisma } from '@prisma/client';
+import type { UpdateInput } from '../../helpers';
 
-export type K8sNode = {
-  id: string;
-  name: string;
-  address: string;
-  hostname: string;
-  status: UpdateStatusInput;
-};
+export type UpdateNodePoolInput =
+  UpdateInput<Prisma.NodePoolUpdateWithoutNodesInput> & { count?: number };
