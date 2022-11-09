@@ -28,5 +28,5 @@ export * from './AuthData';
 export * from './Config';
 export * from './Context';
 export * from './db';
-export * from './K8sNode';
+export * from './k8s';
 export * from './token';
