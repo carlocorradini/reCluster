@@ -39,6 +39,7 @@ import { CpuService } from './CpuService';
 import { NodePoolService } from './NodePoolService';
 import { StatusService } from './StatusService';
 import { K8sService } from './K8sService';
+import { WoLService } from './WoLService';
 
 type CreateArgs = Omit<Prisma.NodeCreateArgs, 'include' | 'data'> & {
   data: CreateNodeInput;
@@ -66,6 +67,11 @@ type ShutdownArgs = {
   status?: Pick<UpdateStatusInput, 'reason' | 'message'>;
 };
 
+type BootArgs = {
+  where: WithRequired<Pick<Prisma.NodeWhereUniqueInput, 'id'>, 'id'>;
+  status?: Pick<UpdateStatusInput, 'reason' | 'message'>;
+};
+
 @injectable()
 export class NodeService {
   public constructor(
@@ -78,7 +84,9 @@ export class NodeService {
     @inject(K8sService)
     private readonly k8sService: K8sService,
     @inject(TokenService)
-    private readonly tokenService: TokenService
+    private readonly tokenService: TokenService,
+    @inject(WoLService)
+    private readonly wolService: WoLService
   ) {}
 
   public create(args: CreateArgs, prismaTxn?: Prisma.TransactionClient) {
@@ -182,10 +190,10 @@ export class NodeService {
     return prismaTxn.node.findUnique(args);
   }
 
-  public findUniqueOrThrow(
-    args: FindUniqueOrThrowArgs,
+  public findUniqueOrThrow<T extends Prisma.NodeFindUniqueOrThrowArgs>(
+    args: Prisma.SelectSubset<T, FindUniqueOrThrowArgs>,
     prismaTxn: Prisma.TransactionClient = prisma
-  ) {
+  ): Prisma.Prisma__NodeClient<Prisma.NodeGetPayload<T>> {
     logger.debug(`Node service find unique or throw: ${JSON.stringify(args)}`);
 
     return prismaTxn.node.findUniqueOrThrow(args);
@@ -230,10 +238,13 @@ export class NodeService {
       logger.info(`Node service unassign: ${JSON.stringify(args)}`);
 
       // Check if node exists and assigned to node pool
-      const { nodePoolAssigned } = await this.findUniqueOrThrow({
-        where: { id: args.where.id },
-        select: { nodePoolAssigned: true }
-      });
+      const { nodePoolAssigned } = await this.findUniqueOrThrow(
+        {
+          where: { id: args.where.id },
+          select: { nodePoolAssigned: true }
+        },
+        prisma
+      );
       if (!nodePoolAssigned)
         throw new NodeError(
           `Node '${args.where.id}' is not assigned to any node pool`
@@ -242,7 +253,7 @@ export class NodeService {
       // Delete K8s node
       await this.k8sService.deleteNode({ id: args.where.id });
 
-      // Update node
+      // Update
       return this.update(
         {
           where: { id: args.where.id },
@@ -267,27 +278,91 @@ export class NodeService {
     const fn = async (prisma: Prisma.TransactionClient) => {
       logger.info(`Node service shutdown: ${JSON.stringify(args)}`);
 
-      // Find node
+      // Check if node exists and not assigned to node pool
       const node = await this.findUniqueOrThrow(
-        { where: { id: args.where.id }, select: { address: true } },
+        {
+          where: { id: args.where.id },
+          select: { nodePoolId: true, nodePoolAssigned: true, hostname: true }
+        },
         prisma
       );
+      if (node.nodePoolAssigned)
+        throw new NodeError(
+          `Node '${args.where.id}' is assigned to node pool ${node.nodePoolId}`
+        );
 
       // Shutdown
-      const ssh = await SSH.connect({ host: node.address });
+      const ssh = await SSH.connect({ host: node.hostname });
       await ssh.execCommand({
         command: 'sudo shutdown -h now',
         disconnect: true
       });
 
       // Update
-      await this.statusService.update(
+      await this.update(
         {
           where: { id: args.where.id },
           data: {
-            status: NodeStatusEnum.INACTIVE,
-            reason: args.status?.reason ?? 'NodeShutdown',
-            message: args.status?.message ?? 'Node shutdown'
+            status: {
+              status: NodeStatusEnum.INACTIVE,
+              reason: args.status?.reason ?? 'NodeShutdown',
+              message: args.status?.message ?? 'Node shutdown'
+            }
+          }
+        },
+        prisma
+      );
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
+  }
+
+  public boot(args: BootArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`Node service boot: ${JSON.stringify(args)}`);
+
+      // Check if node exists and not assigned to node pool
+      const node = await this.findUniqueOrThrow(
+        {
+          where: { id: args.where.id },
+          select: {
+            nodePoolId: true,
+            nodePoolAssigned: true,
+            address: true,
+            interfaces: { select: { address: true } }
+          }
+        },
+        prisma
+      );
+      if (node.nodePoolAssigned)
+        throw new NodeError(
+          `Node '${args.where.id}' is assigned to node pool ${node.nodePoolId}`
+        );
+      if (node.interfaces.length === 0)
+        throw new NodeError(`Node '${args.where.id}' has no interfaces`);
+
+      // Bootstrap
+      await Promise.all(
+        node.interfaces.map(async (intf) => {
+          await this.wolService.wake({
+            mac: intf.address,
+            address: node.address
+          });
+        })
+      );
+
+      // Update
+      await this.update(
+        {
+          where: { id: args.where.id },
+          data: {
+            nodePoolAssigned: true,
+            status: {
+              status: NodeStatusEnum.BOOTING,
+              reason: args.status?.reason ?? 'NodeBoot',
+              message: args.status?.message ?? 'Node boot'
+            }
           }
         },
         prisma

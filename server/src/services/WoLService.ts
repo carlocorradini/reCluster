@@ -22,21 +22,25 @@
  * SOFTWARE.
  */
 
-import { FieldResolver, Resolver, Root } from 'type-graphql';
-import { inject, injectable } from 'tsyringe';
-import { NodeService } from '~/services';
-import { Interface, Node } from '../../entities';
+import wol from 'wake_on_lan';
 
-@Resolver(Interface)
-@injectable()
-export class InterfaceNodeResolver {
-  public constructor(
-    @inject(NodeService)
-    private readonly nodeService: NodeService
-  ) {}
+type WakeArgs = {
+  mac: string;
+  address: string;
+  opts?: Omit<wol.WakeOptions, 'address'>;
+};
 
-  @FieldResolver(() => Node, { description: 'Interface node' })
-  public node(@Root() intf: Interface) {
-    return this.nodeService.findUniqueOrThrow({ where: { id: intf.nodeId } });
+export class WoLService {
+  public wake(args: WakeArgs): Promise<void> {
+    return new Promise((resolve, reject) => {
+      wol.wake(
+        args.mac,
+        { ...args.opts, address: args.address },
+        (error: unknown) => {
+          if (error) return reject(error);
+          return resolve();
+        }
+      );
+    });
   }
 }
