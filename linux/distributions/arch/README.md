@@ -2,7 +2,7 @@
 
 # Arch Linux distribution
 
-## :hammer Build ISO image(s)
+## :hammer: Build ISO image(s)
 
 1. Build
 
