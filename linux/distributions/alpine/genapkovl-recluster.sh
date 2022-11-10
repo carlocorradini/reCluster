@@ -70,47 +70,22 @@ EOF
 mkdir -p "$tmp"/etc/apk
 makefile root:root 0644 "$tmp"/etc/apk/world << EOF
 alpine-base
+# ================
+# reCluster
+# ================
 coreutils
 ethtool
 inotify-tools
 iproute2
 jq
 ncurses
-openssh-keygen
+openssh
 procps
 sudo
 sysbench
 tzdata
 util-linux
 yq
-EOF
-
-makefile root:root 0644 "$tmp"/etc/apk/repositories << EOF
-https://dl-cdn.alpinelinux.org/alpine/v3.16/main
-https://dl-cdn.alpinelinux.org/alpine/v3.16/community
-EOF
-
-mkdir -p "$tmp"/etc/local.d
-makefile root:root 0744 "$tmp"/etc/local.d/recluster.start << EOF
-#!/usr/bin/env sh
-
-# Fail on error
-set -o errexit
-# Disable wildcard character expansion
-set -o noglob
-
-# ================
-# CONFIGURATION
-# ================
-
-# ================
-# MAIN
-# ================
-{
-  # Timezone
-  cp /usr/share/zoneinfo/Etc/UTC /etc/localtime
-  echo "Etc/UTC" > /etc/timezone
-}
 EOF
 
 rc_add devfs sysinit
@@ -125,10 +100,6 @@ rc_add sysctl boot
 rc_add hostname boot
 rc_add bootmisc boot
 rc_add syslog boot
-rc_add networking boot
-rc_add local boot
-
-rc_add sshd default
 
 rc_add mount-ro shutdown
 rc_add killprocs shutdown
