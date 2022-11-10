@@ -99,7 +99,7 @@ prepare_container() {
       --detach \
       --interactive \
       --tty \
-      "$RECLUSTER_ALPINE_IMAGE"
+      "$DOCKER_IMAGE"
   )
 
   # Script permission
