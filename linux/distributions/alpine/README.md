@@ -11,7 +11,7 @@
    ```
 
 2. ISO image(s) \
-   Generated ISO image(s) available under [`iso`](./iso/) directory
+   Generated ISO image(s) available under [`iso`](./iso/) directory.
 
 ## :floppy_disk: Burn ISO image
 
