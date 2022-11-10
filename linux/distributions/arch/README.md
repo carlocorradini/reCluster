@@ -2,7 +2,7 @@
 
 # [Arch Linux](https://archlinux.org) distribution
 
-## :hammer: Build ISO image(s)
+## :hammer_and_wrench: Build ISO image(s)
 
 1. Build
 
@@ -28,6 +28,22 @@
    _dev="/dev/sdX"
    
    dd if="$_iso" of="$_dev" status=progress oflag=sync
+   ```
+
+## :gear: Installation
+
+> **Note**: More information available at <https://wiki.archlinux.org/title/archinstall>
+
+1. Uncomment all mirrors
+
+   ```sh
+   /usr/bin/sed -i "s/#Server/Server/g" /etc/pacman.d/mirrorlist
+   ```
+
+2. Install
+
+   ```sh
+   archinstall
    ```
 
 ---

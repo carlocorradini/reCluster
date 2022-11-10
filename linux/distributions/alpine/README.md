@@ -2,7 +2,7 @@
 
 # [Alpine Linux](https://www.alpinelinux.org) distribution
 
-## :hammer: Build ISO image(s)
+## :hammer_and_wrench: Build ISO image(s)
 
 1. Build
 
@@ -29,6 +29,14 @@
    
    dd if="$_iso" of="$_dev" status=progress oflag=sync
    ```
+
+## :gear: Installation
+
+> **Note**: More information available at <https://docs.alpinelinux.org/user-handbook/0.1a/Installing/setup_alpine.html>
+
+```sh
+setup-alpine
+```
 
 ---
 
