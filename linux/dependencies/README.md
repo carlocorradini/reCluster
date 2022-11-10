@@ -14,7 +14,7 @@
 
 2. Synchronize
 
-   ```console
+   ```sh
    ./dependencies.sh \
      --sync
    ```

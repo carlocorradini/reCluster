@@ -6,7 +6,7 @@
 
 1. Merge configuration file(s)
 
-   ```console
+   ```sh
    ./configs.sh \
      --common ./common.config.yml \
      --merge ./controller.config.yml \

@@ -8,7 +8,7 @@ reCluster server.
 
 ### SSH
 
-```console
+```sh
 filename="ssh"
 passphrase="password"
 
@@ -18,7 +18,7 @@ chmod 600 "$filename" "$filename.pub"
 
 ### Token
 
-```console
+```sh
 filename="token"
 passphrase="password"
 
@@ -65,7 +65,7 @@ chmod 600 "$filename" "$filename.pub"
 
    > **Note**: Type `-- --help` for more information
 
-   ```console
+   ```sh
    npm run dev
    ```
 
@@ -76,7 +76,7 @@ chmod 600 "$filename" "$filename.pub"
 
    - Manually
 
-   ```console
+   ```sh
    curl --request POST \
      --header 'content-type: application/json' \
      --url 'http://localhost:8080' \

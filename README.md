@@ -43,20 +43,20 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 1. Clone
 
-   ```console
+   ```sh
    git clone https://github.com/carlocorradini/reCluster.git
    cd reCluster
    ```
 
 1. Scripts permissions
 
-   ```console
+   ```sh
    chmod -R u+x scripts/*.sh linux/*sh server/scripts/*.sh
    ```
 
 1. Install dependencies
 
-   ```console
+   ```sh
    npm ci && npm --prefix server install
    ```
 
@@ -66,13 +66,13 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 1. Install `vagrant-hosts` plugin:
 
-   ```console
+   ```sh
    vagrant plugin install vagrant-hosts
    ```
 
 1. Creates and configures machines
 
-   ```console
+   ```sh
    vagrant up
    ```
 
@@ -80,13 +80,13 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 1. SSH
 
-   ```console
+   ```sh
    vagrant ssh controller
    ```
 
 1. Install
 
-   ```console
+   ```sh
    ./linux/install.sh --config ./linux/configs/controller.config.yml --pc-device-api "http://192.168.0.61/cm?cmnd=status%2010" --init-cluster
    ```
 
@@ -94,13 +94,13 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 1. SSH
 
-   ```console
+   ```sh
    vagrant ssh worker
    ```
 
 1. Install
 
-   ```console
+   ```sh
    ./linux/install.sh --config ./linux/configs/worker.config.yml --pc-device-api "http://192.168.0.61/cm?cmnd=status%2010"
    ```
 

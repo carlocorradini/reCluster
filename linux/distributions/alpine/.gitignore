@@ -2,6 +2,7 @@
 !/.gitignore
 !/build.sh
 !/Dockerfile
+!/logo.png
+!/README.md
 !/genapkovl-recluster.sh
 !/mkimg.recluster.sh
-!/README.md

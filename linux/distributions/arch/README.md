@@ -1,6 +1,6 @@
 <!-- markdownlint-disable MD033 -->
 
-# Alpine Linux distribution
+# Arch Linux distribution
 
 ## :hammer Build ISO image(s)
 
@@ -11,7 +11,7 @@
    ```
 
 2. ISO image(s) \
-   Generated ISO image(s) available under [`iso`](./iso/) directory
+   Generated ISO image(s) available under [`iso`](./iso/) directory.
 
 ## :floppy_disk: Burn ISO image
 
@@ -33,5 +33,5 @@
 ---
 
 <p align="center">
-  <img src="./logo.png" alt="Alpine Linux logo" width="50%" />
+  <img src="./logo.png" alt="Arch Linux logo" width="50%" />
 </p>
