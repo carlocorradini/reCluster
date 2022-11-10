@@ -23,13 +23,16 @@
 # ================
 # CONFIGURATION
 # ================
-# Alpine Linux version
+# Alpine linux version
 ARG ALPINE_VERSION=3.16
 
 FROM alpine:${ALPINE_VERSION}
 
-# Install Required tools
-RUN apk add --no-cache \
+# Update package list
+RUN apk update
+
+# Install packages
+RUN apk add \
   alpine-sdk \
   build-base \
   apk-tools \
@@ -39,15 +42,12 @@ RUN apk add --no-cache \
   syslinux \
   xorriso \
   squashfs-tools \
-  sudo
-
-# Install EFI tools
-RUN apk add --no-cache \
+  sudo \
   mtools \
   dosfstools \
   grub-efi
 
-# Create user build of group abuild
+# Create user
 RUN adduser \
   --disabled-password \
   --home /home/build \
@@ -62,9 +62,6 @@ RUN abuild-keygen -n --install --append
 
 # Clone aports repository
 RUN git clone --depth=1 https://gitlab.alpinelinux.org/alpine/aports.git /home/build/aports
-
-# Update apk index
-RUN apk update
 
 # Bootstrap
 ENTRYPOINT [ "/bin/sh" ]

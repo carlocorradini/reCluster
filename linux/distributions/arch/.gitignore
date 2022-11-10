@@ -1,0 +1,6 @@
+*
+!/.gitignore
+!/build.sh
+!/Dockerfile
+!/packages.x86_64
+!/profiledef.sh

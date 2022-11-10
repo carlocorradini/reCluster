@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -23,15 +23,20 @@
 
 # shellcheck disable=SC2034
 
-profile_recluster() {
-  title="reCluster"
-  desc="reCluster Alpine Linux"
-  profile_base
-  profile_abbrev="recluster"
-  image_ext="iso"
-  arch="x86_64 aarch64 armv7 s390x"
-  output_format="iso"
-  kernel_addons="xtables-addons"
-  apks="$apks coreutils ethtool inotify-tools iproute2 jq ncurses openssh-keygen procps sudo sysbench tzdata util-linux yq"
-  apkovl="genapkovl-recluster.sh"
-}
+iso_name="reCluster"
+iso_label="ARCH_$(date +%Y%m)"
+iso_publisher="reCluster"
+iso_application="reCluster Arch Linux"
+iso_version="$(date +%Y.%m.%d)"
+install_dir="arch"
+buildmodes=('iso')
+bootmodes=('bios.syslinux.mbr' 'bios.syslinux.eltorito'
+  'uefi-ia32.grub.esp' 'uefi-x64.grub.esp'
+  'uefi-ia32.grub.eltorito' 'uefi-x64.grub.eltorito')
+arch="x86_64"
+pacman_conf="pacman.conf"
+airootfs_image_type="erofs"
+airootfs_image_tool_options=('-zlz4hc,12' -E ztailpacking)
+file_permissions=(
+  ["/etc/shadow"]="0:0:400"
+)

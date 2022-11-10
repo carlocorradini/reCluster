@@ -1,4 +1,3 @@
-#!/usr/bin/env sh
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -21,17 +20,39 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# shellcheck disable=SC2034
+# ================
+# CONFIGURATION
+# ================
+# Arch linux version
+ARG ARCH_VERSION=base
+# Temporary directory
+ARG TMP_DIR=/tmp/recluster
 
-profile_recluster() {
-  title="reCluster"
-  desc="reCluster Alpine Linux"
-  profile_base
-  profile_abbrev="recluster"
-  image_ext="iso"
-  arch="x86_64 aarch64 armv7 s390x"
-  output_format="iso"
-  kernel_addons="xtables-addons"
-  apks="$apks coreutils ethtool inotify-tools iproute2 jq ncurses openssh-keygen procps sudo sysbench tzdata util-linux yq"
-  apkovl="genapkovl-recluster.sh"
-}
+FROM archlinux:${ARCH_VERSION}
+ARG TMP_DIR
+
+# Update package list
+RUN pacman -Syy
+
+# Install packages
+RUN yes | pacman -S \
+  archiso
+
+# Create directories
+RUN mkdir \
+  /run/shm \
+  ${TMP_DIR} \
+  ${TMP_DIR}/profile \
+  ${TMP_DIR}/work \
+  ${TMP_DIR}/out
+
+# Copy profile
+RUN cp -a /usr/share/archiso/configs/baseline/. ${TMP_DIR}/profile
+
+# Remove files
+RUN rm \
+  ${TMP_DIR}/profile/profiledef.sh \
+  ${TMP_DIR}/profile/packages.x86_64
+
+# Bootstrap
+ENTRYPOINT [ "/bin/sh" ]

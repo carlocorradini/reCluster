@@ -28,19 +28,17 @@
 # shellcheck disable=SC1007
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # Docker image
-DOCKER_IMAGE="recluster-alpine:latest"
+DOCKER_IMAGE="recluster-arch:latest"
 # Dockerfile
 DOCKERFILE="$DIRNAME/Dockerfile"
 # ISO directory
 ISO_DIR=$(readlink -f "$DIRNAME/iso")
 # Architectures
 ARCHS='["x86_64"]'
-# Alpine version
-ALPINE_VERSION=16
-# Alpine profile file
-ALPINE_PROFILE_FILE=$(readlink -f "$DIRNAME/mkimg.recluster.sh")
-# Alpine apkovl file
-ALPINE_APKOVL_FILE=$(readlink -f "$DIRNAME/genapkovl-recluster.sh")
+# Arch profile file
+ARCH_PROFILE_FILE=$(readlink -f "$DIRNAME/profiledef.sh")
+# Arch packages file
+ARCH_PACKAGES_FILE=$(readlink -f "$DIRNAME/packages.x86_64")
 
 # ================
 # GLOBALS
@@ -79,49 +77,40 @@ trap cleanup INT QUIT TERM EXIT
 verify_system() {
   assert_cmd docker
   assert_cmd jq
-  assert_cmd sed
 
   assert_docker_image "$DOCKER_IMAGE" "$DOCKERFILE"
 }
 
 # Prepare container
 prepare_container() {
-  _profile_file_name=$(basename "$ALPINE_PROFILE_FILE")
-  _apkovl_file_name=$(basename "$ALPINE_APKOVL_FILE")
-
   # Start container
   CONTAINER_ID=$(
     docker run \
-      --volume "$ALPINE_PROFILE_FILE:/home/build/aports/scripts/$_profile_file_name" \
-      --volume "$ALPINE_APKOVL_FILE:/home/build/aports/scripts/$_apkovl_file_name" \
-      --volume "$ISO_DIR:/home/build/iso" \
+      --volume "$ISO_DIR:/tmp/recluster/out" \
+      --volume "$ARCH_PROFILE_FILE:/tmp/recluster/profile/profiledef.sh" \
+      --volume "$ARCH_PACKAGES_FILE:/tmp/recluster/profile/packages.x86_64" \
       --rm \
       --detach \
       --interactive \
       --tty \
-      "$RECLUSTER_ALPINE_IMAGE"
+      --privileged \
+      "$DOCKER_IMAGE"
   )
-
-  # Script permission
-  docker exec "$CONTAINER_ID" chmod +x "/home/build/aports/scripts/$_profile_file_name"
 }
 
 # Build ISO image
 # @param $1 Architecture
 builder() {
   _arch=$1
-  _profile_name=$(basename "$ALPINE_PROFILE_FILE" | sed -E 's/.*mkimg\.(.*)\.sh.*/\1/')
 
-  INFO "Building Alpine Linux architecture '$_arch'"
+  INFO "Building Arch Linux architecture '$_arch'"
 
   docker exec "$CONTAINER_ID" \
-    /home/build/aports/scripts/mkimage.sh \
-    --tag "v$ALPINE_VERSION" \
-    --outdir /home/build/iso \
-    --arch "$_arch" \
-    --repository "https://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/main" \
-    --repository "https://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/community" \
-    --profile "$_profile_name"
+    mkarchiso \
+    -v \
+    -w /tmp/recluster/work \
+    -o /tmp/recluster/out \
+    /tmp/recluster/profile
 }
 
 # ================
