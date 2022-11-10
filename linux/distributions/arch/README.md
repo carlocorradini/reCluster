@@ -1,6 +1,6 @@
 <!-- markdownlint-disable MD033 -->
 
-# Arch Linux distribution
+# [Arch Linux](https://archlinux.org) distribution
 
 ## :hammer: Build ISO image(s)
 
