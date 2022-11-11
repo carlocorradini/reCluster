@@ -27,6 +27,8 @@ import { GraphQLID, GraphQLString } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
 import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
 import { WoLFlagEnum } from '~/db';
+// eslint-disable-next-line import/no-cycle
+import { Node } from './Node';
 
 @ObjectType({ description: 'Interface' })
 export class Interface implements Prisma.Interface {
@@ -41,9 +43,6 @@ export class Interface implements Prisma.Interface {
   @Field(() => GraphQLString, { description: 'Interface MAC address' })
   address!: string;
 
-  @Field(() => GraphQLBigInt, { description: 'Interface speed' })
-  speed!: bigint;
-
   @Field(() => [WoLFlagEnum], {
     description: 'Interface Wake-on-Lan flags'
   })
@@ -54,4 +53,12 @@ export class Interface implements Prisma.Interface {
 
   @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
   updatedAt!: Date;
+
+  /* Field resolvers */
+
+  @Field(() => GraphQLBigInt, { description: 'Interface speed' })
+  speed!: bigint;
+
+  @Field(() => Node, { description: 'Interface node' })
+  node!: Node;
 }

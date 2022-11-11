@@ -29,6 +29,7 @@ import {
   Mutation,
   Query,
   Resolver,
+  ResolverInterface,
   Root
 } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
@@ -42,7 +43,7 @@ import {
 
 @Resolver(NodePool)
 @injectable()
-export class NodePoolResolver {
+export class NodePoolResolver implements ResolverInterface<NodePool> {
   public constructor(
     @inject(NodePoolService)
     private readonly nodePoolService: NodePoolService
@@ -69,14 +70,12 @@ export class NodePoolResolver {
     });
   }
 
-  @FieldResolver(() => GraphQLInt, { description: 'Node pool node count' })
+  @FieldResolver(() => GraphQLInt)
   public count(@Root() nodePool: NodePool) {
     return this.nodePoolService.count({ where: { id: nodePool.id } });
   }
 
-  @FieldResolver(() => GraphQLInt, {
-    description: 'Node pool maximum number of nodes'
-  })
+  @FieldResolver(() => GraphQLInt)
   public maxNodes(@Root() nodePool: NodePool) {
     return this.nodePoolService.maxNodes({ where: { id: nodePool.id } });
   }

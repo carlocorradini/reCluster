@@ -34,7 +34,7 @@ export class StorageNodeResolver {
     @inject(NodeService) private readonly nodeService: NodeService
   ) {}
 
-  @FieldResolver(() => Node, { description: 'Storage node' })
+  @FieldResolver(() => Node)
   public node(@Root() storage: Storage) {
     return this.nodeService.findUniqueOrThrow({
       where: { id: storage.nodeId }

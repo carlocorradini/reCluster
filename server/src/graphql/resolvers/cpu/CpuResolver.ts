@@ -22,9 +22,17 @@
  * SOFTWARE.
  */
 
-import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { GraphQLInt } from 'graphql';
+import {
+  Arg,
+  Args,
+  FieldResolver,
+  Query,
+  Resolver,
+  ResolverInterface,
+  Root
+} from 'type-graphql';
 import { injectable, inject } from 'tsyringe';
-import { GraphQLNonNegativeInt } from 'graphql-scalars';
 import { convert } from 'convert';
 import { CpuService } from '~/services';
 import { DigitalUnitEnum } from '../../enums';
@@ -33,7 +41,7 @@ import { FindUniqueCpuArgs, FindManyCpuArgs } from '../../args';
 
 @Resolver(Cpu)
 @injectable()
-export class CpuResolver {
+export class CpuResolver implements ResolverInterface<Cpu> {
   public constructor(
     @inject(CpuService) private readonly cpuService: CpuService
   ) {}
@@ -51,7 +59,7 @@ export class CpuResolver {
     return this.cpuService.findUnique({ where: { id: args.id } });
   }
 
-  @FieldResolver(() => GraphQLNonNegativeInt)
+  @FieldResolver(() => GraphQLInt)
   public cacheL1d(
     @Root() cpu: Cpu,
     @Arg('unit', () => DigitalUnitEnum, {
@@ -63,7 +71,7 @@ export class CpuResolver {
     return convert(cpu.cacheL1d, DigitalUnitEnum.B).to(unit);
   }
 
-  @FieldResolver(() => GraphQLNonNegativeInt)
+  @FieldResolver(() => GraphQLInt)
   public cacheL1i(
     @Root() cpu: Cpu,
     @Arg('unit', () => DigitalUnitEnum, {
@@ -75,7 +83,7 @@ export class CpuResolver {
     return convert(cpu.cacheL1i, DigitalUnitEnum.B).to(unit);
   }
 
-  @FieldResolver(() => GraphQLNonNegativeInt)
+  @FieldResolver(() => GraphQLInt)
   public cacheL2(
     @Root() cpu: Cpu,
     @Arg('unit', () => DigitalUnitEnum, {
@@ -87,7 +95,7 @@ export class CpuResolver {
     return convert(cpu.cacheL2, DigitalUnitEnum.B).to(unit);
   }
 
-  @FieldResolver(() => GraphQLNonNegativeInt)
+  @FieldResolver(() => GraphQLInt)
   public cacheL3(
     @Root() cpu: Cpu,
     @Arg('unit', () => DigitalUnitEnum, {

@@ -27,6 +27,8 @@ import { GraphQLID, GraphQLString } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
 import { GraphQLTimestamp } from 'graphql-scalars';
 import { NodeStatusEnum } from '~/db';
+// eslint-disable-next-line import/no-cycle
+import { Node } from './Node';
 
 @ObjectType({ description: 'Status' })
 export class Status implements Prisma.Status {
@@ -57,6 +59,11 @@ export class Status implements Prisma.Status {
   @Field(() => GraphQLTimestamp, { description: 'Last transition timestamp' })
   lastTransition!: Date;
 
-  @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
+  @Field(() => GraphQLTimestamp, { description: 'Up date timestamp' })
   updatedAt!: Date;
+
+  /* Field resolvers */
+
+  @Field(() => Node, { description: 'Status node' })
+  node!: Node;
 }

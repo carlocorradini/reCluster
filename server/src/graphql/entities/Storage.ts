@@ -26,6 +26,8 @@ import type * as Prisma from '@prisma/client';
 import { GraphQLID, GraphQLString } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
 import { GraphQLBigInt, GraphQLTimestamp } from 'graphql-scalars';
+// eslint-disable-next-line import/no-cycle
+import { Node } from './Node';
 
 @ObjectType({ description: 'Storage' })
 export class Storage implements Prisma.Storage {
@@ -37,12 +39,17 @@ export class Storage implements Prisma.Storage {
   @Field(() => GraphQLString, { description: 'Storage name' })
   name!: string;
 
-  @Field(() => GraphQLBigInt, { description: 'Storage size' })
-  size!: bigint;
-
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
   createdAt!: Date;
 
-  @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
+  @Field(() => GraphQLTimestamp, { description: 'Up date timestamp' })
   updatedAt!: Date;
+
+  /* Field resolvers */
+
+  @Field(() => GraphQLBigInt, { description: 'Storage size' })
+  size!: bigint;
+
+  @Field(() => Node, { description: 'Storage node' })
+  node!: Node[];
 }

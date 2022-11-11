@@ -27,6 +27,16 @@ import { GraphQLBoolean, GraphQLID, GraphQLInt, GraphQLString } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
 import { GraphQLBigInt, GraphQLIP, GraphQLTimestamp } from 'graphql-scalars';
 import { NodeRoleEnum, NodePermissionEnum } from '~/db';
+// eslint-disable-next-line import/no-cycle
+import { Cpu } from './Cpu';
+// eslint-disable-next-line import/no-cycle
+import { Interface } from './Interface';
+// eslint-disable-next-line import/no-cycle
+import { NodePool } from './NodePool';
+// eslint-disable-next-line import/no-cycle
+import { Status } from './Status';
+// eslint-disable-next-line import/no-cycle
+import { Storage } from './Storage';
 
 @ObjectType({ description: 'Node' })
 export class Node implements Prisma.Node {
@@ -47,9 +57,6 @@ export class Node implements Prisma.Node {
 
   @Field(() => GraphQLString, { description: 'Node hostname' })
   hostname!: string;
-
-  @Field(() => GraphQLBigInt, { description: 'Node memory' })
-  memory!: bigint;
 
   cpuId!: string;
 
@@ -81,4 +88,24 @@ export class Node implements Prisma.Node {
 
   @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
   updatedAt!: Date;
+
+  /* Field resolvers */
+
+  @Field(() => GraphQLBigInt, { description: 'Node memory' })
+  memory!: bigint;
+
+  @Field(() => Cpu, { description: 'Node CPU' })
+  cpu!: Cpu;
+
+  @Field(() => [Interface], { description: 'Node interfaces' })
+  interfaces!: Interface[];
+
+  @Field(() => NodePool, { description: 'Node Node pool' })
+  nodePool!: NodePool;
+
+  @Field(() => Status, { description: 'Node status' })
+  status!: Status;
+
+  @Field(() => [Storage], { description: 'Node storages' })
+  storages!: Storage[];
 }

@@ -36,7 +36,7 @@ export class NodeInterfaceResolver {
     private readonly interfaceService: InterfaceService
   ) {}
 
-  @FieldResolver(() => [Interface], { description: 'Node interfaces' })
+  @FieldResolver(() => [Interface])
   public interfaces(@Root() node: Node, @Args() args: FindManyInterfaceArgs) {
     return this.interfaceService.findMany({
       ...args,

@@ -35,7 +35,7 @@ export class NodeCpuResolver {
     private readonly cpuService: CpuService
   ) {}
 
-  @FieldResolver(() => Cpu, { description: 'Node CPU' })
+  @FieldResolver(() => Cpu)
   public cpu(@Root() node: Node) {
     return this.cpuService.findUniqueOrThrow({ where: { id: node.cpuId } });
   }

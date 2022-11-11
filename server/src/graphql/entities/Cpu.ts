@@ -27,6 +27,8 @@ import { GraphQLID, GraphQLInt, GraphQLString } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
 import { GraphQLTimestamp } from 'graphql-scalars';
 import { CpuArchitectureEnum, CpuVendorEnum } from '~/db';
+// eslint-disable-next-line import/no-cycle
+import { Node } from './Node';
 
 @ObjectType({ description: 'Cpu' })
 export class Cpu implements Prisma.Cpu {
@@ -54,18 +56,6 @@ export class Cpu implements Prisma.Cpu {
   @Field(() => GraphQLString, { description: 'Cpu name' })
   name!: string;
 
-  @Field(() => GraphQLInt, { description: 'Cpu L1d cache' })
-  cacheL1d!: number;
-
-  @Field(() => GraphQLInt, { description: 'Cpu L1i cache' })
-  cacheL1i!: number;
-
-  @Field(() => GraphQLInt, { description: 'Cpu L2 cache' })
-  cacheL2!: number;
-
-  @Field(() => GraphQLInt, { description: 'Cpu L3 cache' })
-  cacheL3!: number;
-
   @Field(() => [GraphQLString], { description: 'Cpu vulnerabilities' })
   vulnerabilities!: string[];
 
@@ -92,4 +82,21 @@ export class Cpu implements Prisma.Cpu {
 
   @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
   updatedAt!: Date;
+
+  /* Field resolvers */
+
+  @Field(() => GraphQLInt, { description: 'Cpu L1d cache' })
+  cacheL1d!: number;
+
+  @Field(() => GraphQLInt, { description: 'Cpu L1i cache' })
+  cacheL1i!: number;
+
+  @Field(() => GraphQLInt, { description: 'Cpu L2 cache' })
+  cacheL2!: number;
+
+  @Field(() => GraphQLInt, { description: 'Cpu L3 cache' })
+  cacheL3!: number;
+
+  @Field(() => [Node], { description: 'CPU nodes' })
+  nodes!: Node[];
 }

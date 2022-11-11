@@ -22,7 +22,15 @@
  * SOFTWARE.
  */
 
-import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import {
+  Arg,
+  Args,
+  FieldResolver,
+  Query,
+  Resolver,
+  ResolverInterface,
+  Root
+} from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
 import { convert } from 'convert';
@@ -33,7 +41,7 @@ import { FindUniqueStorageArgs, FindManyStorageArgs } from '../../args';
 
 @Resolver(Storage)
 @injectable()
-export class StorageResolver {
+export class StorageResolver implements ResolverInterface<Storage> {
   public constructor(
     @inject(StorageService)
     private readonly storageService: StorageService

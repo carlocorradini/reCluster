@@ -35,7 +35,7 @@ export class CpuNodeResolver {
     @inject(NodeService) private readonly nodeService: NodeService
   ) {}
 
-  @FieldResolver(() => [Node], { description: 'CPU nodes' })
+  @FieldResolver(() => [Node])
   public nodes(@Root() cpu: Cpu, @Args() args: FindManyNodeArgs) {
     return this.nodeService.findMany({
       ...args,

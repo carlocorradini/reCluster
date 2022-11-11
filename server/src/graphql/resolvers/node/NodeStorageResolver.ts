@@ -36,7 +36,7 @@ export class NodeStorageResolver {
     private readonly storageService: StorageService
   ) {}
 
-  @FieldResolver(() => [Storage], { description: 'Node storages' })
+  @FieldResolver(() => [Storage])
   public storages(@Root() node: Node, @Args() args: FindManyStorageArgs) {
     return this.storageService.findMany({
       ...args,

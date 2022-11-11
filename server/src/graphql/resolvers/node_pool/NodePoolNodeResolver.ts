@@ -36,7 +36,7 @@ export class NodePoolNodeResolver {
     private readonly nodeService: NodeService
   ) {}
 
-  @FieldResolver(() => [Node], { description: 'Node pool nodes' })
+  @FieldResolver(() => [Node])
   public nodes(@Root() nodePool: NodePool, @Args() args: FindManyNodeArgs) {
     return this.nodeService.findMany({
       ...args,

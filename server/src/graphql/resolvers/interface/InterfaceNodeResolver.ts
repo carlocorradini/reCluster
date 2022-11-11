@@ -35,7 +35,7 @@ export class InterfaceNodeResolver {
     private readonly nodeService: NodeService
   ) {}
 
-  @FieldResolver(() => Node, { description: 'Interface node' })
+  @FieldResolver(() => Node)
   public node(@Root() intf: Interface) {
     return this.nodeService.findUniqueOrThrow({ where: { id: intf.nodeId } });
   }

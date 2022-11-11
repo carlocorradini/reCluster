@@ -31,6 +31,7 @@ import { TokenPayload } from '~/types';
 import { Status } from '../../entities';
 import { FindUniqueStatusArgs, FindManyStatusArgs } from '../../args';
 
+// FIXME implements ResolverInterface<Status>
 @Resolver(Status)
 @injectable()
 export class StatusResolver {

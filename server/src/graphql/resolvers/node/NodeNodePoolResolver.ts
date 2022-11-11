@@ -35,10 +35,7 @@ export class NodeNodePoolResolver {
     private readonly nodePoolService: NodePoolService
   ) {}
 
-  @FieldResolver(() => NodePool, {
-    nullable: true,
-    description: 'Node Node pool'
-  })
+  @FieldResolver(() => NodePool)
   public nodePool(@Root() node: Node) {
     return this.nodePoolService.findUniqueOrThrow({
       where: { id: node.nodePoolId }

@@ -30,6 +30,7 @@ import {
   Mutation,
   Query,
   Resolver,
+  ResolverInterface,
   Root
 } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
@@ -48,7 +49,7 @@ import {
 
 @Resolver(Node)
 @injectable()
-export class NodeResolver {
+export class NodeResolver implements ResolverInterface<Node> {
   public constructor(
     @inject(NodeService)
     private readonly nodeService: NodeService

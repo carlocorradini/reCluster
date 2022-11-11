@@ -22,7 +22,15 @@
  * SOFTWARE.
  */
 
-import { Arg, Args, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import {
+  Arg,
+  Args,
+  FieldResolver,
+  Query,
+  Resolver,
+  ResolverInterface,
+  Root
+} from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt } from 'graphql-scalars';
 import { convert } from 'convert';
@@ -33,7 +41,7 @@ import { FindUniqueInterfaceArgs, FindManyInterfaceArgs } from '../../args';
 
 @Resolver(Interface)
 @injectable()
-export class InterfaceResolver {
+export class InterfaceResolver implements ResolverInterface<Interface> {
   public constructor(
     @inject(InterfaceService)
     private readonly interfaceService: InterfaceService

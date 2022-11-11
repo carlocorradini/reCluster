@@ -34,6 +34,7 @@ import {
   SignInArgs
 } from '../../args';
 
+// FIXME implements ResolverInterface<User>
 @Resolver(User)
 @injectable()
 export class UserResolver {

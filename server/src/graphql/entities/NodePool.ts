@@ -26,6 +26,8 @@ import type * as Prisma from '@prisma/client';
 import { GraphQLBoolean, GraphQLID, GraphQLInt, GraphQLString } from 'graphql';
 import { Field, ObjectType } from 'type-graphql';
 import { GraphQLTimestamp } from 'graphql-scalars';
+// eslint-disable-next-line import/no-cycle
+import { Node } from './Node';
 
 @ObjectType({ description: 'Node pool' })
 export class NodePool implements Prisma.NodePool {
@@ -46,6 +48,17 @@ export class NodePool implements Prisma.NodePool {
   @Field(() => GraphQLTimestamp, { description: 'Creation timestamp' })
   createdAt!: Date;
 
-  @Field(() => GraphQLTimestamp, { description: 'Update timestamp' })
+  @Field(() => GraphQLTimestamp, { description: 'Up date timestamp' })
   updatedAt!: Date;
+
+  /* Field resolvers */
+
+  @Field(() => GraphQLInt, { description: 'Node pool node count' })
+  count!: number;
+
+  @Field(() => GraphQLInt, { description: 'Node pool maximum number of nodes' })
+  maxNodes!: number;
+
+  @Field(() => [Node], { description: 'Node pool nodes' })
+  nodes!: Node[];
 }
