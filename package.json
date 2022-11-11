@@ -32,7 +32,7 @@
   "devDependencies": {
     "@commitlint/cli": "^17.2.0",
     "@commitlint/config-conventional": "^17.2.0",
-    "@cspell/dict-bash": "^3.0.0",
+    "@cspell/dict-bash": "^4.0.0",
     "@cspell/dict-node": "^4.0.1",
     "@cspell/dict-npm": "^4.0.1",
     "@cspell/dict-typescript": "^3.0.1",
