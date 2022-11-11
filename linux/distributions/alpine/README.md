@@ -34,9 +34,47 @@
 
 > **Note**: More information available at <https://docs.alpinelinux.org/user-handbook/0.1a/Installing/setup_alpine.html>
 
-```sh
-setup-alpine
-```
+1. Patch `setup_partitions() { ... }` function from `setup-disk`
+
+   > **Note**: Find `setup-disk` location with `command -v setup-disk`
+
+   ```sh
+   setup_partitions() {
+     local diskdev="$1" start=1M line=
+     shift
+     supported_part_label "$DISKLABEL" || return 1
+   
+     # create clean disklabel
+     echo "label: $DISKLABEL" | sfdisk --quiet $diskdev
+   
+     # initialize MBR for syslinux only
+     if [ "$BOOTLOADER" = "syslinux" ] && [ -f "$MBR" ]; then
+       cat "$MBR" > $diskdev
+     fi
+   
+     # create new partitions
+     (
+       for line in "$@"; do
+         case "$line" in
+           0M*) ;;
+           *)
+             echo "$start,$line"
+             start=
+             ;;
+         esac
+       done
+     ) | sfdisk --quiet -W always --label $DISKLABEL $diskdev || return 1
+   
+     # create device nodes if not exist
+     mdev -s
+   }
+   ```
+
+2. Install
+
+   ```sh
+   setup-alpine
+   ```
 
 ---
 
