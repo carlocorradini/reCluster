@@ -23,12 +23,7 @@
  */
 
 import { Field, InputType } from 'type-graphql';
-import {
-  GraphQLBigInt,
-  GraphQLIP,
-  GraphQLNonEmptyString,
-  GraphQLPositiveInt
-} from 'graphql-scalars';
+import { GraphQLBigInt, GraphQLPositiveInt } from 'graphql-scalars';
 import {
   ArrayUnique,
   IsDefined,

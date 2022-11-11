@@ -35,7 +35,7 @@ import { logger } from '~/logger';
 
 type UpsertArgs = {
   data: Pick<CreateNodeInput, 'memory' | 'roles'> & { cpu: number };
-  select?: Prisma.NodePoolSelect | null;
+  select?: Prisma.NodePoolSelect;
 };
 
 type FindManyArgs = Omit<Prisma.NodePoolFindManyArgs, 'include' | 'cursor'> & {
@@ -55,6 +55,27 @@ type UpdateArgs = Omit<
 > & {
   where: WithRequired<Pick<Prisma.NodePoolWhereUniqueInput, 'id'>, 'id'>;
   data: UpdateNodePoolInput;
+};
+
+type IncreaseOrDecreaseArgs = {
+  where: WithRequired<Pick<Prisma.NodePoolWhereUniqueInput, 'id'>, 'id'>;
+  data: {
+    count: number;
+  };
+};
+
+type IncreaseArgs = {
+  where: WithRequired<Pick<Prisma.NodePoolWhereUniqueInput, 'id'>, 'id'>;
+  data: {
+    count: number;
+  };
+};
+
+type DecreaseArgs = {
+  where: WithRequired<Pick<Prisma.NodePoolWhereUniqueInput, 'id'>, 'id'>;
+  data: {
+    count: number;
+  };
 };
 
 type CountArgs = {
@@ -164,34 +185,10 @@ export class NodePoolService {
       const { data } = args;
 
       if (data.count) {
-        const newCount = data.count;
-        const { minNodes } = await this.findUniqueOrThrow(
-          {
-            where: args.where,
-            select: { minNodes: true }
-          },
-          prisma
-        );
-        const maxNodes = await this.maxNodes(
-          { where: { id: args.where.id } },
-          prisma
-        );
-
-        if (newCount < minNodes || newCount > maxNodes)
-          throw new NodePoolError(
-            `Node pool '${args.where.id}' count ${newCount} is invalid because exceeds min ${minNodes} or max ${maxNodes} limits`
-          );
-
-        const oldCount = await this.count(
-          { where: { id: args.where.id } },
-          prisma
-        );
-
-        if (newCount < oldCount) {
-          // TODO Decrease
-        } else if (newCount > oldCount) {
-          // TODO Increase
-        }
+        await this.increaseOrDecrease({
+          where: args.where,
+          data: { count: data.count }
+        });
 
         delete data.count;
       }
@@ -201,6 +198,80 @@ export class NodePoolService {
       args.data = data;
 
       return prisma.nodePool.update(args);
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
+  }
+
+  private increaseOrDecrease(
+    args: IncreaseOrDecreaseArgs,
+    prismaTxn?: Prisma.TransactionClient
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(
+        `Node pool service increase or decrease: ${JSON.stringify(args)}`
+      );
+
+      const newCount = args.data.count;
+      const { minNodes } = await this.findUniqueOrThrow(
+        {
+          where: args.where,
+          select: { minNodes: true }
+        },
+        prisma
+      );
+      const maxNodes = await this.maxNodes({ where: args.where }, prisma);
+
+      if (newCount < minNodes || newCount > maxNodes)
+        throw new NodePoolError(
+          `Node pool '${args.where.id}' count ${newCount} is invalid because exceeds min ${minNodes} or max ${maxNodes}`
+        );
+
+      const oldCount = await this.count(
+        { where: { id: args.where.id } },
+        prisma
+      );
+
+      if (newCount > oldCount) {
+        await this.increase(
+          {
+            where: args.where,
+            data: { count: newCount - oldCount }
+          },
+          prisma
+        );
+      } else if (newCount < oldCount) {
+        await this.decrease(
+          {
+            where: args.where,
+            data: { count: oldCount - newCount }
+          },
+          prisma
+        );
+      }
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
+  }
+
+  private increase(args: IncreaseArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`Node pool service increase: ${JSON.stringify(args)}`);
+
+      // TODO
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
+  }
+
+  private decrease(args: DecreaseArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`Node pool service decrease: ${JSON.stringify(args)}`);
+
+      // TODO
     };
 
     return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
