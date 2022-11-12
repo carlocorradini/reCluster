@@ -7,7 +7,10 @@ reCluster scripts.
 > **Note**: Type `--help` for more information
 
 ```sh
+_ssh_passphrase="password"
+_token_passphrase="password"
+
 ./certificates.sh \
-  --ssh-passphrase "my_ssh_passphrase"
---token-passphrase "my_token_passphrase"
+  --ssh-passphrase "$_ssh_passphrase" \
+  --token-passphrase "$_token_passphrase"
 ```
