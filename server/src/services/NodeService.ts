@@ -23,7 +23,7 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import { inject, injectable } from 'tsyringe';
+import { delay, inject, injectable } from 'tsyringe';
 import type {
   CreateNodeInput,
   UpdateNodeInput,
@@ -36,6 +36,7 @@ import { logger } from '~/logger';
 import { SSH } from '~/ssh';
 import { TokenService, TokenTypes } from './TokenService';
 import { CpuService } from './CpuService';
+// eslint-disable-next-line import/no-cycle
 import { NodePoolService } from './NodePoolService';
 import { StatusService } from './StatusService';
 import { K8sService } from './K8sService';
@@ -77,7 +78,7 @@ export class NodeService {
   public constructor(
     @inject(CpuService)
     private readonly cpuService: CpuService,
-    @inject(NodePoolService)
+    @inject(delay(() => NodePoolService))
     private readonly nodePoolService: NodePoolService,
     @inject(StatusService)
     private readonly statusService: StatusService,
@@ -343,13 +344,13 @@ export class NodeService {
         throw new NodeError(`Node '${args.where.id}' has no interfaces`);
 
       // Bootstrap
-      await Promise.all(
-        node.interfaces.map(async (intf) => {
-          await this.wolService.wake({
+      await Promise.any(
+        node.interfaces.map((intf) =>
+          this.wolService.wake({
             mac: intf.address,
             address: node.address
-          });
-        })
+          })
+        )
       );
 
       // Update

@@ -23,6 +23,7 @@
  */
 
 import { NodePool as PrismaNodePool, Prisma } from '@prisma/client';
+import { delay, inject, injectable } from 'tsyringe';
 import type {
   CreateNodeInput,
   UpdateNodePoolInput,
@@ -30,8 +31,10 @@ import type {
 } from '~/types';
 import { NodePoolError } from '~/errors';
 import { config } from '~/config';
-import { prisma, NodeRoleEnum } from '~/db';
+import { prisma, NodeRoleEnum, NodeStatusEnum } from '~/db';
 import { logger } from '~/logger';
+// eslint-disable-next-line import/no-cycle
+import { NodeService } from './NodeService';
 
 type UpsertArgs = {
   data: Pick<CreateNodeInput, 'memory' | 'roles'> & { cpu: number };
@@ -86,7 +89,12 @@ type MaxNodesArgs = {
   where: WithRequired<Pick<Prisma.NodePoolWhereUniqueInput, 'id'>, 'id'>;
 };
 
+@injectable()
 export class NodePoolService {
+  public constructor(
+    @inject(delay(() => NodeService)) private readonly nodeService: NodeService
+  ) {}
+
   // FIXME Return type
   public upsert(
     args: UpsertArgs,
@@ -264,7 +272,28 @@ export class NodePoolService {
     const fn = async (prisma: Prisma.TransactionClient) => {
       logger.info(`Node pool service increase: ${JSON.stringify(args)}`);
 
-      // TODO
+      const nodes = await this.nodeService.findMany(
+        {
+          where: {
+            nodePoolId: args.where.id,
+            nodePoolAssigned: false,
+            status: { status: NodeStatusEnum.INACTIVE }
+          },
+          take: args.data.count
+        },
+        prisma
+      );
+
+      if (nodes.length !== args.data.count)
+        throw new NodePoolError(
+          `Node pool '${args.where.id}' increase request ${args.data.count} but received ${nodes.length}`
+        );
+
+      await Promise.all(
+        nodes.map((node) =>
+          this.nodeService.boot({ where: { id: node.id } }, prisma)
+        )
+      );
     };
 
     return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
@@ -275,7 +304,35 @@ export class NodePoolService {
     const fn = async (prisma: Prisma.TransactionClient) => {
       logger.info(`Node pool service decrease: ${JSON.stringify(args)}`);
 
-      // TODO
+      const nodes = await this.nodeService.findMany(
+        {
+          where: {
+            nodePoolId: args.where.id,
+            nodePoolAssigned: true,
+            status: {
+              status: {
+                in: [
+                  NodeStatusEnum.ACTIVE_READY,
+                  NodeStatusEnum.ACTIVE_NOT_READY
+                ]
+              }
+            }
+          },
+          take: args.data.count
+        },
+        prisma
+      );
+
+      if (nodes.length !== args.data.count)
+        throw new NodePoolError(
+          `Node pool '${args.where.id}' decrease request ${args.data.count} but received ${nodes.length}`
+        );
+
+      await Promise.all(
+        nodes.map((node) =>
+          this.nodeService.shutdown({ where: { id: node.id } }, prisma)
+        )
+      );
     };
 
     return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
