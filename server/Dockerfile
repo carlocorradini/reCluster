@@ -34,9 +34,9 @@ ARG PORT=80
 # BUILDER
 # ================
 FROM node:$NODEJS_VERSION-alpine AS builder
+ARG WORKDIR
 
 # Working directory
-ARG WORKDIR
 WORKDIR $WORKDIR
 
 # Copy build files
@@ -56,6 +56,8 @@ RUN npm run build
 # PRODUCTION
 # ================
 FROM node:$NODEJS_VERSION-alpine
+ARG WORKDIR
+ARG PORT
 
 # Author
 LABEL org.opencontainers.image.authors="Carlo Corradini <carlo.corradini98@gmail.com>"
@@ -65,7 +67,6 @@ ENV NODE_ENV production
 ENV PORT $PORT
 
 # Working directory
-ARG WORKDIR
 WORKDIR $WORKDIR
 
 # Install packages
