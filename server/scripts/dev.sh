@@ -47,6 +47,8 @@ POSTGRES_DB=recluster
 CERTS_DIR="$DIRNAME/../certs"
 # Certificates passphrase
 CERTS_PASSPHRASE=password
+# Certificates script
+CERTS_SCRIPT="$DIRNAME/../../scripts/certificates.sh"
 # Skip certificates
 SKIP_CERTS=false
 # Skip cluster
@@ -207,11 +209,12 @@ verify_system() {
   assert_cmd until
 
   assert_docker_image "$POSTGRES_IMAGE"
+
+  [ -f "$K3D_CONFIG" ] || FATAL "K3d configuration file '$K3D_CONFIG' not found"
 }
 
-# Check system
-check_system() {
-  [ -f "$K3D_CONFIG" ] || FATAL "K3d configuration file '$K3D_CONFIG' not found"
+# Setup system
+setup_system() {
   recreate_dir "$CERTS_DIR" || FATAL "Error recreating certificates directory '$CERTS_DIR'"
 }
 
@@ -219,19 +222,10 @@ check_system() {
 setup_certs() {
   [ "$SKIP_CERTS" = false ] || { WARN "Skipping certificates" && return 0; }
 
-  _ssh_key_name=ssh
-  _token_key_name=token
-
-  INFO "Generating SSH certificate"
-  ssh-keygen -b 2048 -t rsa -f "$CERTS_DIR/$_ssh_key_name.key" -N "$CERTS_PASSPHRASE"
-  mv "$CERTS_DIR/$_ssh_key_name.key.pub" "$CERTS_DIR/$_ssh_key_name.pub"
-  chmod 600 "$CERTS_DIR/$_ssh_key_name.key" "$CERTS_DIR/$_ssh_key_name.pub"
-
-  INFO "Generating Token certificate"
-  ssh-keygen -b 4096 -t rsa -f "$CERTS_DIR/$_token_key_name.key" -N "$CERTS_PASSPHRASE" -m PEM
-  ssh-keygen -e -m PEM -f "$CERTS_DIR/$_token_key_name.key" -P "$CERTS_PASSPHRASE" > "$CERTS_DIR/$_token_key_name.pub"
-  rm "$CERTS_DIR/$_token_key_name.key.pub"
-  chmod 600 "$CERTS_DIR/$_token_key_name.key" "$CERTS_DIR/$_token_key_name.pub"
+  $CERTS_SCRIPT \
+    --out-dir "$CERTS_DIR" \
+    --ssh-passphrase "$CERTS_PASSPHRASE" \
+    --token-passphrase "$CERTS_PASSPHRASE"
 }
 
 # Setup cluster
@@ -290,7 +284,7 @@ setup_server() {
 {
   parse_args "$@"
   verify_system
-  check_system
+  setup_system
   setup_certs
   setup_cluster
   setup_database

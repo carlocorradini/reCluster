@@ -29,12 +29,14 @@ set -o noglob
 # ================
 # GLOBALS
 # ================
-# Return value
-RETVAL=
 # Configuration
 CONFIG=
 # Node facts
 NODE_FACTS="{}"
+# Return value
+RETVAL=
+# Temporary directory
+TMP_DIR=
 
 # ================
 # CLEANUP
