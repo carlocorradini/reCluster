@@ -24,9 +24,9 @@
 # shellcheck disable=SC2034
 
 profile_recluster() {
+  profile_base
   title="reCluster"
   desc="reCluster Alpine Linux"
-  profile_base
   profile_abbrev="recluster"
   image_ext="iso"
   arch="x86_64 aarch64 armv7 s390x"
