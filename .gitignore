@@ -5,6 +5,8 @@
 **/.vagrant/
 *.iso
 *.graphql
+*.key
+*.pub
 
 # Logs
 logs

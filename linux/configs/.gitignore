@@ -3,5 +3,5 @@
 !/common.config.yml
 !/controller.config.yml
 !/worker.config.yml
-!/configs.sh
+!/config.sh
 !/README.md
