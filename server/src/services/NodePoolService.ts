@@ -249,6 +249,10 @@ export class NodePoolService {
           },
           prisma
         );
+      } else {
+        logger.warn(
+          `Increase/Decrease new count '${newCount}' is equal to old count '${oldCount}'`
+        );
       }
     };
 
