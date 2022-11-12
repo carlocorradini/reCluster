@@ -204,7 +204,6 @@ verify_system() {
   assert_cmd k3d
   assert_cmd node
   assert_cmd npm
-  assert_cmd ssh-keygen
   assert_cmd timeout
   assert_cmd until
 
