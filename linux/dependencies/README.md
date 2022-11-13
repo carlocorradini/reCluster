@@ -1,20 +1,26 @@
 # reCluster dependencies
 
-## :warning: Warning
+reCluster dependencies.
 
-### Do not create/update/delete any files or folders manually except for [dependencies.yml](./dependencies.yml)
+## :bookmark_tabs: [`dependencies.yml`](./dependencies.yml)
 
-### For any dependency management, use [dependencies.sh](./dependencies.sh) script
+Dependencies file.
 
-## :clipboard: Workflow
+## :bookmark_tabs: [`dependencies.sh`](./dependencies.sh)
+
+Dependencies script.
+
+```sh
+./dependencies.sh \
+  --sync
+```
+
+### Arguments
 
 > **Note**: Type `--help` for more information
 
-1. Edit [dependencies.yml](./dependencies.yml)
-
-2. Synchronize
-
-   ```sh
-   ./dependencies.sh \
-     --sync
-   ```
+| **Name**       | **Description**                                                    |
+| -------------- | ------------------------------------------------------------------ |
+| `--help`       | Show help message and exit                                         |
+| `--sync`       | Synchronize dependencies                                           |
+| `--sync-force` | Synchronize dependencies replacing assets that are already present |

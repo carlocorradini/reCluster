@@ -1,5 +1,7 @@
 # :penguin: Linux
 
+Linux.
+
 ## :file_folder: Directories
 
 > **Note**: Refer to the `README.md` of each directory for more information
@@ -10,11 +12,15 @@
 | [`dependencies`](./dependencies/)   | Dependencies    |
 | [`distributions`](./distributions/) | Distributions   |
 
-## `install.sh`
+## :bookmark_tabs: [`install.sh`](./install.sh)
 
-Recluster installation script.
+reCluster installation script.
 
-### Flags
+```sh
+./install.sh
+```
+
+### Arguments
 
 > **Note**: Type `--help` for more information
 
@@ -29,7 +35,7 @@ Recluster installation script.
 | `--init-cluster`                    | Initialize cluster components and logic. Enable only when bootstrapping for the first time |
 | `--k3s-version <VERSION>`           | K3s version                                                                                |
 | `--log-level <LEVEL>`               | Logger level                                                                               |
-| `--node_exporter-version <VERSION>` | Node exporter version                                                                      |
+| `--node-exporter-version <VERSION>` | Node exporter version                                                                      |
 | `--pc-device-api <URL>`             | Power consumption device api url                                                           |
 | `--pc-interval <TIME>`              | Power consumption read interval time in seconds                                            |
 | `--pc-time <TIME>`                  | Power consumption execution time in seconds                                                |

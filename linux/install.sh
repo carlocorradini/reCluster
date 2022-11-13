@@ -268,8 +268,6 @@ spinner_stop() {
 # ================
 # Show help message
 show_help() {
-  # Script name
-  _script_name=$(basename "$0")
   # Log level name
   _log_level_name=
   case $LOG_LEVEL in
@@ -281,9 +279,9 @@ show_help() {
   esac
 
   cat << EOF
-Usage: $_script_name [--airgap] [--bench-time <TIME>] [--config <PATH>] [--disable-color]
+Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config <PATH>] [--disable-color]
         [--disable-spinner] [--help] [--init-cluster] [--k3s-version <VERSION>]
-        [--log-level <LEVEL>] [--node_exporter-version <VERSION>]
+        [--log-level <LEVEL>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
         [--spinner <SPINNER>] [--ssh-authorized-keys <PATH>]
 
@@ -325,7 +323,7 @@ Options:
                                          info     Informational level
                                          debug    Debug level
 
-  --node_exporter-version <VERSION>    Node exporter version
+  --node-exporter-version <VERSION>    Node exporter version
                                        Default: $NODE_EXPORTER_VERSION
 
   --pc-device-api <URL>                Power consumption device api url
@@ -1126,7 +1124,7 @@ parse_args() {
         shift
         shift
         ;;
-      --node_exporter-version)
+      --node-exporter-version)
         # Node exporter version
         _parse_args_assert_value "$@"
 

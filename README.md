@@ -4,7 +4,7 @@
 [![codeql](https://github.com/carlocorradini/reCluster/actions/workflows/codeql.yml/badge.svg)](https://github.com/carlocorradini/reCluster/actions/workflows/codeql.yml)
 [![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 
-reCluster is an architecture for a data center that actively reduces its impact and minimizes its resource utilization
+reCluster is an architecture for a data center that actively reduces its impact and minimizes its resource utilization.
 
 ## Members
 

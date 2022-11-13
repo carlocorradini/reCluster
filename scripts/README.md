@@ -2,9 +2,9 @@
 
 reCluster scripts.
 
-## [`certificates.sh`](./certificates.sh)
+## :bookmark_tabs: [`certificates.sh`](./certificates.sh)
 
-> **Note**: Type `--help` for more information
+reCluster certificates script.
 
 ```sh
 _ssh_passphrase="password"
@@ -14,3 +14,16 @@ _token_passphrase="password"
   --ssh-passphrase "$_ssh_passphrase" \
   --token-passphrase "$_token_passphrase"
 ```
+
+### Arguments
+
+> **Note**: Type `--help` for more information
+
+| **Name**                          | **Description**            |
+| --------------------------------- | -------------------------- |
+| `--help`                          | Show help message and exit |
+| `--out-dir <DIRECTORY>`           | Output directory           |
+| `--ssh-name <NAME>`               | SSH key name               |
+| `--ssh-passphrase <PASSPHRARE>`   | SSH passphrase             |
+| `--token-name <NAME>`             | Token key name             |
+| `--token-passphrase <PASSPHRARE>` | Token passphrase           |
