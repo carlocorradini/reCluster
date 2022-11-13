@@ -295,7 +295,7 @@ export class NodeService {
       // Shutdown
       const ssh = await SSH.connect({ host: node.hostname });
       await ssh.execCommand({
-        command: 'sudo shutdown -h now',
+        command: 'sudo poweroff',
         disconnect: true
       });
 

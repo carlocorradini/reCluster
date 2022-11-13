@@ -112,6 +112,7 @@
     "pino",
     "pkey",
     "pidfile",
+    "poweroff",
     "recluster",
     "respawn",
     "retval",
