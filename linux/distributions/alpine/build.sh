@@ -21,12 +21,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# ================
-# CONFIGURATION
-# ================
 # Current directory
 # shellcheck disable=SC1007
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+# Load commons
+. "$DIRNAME/../../../scripts/__commons.sh"
+
+# ================
+# CONFIGURATION
+# ================
 # Docker image
 DOCKER_IMAGE="recluster-alpine:latest"
 # Dockerfile
@@ -48,24 +52,18 @@ ALPINE_APKOVL_FILE=$(readlink -f "$DIRNAME/genapkovl-recluster.sh")
 # Container identifier
 CONTAINER_ID=
 
-# Load commons
-. "$DIRNAME/../../../scripts/__commons.sh"
-
-# Cleanup
+# ================
+# CLEANUP
+# ================
 cleanup() {
   # Exit code
   _exit_code=$?
   [ $_exit_code = 0 ] || WARN "Cleanup exit code $_exit_code"
 
-  # Remove iso directory
-  if [ -n "$ISO_DIR" ] && [ -d "$ISO_DIR" ] && [ $_exit_code -ne 0 ]; then
-    DEBUG "Removing ISO directory '$ISO_DIR'"
-    rm -rf "$ISO_DIR"
-    ISO_DIR=
-  fi
-
-  # Destroy Docker container
-  destroy_docker_container "$CONTAINER_ID"
+  # Cleanup iso directory
+  [ $_exit_code = 0 ] || cleanup_dir "$ISO_DIR"
+  # Cleanup Docker container
+  cleanup_docker_container "$CONTAINER_ID"
 
   exit "$_exit_code"
 }

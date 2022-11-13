@@ -21,12 +21,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# ================
-# CONFIGURATION
-# ================
 # Current directory
 # shellcheck disable=SC1007
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+# Load commons
+. "$DIRNAME/../../scripts/__commons.sh"
+
+# ================
+# CONFIGURATION
+# ================
 # Dependencies configuration file
 DEPS_CONFIG_FILE="$DIRNAME/dependencies.yml"
 # Dependencies configuration file content
@@ -35,9 +39,6 @@ DEPS=
 SYNC=false
 # Synchronize force flag
 SYNC_FORCE=false
-
-# Load commons
-. "$DIRNAME/../../scripts/__commons.sh"
 
 # ================
 # FUNCTIONS
@@ -334,6 +335,8 @@ read_config() {
 
 # Synchronize dependency
 sync_deps() {
+  [ "$SYNC" = true ] || return 0
+
   _num_deps=$(echo "$DEPS" | jq --raw-output '. | length')
 
   INFO "Syncing $_num_deps dependencies"
@@ -359,5 +362,5 @@ EOF
   verify_system
   parse_args "$@"
   read_config
-  if [ "$SYNC" = true ]; then sync_deps; fi
+  sync_deps
 }

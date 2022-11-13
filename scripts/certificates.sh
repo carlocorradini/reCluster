@@ -21,12 +21,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# ================
-# CONFIGURATION
-# ================
 # Current directory
 # shellcheck disable=SC1007
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+# Load commons
+. "$DIRNAME/__commons.sh"
+
+# ================
+# CONFIGURATION
+# ================
 # Output directory
 OUT_DIR="./"
 # SSH key name
@@ -44,21 +48,16 @@ TMP_DIR=
 # Token passphrase
 TOKEN_PASSPHRASE=
 
-# Load commons
-. "$DIRNAME/__commons.sh"
-
-# Cleanup
+# ================
+# CLEANUP
+# ================
 cleanup() {
   # Exit code
   _exit_code=$?
   [ $_exit_code = 0 ] || WARN "Cleanup exit code $_exit_code"
 
-  # Remove temporary directory
-  if [ -n "$TMP_DIR" ]; then
-    DEBUG "Removing temporary directory '$TMP_DIR'"
-    rm -rf "$TMP_DIR"
-    TMP_DIR=
-  fi
+  # Cleanup temporary directory
+  cleanup_dir "$TMP_DIR"
 
   exit "$_exit_code"
 }
@@ -71,11 +70,8 @@ trap cleanup INT QUIT TERM EXIT
 # ================
 # Show help message
 show_help() {
-  # Script name
-  _script_name=$(basename "$0")
-
   cat << EOF
-Usage: $_script_name [--help] [--out-dir <DIRECTORY>]
+Usage: $(basename "$0") [--help] [--out-dir <DIRECTORY>]
         [--ssh-name <NAME>] --ssh-passphrase <PASSPHRARE>
         [--token-name <NAME>] --token-passphrase <PASSPHRASE>
 
@@ -114,10 +110,6 @@ EOF
 # Parse command line arguments
 # @param $@ Arguments
 parse_args() {
-  _parse_args_assert_value() {
-    if [ -z "$2" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
-  }
-
   # Parse
   while [ $# -gt 0 ]; do
     case $1 in
@@ -128,7 +120,7 @@ parse_args() {
         ;;
       --out-dir)
         # Output directory
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         _out_dir=$2
         shift
@@ -136,7 +128,7 @@ parse_args() {
         ;;
       --ssh-name)
         # SSH key name
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         _ssh_name=$2
         shift
@@ -144,7 +136,7 @@ parse_args() {
         ;;
       --ssh-passphrase)
         # SSH passphrase
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         _ssh_passphrase=$2
         shift
@@ -152,7 +144,7 @@ parse_args() {
         ;;
       --token-name)
         # Token key name
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         _token_name=$2
         shift
@@ -160,7 +152,7 @@ parse_args() {
         ;;
       --token-passphrase)
         # Token passphrase
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         _token_passphrase=$2
         shift

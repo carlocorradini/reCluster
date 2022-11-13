@@ -21,10 +21,42 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Fail on error
-set -o errexit
-# Disable wildcard character expansion
-set -o noglob
+# Current directory
+# shellcheck disable=SC1007
+DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+# Load commons
+. "$DIRNAME/../scripts/__commons.sh"
+
+# ================
+# CONFIGURATION
+# ================
+# Airgap environment flag
+AIRGAP_ENV=false
+# Benchmark time in seconds
+BENCH_TIME=30
+# Configuration file
+CONFIG_FILE="config.yml"
+# Initialize cluster
+INIT_CLUSTER=false
+# K3s version
+K3S_VERSION=latest
+# Node exporter version
+NODE_EXPORTER_VERSION=latest
+# Power consumption device api url
+PC_DEVICE_API="http://pc.recluster.local/cm?cmnd=status%2010"
+# Power consumption interval in seconds
+PC_INTERVAL=1
+# Power consumption time in seconds
+PC_TIME=30
+# Power consumption warmup time in seconds
+PC_WARMUP=10
+# reCluster etc directory
+RECLUSTER_ETC_DIR="/etc/recluster"
+# reCluster opt directory
+RECLUSTER_OPT_DIR="/opt/recluster"
+# SSH authorized keys file
+SSH_AUTHORIZED_KEYS_FILE="$HOME/.ssh/authorized_keys"
 
 # ================
 # GLOBALS
@@ -46,21 +78,10 @@ cleanup() {
   _exit_code=$?
   [ $_exit_code = 0 ] || WARN "Cleanup exit code $_exit_code"
 
-  # Remove temporary directory
-  if [ -n "$TMP_DIR" ]; then
-    DEBUG "Removing temporary directory '$TMP_DIR'"
-    rm -rf "$TMP_DIR"
-    TMP_DIR=
-  fi
-
-  # Reset cursor
-  if [ "$SPINNER_ENABLE" = true ] && [ -n "$SPINNER_PID" ]; then
-    DEBUG "Resetting cursor"
-    tput rc
-    tput cnorm
-    SPINNER_ENABLE=
-    SPINNER_PID=
-  fi
+  # Cleanup temporary directory
+  cleanup_dir "$TMP_DIR"
+  # Cleanup spinner
+  cleanup_spinner
 
   exit "$_exit_code"
 }
@@ -69,215 +90,10 @@ cleanup() {
 trap cleanup INT QUIT TERM EXIT
 
 # ================
-# LOGGER
-# ================
-# Fatal log level. Cause exit failure
-LOG_LEVEL_FATAL=100
-# Error log level
-LOG_LEVEL_ERROR=200
-# Warning log level
-LOG_LEVEL_WARN=300
-# Informational log level
-LOG_LEVEL_INFO=500
-# Debug log level
-LOG_LEVEL_DEBUG=600
-# Log level
-LOG_LEVEL=$LOG_LEVEL_INFO
-# Log color flag
-LOG_COLOR_ENABLE=true
-
-# Check if log level is enabled
-# @param $1 Log level
-is_log_level_enabled() {
-  if [ "$1" -le "$LOG_LEVEL" ]; then
-    # Enabled
-    return 0
-  else
-    # Disabled
-    return 1
-  fi
-}
-
-# Print log message
-# @param $1 Log level
-# @param $2 Message
-_log_print_message() {
-  _log_level=${1:-LOG_LEVEL_FATAL}
-  shift
-  _log_level_name=
-  _log_message=${*:-}
-  _log_prefix=
-  _log_suffix="\033[0m"
-
-  # Check log level
-  is_log_level_enabled "$_log_level" || return 0
-
-  case $_log_level in
-    "$LOG_LEVEL_FATAL")
-      _log_level_name=FATAL
-      _log_prefix="\033[41;37m"
-      ;;
-    "$LOG_LEVEL_ERROR")
-      _log_level_name=ERROR
-      _log_prefix="\033[1;31m"
-      ;;
-    "$LOG_LEVEL_WARN")
-      _log_level_name=WARN
-      _log_prefix="\033[1;33m"
-      ;;
-    "$LOG_LEVEL_INFO")
-      _log_level_name=INFO
-      _log_prefix="\033[37m"
-      ;;
-    "$LOG_LEVEL_DEBUG")
-      _log_level_name=DEBUG
-      _log_prefix="\033[1;34m"
-      ;;
-  esac
-
-  # Check color flag
-  if [ "$LOG_COLOR_ENABLE" = false ]; then
-    _log_prefix=
-    _log_suffix=
-  fi
-
-  # Log
-  printf '%b[%-5s] %b%b\n' "$_log_prefix" "$_log_level_name" "$_log_message" "$_log_suffix"
-}
-
-# Fatal log message
-# @param $1 Message
-FATAL() {
-  _log_print_message "$LOG_LEVEL_FATAL" "$1" >&2
-  exit 1
-}
-# Error log message
-# @param $1 Message
-ERROR() { _log_print_message "$LOG_LEVEL_ERROR" "$1" >&2; }
-# Warning log message
-# @param $1 Message
-WARN() { _log_print_message "$LOG_LEVEL_WARN" "$1" >&2; }
-# Informational log message
-# @param $1 Message
-INFO() { _log_print_message "$LOG_LEVEL_INFO" "$1"; }
-# Debug log message
-# @param $1 Message
-# @param $2 JSON value
-DEBUG() {
-  _log_print_message "$LOG_LEVEL_DEBUG" "$1"
-  if [ -n "$2" ] && is_log_level_enabled "$LOG_LEVEL_DEBUG"; then
-    echo "$2" | jq .
-  fi
-}
-
-# ================
-# SPINNER
-# ================
-# Spinner PID
-SPINNER_PID=
-# Spinner symbol time in seconds
-SPINNER_TIME=.1
-# Spinner symbols dots
-SPINNER_SYMBOLS_DOTS="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
-# Spinner symbols grayscale
-SPINNER_SYMBOLS_GRAYSCALE="░░░░░░░ ▒░░░░░░ ▒▒░░░░░ ▒▒▒░░░░ ▒▒▒▒░░░ ▒▒▒▒▒░░ ▒▒▒▒▒▒░ ▒▒▒▒▒▒▒ ░▒▒▒▒▒▒ ░░▒▒▒▒▒ ░░░▒▒▒▒ ░░░░▒▒▒ ░░░░░▒▒ ░░░░░░▒"
-# Spinner symbols propeller
-SPINNER_SYMBOLS_PROPELLER="/ - \\ |"
-# Spinner flag
-SPINNER_ENABLE=true
-# Spinner symbols
-SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
-
-# Spinner logic
-_spinner() {
-  # Termination flag
-  _terminate=false
-  # Termination signal
-  trap '_terminate=true' USR1
-  # Message
-  _spinner_message=${1:-"Loading..."}
-
-  while :; do
-    # Cursor invisible
-    tput civis
-
-    for s in $SPINNER_SYMBOLS; do
-      # Save cursor position
-      tput sc
-      # Symbol and message
-      printf "%s %s" "$s" "$_spinner_message"
-      # Restore cursor position
-      tput rc
-
-      # Terminate
-      if [ "$_terminate" = true ]; then
-        # Clear line from position to end
-        tput el
-        break 2
-      fi
-
-      # Animation time
-      sleep "$SPINNER_TIME"
-
-      # Check parent still alive
-      # Parent PID
-      _spinner_ppid=$(ps -p "$$" -o ppid=)
-      if [ -n "$_spinner_ppid" ]; then
-        # shellcheck disable=SC2086
-        _spinner_parent_up=$(ps --no-headers $_spinner_ppid)
-        if [ -z "$_spinner_parent_up" ]; then break 2; fi
-      fi
-    done
-  done
-
-  # Cursor normal
-  tput cnorm
-  return 0
-}
-
-# Start spinner
-# @param $1 Message
-# shellcheck disable=SC2120
-spinner_start() {
-  # Print message if present
-  if [ -n "$1" ]; then INFO "$1"; fi
-  if [ "$SPINNER_ENABLE" = false ]; then return; fi
-  if [ -n "$SPINNER_PID" ]; then FATAL "Spinner PID ($SPINNER_PID) already defined"; fi
-
-  # Spawn spinner process
-  _spinner "$1" &
-  # Spinner process id
-  SPINNER_PID=$!
-}
-
-# Stop spinner
-spinner_stop() {
-  if [ "$SPINNER_ENABLE" = false ]; then return; fi
-  if [ -z "$SPINNER_PID" ]; then FATAL "Spinner PID is undefined"; fi
-
-  # Send termination signal
-  kill -s USR1 "$SPINNER_PID"
-  # Wait may fail
-  wait "$SPINNER_PID" || :
-  # Reset pid
-  SPINNER_PID=
-}
-
-# ================
 # FUNCTIONS
 # ================
 # Show help message
 show_help() {
-  # Log level name
-  _log_level_name=
-  case $LOG_LEVEL in
-    "$LOG_LEVEL_FATAL") _log_level_name=fatal ;;
-    "$LOG_LEVEL_ERROR") _log_level_name=error ;;
-    "$LOG_LEVEL_WARN") _log_level_name=warn ;;
-    "$LOG_LEVEL_INFO") _log_level_name=info ;;
-    "$LOG_LEVEL_DEBUG") _log_level_name=debug ;;
-  esac
-
   cat << EOF
 Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config <PATH>] [--disable-color]
         [--disable-spinner] [--help] [--init-cluster] [--k3s-version <VERSION>]
@@ -315,7 +131,7 @@ Options:
                                          Any K3s version released
 
   --log-level <LEVEL>                  Logger level
-                                       Default: $_log_level_name
+                                       Default: $(to_log_level_name "$LOG_LEVEL")
                                        Values:
                                          fatal    Fatal level
                                          error    Error level
@@ -360,13 +176,6 @@ Options:
 EOF
 }
 
-# Assert command is installed
-# @param $1 Command name
-assert_cmd() {
-  command -v "$1" > /dev/null 2>&1 || FATAL "Command '$1' not found"
-  DEBUG "Command '$1' found at '$(command -v "$1")'"
-}
-
 # Assert init system
 assert_init_system() {
   if [ -x /sbin/openrc-run ]; then
@@ -395,80 +204,6 @@ assert_timezone() {
   [ -f "$_timezone_file" ] || FATAL "Timezone file '$_timezone_file' not found"
   _current_timezone=$(cat $_timezone_file)
   [ "$_current_timezone" = "$_timezone" ] || FATAL "Timezone is not '$_timezone' but '$_current_timezone'"
-}
-
-# Assert executable downloader
-assert_downloader() {
-  _assert_downloader() {
-    # Return failure if it doesn't exist or is no executable
-    [ -x "$(command -v "$1")" ] || return 1
-
-    # Set downloader
-    DOWNLOADER=$1
-    return 0
-  }
-
-  # Downloader command
-  _assert_downloader curl \
-    || _assert_downloader wget \
-    || FATAL "No executable downloader found: 'curl' or 'wget'"
-  DEBUG "Downloader '$DOWNLOADER' found at '$(command -v "$DOWNLOADER")'"
-}
-
-# Assert URL address is reachable
-# @param $1 URL address
-# @param $2 Timeout in seconds
-assert_url_reachability() {
-  DEBUG "Testing URL address '$1' reachability"
-  # URL address
-  _url_address=$1
-  # Timeout in seconds
-  _timeout=${2:-10}
-
-  case $DOWNLOADER in
-    curl)
-      curl --fail --silent --show-error --max-time "$_timeout" "$_url_address" > /dev/null || FATAL "URL address '$_url_address' is unreachable"
-      ;;
-    wget)
-      wget --quiet --spider --timeout="$_timeout" --tries=1 "$_url_address" 2>&1 || FATAL "URL address '$_url_address' is unreachable"
-      ;;
-    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
-  esac
-}
-
-# Download a file
-# @param $1 Output location
-# @param $2 Download URL
-download() {
-  DEBUG "Downloading file '$2' to '$1'"
-
-  # Download
-  case $DOWNLOADER in
-    curl)
-      curl --fail --silent --location --output "$1" "$2" || FATAL "Download file '$2' failed"
-      ;;
-    wget)
-      wget --quiet --output-document="$1" "$2" || FATAL "Download file '$2' failed"
-      ;;
-    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
-  esac
-
-  DEBUG "Successfully downloaded file '$2' to '$1'"
-}
-
-# Print downloaded content
-# @param $1 Download URL
-download_print() {
-  # Download
-  case $DOWNLOADER in
-    curl)
-      curl --fail --silent --location --show-error "$1" || FATAL "Download print '$1' failed"
-      ;;
-    wget)
-      wget --quiet --output-document=- "$1" 2>&1 || FATAL "Download print '$1' failed"
-      ;;
-    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
-  esac
 }
 
 # Read power consumption
@@ -544,16 +279,6 @@ read_power_consumption() {
         "standardDeviation": $standard_deviation
       }'
   )
-}
-
-# Check if parameter is an integer number
-# @param $1 Parameter
-is_number_integer() {
-  if [ -z "$1" ]; then return 1; fi
-  case $1 in
-    '' | *[!0-9]*) return 1 ;;
-    *) return 0 ;;
-  esac
 }
 
 # Decode JWT token
@@ -1046,17 +771,6 @@ node_registration() {
 # Parse command line arguments
 # @param $@ Arguments
 parse_args() {
-  _parse_args_assert_value() {
-    if [ -z "$2" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
-  }
-  _parse_args_assert_positive_number_integer() {
-    if ! is_number_integer "$2" || [ "$2" -le 0 ]; then FATAL "Value '$2' of argument '$1' is not a positive number"; fi
-  }
-  _parse_args_invalid_value() {
-    FATAL "Value '$2' of argument '$1' is invalid"
-  }
-
-  # Parse
   while [ $# -gt 0 ]; do
     case $1 in
       --airgap)
@@ -1066,8 +780,8 @@ parse_args() {
         ;;
       --bench-time)
         # Benchmark time
-        _parse_args_assert_value "$@"
-        _parse_args_assert_positive_number_integer "$1" "$2"
+        parse_args_assert_value "$@"
+        parse_args_assert_positive_integer "$1" "$2"
 
         _bench_time=$2
         shift
@@ -1075,7 +789,7 @@ parse_args() {
         ;;
       --config)
         # Configuration file
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         _config=$2
         shift
@@ -1103,7 +817,7 @@ parse_args() {
         ;;
       --k3s-version)
         # K3s version
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         _k3s_version=$2
         shift
@@ -1111,7 +825,7 @@ parse_args() {
         ;;
       --log-level)
         # Log level
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         case $2 in
           fatal) _log_level=$LOG_LEVEL_FATAL ;;
@@ -1119,14 +833,14 @@ parse_args() {
           warn) _log_level=$LOG_LEVEL_WARN ;;
           info) _log_level=$LOG_LEVEL_INFO ;;
           debug) _log_level=$LOG_LEVEL_DEBUG ;;
-          *) _parse_args_invalid_value "$1" "$2" ;;
+          *) FATAL "Value '$2' of argument '$1' is invalid" ;;
         esac
         shift
         shift
         ;;
       --node-exporter-version)
         # Node exporter version
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         _node_exporter_version=$2
         shift
@@ -1134,7 +848,7 @@ parse_args() {
         ;;
       --pc-device-api)
         # Power consumption device api url
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         _pc_device_api=$2
         shift
@@ -1142,8 +856,8 @@ parse_args() {
         ;;
       --pc-interval)
         # Power consumption interval
-        _parse_args_assert_value "$@"
-        _parse_args_assert_positive_number_integer "$1" "$2"
+        parse_args_assert_value "$@"
+        parse_args_assert_positive_integer "$1" "$2"
 
         _pc_interval=$2
         shift
@@ -1151,8 +865,8 @@ parse_args() {
         ;;
       --pc-time)
         # Power consumption time
-        _parse_args_assert_value "$@"
-        _parse_args_assert_positive_number_integer "$1" "$2"
+        parse_args_assert_value "$@"
+        parse_args_assert_positive_integer "$1" "$2"
 
         _pc_time=$2
         shift
@@ -1160,28 +874,28 @@ parse_args() {
         ;;
       --pc-warmup)
         # Power consumption warmup time
-        _parse_args_assert_value "$@"
-        _parse_args_assert_positive_number_integer "$1" "$2"
+        parse_args_assert_value "$@"
+        parse_args_assert_positive_integer "$1" "$2"
 
         _pc_warmup=$2
         shift
         shift
         ;;
       --spinner)
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         case $2 in
           dots) _spinner=$SPINNER_SYMBOLS_DOTS ;;
           grayscale) _spinner=$SPINNER_SYMBOLS_GRAYSCALE ;;
           propeller) _spinner=$SPINNER_SYMBOLS_PROPELLER ;;
-          *) _parse_args_invalid_value "$1" "$2" ;;
+          *) FATAL "Value '$2' of argument '$1' is invalid" ;;
         esac
         shift
         shift
         ;;
       --ssh-authorized-keys)
         # SSH authorized keys file
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         _ssh_authorized_keys=$2
         shift
@@ -2075,47 +1789,6 @@ start_recluster() {
 
   spinner_stop
 }
-
-# ================
-# CONFIGURATION
-# ================
-# Current directory
-# shellcheck disable=SC1007
-DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-# Airgap environment flag
-AIRGAP_ENV=false
-# Benchmark time in seconds
-BENCH_TIME=30
-# Configuration file
-CONFIG_FILE="config.yml"
-# Initialize cluster
-INIT_CLUSTER=false
-# K3s version
-K3S_VERSION=latest
-# Log color flag
-LOG_COLOR_ENABLE=true
-# Log level
-LOG_LEVEL=$LOG_LEVEL_INFO
-# Node exporter version
-NODE_EXPORTER_VERSION=latest
-# Power consumption device api url
-PC_DEVICE_API="http://pc.recluster.local/cm?cmnd=status%2010"
-# Power consumption interval in seconds
-PC_INTERVAL=1
-# Power consumption time in seconds
-PC_TIME=30
-# Power consumption warmup time in seconds
-PC_WARMUP=10
-# reCluster etc directory
-RECLUSTER_ETC_DIR="/etc/recluster"
-# reCluster opt directory
-RECLUSTER_OPT_DIR="/opt/recluster"
-# Spinner flag
-SPINNER_ENABLE=true
-# Spinner symbols
-SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
-# SSH authorized keys file
-SSH_AUTHORIZED_KEYS_FILE="$HOME/.ssh/authorized_keys"
 
 # ================
 # MAIN

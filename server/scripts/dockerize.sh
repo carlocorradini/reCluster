@@ -21,21 +21,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# ================
-# CONFIGURATION
-# ================
 # Current directory
 # shellcheck disable=SC1007
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+# Load commons
+. "$DIRNAME/../../scripts/__commons.sh"
+
+# ================
+# CONFIGURATION
+# ================
 # reCluster server Dockerfile
 RECLUSTER_SERVER_DOCKERFILE="$DIRNAME/../Dockerfile"
 # reCluster server version
 RECLUSTER_SERVER_VERSION=latest
 # reCluster server image
 RECLUSTER_SERVER_IMAGE="recluster-server:$RECLUSTER_SERVER_VERSION"
-
-# Load commons
-. "$DIRNAME/../../scripts/__commons.sh"
 
 ################################################################################################################################
 

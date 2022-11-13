@@ -27,6 +27,28 @@ set -o errexit
 set -o noglob
 
 # ================
+# PARSE ARGUMENTS
+# ================
+# Assert argument has a value
+# @param $1 Argument name
+# @param $2 Argument value
+parse_args_assert_value() {
+  [ -n "$2" ] || FATAL "Argument '$1' requires a non-empty value"
+}
+# Assert argument value is a non negative integer (>= 0)
+# @param $1 Argument name
+# @param $2 Argument value
+parse_args_assert_non_negative_integer() {
+  { is_integer "$2" && [ "$2" -ge 0 ]; } || FATAL "Value '$2' of argument '$1' is not a non negative number"
+}
+# Assert argument value is a positive integer (> 0)
+# @param $1 Argument name
+# @param $2 Argument value
+parse_args_assert_positive_integer() {
+  { is_integer "$2" && [ "$2" -gt 0 ]; } || FATAL "Value '$2' of argument '$1' is not a positive number"
+}
+
+# ================
 # LOGGER
 # ================
 # Fatal log level. Cause exit failure
@@ -43,6 +65,24 @@ LOG_LEVEL_DEBUG=600
 LOG_LEVEL=$LOG_LEVEL_INFO
 # Log color flag
 LOG_COLOR_ENABLE=true
+
+# Convert log level to equivalent name
+# @param $1 Log level
+to_log_level_name() {
+  _log_level=${1:-LOG_LEVEL}
+  _log_level_name=
+
+  case $_log_level in
+    "$LOG_LEVEL_FATAL") _log_level_name=fatal ;;
+    "$LOG_LEVEL_ERROR") _log_level_name=error ;;
+    "$LOG_LEVEL_WARN") _log_level_name=warn ;;
+    "$LOG_LEVEL_INFO") _log_level_name=info ;;
+    "$LOG_LEVEL_DEBUG") _log_level_name=debug ;;
+    *) FATAL "Unknown log level '$_log_level'" ;;
+  esac
+
+  echo "$_log_level_name"
+}
 
 # Check if log level is enabled
 # @param $1 Log level
@@ -129,6 +169,99 @@ DEBUG() {
 }
 
 # ================
+# SPINNER
+# ================
+# Spinner PID
+SPINNER_PID=
+# Spinner symbol time in seconds
+SPINNER_TIME=.1
+# Spinner symbols dots
+SPINNER_SYMBOLS_DOTS="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
+# Spinner symbols grayscale
+SPINNER_SYMBOLS_GRAYSCALE="░░░░░░░ ▒░░░░░░ ▒▒░░░░░ ▒▒▒░░░░ ▒▒▒▒░░░ ▒▒▒▒▒░░ ▒▒▒▒▒▒░ ▒▒▒▒▒▒▒ ░▒▒▒▒▒▒ ░░▒▒▒▒▒ ░░░▒▒▒▒ ░░░░▒▒▒ ░░░░░▒▒ ░░░░░░▒"
+# Spinner symbols propeller
+SPINNER_SYMBOLS_PROPELLER="/ - \\ |"
+# Spinner flag
+SPINNER_ENABLE=true
+# Spinner symbols
+SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
+
+# Spinner logic
+_spinner() {
+  # Termination flag
+  _terminate=false
+  # Termination signal
+  trap '_terminate=true' USR1
+  # Message
+  _spinner_message=${1:-"Loading..."}
+
+  while :; do
+    # Cursor invisible
+    tput civis
+
+    for s in $SPINNER_SYMBOLS; do
+      # Save cursor position
+      tput sc
+      # Symbol and message
+      printf "%s %s" "$s" "$_spinner_message"
+      # Restore cursor position
+      tput rc
+
+      # Terminate
+      if [ "$_terminate" = true ]; then
+        # Clear line from position to end
+        tput el
+        break 2
+      fi
+
+      # Animation time
+      sleep "$SPINNER_TIME"
+
+      # Check parent still alive
+      # Parent PID
+      _spinner_ppid=$(ps -p "$$" -o ppid=)
+      if [ -n "$_spinner_ppid" ]; then
+        # shellcheck disable=SC2086
+        _spinner_parent_up=$(ps --no-headers $_spinner_ppid)
+        if [ -z "$_spinner_parent_up" ]; then break 2; fi
+      fi
+    done
+  done
+
+  # Cursor normal
+  tput cnorm
+  return 0
+}
+
+# Start spinner
+# @param $1 Message
+# shellcheck disable=SC2120
+spinner_start() {
+  # Print message if present
+  if [ -n "$1" ]; then INFO "$1"; fi
+  if [ "$SPINNER_ENABLE" = false ]; then return; fi
+  if [ -n "$SPINNER_PID" ]; then FATAL "Spinner PID ($SPINNER_PID) already defined"; fi
+
+  # Spawn spinner process
+  _spinner "$1" &
+  # Spinner process id
+  SPINNER_PID=$!
+}
+
+# Stop spinner
+spinner_stop() {
+  if [ "$SPINNER_ENABLE" = false ]; then return; fi
+  if [ -z "$SPINNER_PID" ]; then FATAL "Spinner PID is undefined"; fi
+
+  # Send termination signal
+  kill -s USR1 "$SPINNER_PID"
+  # Wait may fail
+  wait "$SPINNER_PID" || :
+  # Reset pid
+  SPINNER_PID=
+}
+
+# ================
 # FUNCTIONS
 # ================
 # Check command is installed
@@ -146,7 +279,7 @@ assert_cmd() {
 
 # Assert executable downloader
 assert_downloader() {
-  [ -n "$DOWNLOADER" ] && return 0
+  [ -z "$DOWNLOADER" ] || return 0
 
   _assert_downloader() {
     # Return failure if it doesn't exist or is no executable
@@ -162,6 +295,29 @@ assert_downloader() {
     || _assert_downloader wget \
     || FATAL "No executable downloader found: 'curl' or 'wget'"
   DEBUG "Downloader '$DOWNLOADER' found at '$(command -v "$DOWNLOADER")'"
+}
+
+# Assert URL is reachable
+# @param $1 URL address
+# @param $2 Timeout in seconds
+assert_url_reachability() {
+  assert_downloader
+  DEBUG "Testing URL '$1' reachability"
+
+  # URL address
+  _url_address=$1
+  # Timeout in seconds
+  _timeout=${2:-10}
+
+  case $DOWNLOADER in
+    curl)
+      curl --fail --silent --show-error --max-time "$_timeout" "$_url_address" > /dev/null || FATAL "URL address '$_url_address' is unreachable"
+      ;;
+    wget)
+      wget --quiet --spider --timeout="$_timeout" --tries=1 "$_url_address" 2>&1 || FATAL "URL address '$_url_address' is unreachable"
+      ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
+  esac
 }
 
 # Assert Docker image
@@ -191,26 +347,11 @@ assert_docker_image() {
   fi
 }
 
-# Destroy Docker container
-# @param $1 Container id
-destroy_docker_container() {
-  assert_cmd docker
-  _container_id=$1
-
-  [ -n "$_container_id" ] || return 0
-
-  INFO "Stopping Docker container '$_container_id'"
-  docker stop "$_container_id" > /dev/null 2>&1 || return 0
-  INFO "Removing Docker container '$_container_id'"
-  docker rm "$_container_id" > /dev/null 2>&1 || return 0
-}
-
 # Download a file
 # @param $1 Output location
 # @param $2 Download URL
 download() {
   assert_downloader
-
   DEBUG "Downloading file '$2' to '$1'"
 
   # Download
@@ -223,6 +364,8 @@ download() {
       ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
+
+  DEBUG "Successfully downloaded file '$2' to '$1'"
 }
 
 # Print downloaded content
@@ -233,10 +376,10 @@ download_print() {
   # Download
   case $DOWNLOADER in
     curl)
-      curl --fail --silent --location --show-error "$1" || FATAL "Download '$1' failed"
+      curl --fail --silent --location --show-error "$1" || FATAL "Download print '$1' failed"
       ;;
     wget)
-      wget --quiet --output-document=- "$1" 2>&1 || FATAL "Download '$1' failed"
+      wget --quiet --output-document=- "$1" 2>&1 || FATAL "Download print '$1' failed"
       ;;
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
@@ -255,4 +398,50 @@ recreate_dir() {
 
   INFO "Creating directory '$_dir'"
   mkdir -p "$_dir" || FATAL "Error creating directory '$_dir'"
+}
+
+# Check if parameter is an integer number
+# @param $1 Parameter
+is_integer() {
+  if [ -z "$1" ]; then return 1; fi
+  case $1 in
+    '' | *[!0-9]*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+# ================
+# CLEANUP
+# ================
+# Cleanup spinner
+cleanup_spinner() {
+  { [ "$SPINNER_ENABLE" = true ] && [ -n "$SPINNER_PID" ]; } || return 0
+
+  DEBUG "Resetting cursor"
+  tput rc
+  tput cnorm
+  SPINNER_ENABLE=
+  SPINNER_PID=
+}
+
+# Cleanup Docker container
+# @param $1 Container id
+cleanup_docker_container() {
+  [ -n "$1" ] || return 0
+
+  _container_id=$1
+  DEBUG "Stopping Docker container '$_container_id'"
+  docker stop "$_container_id" > /dev/null 2>&1 || return 0
+  DEBUG "Removing Docker container '$_container_id'"
+  docker rm "$_container_id" > /dev/null 2>&1 || return 0
+}
+
+# Cleanup directory
+# @param $1 Directory path
+cleanup_dir() {
+  { [ -n "$1" ] && [ -f "$1" ]; } || return 0
+
+  _dir=$1
+  DEBUG "Removing directory '$_dir'"
+  rm -rf "$TMP_DIR" || return 0
 }

@@ -21,12 +21,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# ================
-# CONFIGURATION
-# ================
 # Current directory
 # shellcheck disable=SC1007
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+# Load commons
+. "$DIRNAME/../../scripts/__commons.sh"
+
+# ================
+# CONFIGURATION
+# ================
 # K3d configuration file
 K3D_CONFIG="$DIRNAME/../k3d.config.yml"
 # npm prefix
@@ -66,29 +70,23 @@ SKIP_SERVER=false
 # Postgres container id
 POSTGRES_CONTAINER_ID=
 
-# Load commons
-. "$DIRNAME/../../scripts/__commons.sh"
-
-# Cleanup
+# ================
+# CLEANUP
+# ================
 cleanup() {
   # Exit code
   _exit_code=$?
   [ $_exit_code = 0 ] || WARN "Cleanup exit code $_exit_code"
 
-  # Certificates
-  if [ -d "$CERTS_DIR" ]; then
-    DEBUG "Removing certificates directory '$CERTS_DIR'"
-    rm -rf "$CERTS_DIR" || WARN "Failed to remove certificates directory '$CERTS_DIR'"
-  fi
-
-  # Cluster
-  if check_cmd k3d; then
+  # Cleanup cluster
+  if [ "$SKIP_CLUSTER" = false ] && check_cmd k3d; then
     DEBUG "Deleting cluster"
-    k3d cluster delete --config "$K3D_CONFIG" || WARN "Failed to delete cluster"
+    k3d cluster delete --config "$K3D_CONFIG" || :
   fi
-
-  # Destroy Docker container
-  destroy_docker_container "$POSTGRES_CONTAINER_ID"
+  # Cleanup certificates directory
+  cleanup_dir "$CERTS_DIR"
+  # Cleanup Docker container
+  cleanup_docker_container "$POSTGRES_CONTAINER_ID"
 
   exit "$_exit_code"
 }
@@ -101,11 +99,8 @@ trap cleanup INT QUIT TERM EXIT
 # ================
 # Show help message
 show_help() {
-  # Script name
-  _script_name=$(basename "$0")
-
   cat << EOF
-Usage: $_script_name [--help] [--k3d-config <PATH>] [--skip-certs]
+Usage: $(basename "$0") [--help] [--k3d-config <PATH>] [--skip-certs]
         [--skip-cluster] [--skip-db] [--skip-db-seed] [--skip-server]
 
 reCluster development server script.
@@ -135,10 +130,6 @@ EOF
 # Parse command line arguments
 # @param $@ Arguments
 parse_args() {
-  _parse_args_assert_value() {
-    if [ -z "$2" ]; then FATAL "Argument '$1' requires a non-empty value"; fi
-  }
-
   # Parse
   while [ $# -gt 0 ]; do
     case $1 in
@@ -149,7 +140,7 @@ parse_args() {
         ;;
       --k3d-config)
         # K3d configuration file
-        _parse_args_assert_value "$@"
+        parse_args_assert_value "$@"
 
         _k3d_config=$2
         shift
