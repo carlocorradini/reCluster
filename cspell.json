@@ -103,6 +103,7 @@
     "oneshot",
     "oper",
     "pacman",
+    "passphrase",
     "profiledef",
     "pebibit",
     "pebibyte",
