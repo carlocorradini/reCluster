@@ -151,7 +151,7 @@ merge_files() {
 # MAIN
 # ================
 {
-  verify_system
   parse_args "$@"
+  verify_system
   merge_files
 }
