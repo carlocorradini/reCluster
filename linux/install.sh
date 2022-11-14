@@ -206,6 +206,17 @@ assert_timezone() {
   [ "$_current_timezone" = "$_timezone" ] || FATAL "Timezone is not '$_timezone' but '$_current_timezone'"
 }
 
+# Read interfaces
+read_interfaces() {
+  ip -details -json link show \
+    | jq \
+      '
+          map(if .linkinfo.info_kind // .link_type == "loopback" then empty else . end)
+          | map(.name = .ifname)
+          | map({address, name})
+        '
+}
+
 # Read power consumption
 # @param $1 Benchmark PID
 read_power_consumption() {
@@ -419,23 +430,15 @@ read_storages_info() {
 
 # Read interface(s) information
 read_interfaces_info() {
-  _interfaces_info=$(
-    ip -details -json link show \
-      | jq \
-        '
-          map(if .linkinfo.info_kind // .link_type == "loopback" then empty else . end)
-          | map(.name = .ifname)
-          | map({address, name})
-        '
-  )
+  _interfaces_info=$(read_interfaces)
 
   # Cycle interfaces to obtain additional information
   while read -r _interface; do
+    # Name
     _iname=$(echo "$_interface" | jq --raw-output '.name')
-
     # Speed
     _speed=$($SUDO ethtool "$_iname" | grep Speed | sed 's/Speed://g' | sed 's/[[:space:]]*//g' | sed 's/b.*//' | numfmt --from=si)
-    # Wake on Lan
+    # WoL
     _wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')
 
     # Update interfaces
@@ -1047,6 +1050,30 @@ EOF
     $SUDO --reset-timestamp
     $SUDO true || FATAL "Failed to obtain 'root' privileges"
   fi
+
+  # Interfaces
+  _interfaces=$(read_interfaces)
+  [ "$(echo "$_interfaces" | jq --raw-output 'length')" -ge 1 ] || FATAL "No interfaces found"
+  while read -r _interface; do
+    # Name
+    _iname=$(echo "$_interface" | jq --raw-output '.name')
+    # Supports WoL
+    _supports_wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')
+
+    case $_supports_wol in
+      '' | *[!b]*)
+        # WoL not supported
+        WARN "Interface '$_iname' does not support Wake-on-Lan"
+        ;;
+      *)
+        # WoL supported
+        _wol=$($SUDO ethtool "$_iname" | grep 'Wake-on' | grep --invert-match 'Supports Wake-on' | sed 's/Wake-on://g' | sed 's/[[:space:]]*//g')
+        [ "$_wol" != d ] || FATAL "Interface '$_iname' Wake-on-Lan is disabled"
+        ;;
+    esac
+  done << EOF
+$(echo "$_interfaces" | jq --compact-output '.[]')
+EOF
 }
 
 # Setup system

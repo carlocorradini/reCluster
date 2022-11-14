@@ -27,8 +27,6 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 ## Development
 
-> **Warning**: All components must have their timezone set to `Etc/UTC`
-
 ### Requirements
 
 | **Name**  | **Homepage**                |
