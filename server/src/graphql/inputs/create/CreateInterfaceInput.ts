@@ -28,7 +28,7 @@ import {
   GraphQLNonEmptyString
 } from 'graphql-scalars';
 import { Field, InputType } from 'type-graphql';
-import { ArrayUnique } from 'class-validator';
+import { ArrayNotContains, ArrayUnique } from 'class-validator';
 import type { CreateInterfaceInput as ICreateInterfaceInput } from '~/types';
 import { WoLFlagEnum } from '~/db';
 
@@ -48,5 +48,6 @@ export class CreateInterfaceInput implements ICreateInterfaceInput {
     description: 'Interface Wake-on-Lan flags'
   })
   @ArrayUnique()
+  @ArrayNotContains([WoLFlagEnum.d])
   wol?: WoLFlagEnum[];
 }
