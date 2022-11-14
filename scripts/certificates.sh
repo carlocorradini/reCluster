@@ -35,18 +35,22 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 OUT_DIR="./"
 # SSH key name
 SSH_NAME="ssh"
+# SSH passphrase
+SSH_PASSPHRASE=
+# SSH bits
+SSH_BITS=2048
 # Token key name
 TOKEN_NAME="token"
+# Token passphrase
+TOKEN_PASSPHRASE=
+# Token bits
+TOKEN_BITS=4096
 
 # ================
 # GLOBALS
 # ================
-# SSH passphrase
-SSH_PASSPHRASE=
 # Temporary directory
 TMP_DIR=
-# Token passphrase
-TOKEN_PASSPHRASE=
 
 # ================
 # CLEANUP
@@ -72,8 +76,8 @@ trap cleanup INT QUIT TERM EXIT
 show_help() {
   cat << EOF
 Usage: $(basename "$0") [--help] [--out-dir <DIRECTORY>]
-        [--ssh-name <NAME>] --ssh-passphrase <PASSPHRARE>
-        [--token-name <NAME>] --token-passphrase <PASSPHRASE>
+        [--ssh-bits <BITS>] [--ssh-name <NAME>] --ssh-passphrase <PASSPHRARE>
+        [--token-bits <BITS>] [--token-name <NAME>] --token-passphrase <PASSPHRASE>
 
 reCluster certificates script.
 
@@ -85,6 +89,11 @@ Options:
                                     Values:
                                       Any valid directory
 
+  --ssh-bits <BITS>                 Number of bits in the SSH key
+                                    Default: $SSH_BITS
+                                    Values:
+                                      Any valid number of bits
+
   --ssh-name <NAME>                 SSH key name
                                     Default: $SSH_NAME
                                     Values:
@@ -93,6 +102,11 @@ Options:
   --ssh-passphrase <PASSPHRARE>     SSH passphrase
                                     Values:
                                       Any valid passphrase
+
+  --token-bits <BITS>               Number of bits in the Token key
+                                    Default: $TOKEN_BITS
+                                    Values:
+                                      Any valid number of bits
 
   --token-name <NAME>               Token key name
                                     Default: $TOKEN_NAME
@@ -123,6 +137,15 @@ parse_args() {
         parse_args_assert_value "$@"
 
         _out_dir=$2
+        shift
+        shift
+        ;;
+      --ssh-bits)
+        # SSH bits
+        parse_args_assert_value "$@"
+        parse_args_assert_positive_integer "$@"
+
+        _ssh_bits=$2
         shift
         shift
         ;;
@@ -158,6 +181,15 @@ parse_args() {
         shift
         shift
         ;;
+      --token-bits)
+        # Token bits
+        parse_args_assert_value "$@"
+        parse_args_assert_positive_integer "$@"
+
+        _token_bits=$2
+        shift
+        shift
+        ;;
       -*)
         # Unknown argument
         WARN "Unknown argument '$1' is ignored"
@@ -173,10 +205,14 @@ parse_args() {
 
   # Output directory
   if [ -n "$_out_dir" ]; then OUT_DIR=$_out_dir; fi
+  # SSH bits
+  if [ -n "$_ssh_bits" ]; then SSH_BITS=$_ssh_bits; fi
   # SSH key name
   if [ -n "$_ssh_name" ]; then SSH_NAME=$_ssh_name; fi
   # SSH passphrase
   if [ -n "$_ssh_passphrase" ]; then SSH_PASSPHRASE=$_ssh_passphrase; fi
+  # Token bits
+  if [ -n "$_token_bits" ]; then TOKEN_BITS=$_token_bits; fi
   # Token key name
   if [ -n "$_token_name" ]; then SSH_NAME=$_token_name; fi
   # Token passphrase
@@ -204,7 +240,7 @@ setup_system() {
 cert_ssh() {
   INFO "Generating SSH certificate"
 
-  ssh-keygen -b 2048 -t rsa -f "$TMP_DIR/$SSH_NAME.key" -N "$SSH_PASSPHRASE"
+  ssh-keygen -b "$SSH_BITS" -t rsa -f "$TMP_DIR/$SSH_NAME.key" -N "$SSH_PASSPHRASE"
   mv "$TMP_DIR/$SSH_NAME.key.pub" "$TMP_DIR/$SSH_NAME.pub"
   chmod 600 "$TMP_DIR/$SSH_NAME.key" "$TMP_DIR/$SSH_NAME.pub"
 }
@@ -213,7 +249,7 @@ cert_ssh() {
 cert_token() {
   INFO "Generating Token certificate"
 
-  ssh-keygen -b 4096 -t rsa -f "$TMP_DIR/$TOKEN_NAME.key" -N "$TOKEN_PASSPHRASE" -m PEM
+  ssh-keygen -b "$TOKEN_BITS" -t rsa -f "$TMP_DIR/$TOKEN_NAME.key" -N "$TOKEN_PASSPHRASE" -m PEM
   ssh-keygen -e -m PEM -f "$TMP_DIR/$TOKEN_NAME.key" -P "$TOKEN_PASSPHRASE" > "$TMP_DIR/$TOKEN_NAME.pub"
   rm "$TMP_DIR/$TOKEN_NAME.key.pub"
   chmod 600 "$TMP_DIR/$TOKEN_NAME.key" "$TMP_DIR/$TOKEN_NAME.pub"
