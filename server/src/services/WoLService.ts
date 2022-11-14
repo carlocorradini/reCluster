@@ -26,21 +26,16 @@ import wol from 'wake_on_lan';
 
 type WakeArgs = {
   mac: string;
-  address: string;
-  opts?: Omit<wol.WakeOptions, 'address'>;
+  opts?: wol.WakeOptions;
 };
 
 export class WoLService {
   public wake(args: WakeArgs): Promise<void> {
     return new Promise((resolve, reject) => {
-      wol.wake(
-        args.mac,
-        { ...args.opts, address: args.address },
-        (error: unknown) => {
-          if (error) return reject(error);
-          return resolve();
-        }
-      );
+      wol.wake(args.mac, args.opts || {}, (error: unknown) => {
+        if (error) return reject(error);
+        return resolve();
+      });
     });
   }
 }
