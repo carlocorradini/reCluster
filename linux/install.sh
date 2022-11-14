@@ -976,10 +976,9 @@ verify_system() {
   if [ "$INIT_CLUSTER" = true ]; then
     assert_cmd inotifywait
   fi
-  if [ "$SPINNER_ENABLE" = true ]; then
-    assert_cmd ps
-    assert_cmd tput
-  fi
+
+  # Spinner
+  assert_spinner
 
   # Init system
   assert_init_system

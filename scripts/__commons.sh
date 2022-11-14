@@ -181,10 +181,10 @@ SPINNER_SYMBOLS_DOTS="⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏"
 SPINNER_SYMBOLS_GRAYSCALE="░░░░░░░ ▒░░░░░░ ▒▒░░░░░ ▒▒▒░░░░ ▒▒▒▒░░░ ▒▒▒▒▒░░ ▒▒▒▒▒▒░ ▒▒▒▒▒▒▒ ░▒▒▒▒▒▒ ░░▒▒▒▒▒ ░░░▒▒▒▒ ░░░░▒▒▒ ░░░░░▒▒ ░░░░░░▒"
 # Spinner symbols propeller
 SPINNER_SYMBOLS_PROPELLER="/ - \\ |"
-# Spinner flag
-SPINNER_ENABLE=true
 # Spinner symbols
 SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
+# Spinner flag
+SPINNER_ENABLE=true
 
 # Spinner logic
 _spinner() {
@@ -193,7 +193,7 @@ _spinner() {
   # Termination signal
   trap '_terminate=true' USR1
   # Message
-  _spinner_message=${1:-"Loading..."}
+  _spinner_message=${1:-""}
 
   while :; do
     # Cursor invisible
@@ -237,21 +237,22 @@ _spinner() {
 # @param $1 Message
 # shellcheck disable=SC2120
 spinner_start() {
-  # Print message if present
-  if [ -n "$1" ]; then INFO "$1"; fi
-  if [ "$SPINNER_ENABLE" = false ]; then return; fi
-  if [ -n "$SPINNER_PID" ]; then FATAL "Spinner PID ($SPINNER_PID) already defined"; fi
+  _spinner_message=${1:-"Loading..."}
+  INFO "$_spinner_message"
+
+  [ "$SPINNER_ENABLE" = true ] || return 0
+  [ -z "$SPINNER_PID" ] || FATAL "Spinner PID ($SPINNER_PID) already defined"
 
   # Spawn spinner process
-  _spinner "$1" &
+  _spinner "$_spinner_message" &
   # Spinner process id
   SPINNER_PID=$!
 }
 
 # Stop spinner
 spinner_stop() {
-  if [ "$SPINNER_ENABLE" = false ]; then return; fi
-  if [ -z "$SPINNER_PID" ]; then FATAL "Spinner PID is undefined"; fi
+  [ "$SPINNER_ENABLE" = true ] || return 0
+  [ -n "$SPINNER_PID" ] || FATAL "Spinner PID is undefined"
 
   # Send termination signal
   kill -s USR1 "$SPINNER_PID"
@@ -262,14 +263,8 @@ spinner_stop() {
 }
 
 # ================
-# FUNCTIONS
+# ASSERT
 # ================
-# Check command is installed
-# @param $1 Command name
-check_cmd() {
-  command -v "$1" > /dev/null 2>&1
-}
-
 # Assert command is installed
 # @param $1 Command name
 assert_cmd() {
@@ -277,47 +272,12 @@ assert_cmd() {
   DEBUG "Command '$1' found at '$(command -v "$1")'"
 }
 
-# Assert executable downloader
-assert_downloader() {
-  [ -z "$DOWNLOADER" ] || return 0
+# Assert spinner
+assert_spinner() {
+  [ "$SPINNER_ENABLE" = true ] || return 0
 
-  _assert_downloader() {
-    # Return failure if it doesn't exist or is no executable
-    [ -x "$(command -v "$1")" ] || return 1
-
-    # Set downloader
-    DOWNLOADER=$1
-    return 0
-  }
-
-  # Downloader command
-  _assert_downloader curl \
-    || _assert_downloader wget \
-    || FATAL "No executable downloader found: 'curl' or 'wget'"
-  DEBUG "Downloader '$DOWNLOADER' found at '$(command -v "$DOWNLOADER")'"
-}
-
-# Assert URL is reachable
-# @param $1 URL address
-# @param $2 Timeout in seconds
-assert_url_reachability() {
-  assert_downloader
-  DEBUG "Testing URL '$1' reachability"
-
-  # URL address
-  _url_address=$1
-  # Timeout in seconds
-  _timeout=${2:-10}
-
-  case $DOWNLOADER in
-    curl)
-      curl --fail --silent --show-error --max-time "$_timeout" "$_url_address" > /dev/null || FATAL "URL address '$_url_address' is unreachable"
-      ;;
-    wget)
-      wget --quiet --spider --timeout="$_timeout" --tries=1 "$_url_address" 2>&1 || FATAL "URL address '$_url_address' is unreachable"
-      ;;
-    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
-  esac
+  assert_cmd ps
+  assert_cmd tput
 }
 
 # Assert Docker image
@@ -347,14 +307,102 @@ assert_docker_image() {
   fi
 }
 
+# Assert executable downloader
+assert_downloader() {
+  [ -z "$DOWNLOADER" ] || return 0
+
+  _assert_downloader() {
+    # Return failure if it doesn't exist or is no executable
+    [ -x "$(command -v "$1")" ] || return 1
+
+    # Set downloader
+    DOWNLOADER=$1
+    return 0
+  }
+
+  # Downloader command
+  _assert_downloader curl \
+    || _assert_downloader wget \
+    || FATAL "No executable downloader found: 'curl' or 'wget'"
+  DEBUG "Downloader '$DOWNLOADER' found at '$(command -v "$DOWNLOADER")'"
+}
+
+# Assert URL is reachable
+# @param $1 URL address
+# @param $2 Timeout in seconds
+assert_url_reachability() {
+  assert_downloader
+
+  # URL address
+  _url_address=$1
+  # Timeout in seconds
+  _timeout=${2:-10}
+
+  DEBUG "Testing URL '$_url_address' reachability"
+  case $DOWNLOADER in
+    curl)
+      curl --fail --silent --show-error --max-time "$_timeout" "$_url_address" > /dev/null || FATAL "URL address '$_url_address' is unreachable"
+      ;;
+    wget)
+      wget --quiet --spider --timeout="$_timeout" --tries=1 "$_url_address" 2>&1 || FATAL "URL address '$_url_address' is unreachable"
+      ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
+  esac
+}
+
+# ================
+# CLEANUP
+# ================
+# Cleanup spinner
+cleanup_spinner() {
+  { [ "$SPINNER_ENABLE" = true ] && [ -n "$SPINNER_PID" ]; } || return 0
+
+  DEBUG "Resetting cursor"
+  tput rc
+  tput cnorm
+  SPINNER_ENABLE=
+  SPINNER_PID=
+}
+
+# Cleanup Docker container
+# @param $1 Container id
+cleanup_docker_container() {
+  { [ -n "$1" ] && check_cmd docker; } || return 0
+
+  _container_id=$1
+  DEBUG "Stopping Docker container '$_container_id'"
+  docker stop "$_container_id" > /dev/null 2>&1 || return 0
+  DEBUG "Removing Docker container '$_container_id'"
+  docker rm "$_container_id" > /dev/null 2>&1 || return 0
+}
+
+# Cleanup directory
+# @param $1 Directory path
+cleanup_dir() {
+  { [ -n "$1" ] && [ -f "$1" ]; } || return 0
+
+  _dir=$1
+  DEBUG "Removing directory '$_dir'"
+  rm -rf "$TMP_DIR" || return 0
+}
+
+# ================
+# FUNCTIONS
+# ================
+# Check command is installed
+# @param $1 Command name
+check_cmd() {
+  command -v "$1" > /dev/null 2>&1
+}
+
 # Download a file
 # @param $1 Output location
 # @param $2 Download URL
 download() {
   assert_downloader
-  DEBUG "Downloading file '$2' to '$1'"
 
   # Download
+  DEBUG "Downloading file '$2' to '$1'"
   case $DOWNLOADER in
     curl)
       curl --fail --silent --location --output "$1" "$2" || FATAL "Download file '$2' failed"
@@ -400,10 +448,11 @@ recreate_dir() {
   mkdir -p "$_dir" || FATAL "Error creating directory '$_dir'"
 }
 
-# Check if parameter is an integer number
-# @param $1 Parameter
+# Check if value is an integer number
+# @param $1 Value
 is_integer() {
-  if [ -z "$1" ]; then return 1; fi
+  [ -n "$1" ] || return 1
+
   case $1 in
     '' | *[!0-9]*) return 1 ;;
     *) return 0 ;;
@@ -411,37 +460,13 @@ is_integer() {
 }
 
 # ================
-# CLEANUP
+# CONFIGURATION
 # ================
-# Cleanup spinner
-cleanup_spinner() {
-  { [ "$SPINNER_ENABLE" = true ] && [ -n "$SPINNER_PID" ]; } || return 0
-
-  DEBUG "Resetting cursor"
-  tput rc
-  tput cnorm
-  SPINNER_ENABLE=
-  SPINNER_PID=
-}
-
-# Cleanup Docker container
-# @param $1 Container id
-cleanup_docker_container() {
-  [ -n "$1" ] || return 0
-
-  _container_id=$1
-  DEBUG "Stopping Docker container '$_container_id'"
-  docker stop "$_container_id" > /dev/null 2>&1 || return 0
-  DEBUG "Removing Docker container '$_container_id'"
-  docker rm "$_container_id" > /dev/null 2>&1 || return 0
-}
-
-# Cleanup directory
-# @param $1 Directory path
-cleanup_dir() {
-  { [ -n "$1" ] && [ -f "$1" ]; } || return 0
-
-  _dir=$1
-  DEBUG "Removing directory '$_dir'"
-  rm -rf "$TMP_DIR" || return 0
-}
+# Log level
+LOG_LEVEL=$LOG_LEVEL_INFO
+# Log color flag
+LOG_COLOR_ENABLE=true
+# Spinner symbols
+SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER
+# Spinner flag
+SPINNER_ENABLE=true
