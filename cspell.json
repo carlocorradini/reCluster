@@ -76,6 +76,8 @@
     "inotifywait",
     "intf",
     "ireduce",
+    "iface",
+    "inet",
     "keygen",
     "kibibit",
     "kibibyte",
@@ -83,6 +85,7 @@
     "kubernetes",
     "linkinfo",
     "loadbalancer",
+    "localtime",
     "mdev",
     "mkarchiso",
     "mirrorlist",
@@ -112,6 +115,7 @@
     "pgtz",
     "pino",
     "pkey",
+    "pkgs",
     "pidfile",
     "poweroff",
     "recluster",
@@ -139,6 +143,7 @@
     "typedi",
     "tonumber",
     "uncompiled",
-    "upsert"
+    "upsert",
+    "zoneinfo"
   ]
 }

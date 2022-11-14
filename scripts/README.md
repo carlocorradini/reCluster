@@ -25,7 +25,7 @@ _token_passphrase="password"
 | `--out-dir <DIRECTORY>`           | Output directory                |
 | `--ssh-bits <BITS>`               | Number of bits in the SSH key   |
 | `--ssh-name <NAME>`               | SSH key name                    |
-| `--ssh-passphrase <PASSPHRARE>`   | SSH passphrase                  |
+| `--ssh-passphrase <PASSPHRASE>`   | SSH passphrase                  |
 | `--token-bits <BITS>`             | Number of bits in the Token key |
 | `--token-name <NAME>`             | Token key name                  |
-| `--token-passphrase <PASSPHRARE>` | Token passphrase                |
+| `--token-passphrase <PASSPHRASE>` | Token passphrase                |

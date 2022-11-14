@@ -39,6 +39,8 @@ _Wake-on-Lan_ must be enabled if it is supported.
 
   1. Enable
 
+     > **Warning**: `Wake-on-Lan` must be enabled also in the _BIOS_
+
      > **Note**: Example device `eth0`
 
      Edit `/etc/network/interfaces`.

@@ -76,7 +76,7 @@ trap cleanup INT QUIT TERM EXIT
 show_help() {
   cat << EOF
 Usage: $(basename "$0") [--help] [--out-dir <DIRECTORY>]
-        [--ssh-bits <BITS>] [--ssh-name <NAME>] --ssh-passphrase <PASSPHRARE>
+        [--ssh-bits <BITS>] [--ssh-name <NAME>] --ssh-passphrase <PASSPHRASE>
         [--token-bits <BITS>] [--token-name <NAME>] --token-passphrase <PASSPHRASE>
 
 reCluster certificates script.
@@ -99,7 +99,7 @@ Options:
                                     Values:
                                       Any valid name
 
-  --ssh-passphrase <PASSPHRARE>     SSH passphrase
+  --ssh-passphrase <PASSPHRASE>     SSH passphrase
                                     Values:
                                       Any valid passphrase
 
@@ -113,7 +113,7 @@ Options:
                                     Values:
                                       Any valid name
 
-  --token-passphrase <PASSPHRARE>   Token passphrase
+  --token-passphrase <PASSPHRASE>   Token passphrase
                                     Values:
                                       Any valid passphrase
 EOF
