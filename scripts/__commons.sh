@@ -379,7 +379,7 @@ cleanup_docker_container() {
 # Cleanup directory
 # @param $1 Directory path
 cleanup_dir() {
-  { [ -n "$1" ] && [ -f "$1" ]; } || return 0
+  { [ -n "$1" ] && [ -d "$1" ]; } || return 0
 
   _dir=$1
   DEBUG "Removing directory '$_dir'"

@@ -1,8 +1,9 @@
-# Project
+# reCluster
 **/build/
 **/coverage/
 **/node_modules/
 **/.vagrant/
+*.tar.gz
 *.iso
 *.graphql
 *.key
