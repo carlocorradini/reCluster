@@ -331,7 +331,10 @@ export class NodeService {
             nodePoolId: true,
             nodePoolAssigned: true,
             address: true,
-            interfaces: { select: { address: true } }
+            interfaces: {
+              where: { wol: { isEmpty: false } },
+              select: { address: true }
+            }
           }
         },
         prisma
@@ -341,7 +344,7 @@ export class NodeService {
           `Node '${args.where.id}' is assigned to node pool ${node.nodePoolId}`
         );
       if (node.interfaces.length === 0)
-        throw new NodeError(`Node '${args.where.id}' has no interfaces`);
+        throw new NodeError(`Node '${args.where.id}' has no WoL interfaces`);
 
       // Bootstrap
       await Promise.any(

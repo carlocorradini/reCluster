@@ -277,9 +277,17 @@ export class NodePoolService {
           where: {
             nodePoolId: args.where.id,
             nodePoolAssigned: false,
-            status: { status: NodeStatusEnum.INACTIVE }
+            status: { status: NodeStatusEnum.INACTIVE },
+            interfaces: { some: { wol: { isEmpty: false } } }
           },
-          take: args.data.count
+          select: { id: true },
+          take: args.data.count,
+          orderBy: [
+            { maxPowerConsumption: 'asc' },
+            { minPowerConsumption: 'asc' },
+            { cpu: { multiThreadScore: 'desc' } },
+            { cpu: { singleThreadScore: 'desc' } }
+          ]
         },
         prisma
       );
@@ -318,7 +326,14 @@ export class NodePoolService {
               }
             }
           },
-          take: args.data.count
+          select: { id: true },
+          take: args.data.count,
+          orderBy: [
+            { maxPowerConsumption: 'desc' },
+            { minPowerConsumption: 'desc' },
+            { cpu: { multiThreadScore: 'asc' } },
+            { cpu: { singleThreadScore: 'asc' } }
+          ]
         },
         prisma
       );
