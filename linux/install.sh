@@ -56,7 +56,7 @@ RECLUSTER_ETC_DIR="/etc/recluster"
 # reCluster opt directory
 RECLUSTER_OPT_DIR="/opt/recluster"
 # SSH authorized keys file
-SSH_AUTHORIZED_KEYS_FILE="$HOME/.ssh/authorized_keys"
+SSH_AUTHORIZED_KEYS_FILE="/root/.ssh/authorized_keys"
 
 # ================
 # GLOBALS
