@@ -21,7 +21,7 @@ reCluster is an architecture for a data center that actively reduces its impact 
 | [`.github`](./.github/) | [GitHub](https://github.com) configuration                        |
 | [`.husky`](./.husky/)   | [husky](https://typicode.github.io/husky) configuration           |
 | [`.vscode`](./.vscode/) | [Visual Studio Code](https://code.visualstudio.com) configuration |
-| [`linux`](./.linux/)    | `Linux`-related resources                                         |
+| [`linux`](./linux/)    | `Linux`-related resources                                         |
 | [`scripts`](./scripts/) | `Shell` scripts                                                   |
 | [`server`](./server/)   | `reCluster` server                                                |
 
@@ -49,7 +49,7 @@ reCluster is an architecture for a data center that actively reduces its impact 
 1. Scripts permissions
 
    ```sh
-   chmod -R u+x scripts/*.sh linux/*sh server/scripts/*.sh
+   chmod -R u+x scripts/*.sh linux/*.sh server/scripts/*.sh
    ```
 
 1. Install dependencies
