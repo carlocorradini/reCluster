@@ -31,14 +31,18 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # ================
 # CONFIGURATION
 # ================
-# Dependencies configuration file
-DEPS_CONFIG_FILE="$DIRNAME/dependencies.yml"
-# Dependencies configuration file content
-DEPS=
+# Configuration file
+CONFIG_FILE="$DIRNAME/dependencies.config.yml"
 # Synchronize flag
 SYNC=false
 # Synchronize force flag
 SYNC_FORCE=false
+
+# ================
+# GLOBALS
+# ================
+# Configuration
+CONFIG=
 
 # ================
 # FUNCTIONS
@@ -62,14 +66,14 @@ EOF
 # Assert dependency $1 exists
 # @param $1 Dependency name
 assert_dep() {
-  echo "$DEPS" | jq --exit-status --arg name "$1" 'has($name)' > /dev/null 2>&1 || FATAL "Dependency '$1' does not exists"
+  echo "$CONFIG" | jq --exit-status --arg name "$1" 'has($name)' > /dev/null 2>&1 || FATAL "Dependency '$1' does not exists"
 }
 
 # Return dependency configuration
 # @param $1 Dependency name
 dep_config() {
   assert_dep "$1"
-  echo "$DEPS" | jq --arg name "$1" '.[$name]'
+  echo "$CONFIG" | jq --arg name "$1" '.[$name]'
 }
 
 # Generate github api url
@@ -114,7 +118,7 @@ sync_deps_clean() {
       esac
     elif [ -d "$_dep_fd" ]; then
       # Check directories
-      if ! echo "$DEPS" | jq --exit-status --arg dep "$_dep_fd_basename" 'has($dep)' > /dev/null 2>&1; then
+      if ! echo "$CONFIG" | jq --exit-status --arg dep "$_dep_fd_basename" 'has($dep)' > /dev/null 2>&1; then
         # Remove dependency directory
         INFO "Removing '$_dep_fd_basename' dependency directory"
         rm -rf "$_dep_fd"
@@ -277,16 +281,6 @@ EOF
 
 ################################################################################################################################
 
-# Verify system
-verify_system() {
-  assert_cmd grep
-  assert_cmd jq
-  assert_cmd sed
-  assert_cmd yq
-
-  assert_downloader
-}
-
 # Parse command line arguments
 # @param $@ Arguments
 parse_args() {
@@ -323,21 +317,27 @@ parse_args() {
   done
 }
 
-# Read configuration file
-read_config() {
-  # Check config file exists
-  [ -f "$DEPS_CONFIG_FILE" ] || FATAL "Dependencies configuration file not found at '$DEPS_CONFIG_FILE'"
+# Verify system
+verify_system() {
+  assert_cmd grep
+  assert_cmd jq
+  assert_cmd sed
+  assert_cmd yq
 
-  # Read config file
-  DEPS=$(yq e --output-format=json --no-colors '.' "$DEPS_CONFIG_FILE") || FATAL "Error reading configuration file '$DEPS_CONFIG_FILE'"
-  DEBUG "Configuration:" "$DEPS"
+  assert_downloader
+
+  # Configuration
+  [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' not found"
+  INFO "Reading configuration file '$CONFIG_FILE'"
+  CONFIG=$(yq e --output-format=json --no-colors '.' "$CONFIG_FILE") || FATAL "Error reading configuration file '$CONFIG_FILE'"
+  DEBUG "Configuration:" "$CONFIG"
 }
 
 # Synchronize dependency
 sync_deps() {
   [ "$SYNC" = true ] || return 0
 
-  _num_deps=$(echo "$DEPS" | jq --raw-output '. | length')
+  _num_deps=$(echo "$CONFIG" | jq --raw-output '. | length')
 
   INFO "Syncing $_num_deps dependencies"
 
@@ -349,7 +349,7 @@ sync_deps() {
     INFO "Syncing '$_dep_name'"
     sync_dep "$_dep_name"
   done << EOF
-$(echo "$DEPS" | jq --compact-output 'to_entries[]')
+$(echo "$CONFIG" | jq --compact-output 'to_entries[]')
 EOF
 
   INFO "Successfully synced $_num_deps dependencies"
@@ -359,8 +359,7 @@ EOF
 # MAIN
 # ================
 {
-  verify_system
   parse_args "$@"
-  read_config
+  verify_system
   sync_deps
 }

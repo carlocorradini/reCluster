@@ -1,5 +1,5 @@
 *
 !/.gitignore
-!/dependencies.yml
+!/dependencies.config.yml
 !/dependencies.sh
 !/README.md
