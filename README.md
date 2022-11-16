@@ -49,7 +49,7 @@ reCluster is an architecture for a data center that actively reduces its impact 
 1. Scripts permissions
 
    ```sh
-   chmod -R u+x scripts/*.sh linux/*.sh server/scripts/*.sh
+   find . -type f -name "*.sh" -print0 | xargs -0 chmod u+x
    ```
 
 1. Install dependencies
