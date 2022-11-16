@@ -24,11 +24,11 @@ reCluster server.
 | `NODE_ENV`          | Node environment  | `production` | `development` \| `production` \| `test` |
 | `HOST`              | Server host       | `0.0.0.0`    | Any valid host                          |
 | `PORT`              | Server port       | `80`         | Any valid port                          |
-| `DATABASE_URL`      | Database URL      |              |
+| `DATABASE_URL`      | Database URL      |              | Any valid URL                           |
 | `SSH_USERNAME`      | SSH username      | `root`       | Any valid username                      |
-| `SSH_PRIVATE_KEY`   | SSH private key   |              |
-| `TOKEN_PRIVATE_KEY` | Token private key |              |
-| `TOKEN_PUBLIC_KEY`  | Token public key  |              |
+| `SSH_PRIVATE_KEY`   | SSH private key   |              | Any valid file                          |
+| `TOKEN_PRIVATE_KEY` | Token private key |              | Any valid file                          |
+| `TOKEN_PUBLIC_KEY`  | Token public key  |              | Any valid file                          |
 
 ### Preparation
 
