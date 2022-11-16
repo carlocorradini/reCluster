@@ -27,6 +27,12 @@ set -o errexit
 set -o noglob
 
 # ================
+# GLOBALS
+# ================
+# Return value
+RETVAL=
+
+# ================
 # PARSE ARGUMENTS
 # ================
 # Assert argument has a value
@@ -46,6 +52,61 @@ parse_args_assert_non_negative_integer() {
 # @param $2 Argument value
 parse_args_assert_positive_integer() {
   { is_integer "$2" && [ "$2" -gt 0 ]; } || FATAL "Value '$2' of argument '$1' is not a positive number"
+}
+# Parse command line arguments
+# @param $@ Arguments
+parse_args_commons() {
+  # Number of shift
+  _shifts=1
+
+  # Parse
+  case $1 in
+    --disable-color)
+      # Disable color
+      LOG_COLOR_ENABLE=false
+      ;;
+    --disable-spinner)
+      # Disable spinner
+      SPINNER_ENABLE=false
+      ;;
+    --log-level)
+      # Log level
+      parse_args_assert_value "$@"
+
+      case $2 in
+        fatal) LOG_LEVEL=$LOG_LEVEL_FATAL ;;
+        error) LOG_LEVEL=$LOG_LEVEL_ERROR ;;
+        warn) LOG_LEVEL=$LOG_LEVEL_WARN ;;
+        info) LOG_LEVEL=$LOG_LEVEL_INFO ;;
+        debug) LOG_LEVEL=$LOG_LEVEL_DEBUG ;;
+        *) FATAL "Value '$2' of argument '$1' is invalid" ;;
+      esac
+      _shifts=2
+      ;;
+    --spinner)
+      # Spinner
+      parse_args_assert_value "$@"
+
+      case $2 in
+        dots) SPINNER_SYMBOLS=$SPINNER_SYMBOLS_DOTS ;;
+        grayscale) SPINNER_SYMBOLS=$SPINNER_SYMBOLS_GRAYSCALE ;;
+        propeller) SPINNER_SYMBOLS=$SPINNER_SYMBOLS_PROPELLER ;;
+        *) FATAL "Value '$2' of argument '$1' is invalid" ;;
+      esac
+      _shifts=2
+      ;;
+    -*)
+      # Unknown argument
+      WARN "Unknown argument '$1' is ignored"
+      ;;
+    *)
+      # No argument
+      WARN "Skipping argument '$1'"
+      ;;
+  esac
+
+  # Return
+  RETVAL=$_shifts
 }
 
 # ================
@@ -290,10 +351,10 @@ assert_docker_image() {
   _dockerfile=${2:-}
   _dockerfile_context=${3:-}
 
-  if docker image inspect "$_docker_image" > /dev/null 2>&1; then
+  ! docker image inspect "$_docker_image" > /dev/null 2>&1 || {
     DEBUG "Docker image '$_docker_image' found"
     return 0
-  fi
+  }
 
   WARN "Docker image '$_docker_image' not found"
 
@@ -462,6 +523,37 @@ is_integer() {
 # ================
 # CONFIGURATION
 # ================
+# Help usage string
+HELP_COMMONS_USAGE=$(
+  cat << EOF
+Usage commons: $(basename "$0") [--disable-color] [--disable-spinner] [--log-level <LEVEL>] [--spinner <SPINNER>]
+EOF
+)
+# Help options string
+HELP_COMMONS_OPTIONS=$(
+  cat << EOF
+Options commons:
+  --disable-color      Disable color
+
+  --disable-spinner    Disable spinner
+
+  --log-level <LEVEL>  Logger level
+                       Default: $(to_log_level_name "$LOG_LEVEL")
+                       Values:
+                         fatal    Fatal level
+                         error    Error level
+                         warn     Warning level
+                         info     Informational level
+                         debug    Debug level
+
+  --spinner <SPINNER>  Spinner symbols
+                       Default: propeller
+                       Values:
+                         dots         Dots spinner
+                         grayscale    Grayscale spinner
+                         propeller    Propeller spinner
+EOF
+)
 # Log level
 LOG_LEVEL=$LOG_LEVEL_INFO
 # Log color flag

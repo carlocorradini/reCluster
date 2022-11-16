@@ -103,6 +103,8 @@ show_help() {
 Usage: $(basename "$0") [--help] [--k3d-config <PATH>] [--skip-certs]
         [--skip-cluster] [--skip-db] [--skip-db-seed] [--skip-server]
 
+$HELP_COMMONS_USAGE
+
 reCluster development server script.
 
 Options:
@@ -122,6 +124,8 @@ Options:
   --skip-db-seed        Skip database seed
 
   --skip-server         Skip server
+
+$HELP_COMMONS_OPTIONS
 EOF
 }
 
@@ -130,8 +134,10 @@ EOF
 # Parse command line arguments
 # @param $@ Arguments
 parse_args() {
-  # Parse
   while [ $# -gt 0 ]; do
+    # Number of shift
+    _shifts=1
+
     case $1 in
       --help)
         # Display help message and exit
@@ -142,50 +148,42 @@ parse_args() {
         # K3d configuration file
         parse_args_assert_value "$@"
 
-        _k3d_config=$2
-        shift
-        shift
+        K3D_CONFIG=$2
+        _shifts=2
         ;;
       --skip-certs)
         # Skip certificates
         SKIP_CERTS=true
-        shift
         ;;
       --skip-cluster)
         # Skip cluster
         SKIP_CLUSTER=true
-        shift
         ;;
       --skip-db)
         # Skip database
         SKIP_DB=true
-        shift
         ;;
       --skip-db-seed)
         # Skip database seed
         SKIP_DB_SEED=true
-        shift
         ;;
       --skip-server)
         # Skip server
         SKIP_SERVER=true
-        shift
-        ;;
-      -*)
-        # Unknown argument
-        WARN "Unknown argument '$1' is ignored"
-        shift
         ;;
       *)
-        # No argument
-        WARN "Skipping argument '$1'"
-        shift
+        # Commons
+        parse_args_commons "$@"
+        _shifts=$RETVAL
         ;;
     esac
-  done
 
-  # K3d configuration file
-  if [ -n "$_k3d_config" ]; then K3D_CONFIG=$_k3d_config; fi
+    # Shift arguments
+    while [ "$_shifts" -gt 0 ]; do
+      shift
+      _shifts=$((_shifts = _shifts - 1))
+    done
+  done
 }
 
 # Verify system

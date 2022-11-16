@@ -79,6 +79,8 @@ Usage: $(basename "$0") [--help] [--out-dir <DIRECTORY>]
         [--ssh-bits <BITS>] [--ssh-name <NAME>] --ssh-passphrase <PASSPHRASE>
         [--token-bits <BITS>] [--token-name <NAME>] --token-passphrase <PASSPHRASE>
 
+$HELP_COMMONS_USAGE
+
 reCluster certificates script.
 
 Options:
@@ -116,6 +118,8 @@ Options:
   --token-passphrase <PASSPHRASE>   Token passphrase
                                     Values:
                                       Any valid passphrase
+
+$HELP_COMMONS_OPTIONS
 EOF
 }
 
@@ -124,8 +128,10 @@ EOF
 # Parse command line arguments
 # @param $@ Arguments
 parse_args() {
-  # Parse
   while [ $# -gt 0 ]; do
+    # Number of shift
+    _shifts=1
+
     case $1 in
       --help)
         # Display help message and exit
@@ -136,87 +142,66 @@ parse_args() {
         # Output directory
         parse_args_assert_value "$@"
 
-        _out_dir=$2
-        shift
-        shift
+        OUT_DIR=$2
+        _shifts=2
         ;;
       --ssh-bits)
         # SSH bits
         parse_args_assert_value "$@"
         parse_args_assert_positive_integer "$@"
 
-        _ssh_bits=$2
-        shift
-        shift
+        SSH_BITS=$2
+        _shifts=2
         ;;
       --ssh-name)
         # SSH key name
         parse_args_assert_value "$@"
 
-        _ssh_name=$2
-        shift
-        shift
+        SSH_NAME=$2
+        _shifts=2
         ;;
       --ssh-passphrase)
         # SSH passphrase
         parse_args_assert_value "$@"
 
-        _ssh_passphrase=$2
-        shift
-        shift
-        ;;
-      --token-name)
-        # Token key name
-        parse_args_assert_value "$@"
-
-        _token_name=$2
-        shift
-        shift
-        ;;
-      --token-passphrase)
-        # Token passphrase
-        parse_args_assert_value "$@"
-
-        _token_passphrase=$2
-        shift
-        shift
+        SSH_PASSPHRASE=$2
+        _shifts=2
         ;;
       --token-bits)
         # Token bits
         parse_args_assert_value "$@"
         parse_args_assert_positive_integer "$@"
 
-        _token_bits=$2
-        shift
-        shift
+        TOKEN_BITS=$2
+        _shifts=2
         ;;
-      -*)
-        # Unknown argument
-        WARN "Unknown argument '$1' is ignored"
-        shift
+      --token-name)
+        # Token key name
+        parse_args_assert_value "$@"
+
+        TOKEN_NAME=$2
+        _shifts=2
+        ;;
+      --token-passphrase)
+        # Token passphrase
+        parse_args_assert_value "$@"
+
+        TOKEN_PASSPHRASE=$2
+        _shifts=2
         ;;
       *)
-        # No argument
-        WARN "Skipping argument '$1'"
-        shift
+        # Commons
+        parse_args_commons "$@"
+        _shifts=$RETVAL
         ;;
     esac
-  done
 
-  # Output directory
-  if [ -n "$_out_dir" ]; then OUT_DIR=$_out_dir; fi
-  # SSH bits
-  if [ -n "$_ssh_bits" ]; then SSH_BITS=$_ssh_bits; fi
-  # SSH key name
-  if [ -n "$_ssh_name" ]; then SSH_NAME=$_ssh_name; fi
-  # SSH passphrase
-  if [ -n "$_ssh_passphrase" ]; then SSH_PASSPHRASE=$_ssh_passphrase; fi
-  # Token bits
-  if [ -n "$_token_bits" ]; then TOKEN_BITS=$_token_bits; fi
-  # Token key name
-  if [ -n "$_token_name" ]; then SSH_NAME=$_token_name; fi
-  # Token passphrase
-  if [ -n "$_token_passphrase" ]; then TOKEN_PASSPHRASE=$_token_passphrase; fi
+    # Shift arguments
+    while [ "$_shifts" -gt 0 ]; do
+      shift
+      _shifts=$((_shifts = _shifts - 1))
+    done
+  done
 }
 
 # Verify system

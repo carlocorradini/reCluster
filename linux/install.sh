@@ -65,8 +65,6 @@ SSH_AUTHORIZED_KEYS_FILE="/root/.ssh/authorized_keys"
 CONFIG=
 # Node facts
 NODE_FACTS="{}"
-# Return value
-RETVAL=
 # Temporary directory
 TMP_DIR=
 
@@ -95,84 +93,67 @@ trap cleanup INT QUIT TERM EXIT
 # Show help message
 show_help() {
   cat << EOF
-Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config <PATH>] [--disable-color]
-        [--disable-spinner] [--help] [--init-cluster] [--k3s-version <VERSION>]
-        [--log-level <LEVEL>] [--node-exporter-version <VERSION>]
+Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config <PATH>] [--help]
+        [--init-cluster] [--k3s-version <VERSION>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-        [--spinner <SPINNER>] [--ssh-authorized-keys <PATH>]
+        [--ssh-authorized-keys <PATH>]
+
+$HELP_COMMONS_USAGE
 
 reCluster installation script.
 
 Options:
-  --airgap                             Perform installation in Air-Gap environment
+  --airgap                           Perform installation in Air-Gap environment
 
-  --bench-time <TIME>                  Benchmark execution time in seconds
-                                       Default: $BENCH_TIME
-                                       Values:
-                                         Any positive number
+  --bench-time <TIME>                Benchmark execution time in seconds
+                                     Default: $BENCH_TIME
+                                     Values:
+                                       Any positive number
 
-  --config <PATH>                      Configuration file
-                                       Default: $CONFIG_FILE
-                                       Values:
-                                         Any valid file path
+  --config <PATH>                    Configuration file
+                                     Default: $CONFIG_FILE
+                                     Values:
+                                       Any valid file path
 
-  --disable-color                      Disable color
+  --help                             Show this help message and exit
 
-  --disable-spinner                    Disable spinner
+  --init-cluster                     Initialize cluster components and logic
+                                     Enable only when bootstrapping for the first time
 
-  --help                               Show this help message and exit
+  --k3s-version <VERSION>            K3s version
+                                     Default: $K3S_VERSION
+                                     Values:
+                                       Any K3s version released
 
-  --init-cluster                       Initialize cluster components and logic
-                                       Enable only when bootstrapping for the first time
+  --node-exporter-version <VERSION>  Node exporter version
+                                     Default: $NODE_EXPORTER_VERSION
 
-  --k3s-version <VERSION>              K3s version
-                                       Default: $K3S_VERSION
-                                       Values:
-                                         Any K3s version released
+  --pc-device-api <URL>              Power consumption device api url
+                                     Default: $PC_DEVICE_API
+                                     Values:
+                                       Any valid api url
 
-  --log-level <LEVEL>                  Logger level
-                                       Default: $(to_log_level_name "$LOG_LEVEL")
-                                       Values:
-                                         fatal    Fatal level
-                                         error    Error level
-                                         warn     Warning level
-                                         info     Informational level
-                                         debug    Debug level
+  --pc-interval <TIME>               Power consumption read interval time in seconds
+                                     Default: $PC_INTERVAL
+                                     Values:
+                                       Any positive number
 
-  --node-exporter-version <VERSION>    Node exporter version
-                                       Default: $NODE_EXPORTER_VERSION
+  --pc-time <TIME>                   Power consumption execution time in seconds
+                                     Default: $PC_TIME
+                                     Values:
+                                       Any positive number
 
-  --pc-device-api <URL>                Power consumption device api url
-                                       Default: $PC_DEVICE_API
-                                       Values:
-                                         Any valid api url
+  --pc-warmup <TIME>                 Power consumption warmup time in seconds
+                                     Default: $PC_WARMUP
+                                     Values:
+                                       Any positive number
 
-  --pc-interval <TIME>                 Power consumption read interval time in seconds
-                                       Default: $PC_INTERVAL
-                                       Values:
-                                         Any positive number
+  --ssh-authorized-keys <PATH>       SSH authorized keys file
+                                     Default: $SSH_AUTHORIZED_KEYS_FILE
+                                     Values:
+                                       Any valid file path
 
-  --pc-time <TIME>                     Power consumption execution time in seconds
-                                       Default: $PC_TIME
-                                        Values:
-                                          Any positive number
-
-  --pc-warmup <TIME>                   Power consumption warmup time in seconds
-                                       Default: $PC_WARMUP
-                                       Values:
-                                         Any positive number
-
-  --spinner <SPINNER>                  Spinner symbols
-                                       Default: propeller
-                                       Values:
-                                         dots         Dots spinner
-                                         grayscale    Grayscale spinner
-                                         propeller    Propeller spinner
-
-  --ssh-authorized-keys <PATH>         SSH authorized keys file
-                                       Default: $SSH_AUTHORIZED_KEYS_FILE
-                                       Values:
-                                         Any valid file path
+$HELP_COMMONS_OPTIONS
 EOF
 }
 
@@ -775,38 +756,28 @@ node_registration() {
 # @param $@ Arguments
 parse_args() {
   while [ $# -gt 0 ]; do
+    # Number of shift
+    _shifts=1
+
     case $1 in
       --airgap)
         # Airgap environment
         AIRGAP_ENV=true
-        shift
         ;;
       --bench-time)
         # Benchmark time
         parse_args_assert_value "$@"
         parse_args_assert_positive_integer "$1" "$2"
 
-        _bench_time=$2
-        shift
-        shift
+        BENCH_TIME=$2
+        _shifts=2
         ;;
       --config)
         # Configuration file
         parse_args_assert_value "$@"
 
-        _config=$2
-        shift
-        shift
-        ;;
-      --disable-color)
-        # Disable color
-        LOG_COLOR_ENABLE=false
-        shift
-        ;;
-      --disable-spinner)
-        # Disable spinner
-        SPINNER_ENABLE=false
-        shift
+        CONFIG_FILE=$2
+        _shifts=2
         ;;
       --help)
         # Display help message and exit
@@ -816,129 +787,72 @@ parse_args() {
       --init-cluster)
         # Initialize cluster
         INIT_CLUSTER=true
-        shift
         ;;
       --k3s-version)
         # K3s version
         parse_args_assert_value "$@"
 
-        _k3s_version=$2
-        shift
-        shift
-        ;;
-      --log-level)
-        # Log level
-        parse_args_assert_value "$@"
-
-        case $2 in
-          fatal) _log_level=$LOG_LEVEL_FATAL ;;
-          error) _log_level=$LOG_LEVEL_ERROR ;;
-          warn) _log_level=$LOG_LEVEL_WARN ;;
-          info) _log_level=$LOG_LEVEL_INFO ;;
-          debug) _log_level=$LOG_LEVEL_DEBUG ;;
-          *) FATAL "Value '$2' of argument '$1' is invalid" ;;
-        esac
-        shift
-        shift
+        K3S_VERSION=$2
+        _shifts=2
         ;;
       --node-exporter-version)
         # Node exporter version
         parse_args_assert_value "$@"
 
-        _node_exporter_version=$2
-        shift
-        shift
+        NODE_EXPORTER_VERSION=$2
+        _shifts=2
         ;;
       --pc-device-api)
         # Power consumption device api url
         parse_args_assert_value "$@"
 
-        _pc_device_api=$2
-        shift
-        shift
+        PC_DEVICE_API=$2
+        _shifts=2
         ;;
       --pc-interval)
         # Power consumption interval
         parse_args_assert_value "$@"
         parse_args_assert_positive_integer "$1" "$2"
 
-        _pc_interval=$2
-        shift
-        shift
+        PC_INTERVAL=$2
+        _shifts=2
         ;;
       --pc-time)
         # Power consumption time
         parse_args_assert_value "$@"
         parse_args_assert_positive_integer "$1" "$2"
 
-        _pc_time=$2
-        shift
-        shift
+        PC_TIME=$2
+        _shifts=2
         ;;
       --pc-warmup)
         # Power consumption warmup time
         parse_args_assert_value "$@"
         parse_args_assert_positive_integer "$1" "$2"
 
-        _pc_warmup=$2
-        shift
-        shift
-        ;;
-      --spinner)
-        parse_args_assert_value "$@"
-
-        case $2 in
-          dots) _spinner=$SPINNER_SYMBOLS_DOTS ;;
-          grayscale) _spinner=$SPINNER_SYMBOLS_GRAYSCALE ;;
-          propeller) _spinner=$SPINNER_SYMBOLS_PROPELLER ;;
-          *) FATAL "Value '$2' of argument '$1' is invalid" ;;
-        esac
-        shift
-        shift
+        PC_WARMUP=$2
+        _shifts=2
         ;;
       --ssh-authorized-keys)
         # SSH authorized keys file
         parse_args_assert_value "$@"
 
-        _ssh_authorized_keys=$2
-        shift
-        shift
-        ;;
-      -*)
-        # Unknown argument
-        WARN "Unknown argument '$1'"
-        shift
+        SSH_AUTHORIZED_KEYS_FILE=$2
+        _shifts=2
         ;;
       *)
-        # No argument
-        WARN "Skipping argument '$1'"
-        shift
+        # Commons
+        parse_args_commons "$@"
+        _shifts=$RETVAL
         ;;
     esac
-  done
 
-  # Benchmark time
-  if [ -n "$_bench_time" ]; then BENCH_TIME=$_bench_time; fi
-  # Configuration file
-  if [ -n "$_config" ]; then CONFIG_FILE=$_config; fi
-  # K3s version
-  if [ -n "$_k3s_version" ]; then K3S_VERSION=$_k3s_version; fi
-  # Log level
-  if [ -n "$_log_level" ]; then LOG_LEVEL=$_log_level; fi
-  # Node exporter version
-  if [ -n "$_node_exporter_version" ]; then NODE_EXPORTER_VERSION=$_node_exporter_version; fi
-  # Power consumption device api
-  if [ -n "$_pc_device_api" ]; then PC_DEVICE_API=$_pc_device_api; fi
-  # Power consumption interval
-  if [ -n "$_pc_interval" ]; then PC_INTERVAL=$_pc_interval; fi
-  # Power consumption time
-  if [ -n "$_pc_time" ]; then PC_TIME=$_pc_time; fi
-  # Power consumption warmup time
-  if [ -n "$_pc_warmup" ]; then PC_WARMUP=$_pc_warmup; fi
-  # Spinner
-  if [ -n "$_spinner" ]; then SPINNER_SYMBOLS=$_spinner; fi
-  # SSH authorized keys file
-  if [ -n "$_ssh_authorized_keys" ]; then SSH_AUTHORIZED_KEYS_FILE=$_ssh_authorized_keys; fi
+    # Shift arguments
+    while [ "$_shifts" -gt 0 ]; do
+      shift
+      _shifts=$((_shifts = _shifts - 1))
+    done
+  done
 }
 
 # Verify system

@@ -71,7 +71,54 @@ cleanup() {
 # Trap
 trap cleanup INT QUIT TERM EXIT
 
+# ================
+# FUNCTIONS
+# ================
+# Show help message
+show_help() {
+  cat << EOF
+Usage: $(basename "$0") [--help]
+
+$HELP_COMMONS_USAGE
+
+reCluster Alpine Linux distribution script.
+
+Options:
+  --help  Show this help message and exit
+
+$HELP_COMMONS_OPTIONS
+EOF
+}
+
 ################################################################################################################################
+
+# Parse command line arguments
+# @param $@ Arguments
+parse_args() {
+  while [ $# -gt 0 ]; do
+    # Number of shift
+    _shifts=1
+
+    case $1 in
+      --help)
+        # Display help message and exit
+        show_help
+        exit 0
+        ;;
+      *)
+        # Commons
+        parse_args_commons "$@"
+        _shifts=$RETVAL
+        ;;
+    esac
+
+    # Shift arguments
+    while [ "$_shifts" -gt 0 ]; do
+      shift
+      _shifts=$((_shifts = _shifts - 1))
+    done
+  done
+}
 
 # Verify system
 verify_system() {
@@ -126,6 +173,7 @@ builder() {
 # MAIN
 # ================
 {
+  parse_args "$@"
   verify_system
   recreate_dir "$ISO_DIR"
   prepare_container

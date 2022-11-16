@@ -46,6 +46,8 @@ show_help() {
   cat << EOF
 Usage: $(basename "$0") [--common <PATH>] [--help] [--merge <PATH>] [--output <PATH>]
 
+$HELP_COMMONS_USAGE
+
 reCluster configurations script.
 
 Options:
@@ -65,6 +67,8 @@ Options:
                      Default: $CONFIG_OUTPUT_FILE
                      Values:
                        Any valid file path
+
+$HELP_COMMONS_OPTIONS
 EOF
 }
 
@@ -81,16 +85,17 @@ verify_system() {
 # Parse command line arguments
 # @param $@ Arguments
 parse_args() {
-  # Parse
   while [ $# -gt 0 ]; do
+    # Number of shift
+    _shifts=1
+
     case $1 in
       --common)
         # Common config file
         parse_args_assert_value "$@"
 
-        _config_common_file=$2
-        shift
-        shift
+        CONFIG_COMMON_FILE=$2
+        _shifts=2
         ;;
       --help)
         # Display help message and exit
@@ -101,37 +106,29 @@ parse_args() {
         # Merge config file
         parse_args_assert_value "$@"
 
-        _config_merge_file=$2
-        shift
-        shift
+        CONFIG_MERGE_FILE=$2
+        _shifts=2
         ;;
       --output)
         # Output config file
         parse_args_assert_value "$@"
 
-        _config_output_file=$2
-        shift
-        shift
-        ;;
-      -*)
-        # Unknown argument
-        WARN "Unknown argument '$1' is ignored"
-        shift
+        CONFIG_OUTPUT_FILE=$2
+        _shifts=2
         ;;
       *)
-        # No argument
-        WARN "Skipping argument '$1'"
-        shift
+        # Commons
+        parse_args_commons "$@"
+        _shifts=$RETVAL
         ;;
     esac
-  done
 
-  # Common config file
-  if [ -n "$_config_common_file" ]; then CONFIG_COMMON_FILE=$_config_common_file; fi
-  # Merge config file
-  if [ -n "$_config_merge_file" ]; then CONFIG_MERGE_FILE=$_config_merge_file; fi
-  # Output config file
-  if [ -n "$_config_output_file" ]; then CONFIG_OUTPUT_FILE=$_config_output_file; fi
+    # Shift arguments
+    while [ "$_shifts" -gt 0 ]; do
+      shift
+      _shifts=$((_shifts = _shifts - 1))
+    done
+  done
 }
 
 # Merge files

@@ -45,8 +45,6 @@ ROOT_DIR="$(readlink -f "$DIRNAME/..")"
 CONFIG=
 # Git files
 GIT_FILES=
-# Return value
-RETVAL=
 # Temporary directory
 TMP_DIR=
 
@@ -75,6 +73,8 @@ show_help() {
   cat << EOF
 Usage: $(basename "$0") [--help] [--out-file <FILE>]
 
+$HELP_COMMONS_USAGE
+
 reCluster bundle script.
 
 Options:
@@ -84,6 +84,8 @@ Options:
                      Default: $OUT_FILE
                      Values:
                        Any valid file
+
+$HELP_COMMONS_OPTIONS
 EOF
 }
 
@@ -159,8 +161,10 @@ EOF
 # Parse command line arguments
 # @param $@ Arguments
 parse_args() {
-  # Parse
   while [ $# -gt 0 ]; do
+    # Number of shift
+    _shifts=1
+
     case $1 in
       --help)
         # Display help message and exit
@@ -170,26 +174,22 @@ parse_args() {
       --out-file)
         # Output file
         parse_args_assert_value "$@"
-
-        _out_file=$2
-        shift
-        shift
-        ;;
-      -*)
-        # Unknown argument
-        WARN "Unknown argument '$1' is ignored"
-        shift
+        OUT_FILE=$2
+        _shifts=2
         ;;
       *)
-        # No argument
-        WARN "Skipping argument '$1'"
-        shift
+        # Commons
+        parse_args_commons "$@"
+        _shifts=$RETVAL
         ;;
     esac
-  done
 
-  # Output file
-  if [ -n "$_out_file" ]; then OUT_FILE=$_out_file; fi
+    # Shift arguments
+    while [ "$_shifts" -gt 0 ]; do
+      shift
+      _shifts=$((_shifts = _shifts - 1))
+    done
+  done
 }
 
 # Verify system

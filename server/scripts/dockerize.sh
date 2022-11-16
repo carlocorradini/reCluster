@@ -38,18 +38,74 @@ RECLUSTER_SERVER_VERSION=latest
 # reCluster server image
 RECLUSTER_SERVER_IMAGE="recluster-server:$RECLUSTER_SERVER_VERSION"
 
+# ================
+# FUNCTIONS
+# ================
+# Show help message
+show_help() {
+  cat << EOF
+Usage: $(basename "$0") [--help]
+
+$HELP_COMMONS_USAGE
+
+reCluster Dockerize script.
+
+Options:
+  --help  Show this help message and exit
+
+$HELP_COMMONS_OPTIONS
+EOF
+}
+
 ################################################################################################################################
+
+# Parse command line arguments
+# @param $@ Arguments
+parse_args() {
+  while [ $# -gt 0 ]; do
+    # Number of shift
+    _shifts=1
+
+    case $1 in
+      --help)
+        # Display help message and exit
+        show_help
+        exit 0
+        ;;
+      *)
+        # Commons
+        parse_args_commons "$@"
+        _shifts=$RETVAL
+        ;;
+    esac
+
+    # Shift arguments
+    while [ "$_shifts" -gt 0 ]; do
+      shift
+      _shifts=$((_shifts = _shifts - 1))
+    done
+  done
+}
 
 # Verify system
 verify_system() {
   assert_cmd docker
 }
 
+# Remove Docker image
+docker_remove() {
+  ! docker image inspect "$RECLUSTER_SERVER_IMAGE" > /dev/null 2>&1 || return 0
+
+  INFO "Removing Docker image '$RECLUSTER_SERVER_IMAGE'"
+  docker image rm --force "$RECLUSTER_SERVER_IMAGE" || FATAL "Error removing Docker image '$RECLUSTER_SERVER_IMAGE'"
+}
+
 # ================
 # MAIN
 # ================
 {
+  parse_args "$@"
   verify_system
-  INFO "Building reCluster server Docker image '$RECLUSTER_SERVER_IMAGE' using Dockerfile '$RECLUSTER_SERVER_DOCKERFILE'"
-  docker build --rm -t "$RECLUSTER_SERVER_IMAGE" -f "$RECLUSTER_SERVER_DOCKERFILE" "$DIRNAME/.."
+  docker_remove
+  assert_docker_image "$RECLUSTER_SERVER_IMAGE" "$RECLUSTER_SERVER_DOCKERFILE" "$DIRNAME/.."
 }

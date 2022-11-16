@@ -52,6 +52,8 @@ show_help() {
   cat << EOF
 Usage: $(basename "$0") [--help] [--list] [--release <DEP> <VERSION>] [--update]
 
+$HELP_COMMONS_USAGE
+
 reCluster dependencies script.
 
 Options:
@@ -60,6 +62,8 @@ Options:
   --sync          Synchronize dependencies
 
   --sync-force    Synchronize dependencies replacing assets that are already present
+
+$HELP_COMMONS_OPTIONS
 EOF
 }
 
@@ -284,8 +288,10 @@ EOF
 # Parse command line arguments
 # @param $@ Arguments
 parse_args() {
-  # Parse
   while [ $# -gt 0 ]; do
+    # Number of shift
+    _shifts=1
+
     case $1 in
       --help)
         # Display help message and exit
@@ -295,25 +301,24 @@ parse_args() {
       --sync)
         # Synchronize
         SYNC=true
-        shift
         ;;
       --sync-force)
         # Synchronize force
         SYNC=true
         SYNC_FORCE=true
-        shift
-        ;;
-      -*)
-        # Unknown argument
-        WARN "Unknown argument '$1' is ignored"
-        shift
         ;;
       *)
-        # No argument
-        WARN "Skipping argument '$1'"
-        shift
+        # Commons
+        parse_args_commons "$@"
+        _shifts=$RETVAL
         ;;
     esac
+
+    # Shift arguments
+    while [ "$_shifts" -gt 0 ]; do
+      shift
+      _shifts=$((_shifts = _shifts - 1))
+    done
   done
 }
 
