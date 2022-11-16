@@ -41,12 +41,14 @@ linux:
           ./linux/distributions/alpine/build.sh
       README.md: true
       logo.png: true
+      iso: true
     arch:
       __:
         run: |-
           ./linux/distributions/arch/build.sh
       README.md: true
       logo.png: true
+      iso: true
 
 scripts:
   __commons.sh: true
@@ -56,7 +58,6 @@ scripts:
 server:
   __:
     run: |-
-      npm run prepare
       npm run build:clean
       npm run build
   README.md: true

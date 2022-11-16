@@ -10,6 +10,16 @@
    ./build.sh
    ```
 
+   - Arguments
+
+     > **Note**: Type `--help` for more information
+
+     > **Note**: [commons arguments](../../../scripts/README.md#arguments-2) available
+
+     | **Name** | **Description**            | **Default** | **Values** |
+     | -------- | -------------------------- | ----------- | ---------- |
+     | `--help` | Show help message and exit |
+
 2. ISO image(s) \
    Generated ISO image(s) available under [`iso`](./iso/) directory.
 

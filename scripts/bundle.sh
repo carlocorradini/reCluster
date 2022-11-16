@@ -32,7 +32,7 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # CONFIGURATION
 # ================
 # Configuration file
-CONFIG_FILE="$DIRNAME/bundle.config.yml"
+CONFIG_FILE="bundle.config.yml"
 # Output file
 OUT_FILE="bundle.tar.gz"
 # Root directory
@@ -78,12 +78,17 @@ $HELP_COMMONS_USAGE
 reCluster bundle script.
 
 Options:
-  --help   Show this help message and exit
+  --config-file <FILE>  Configuration file
+                        Default: $CONFIG_FILE
+                        Values:
+                          Any valid file
 
-  --out-file <FILE>  Output file
-                     Default: $OUT_FILE
-                     Values:
-                       Any valid file
+  --help                Show this help message and exit
+
+  --out-file <FILE>     Output file
+                        Default: $OUT_FILE
+                        Values:
+                          Any valid file
 
 $HELP_COMMONS_OPTIONS
 EOF
@@ -118,7 +123,7 @@ bundle_prepare() {
 
     # Run
     _runs="$(printf '%s\n' "$_entry" | jq --raw-output --arg root "$ROOT_DIR" '.value | split("\n") | map(select(length > 0) | sub("^\\."; $root))')"
-    INFO "Executing 'run' of '$_path'"
+    INFO "'run' of '$_path'"
     (
       # Change working directory
       cd "$_path_src"
@@ -222,6 +227,12 @@ parse_args() {
     _shifts=1
 
     case $1 in
+      --config-file)
+        # Configuration file
+        parse_args_assert_value "$@"
+        CONFIG_FILE=$2
+        _shifts=$2
+        ;;
       --help)
         # Display help message and exit
         show_help

@@ -598,7 +598,7 @@ Options commons:
                          info     Informational level
                          debug    Debug level
 
-  --spinner <SPINNER>  Spinner symbols
+  --spinner <SPINNER>  Spinner
                        Default: propeller
                        Values:
                          dots         Dots spinner

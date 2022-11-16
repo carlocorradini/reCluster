@@ -29,9 +29,11 @@ _merge="./controller.config.yml"
 
 > **Note**: Type `--help` for more information
 
-| **Name**          | **Description**             |
-| ----------------- | --------------------------- |
-| `--common <PATH>` | Common configuration file   |
+> **Note**: [commons arguments](../../scripts/README.md#arguments-2) available
+
+| **Name**          | **Description**             | **Default**         | **Values**     |
+| ----------------- | --------------------------- | ------------------- | -------------- |
+| `--common <FILE>` | Common configuration file   | `common.config.yml` | Any valid file |
 | `--help`          | Show help message and exit  |
-| `--merge <PATH>`  | Configuration file to merge |
-| `--output <PATH>` | Output configuration file   |
+| `--merge <FILE>`  | Configuration file to merge | `config.yml`        | Any valid file |
+| `--output <FILE>` | Output configuration file   | `output.yml`        | Any valid file |

@@ -79,20 +79,19 @@ reCluster installation script.
 
 > **Note**: Type `--help` for more information
 
-| **Name**                            | **Description**                                                                            |
-| ----------------------------------- | ------------------------------------------------------------------------------------------ |
-| `--airgap`                          | Perform installation in Air-Gap environment                                                |
-| `--bench-time <TIME>`               | Benchmark execution time in seconds                                                        |
-| `--config <PATH>`                   | Configuration file                                                                         |
-| `--disable-color`                   | Disable color                                                                              |
-| `--disable-spinner`                 | Disable spinner                                                                            |
+> **Note**: [commons arguments](../scripts/README.md#arguments-2) available
+
+| **Name**                            | **Description**                                                                            | **Default**                                     | **Values**                |
+| ----------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------------------------- |
+| `--airgap`                          | Perform installation in Air-Gap environment                                                | `false`                                         |
+| `--bench-time <TIME>`               | Benchmark execution time in seconds                                                        | `30`                                            | Any positive number       |
+| `--config-file <FILE>`              | Configuration file                                                                         | `config.yml`                                    | Any valid file            |
 | `--help`                            | Show help message and exit                                                                 |
-| `--init-cluster`                    | Initialize cluster components and logic. Enable only when bootstrapping for the first time |
-| `--k3s-version <VERSION>`           | K3s version                                                                                |
-| `--log-level <LEVEL>`               | Logger level                                                                               |
-| `--node-exporter-version <VERSION>` | Node exporter version                                                                      |
-| `--pc-device-api <URL>`             | Power consumption device api url                                                           |
-| `--pc-interval <TIME>`              | Power consumption read interval time in seconds                                            |
-| `--pc-time <TIME>`                  | Power consumption execution time in seconds                                                |
-| `--pc-warmup <TIME>`                | Power consumption warmup time in seconds                                                   |
-| `--spinner <SPINNER>`               | Spinner symbols                                                                            |
+| `--init-cluster`                    | Initialize cluster components and logic. Enable only when bootstrapping for the first time | `false`                                         |
+| `--k3s-version <VERSION>`           | K3s version                                                                                | `latest`                                        | Any K3s version           |
+| `--node-exporter-version <VERSION>` | Node exporter version                                                                      | `latest`                                        | Any Node exporter version |
+| `--pc-device-api <URL>`             | Power consumption device api url                                                           | `http://pc.recluster.local/cm?cmnd=status%2010` | Any valid URL             |
+| `--pc-interval <TIME>`              | Power consumption read interval time in seconds                                            | `1`                                             | Any positive number       |
+| `--pc-time <TIME>`                  | Power consumption execution time in seconds                                                | `30`                                            | Any positive number       |
+| `--pc-warmup <TIME>`                | Power consumption warmup time in seconds                                                   | `10`                                            | Any positive number       |
+| `--ssh-authorized-keys <FILE>`      | SSH authorized keys file                                                                   | `/root/.ssh/authorized_keys`                    | Any valid file            |

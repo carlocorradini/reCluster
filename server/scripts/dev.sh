@@ -32,7 +32,7 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # CONFIGURATION
 # ================
 # K3d configuration file
-K3D_CONFIG="$DIRNAME/../k3d.config.yml"
+K3D_CONFIG_FILE="k3d.config.yml"
 # npm prefix
 NPM_PREFIX="$DIRNAME/.."
 # Postgres version
@@ -81,7 +81,7 @@ cleanup() {
   # Cleanup cluster
   if [ "$SKIP_CLUSTER" = false ] && check_cmd k3d; then
     DEBUG "Deleting cluster"
-    k3d cluster delete --config "$K3D_CONFIG" || :
+    k3d cluster delete --config "$K3D_CONFIG_FILE" || :
   fi
   # Cleanup certificates directory
   cleanup_dir "$CERTS_DIR"
@@ -100,7 +100,7 @@ trap cleanup INT QUIT TERM EXIT
 # Show help message
 show_help() {
   cat << EOF
-Usage: $(basename "$0") [--help] [--k3d-config <PATH>] [--skip-certs]
+Usage: $(basename "$0") [--help] [--k3d-config <FILE>] [--skip-certs]
         [--skip-cluster] [--skip-db] [--skip-db-seed] [--skip-server]
 
 $HELP_COMMONS_USAGE
@@ -108,22 +108,22 @@ $HELP_COMMONS_USAGE
 reCluster development server script.
 
 Options:
-  --help                Show this help message and exit
+  --help                     Show this help message and exit
 
-  --k3d-config <PATH>   K3d configuration file
-                        Default: $K3D_CONFIG
-                        Values:
-                          Any valid file path
+  --k3d-config-file <FILE>   K3d configuration file
+                             Default: $K3D_CONFIG_FILE
+                             Values:
+                               Any valid file
 
-  --skip-certs          Skip certificates
+  --skip-certs               Skip certificates
 
-  --skip-cluster        Skip cluster
+  --skip-cluster             Skip cluster
 
-  --skip-db             Skip database
+  --skip-db                  Skip database
 
-  --skip-db-seed        Skip database seed
+  --skip-db-seed             Skip database seed
 
-  --skip-server         Skip server
+  --skip-server              Skip server
 
 $HELP_COMMONS_OPTIONS
 EOF
@@ -144,11 +144,11 @@ parse_args() {
         show_help
         exit 0
         ;;
-      --k3d-config)
+      --k3d-config-file)
         # K3d configuration file
         parse_args_assert_value "$@"
 
-        K3D_CONFIG=$2
+        K3D_CONFIG_FILE=$2
         _shifts=2
         ;;
       --skip-certs)
@@ -198,7 +198,7 @@ verify_system() {
 
   assert_docker_image "$POSTGRES_IMAGE"
 
-  [ -f "$K3D_CONFIG" ] || FATAL "K3d configuration file '$K3D_CONFIG' not found"
+  [ -f "$K3D_CONFIG_FILE" ] || FATAL "K3d configuration file '$K3D_CONFIG_FILE' not found"
 }
 
 # Setup system
@@ -221,7 +221,7 @@ setup_cluster() {
   [ "$SKIP_CLUSTER" = false ] || { WARN "Skipping cluster" && return 0; }
 
   INFO "Creating cluster"
-  k3d cluster create --config "$K3D_CONFIG"
+  k3d cluster create --config "$K3D_CONFIG_FILE"
 }
 
 # Setup database

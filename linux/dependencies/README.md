@@ -19,8 +19,11 @@ Dependencies script.
 
 > **Note**: Type `--help` for more information
 
-| **Name**       | **Description**                                                    |
-| -------------- | ------------------------------------------------------------------ |
-| `--help`       | Show help message and exit                                         |
-| `--sync`       | Synchronize dependencies                                           |
-| `--sync-force` | Synchronize dependencies replacing assets that are already present |
+> **Note**: [commons arguments](../../scripts/README.md#arguments-2) available
+
+| **Name**               | **Description**                                                    | **Default**               | **Values**     |
+| ---------------------- | ------------------------------------------------------------------ | ------------------------- | -------------- |
+| `--config-file <FILE>` | Configuration file                                                 | `dependencies.config.yml` | Any valid file |
+| `--help`               | Show help message and exit                                         |
+| `--sync`               | Synchronize dependencies                                           | `false`                   |
+| `--sync-force`         | Synchronize dependencies replacing assets that are already present | `false`                   |

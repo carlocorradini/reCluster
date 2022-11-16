@@ -19,16 +19,16 @@ reCluster server.
 
 > **Note**: Copy `.env.example` and paste `.env`
 
-| **Name**            | **Description**   | **Choices**                             | **Default**  |
-| ------------------- | ----------------- | --------------------------------------- | ------------ |
-| `NODE_ENV`          | Node environment  | `development` \| `production` \| `test` | `production` |
-| `HOST`              | Server host       |                                         | `0.0.0.0`    |
-| `PORT`              | Server port       |                                         | `80`         |
-| `DATABASE_URL`      | Database URL      |                                         |              |
-| `SSH_USERNAME`      | SSH username      |                                         | `root`       |
-| `SSH_PRIVATE_KEY`   | SSH private key   |                                         |              |
-| `TOKEN_PRIVATE_KEY` | Token private key |                                         |              |
-| `TOKEN_PUBLIC_KEY`  | Token public key  |                                         |              |
+| **Name**            | **Description**   | **Default**  | **Values**                              |
+| ------------------- | ----------------- | ------------ | --------------------------------------- |
+| `NODE_ENV`          | Node environment  | `production` | `development` \| `production` \| `test` |
+| `HOST`              | Server host       | `0.0.0.0`    | Any valid host                          |
+| `PORT`              | Server port       | `80`         | Any valid port                          |
+| `DATABASE_URL`      | Database URL      |              |
+| `SSH_USERNAME`      | SSH username      | `root`       | Any valid username                      |
+| `SSH_PRIVATE_KEY`   | SSH private key   |              |
+| `TOKEN_PRIVATE_KEY` | Token private key |              |
+| `TOKEN_PUBLIC_KEY`  | Token public key  |              |
 
 ### Preparation
 

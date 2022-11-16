@@ -51,22 +51,22 @@ $HELP_COMMONS_USAGE
 reCluster configurations script.
 
 Options:
-  --common <PATH>    Common configuration file
+  --common <FILE>    Common configuration file
                      Default: $CONFIG_COMMON_FILE
                      Values:
-                       Any valid file path
+                       Any valid file
 
   --help             Show this help message and exit
 
-  --merge <PATH>     Configuration file to merge
+  --merge <FILE>     Configuration file to merge
                      Default: $CONFIG_MERGE_FILE
                      Values:
-                       Any valid file path
+                       Any valid file
 
-  --output <PATH>    Output configuration file
+  --output <FILE>    Output configuration file
                      Default: $CONFIG_OUTPUT_FILE
                      Values:
-                       Any valid file path
+                       Any valid file
 
 $HELP_COMMONS_OPTIONS
 EOF

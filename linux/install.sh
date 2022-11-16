@@ -93,10 +93,10 @@ trap cleanup INT QUIT TERM EXIT
 # Show help message
 show_help() {
   cat << EOF
-Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config <PATH>] [--help]
+Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config-file <FILE>] [--help]
         [--init-cluster] [--k3s-version <VERSION>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-        [--ssh-authorized-keys <PATH>]
+        [--ssh-authorized-keys <FILE>]
 
 $HELP_COMMONS_USAGE
 
@@ -110,10 +110,10 @@ Options:
                                      Values:
                                        Any positive number
 
-  --config <PATH>                    Configuration file
+  --config-file <FILE>               Configuration file
                                      Default: $CONFIG_FILE
                                      Values:
-                                       Any valid file path
+                                       Any valid file
 
   --help                             Show this help message and exit
 
@@ -123,15 +123,17 @@ Options:
   --k3s-version <VERSION>            K3s version
                                      Default: $K3S_VERSION
                                      Values:
-                                       Any K3s version released
+                                       Any K3s version
 
   --node-exporter-version <VERSION>  Node exporter version
                                      Default: $NODE_EXPORTER_VERSION
+                                     Values:
+                                       Any Node exporter version
 
-  --pc-device-api <URL>              Power consumption device api url
+  --pc-device-api <URL>              Power consumption device api URL
                                      Default: $PC_DEVICE_API
                                      Values:
-                                       Any valid api url
+                                       Any valid URL
 
   --pc-interval <TIME>               Power consumption read interval time in seconds
                                      Default: $PC_INTERVAL
@@ -148,10 +150,10 @@ Options:
                                      Values:
                                        Any positive number
 
-  --ssh-authorized-keys <PATH>       SSH authorized keys file
+  --ssh-authorized-keys <FILE>       SSH authorized keys file
                                      Default: $SSH_AUTHORIZED_KEYS_FILE
                                      Values:
-                                       Any valid file path
+                                       Any valid file
 
 $HELP_COMMONS_OPTIONS
 EOF
@@ -772,7 +774,7 @@ parse_args() {
         BENCH_TIME=$2
         _shifts=2
         ;;
-      --config)
+      --config-file)
         # Configuration file
         parse_args_assert_value "$@"
 
