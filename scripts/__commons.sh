@@ -225,7 +225,7 @@ INFO() { _log_print_message "$LOG_LEVEL_INFO" "$1"; }
 DEBUG() {
   _log_print_message "$LOG_LEVEL_DEBUG" "$1"
   if [ -n "$2" ] && is_log_level_enabled "$LOG_LEVEL_DEBUG"; then
-    echo "$2" | jq .
+    printf '%s\n' "$2" | jq '.'
   fi
 }
 
@@ -518,6 +518,58 @@ is_integer() {
     '' | *[!0-9]*) return 1 ;;
     *) return 0 ;;
   esac
+}
+
+# Git files
+# @param $1 Git directory
+git_files() {
+  assert_cmd basename
+  assert_cmd git
+  assert_cmd jq
+
+  _dir=$1
+  # Append .git if not present
+  [ "$(basename "$_dir")" = .git ] || _dir="$_dir/.git"
+
+  DEBUG "Git files in '$_dir' Git directory"
+
+  # Check if directory
+  [ -d "$_dir" ] || FATAL "Directory '$_dir' does not exists"
+
+  # Git files
+  _git_files=$(
+    git --git-dir "$_dir" ls-files --cached --others --exclude-standard --full-name \
+      | jq --raw-input --null-input '[inputs | select(length > 0)]'
+  ) || FATAL "Error Git files in '$_dir' Git directory"
+
+  # Return
+  RETVAL=$_git_files
+}
+
+# Check if directory in git
+# @param $1 Git files
+# @param $2 Directory
+git_has_directory() {
+  assert_cmd jq
+
+  _git_files=$1
+  _dir=$2
+
+  DEBUG "Checking Git has directory '$_dir'"
+  [ "$(echo "$_git_files" | jq --raw-output --arg dir "$_dir" 'any(.[]; startswith($dir))')" = true ]
+}
+
+# Check if file in git
+# @param $1 Git files
+# @param $2 File
+git_has_file() {
+  assert_cmd jq
+
+  _git_files=$1
+  _file=$2
+
+  DEBUG "Checking Git has file '$_file'"
+  [ "$(echo "$_git_files" | jq --raw-output --arg file "$_file" 'any(.[]; . == $file)')" = true ]
 }
 
 # ================

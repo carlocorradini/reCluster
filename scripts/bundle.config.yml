@@ -28,14 +28,23 @@ linux:
   install.sh: true
   configs: true
   dependencies:
+    __:
+      run: |-
+        ./linux/dependencies/dependencies.sh --sync-force
     k3s: true
     node_exporter: true
     prometheus: true
   distributions:
     alpine:
+      __:
+        run: |-
+          ./linux/distributions/alpine/build.sh
       README.md: true
       logo.png: true
     arch:
+      __:
+        run: |-
+          ./linux/distributions/arch/build.sh
       README.md: true
       logo.png: true
 
@@ -45,6 +54,11 @@ scripts:
   README.md: true
 
 server:
+  __:
+    run: |-
+      npm run prepare
+      npm run build:clean
+      npm run build
   README.md: true
   .env.example: true
   package.json: true

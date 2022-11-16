@@ -33,6 +33,8 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # ================
 # Configuration file
 CONFIG_FILE="$DIRNAME/dependencies.config.yml"
+# Root directory
+ROOT_DIR="$(readlink -f "$DIRNAME/../..")"
 # Synchronize flag
 SYNC=false
 # Synchronize force flag
@@ -101,6 +103,9 @@ find_latest_release() {
 
 # Clean dependencies environment
 sync_deps_clean() {
+  git_files "$ROOT_DIR"
+  _git_files=$RETVAL
+
   set +o noglob
 
   # Clean dependency directories
@@ -108,23 +113,21 @@ sync_deps_clean() {
     _dep_fd_basename=$(basename "$_dep_fd")
 
     if [ -f "$_dep_fd" ]; then
-      # Check files
+      # File
+      _dep_fd_git_file=$(echo "$_dep_fd" | sed -n -e 's#^.*'"$ROOT_DIR"'/##p')
 
-      case $_dep_fd_basename in
-        .gitignore | dependencies.sh | dependencies.yml | README.md)
-          # Keep
-          ;;
-        *)
-          # Remove dependency file
-          INFO "Removing '$_dep_fd_basename' file"
-          rm -f "$_dep_fd"
-          ;;
-      esac
+      if ! git_has_file "$_git_files" "$_dep_fd_git_file"; then
+        # Remove dependency file
+        INFO "Removing file '$_dep_fd_basename'"
+        rm -f "$_dep_fd"
+      else
+        DEBUG "Keeping file '$_dep_fd_basename'"
+      fi
     elif [ -d "$_dep_fd" ]; then
-      # Check directories
+      # Directory
       if ! echo "$CONFIG" | jq --exit-status --arg dep "$_dep_fd_basename" 'has($dep)' > /dev/null 2>&1; then
         # Remove dependency directory
-        INFO "Removing '$_dep_fd_basename' dependency directory"
+        INFO "Removing dependency directory '$_dep_fd_basename'"
         rm -rf "$_dep_fd"
         continue
       fi

@@ -89,16 +89,57 @@ $HELP_COMMONS_OPTIONS
 EOF
 }
 
-# Check if directory in git
-# @param $1 Directory path
-directory_in_git() {
-  _dir=$1
-  DEBUG "Checking directory '$_dir' in Git"
-  [ "$(echo "$GIT_FILES" | jq --raw-output --arg dir "$_dir" 'any(.[]; startswith($dir))')" = true ]
+# Configuration __
+config__() {
+  printf '%s\n' "$CONFIG" | jq 'map(select(.key | contains("/__/")))'
+}
+
+# Configuration without __
+config_no__() {
+  printf '%s\n' "$CONFIG" | jq 'map(select(.key | (contains("/__/") | not)))'
+}
+
+# Prepare bundle
+bundle_prepare() {
+  _config=$(config__)
+
+  while read -r _entry; do
+    _path="$(printf '%s\n' "$_entry" | jq --raw-output '.key | sub("(\/__\/).*"; "")')"
+    _path_src="$ROOT_DIR/$_path"
+    _has_run="$(printf '%s\n' "$_entry" | jq --raw-output 'any(.key; endswith("run"))')"
+
+    INFO "Preparing '$_path'"
+
+    # Check __/run
+    [ "$_has_run" = true ] || {
+      WARN "'run' not found in '$_path'"
+      continue
+    }
+
+    # Run
+    _runs="$(printf '%s\n' "$_entry" | jq --raw-output --arg root "$ROOT_DIR" '.value | split("\n") | map(select(length > 0) | sub("^\\."; $root))')"
+    INFO "Executing 'run' of '$_path'"
+    (
+      # Change working directory
+      cd "$_path_src"
+
+      while read -r _run; do
+        _run="$(printf '%s\n' "$_run" | jq --raw-output '.')"
+
+        INFO "Executing '$_run' of '$_path'"
+        eval "$_run" || FATAL "Error executing '$_run' of '$_path'"
+      done << EOF
+$(printf '%s\n' "$_runs" | jq --compact-output '.[]')
+EOF
+    ) || FATAL "Error 'run' of '$_path'"
+  done << EOF
+$(printf '%s\n' "$_config" | jq --compact-output '.[]')
+EOF
 }
 
 # Bundle files
 bundle_files() {
+  _config=$(config_no__)
   _files="[]"
 
   while read -r _entry; do
@@ -125,7 +166,7 @@ bundle_files() {
       _new_files=
 
       # Check Git
-      if directory_in_git "$_path"; then
+      if git_has_directory "$GIT_FILES" "$_path"; then
         # Git
         DEBUG "Directory '$_path' in Git"
         _new_files=$(echo "$GIT_FILES" | jq --arg dir "$_path" 'map(select(startswith($dir) and (contains(".gitignore") | not) and (contains(".gitkeep") | not)))')
@@ -146,7 +187,7 @@ bundle_files() {
       _files=$(echo "$_files" | jq --argjson files "$_new_files" '. + $files')
     fi
   done << EOF
-$(echo "$CONFIG" | jq --compact-output '[paths([scalars] != []) as $path | {"key": $path | join("/"), "value": getpath($path)}] | from_entries | to_entries[]')
+$(echo "$_config" | jq --compact-output '.[]')
 EOF
 
   # Remove duplicates and sort
@@ -154,6 +195,21 @@ EOF
 
   # Return
   RETVAL=$_files
+}
+
+# Bundle tarball
+bundle_tarball() {
+  INFO "Generating tarball '$OUT_FILE'"
+
+  find "$TMP_DIR" -printf "%P\n" \
+    | tar \
+      --create \
+      --verbose \
+      --gzip \
+      --no-recursion \
+      --file="$OUT_FILE" \
+      --directory="$TMP_DIR" \
+      --files-from=-
 }
 
 ################################################################################################################################
@@ -198,6 +254,7 @@ verify_system() {
   assert_cmd git
   assert_cmd jq
   assert_cmd mktemp
+  assert_cmd printf
   assert_cmd sed
   assert_cmd tar
   assert_cmd yq
@@ -217,14 +274,21 @@ setup_system() {
   TMP_DIR=$(mktemp --directory)
   DEBUG "Created temporary directory '$TMP_DIR'"
 
+  # Configuration
+  CONFIG=$(printf '%s\n' "$CONFIG" | jq '[paths([scalars] != []) as $path | {"key": $path | join("/"), "value": getpath($path)}]')
+
   # Git files
-  GIT_FILES=$(git --git-dir "$ROOT_DIR/.git" ls-files --cached --others --exclude-standard --full-name | jq --raw-input --null-input '[inputs | select(length > 0)]')
+  git_files "$ROOT_DIR"
+  GIT_FILES=$RETVAL
   DEBUG "Git files:" "$GIT_FILES"
 }
 
 # Bundle
 bundle() {
   _files=
+
+  # Prepare bundle
+  bundle_prepare
 
   # Files
   bundle_files
@@ -251,21 +315,9 @@ bundle() {
   done << EOF
 $(echo "$_files" | jq --compact-output '.[]')
 EOF
-}
 
-# Bundle tarball
-bundle_tarball() {
-  INFO "Generating tarball '$OUT_FILE'"
-
-  find "$TMP_DIR" -printf "%P\n" \
-    | tar \
-      --create \
-      --verbose \
-      --gzip \
-      --no-recursion \
-      --file="$OUT_FILE" \
-      --directory="$TMP_DIR" \
-      --files-from=-
+  # Generate bundle tarball
+  bundle_tarball
 }
 
 # ================
@@ -276,5 +328,4 @@ bundle_tarball() {
   verify_system
   setup_system
   bundle
-  bundle_tarball
 }
