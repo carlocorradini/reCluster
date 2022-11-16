@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "bbenoist.vagrant",
+    "bierner.markdown-emoji",
     "DavidAnson.vscode-markdownlint",
     "dbaeumer.vscode-eslint",
     "EditorConfig.EditorConfig",
@@ -14,6 +15,6 @@
     "Prisma.prisma",
     "redhat.vscode-yaml",
     "timonwong.shellcheck",
-    "usernamehw.errorlens"
+    "usernamehw.errorlens",
   ]
 }
