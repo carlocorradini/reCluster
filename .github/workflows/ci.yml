@@ -1,6 +1,11 @@
 name: ci
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
 
 jobs:
   ci:
@@ -33,3 +38,71 @@ jobs:
         with:
           severity: error
           ignore_paths: node_modules
+
+  integration:
+    needs: ci
+    if: needs.ci.result == 'success' && github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+      - name: Install dependencies
+        # FIXME Use ci instead of install
+        run: |
+          npm ci
+          npm --prefix server install
+      - name: Check vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Code analysis
+        uses: codacy/codacy-analysis-cli-action@master
+        with:
+          output: results.sarif
+          format: sarif
+          gh-code-scanning-compat: true
+          max-allowed-issues: 2147483647
+      - name: Upload code analysis results
+        uses: github/codeql-action/upload-sarif@main
+        with:
+          sarif_file: results.sarif
+      - name: License scan
+        uses: fossas/fossa-action@main
+        with:
+          api-key: ${{ secrets.FOSSA_TOKEN }}
+
+  release:
+    needs: integration
+    if: needs.integration.result == 'success' && startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+      - name: Install dependencies
+        # FIXME Use ci instead of install
+        run: |
+          npm ci
+          npm --prefix server install
+      - name: Build Changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          configuration: './.github/configs/changelog.json'
+          owner: carlocorradini
+          repo: reCluster
+          failOnError: true
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ steps.changelog.outputs.changelog }}

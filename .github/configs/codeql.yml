@@ -1,0 +1,6 @@
+name: CodeQL Configuration
+
+paths:
+  - server/src
+paths-ignore:
+  - server/src/**/*.test.ts
