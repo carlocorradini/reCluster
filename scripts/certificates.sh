@@ -26,6 +26,7 @@
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 # Load commons
+# shellcheck source=./__commons.sh
 . "$DIRNAME/__commons.sh"
 
 # ================

@@ -543,6 +543,7 @@ git_files() {
   ) || FATAL "Error Git files in '$_dir' Git directory"
 
   # Return
+  # shellcheck disable=2034
   RETVAL=$_git_files
 }
 
@@ -576,12 +577,14 @@ git_has_file() {
 # CONFIGURATION
 # ================
 # Help usage string
+# shellcheck disable=2034
 HELP_COMMONS_USAGE=$(
   cat << EOF
 Usage commons: $(basename "$0") [--disable-color] [--disable-spinner] [--log-level <LEVEL>] [--spinner <SPINNER>]
 EOF
 )
 # Help options string
+# shellcheck disable=2034
 HELP_COMMONS_OPTIONS=$(
   cat << EOF
 Options commons:
