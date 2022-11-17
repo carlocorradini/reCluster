@@ -94,7 +94,7 @@
              esac
            done
      -   ) | sfdisk --quiet --label $DISKLABEL $diskdev || return 1
-     +   ) | sfdisk --quiet -W always --label $DISKLABEL $diskdev || return 1
+     +   ) | sfdisk --quiet --wipe-partitions always --label $DISKLABEL $diskdev || return 1
 
          # create device nodes if not exist
          $MOCK mdev -s
