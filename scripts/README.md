@@ -24,6 +24,7 @@ reCluster bundle script.
 | `--config-file <FILE>` | Configuration file         | `bundle.config.yml` | Any valid file |
 | `--help`               | Show help message and exit |
 | `--out-file <FILE>`    | Output file                | `bundle.tar.gz`     | Any valid file |
+| `--skip-run`           | Skip run                   | `false`             |
 
 ## :bookmark_tabs: [`certificates.sh`](./certificates.sh)
 

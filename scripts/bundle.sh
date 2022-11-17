@@ -38,6 +38,8 @@ CONFIG_FILE="bundle.config.yml"
 OUT_FILE="bundle.tar.gz"
 # Root directory
 ROOT_DIR="$(readlink -f "$DIRNAME/..")"
+# Skip run
+SKIP_RUN=false
 
 # ================
 # GLOBALS
@@ -72,7 +74,7 @@ trap cleanup INT QUIT TERM EXIT
 # Show help message
 show_help() {
   cat << EOF
-Usage: $(basename "$0") [--help] [--out-file <FILE>]
+Usage: $(basename "$0") [--help] [--out-file <FILE>] [--skip-run]
 
 $HELP_COMMONS_USAGE
 
@@ -90,6 +92,8 @@ Options:
                         Default: $OUT_FILE
                         Values:
                           Any valid file
+
+  --skip-run            Skip run
 
 $HELP_COMMONS_OPTIONS
 EOF
@@ -117,8 +121,12 @@ bundle_prepare() {
     INFO "Preparing '$_path'"
 
     # Check __/run
+    [ "$SKIP_RUN" = false ] || {
+      WARN "Skipping 'run' of '$_path'"
+      continue
+    }
     [ "$_has_run" = true ] || {
-      WARN "'run' not found in '$_path'"
+      WARN "'run' of '$_path' not found"
       continue
     }
 
@@ -244,6 +252,10 @@ parse_args() {
         parse_args_assert_value "$@"
         OUT_FILE=$2
         _shifts=2
+        ;;
+      --skip-run)
+        # Skip run
+        SKIP_RUN=true
         ;;
       *)
         # Commons
