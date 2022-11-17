@@ -240,7 +240,7 @@ parse_args() {
         # Configuration file
         parse_args_assert_value "$@"
         CONFIG_FILE=$2
-        _shifts=$2
+        _shifts=2
         ;;
       --help)
         # Display help message and exit
