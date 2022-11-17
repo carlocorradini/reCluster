@@ -101,15 +101,10 @@ async function terminate(signal: NodeJS.Signals) {
   await apollo.stop();
   // Server
   await server.close();
-
-  process.kill(process.pid, signal);
 }
 
-process.once('SIGTERM', terminate);
-process.once('SIGKILL', terminate);
-process.once('SIGINT', terminate);
-process.once('SIGQUIT', terminate);
-process.once('SIGHUP', terminate);
+process.on('SIGTERM', terminate);
+process.on('SIGINT', terminate);
 
 main().catch((error) => {
   logger.fatal(error instanceof Error ? error.message : error);
