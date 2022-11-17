@@ -68,10 +68,10 @@ jobs:
           format: sarif
           gh-code-scanning-compat: true
           max-allowed-issues: 2147483647
-      - name: Upload code analysis results
-        uses: github/codeql-action/upload-sarif@main
-        with:
-          sarif_file: results.sarif
+      # - name: Upload code analysis results
+      #   uses: github/codeql-action/upload-sarif@main
+      #   with:
+      #     sarif_file: results.sarif
       - name: License scan
         uses: fossas/fossa-action@main
         with:
