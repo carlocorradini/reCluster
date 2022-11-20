@@ -28,6 +28,5 @@ export type K8sNode = {
   id: string;
   name: string;
   address: string;
-  hostname: string;
   status: UpdateStatusInput;
 };

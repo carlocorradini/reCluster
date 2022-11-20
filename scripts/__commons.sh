@@ -148,13 +148,7 @@ to_log_level_name() {
 # Check if log level is enabled
 # @param $1 Log level
 is_log_level_enabled() {
-  if [ "$1" -le "$LOG_LEVEL" ]; then
-    # Enabled
-    return 0
-  else
-    # Disabled
-    return 1
-  fi
+  [ "$1" -le "$LOG_LEVEL" ]
 }
 
 # Print log message

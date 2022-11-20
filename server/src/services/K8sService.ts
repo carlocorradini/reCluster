@@ -80,9 +80,6 @@ export class K8sService {
     const address: string | undefined = node.status?.addresses?.find(
       (a) => a.type === 'InternalIP'
     )?.address;
-    const hostname: string | undefined = node.status?.addresses?.find(
-      (a) => a.type === 'HostName'
-    )?.address;
     const ready: k8s.V1NodeCondition | undefined =
       node?.status?.conditions?.find((c) => c.type === 'Ready');
 
@@ -94,7 +91,6 @@ export class K8sService {
       );
     if (!name) throw new K8sError(`K8s node '${id}' name not found`);
     if (!address) throw new K8sError(`K8s node '${id}' address not found`);
-    if (!hostname) throw new K8sError(`K8s node '${id}' hostname not found`);
     if (!ready)
       throw new K8sError(`K8s node '${id}' ready condition not found`);
 
@@ -119,7 +115,6 @@ export class K8sService {
       id,
       name,
       address,
-      hostname,
       status: {
         status,
         reason: ready.reason,

@@ -48,7 +48,7 @@ import { Context } from './types';
 process.env.TZ = 'Etc/UTC';
 
 // Server
-const server = Fastify({ logger });
+const server = Fastify();
 // Apollo
 const apollo = new ApolloServer<Context>({
   schema,
@@ -93,10 +93,10 @@ async function main() {
 async function terminate(signal: NodeJS.Signals) {
   logger.warn(`Received '${signal}' signal`);
 
+  // Container
+  await container.dispose();
   // Database
   await prisma.$disconnect();
-  // K8s
-  await container.resolve(NodeInformer).stop();
   // Apollo
   await apollo.stop();
   // Server

@@ -23,7 +23,7 @@
  */
 
 import * as k8s from '@kubernetes/client-node';
-import { inject, injectable, singleton } from 'tsyringe';
+import { Disposable, inject, injectable, singleton } from 'tsyringe';
 import convert from 'convert';
 import type { K8sNode } from '~/types';
 import { logger } from '~/logger';
@@ -33,12 +33,14 @@ import { kubeconfig } from './kubeconfig';
 
 @singleton()
 @injectable()
-export class NodeInformer {
+export class NodeInformer implements Disposable {
   public static readonly RESTART_TIME: number = convert(3, 's').to('ms');
 
   private readonly api: k8s.CoreV1Api;
 
   private readonly informer: k8s.Informer<k8s.V1Node>;
+
+  private timeoutId: NodeJS.Timeout | undefined;
 
   public constructor(
     @inject(NodeService)
@@ -49,7 +51,6 @@ export class NodeInformer {
     this.informer = k8s.makeInformer(kubeconfig, '/api/v1/nodes', () =>
       this.api.listNode()
     );
-
     this.informer.on(k8s.ADD, (node: k8s.V1Node) => this.on(k8s.ADD, node));
     this.informer.on(k8s.UPDATE, (node: k8s.V1Node) =>
       this.on(k8s.UPDATE, node)
@@ -59,12 +60,19 @@ export class NodeInformer {
     );
     this.informer.on(k8s.CONNECT, this.onConnect.bind(this));
     this.informer.on(k8s.ERROR, this.onError.bind(this));
+
+    this.timeoutId = undefined;
+  }
+
+  public async dispose() {
+    await this.stop();
   }
 
   private restart() {
     logger.info(`Restarting Node informer in ${NodeInformer.RESTART_TIME} ms`);
 
-    setTimeout(async () => {
+    this.timeoutId = setTimeout(async () => {
+      this.timeoutId = undefined;
       await this.start();
     }, NodeInformer.RESTART_TIME);
   }
@@ -85,6 +93,8 @@ export class NodeInformer {
 
   public async stop() {
     logger.info('Stopping Node informer');
+
+    if (this.timeoutId) clearTimeout(this.timeoutId);
     await this.informer.stop();
   }
 
@@ -107,7 +117,6 @@ export class NodeInformer {
       data: {
         name: node.name,
         address: node.address,
-        hostname: node.hostname,
         status: node.status
       }
     });
@@ -121,7 +130,6 @@ export class NodeInformer {
       data: {
         name: node.name,
         address: node.address,
-        hostname: node.hostname,
         status: node.status
       }
     });

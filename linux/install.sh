@@ -700,7 +700,7 @@ node_registration() {
   INFO "Registering node at '$_server_url'"
 
   # Send node registration request
-  DEBUG "Sending node registration request data '$_request_data' to '$_server_url'"
+  DEBUG "Sending node registration request data to '$_server_url'" "$_request_data"
   case $DOWNLOADER in
     curl)
       _response_data=$(
@@ -930,10 +930,12 @@ verify_system() {
   [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."node-name"))')" = false ] || FATAL "K3s 'node-name' must not be provided"
   # K3s node id
   [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."with-node-id"))')" = false ] || FATAL "K3s 'with-node-id' must not be provided"
+  # K3s write-kubeconfig-mode
+  [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."write-kubeconfig-mode"))')" = false ] || FATAL "K3s 'write-kubeconfig-mode' must not be provided"
 
   # reCluster server URL
   _recluster_server_url=$(echo "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires 'server'"
-  assert_url_reachability "$_recluster_server_url/health"
+  [ "$INIT_CLUSTER" = true ] || assert_url_reachability "$_recluster_server_url/health"
 
   # SSH
   _ssh_authorized_keys=$(echo "$CONFIG" | jq --exit-status '.ssh_authorized_keys') || FATAL "Configuration requires 'ssh_authorized_keys' array"
@@ -978,14 +980,14 @@ EOF
     _supports_wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')
 
     case $_supports_wol in
-      '' | *[!b]*)
-        # WoL not supported
-        WARN "Interface '$_iname' does not support Wake-on-Lan"
+      *g*)
+        # WoL supported
+        _wol=$($SUDO ethtool "$_iname" | grep 'Wake-on' | grep -v 'Supports Wake-on' | sed 's/Wake-on://g' | sed 's/[[:space:]]*//g')
+        [ "$_wol" != d ] || FATAL "Interface '$_iname' Wake-on-Lan is disabled"
         ;;
       *)
-        # WoL supported
-        _wol=$($SUDO ethtool "$_iname" | grep 'Wake-on' | grep --invert-match 'Supports Wake-on' | sed 's/Wake-on://g' | sed 's/[[:space:]]*//g')
-        [ "$_wol" != d ] || FATAL "Interface '$_iname' Wake-on-Lan is disabled"
+        # WoL not supported
+        WARN "Interface '$_iname' does not support Wake-on-Lan"
         ;;
     esac
   done << EOF
@@ -1000,7 +1002,14 @@ setup_system() {
   DEBUG "Created temporary directory '$TMP_DIR'"
 
   # SSH
+  _ssh_authorized_keys_dir=$(dirname "$SSH_AUTHORIZED_KEYS_FILE")
   _ssh_authorized_keys=$(echo "$CONFIG" | jq '.ssh_authorized_keys')
+  # Create directory if not exists
+  [ -d "$_ssh_authorized_keys_dir" ] || {
+    WARN "Creating SSH authorized keys directory '$_ssh_authorized_keys_dir'"
+    $SUDO mkdir -p "$_ssh_authorized_keys_dir"
+  }
+  # Add keys
   while read -r _pub_key; do
     DEBUG "Adding public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
     $SUDO echo "$_pub_key" >> "$SSH_AUTHORIZED_KEYS_FILE" || FATAL "Error adding public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
@@ -1357,19 +1366,25 @@ cluster_init() {
     _k3s_kubeconfig_dir=$(dirname "$_k3s_kubeconfig_file")
     _k3s_kubeconfig_file_name=$(basename "$_k3s_kubeconfig_file")
 
-    INFO "Waiting K3s kubeconfig file at '$_k3s_kubeconfig_file'"
     if [ -f "$_k3s_kubeconfig_file" ]; then
-      DEBUG "K3s kubeconfig file already generated at '$_k3s_kubeconfig_file'"
-      return 0
-    fi
-    inotifywait -e create,close_write,moved_to --monitor --quiet "$_k3s_kubeconfig_dir" \
-      | while read -r _dir _action _file; do
+      # kubeconfig already exists
+      INFO "K3s kubeconfig file already generated at '$_k3s_kubeconfig_file'"
+    else
+      # kubeconfig wait generation
+      INFO "Waiting K3s kubeconfig file at '$_k3s_kubeconfig_file'"
+
+      _k3s_kubeconfig_generated=false
+      while [ "$_k3s_kubeconfig_generated" = false ]; do
+        read -r _dir _action _file << EOF
+$(inotifywait -e create,close_write,moved_to --quiet "$_k3s_kubeconfig_dir")
+EOF
         DEBUG "File '$_file' notify '$_action' at '$_dir'"
         if [ "$_file" = "$_k3s_kubeconfig_file_name" ]; then
           DEBUG "K3s kubeconfig file generated"
-          return 0
+          _k3s_kubeconfig_generated=true
         fi
       done
+    fi
   }
 
   # Start and stop K3s service to generate initial configuration
@@ -1392,15 +1407,12 @@ cluster_init() {
   esac
 
   # Copy kubeconfig
-  if [ -f "$_kubeconfig_file" ]; then
-    WARN "Skipping copying K3s kubeconfig from '$_k3s_kubeconfig_file' to '$_kubeconfig_file' because it already exists"
-  else
-    INFO "Copying K3s kubeconfig from '$_k3s_kubeconfig_file' to '$_kubeconfig_file'"
-    _kubeconfig_dir=$(dirname "$_kubeconfig_file")
-    [ -d "$_kubeconfig_dir" ] || mkdir "$_kubeconfig_dir"
-    $SUDO cp "$_k3s_kubeconfig_file" "$_kubeconfig_file"
-    $SUDO chmod 0644 "$_kubeconfig_file"
-  fi
+  INFO "Copying K3s kubeconfig from '$_k3s_kubeconfig_file' to '$_kubeconfig_file'"
+  _kubeconfig_dir=$(dirname "$_kubeconfig_file")
+  [ -d "$_kubeconfig_dir" ] || mkdir -p "$_kubeconfig_dir"
+  [ ! -f "$_kubeconfig_file" ] || rm -f "$_kubeconfig_file"
+  $SUDO cp "$_k3s_kubeconfig_file" "$_kubeconfig_file"
+  $SUDO chmod 0644 "$_kubeconfig_file"
 
   # Read kubeconfig
   WARN "kubeconfig:"
@@ -1467,7 +1479,7 @@ install_recluster() {
 
   # Update K3s configuration
   INFO "Updating K3s configuration '$_k3s_config_file'"
-  $SUDO k3s_node_name="$_node_name" k3s_label_id="$_node_label_id" yq e '.node-name = env(k3s_node_name) | .node-label += [env(k3s_label_id)] | (.. | select(tag == "!!str")) style="double"' -i "$_k3s_config_file"
+  $SUDO yq e '.node-name = "'"$_k3s_node_name"'" | .node-label += ["'"$_node_label_id"'"] | (.. | select(tag == "!!str")) style="double"' -i "$_k3s_config_file"
 
   #
   # Scripts

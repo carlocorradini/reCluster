@@ -283,7 +283,7 @@ export class NodeService {
       const node = await this.findUniqueOrThrow(
         {
           where: { id: args.where.id },
-          select: { nodePoolId: true, nodePoolAssigned: true, hostname: true }
+          select: { nodePoolId: true, nodePoolAssigned: true, address: true }
         },
         prisma
       );
@@ -293,7 +293,7 @@ export class NodeService {
         );
 
       // Shutdown
-      const ssh = await SSH.connect({ host: node.hostname });
+      const ssh = await SSH.connect({ host: node.address });
       await ssh.execCommand({
         command: 'sudo poweroff',
         disconnect: true

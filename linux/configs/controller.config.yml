@@ -25,6 +25,5 @@ k3s:
   cluster-init: true # TODO First controller only !
   cluster-domain: recluster.local
   flannel-backend: host-gw
-  write-kubeconfig-mode: 644
   node-taint:
     - CriticalAddonsOnly=true:NoExecute
