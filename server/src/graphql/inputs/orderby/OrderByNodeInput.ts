@@ -60,9 +60,6 @@ export class OrderByNodeInput
   })
   address?: SortOrderEnum;
 
-  @Field(() => SortOrderEnum, { nullable: true, description: 'Node hostname' })
-  hostname?: SortOrderEnum;
-
   @Field(() => SortOrderEnum, { nullable: true, description: 'Node memory' })
   memory?: SortOrderEnum;
 

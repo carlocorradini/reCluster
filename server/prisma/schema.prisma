@@ -56,7 +56,6 @@ model Node {
   roles                          NodeRoleEnum[]
   permissions                    NodePermissionEnum[] @default([])
   address                        String               @unique
-  hostname                       String               @unique
   status                         Status?
   cpu                            Cpu                  @relation(fields: [cpuId], references: [id], map: "cpu_id")
   cpuId                          String               @db.Uuid
@@ -100,7 +99,7 @@ enum NodeStatusEnum {
   ACTIVE
   ACTIVE_READY
   ACTIVE_NOT_READY
-  ACTIVE_DELETE
+  ACTIVE_DELETING
   BOOTING
   INACTIVE
   UNKNOWN
@@ -136,7 +135,6 @@ model Interface {
 enum WoLFlagEnum {
   a
   b
-  d
   g
   m
   p

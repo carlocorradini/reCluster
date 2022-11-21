@@ -30,7 +30,6 @@ import { AuthenticationError } from '~/errors';
 
 export const context: ApolloFastifyContextFunction<Context> = async ({
   ip,
-  hostname,
   headers
 }): Promise<Context> => {
   let applicant: TokenPayload | undefined;
@@ -64,5 +63,5 @@ export const context: ApolloFastifyContextFunction<Context> = async ({
     }
   }
 
-  return <Context>{ ip, hostname, applicant };
+  return { ip, applicant };
 };

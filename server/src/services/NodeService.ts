@@ -123,7 +123,7 @@ export class NodeService {
         select: { id: true, roles: true },
         data: {
           ...args.data,
-          name: `dummy.${args.data.hostname}`,
+          name: `dummy.${args.data.address}`,
           status: {
             create: {
               status: NodeStatusEnum.ACTIVE,
@@ -261,7 +261,7 @@ export class NodeService {
           data: {
             nodePoolAssigned: false,
             status: {
-              status: NodeStatusEnum.ACTIVE_DELETE,
+              status: NodeStatusEnum.ACTIVE_DELETING,
               reason: 'NodeUnassign',
               message: 'Node unassign'
             }

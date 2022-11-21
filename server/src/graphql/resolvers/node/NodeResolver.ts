@@ -72,7 +72,7 @@ export class NodeResolver implements ResolverInterface<Node> {
   public createNode(@Args() args: CreateNodeArgs, @Ctx() context: Context) {
     return this.nodeService.create({
       ...args,
-      data: { ...args.data, address: context.ip, hostname: context.hostname }
+      data: { ...args.data, address: context.ip }
     });
   }
 

@@ -68,7 +68,6 @@ registerEnumType(WoLFlagEnum, {
   valuesConfig: {
     a: { description: 'Wake on ARP' },
     b: { description: 'Wake on broadcast messages' },
-    d: { description: 'Disable' },
     g: { description: 'Wake on MagicPacket' },
     m: { description: 'Wake on multicast messages' },
     p: { description: 'Wake on PHY activity' },
@@ -104,8 +103,8 @@ registerEnumType(NodeStatusEnum, {
     ACTIVE_NOT_READY: {
       description: 'Node is active but not healthy and is not accepting pods'
     },
-    ACTIVE_DELETE: {
-      description: 'Node is active and delete'
+    ACTIVE_DELETING: {
+      description: 'Node is active and is deleting from K8s'
     },
     BOOTING: {
       description: 'Node is booting'

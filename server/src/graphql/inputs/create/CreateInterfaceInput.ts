@@ -48,6 +48,6 @@ export class CreateInterfaceInput implements ICreateInterfaceInput {
     description: 'Interface Wake-on-Lan flags'
   })
   @ArrayUnique()
-  @ArrayNotContains([WoLFlagEnum.d])
+  @ArrayNotContains(['d'])
   wol?: WoLFlagEnum[];
 }

@@ -110,7 +110,7 @@ export class StatusService {
         case NodeStatusEnum.ACTIVE:
         case NodeStatusEnum.ACTIVE_READY:
         case NodeStatusEnum.ACTIVE_NOT_READY:
-        case NodeStatusEnum.ACTIVE_DELETE:
+        case NodeStatusEnum.ACTIVE_DELETING:
         case NodeStatusEnum.BOOTING:
         case NodeStatusEnum.INACTIVE:
           // Update last heartbeat

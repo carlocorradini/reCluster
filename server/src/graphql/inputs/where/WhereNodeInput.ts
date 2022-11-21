@@ -68,9 +68,6 @@ export class WhereNodeInput
   @Field({ nullable: true, description: 'Node IP address' })
   address?: StringFilter;
 
-  @Field({ nullable: true, description: 'Node hostname' })
-  hostname?: StringFilter;
-
   @Field({ nullable: true, description: 'Node memory' })
   memory?: BigIntFilter;
 

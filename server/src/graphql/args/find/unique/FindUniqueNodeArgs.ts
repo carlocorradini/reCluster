@@ -37,7 +37,4 @@ export class FindUniqueNodeArgs implements Prisma.NodeWhereUniqueInput {
 
   @Field(() => GraphQLIP, { nullable: true, description: 'Node IP address' })
   address?: string;
-
-  @Field(() => GraphQLID, { nullable: true, description: 'Node hostname' })
-  hostname?: string;
 }

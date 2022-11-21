@@ -55,9 +55,6 @@ export class Node implements Prisma.Node {
   @Field(() => GraphQLIP, { description: 'Node IP address' })
   address!: string;
 
-  @Field(() => GraphQLString, { description: 'Node hostname' })
-  hostname!: string;
-
   cpuId!: string;
 
   nodePoolId!: string;
