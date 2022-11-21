@@ -55,10 +55,10 @@ reCluster is an architecture for a data center that actively reduces its impact 
    find . -type f -name "*.sh" -print0 | xargs -0 chmod u+x
    ```
 
-1. Install dependencies
+1. Execute [initialization](./scripts/init.sh) script
 
    ```sh
-   npm ci && npm --prefix server install
+   ./scripts/init.sh
    ```
 
 ## Simulate Cluster

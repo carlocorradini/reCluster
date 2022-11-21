@@ -17,7 +17,7 @@ reCluster bundle script.
 
 > **Note**: Type `--help` for more information
 
-> **Note**: [commons arguments](#arguments-2) available
+> **Note**: [commons arguments](#commons-arguments) available
 
 | **Name**               | **Description**            | **Default**         | **Values**     |
 | ---------------------- | -------------------------- | ------------------- | -------------- |
@@ -43,7 +43,7 @@ _token_passphrase="password"
 
 > **Note**: Type `--help` for more information
 
-> **Note**: [commons arguments](#arguments-2) available
+> **Note**: [commons arguments](#commons-arguments) available
 
 | **Name**                          | **Description**                 | **Default** | **Values**               |
 | --------------------------------- | ------------------------------- | ----------- | ------------------------ |
@@ -56,13 +56,31 @@ _token_passphrase="password"
 | `--token-name <NAME>`             | Token key name                  | `token`     | Any valid name           |
 | `--token-passphrase <PASSPHRASE>` | Token passphrase                |             | Any valid passphrase     |
 
+## :bookmark_tabs: [`init.sh`](./init.sh)
+
+reCluster initialization script.
+
+```sh
+./init.sh
+```
+
+### Arguments
+
+> **Note**: Type `--help` for more information
+
+> **Note**: [commons arguments](#commons-arguments) available
+
+| **Name** | **Description**            | **Default** | **Values** |
+| -------- | -------------------------- | ----------- | ---------- |
+| `--help` | Show help message and exit |
+
 ## :bookmark_tabs: [`__commons.sh`](./__commons.sh)
 
 > **Warning**: Included (`. path/to/__commons.sh`) by other scripts
 
 Common functions and helpers.
 
-### Arguments
+<h3 id="commons-arguments">Arguments</h3>
 
 | **Name**              | **Description** | **Default** | **Values**                                                                                                                          |
 | --------------------- | --------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |

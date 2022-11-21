@@ -79,7 +79,7 @@ reCluster installation script.
 
 > **Note**: Type `--help` for more information
 
-> **Note**: [commons arguments](../scripts/README.md#arguments-2) available
+> **Note**: [commons arguments](../scripts/README.md#commons-arguments) available
 
 | **Name**                            | **Description**                                                                            | **Default**                                     | **Values**                |
 | ----------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------------------------- |
