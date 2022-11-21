@@ -57,12 +57,12 @@ model Node {
   permissions                    NodePermissionEnum[] @default([])
   address                        String               @unique
   status                         Status?
-  cpu                            Cpu                  @relation(fields: [cpuId], references: [id], map: "cpu_id")
+  cpu                            Cpu                  @relation(fields: [cpuId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "cpu_id")
   cpuId                          String               @db.Uuid
   memory                         BigInt
   storages                       Storage[]
   interfaces                     Interface[]
-  nodePool                       NodePool             @relation(fields: [nodePoolId], references: [id], map: "node_pool_id")
+  nodePool                       NodePool             @relation(fields: [nodePoolId], references: [id], onDelete: Restrict, onUpdate: Cascade, map: "node_pool_id")
   nodePoolId                     String               @db.Uuid
   nodePoolAssigned               Boolean              @default(false) @map("node_pool_assigned")
   minPowerConsumption            Int                  @map("min_power_consumption")
@@ -86,7 +86,7 @@ enum NodePermissionEnum {
 
 model Status {
   id             String         @id @db.Uuid
-  node           Node           @relation(fields: [id], references: [id])
+  node           Node           @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   status         NodeStatusEnum
   reason         String?
   message        String?
@@ -107,7 +107,7 @@ enum NodeStatusEnum {
 
 model Storage {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  node      Node     @relation(fields: [nodeId], references: [id], map: "node_id")
+  node      Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "node_id")
   nodeId    String   @db.Uuid
   name      String
   size      BigInt
@@ -119,7 +119,7 @@ model Storage {
 
 model Interface {
   id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  node      Node          @relation(fields: [nodeId], references: [id], map: "node_id")
+  node      Node          @relation(fields: [nodeId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "node_id")
   nodeId    String        @db.Uuid
   name      String
   address   String
