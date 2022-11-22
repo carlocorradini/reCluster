@@ -22,9 +22,11 @@
  * SOFTWARE.
  */
 
+/* ! Always on top ! */
 import 'reflect-metadata';
 import 'json-bigint-patch';
 import 'dotenv/config';
+/*  */
 import { container } from 'tsyringe';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import fs from 'fs';
+import fs from 'node:fs';
 import { host, port, str, url, cleanEnv, makeValidator } from 'envalid';
 
 const fileValidator = makeValidator((file) => {

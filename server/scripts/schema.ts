@@ -25,6 +25,8 @@
  */
 
 import 'reflect-metadata';
+import 'json-bigint-patch';
+import 'dotenv/config';
 import yargs from 'yargs';
 import pino from 'pino';
 import { lexicographicSortSchema } from 'graphql';
@@ -48,9 +50,10 @@ const argv = yargs(process.argv.slice(2))
   .help()
   .parseSync();
 
+// Generate schema string
+logger.debug('Generating GraphQL schema string');
+const schemaString = printSchemaWithDirectives(lexicographicSortSchema(schema));
+
 // Save schema
 logger.info(`Saving GraphQL schema to '${argv.output}'`);
-outputFileSync(
-  argv.output,
-  printSchemaWithDirectives(lexicographicSortSchema(schema))
-);
+outputFileSync(argv.output, schemaString);
