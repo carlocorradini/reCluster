@@ -37,7 +37,7 @@ AIRGAP_ENV=false
 # Benchmark time in seconds
 BENCH_TIME=30
 # Configuration file
-CONFIG_FILE="config.yml"
+CONFIG_FILE="configs/recluster.yml"
 # Initialize cluster
 INIT_CLUSTER=false
 # K3s version
@@ -58,6 +58,10 @@ RECLUSTER_ETC_DIR="/etc/recluster"
 RECLUSTER_OPT_DIR="/opt/recluster"
 # SSH authorized keys file
 SSH_AUTHORIZED_KEYS_FILE="/root/.ssh/authorized_keys"
+# SSH configuration file
+SSH_CONFIG_FILE="configs/ssh_config"
+# SSH server configuration file
+SSHD_CONFIG_FILE="configs/sshd_config"
 
 # ================
 # GLOBALS
@@ -97,64 +101,74 @@ show_help() {
 Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config-file <FILE>] [--help]
         [--init-cluster] [--k3s-version <VERSION>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-        [--ssh-authorized-keys-file <FILE>]
+        [--ssh-authorized-keys-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>]
 
 $HELP_COMMONS_USAGE
 
 reCluster installation script.
 
 Options:
-  --airgap                                Perform installation in Air-Gap environment
+  --airgap                           Perform installation in Air-Gap environment
 
-  --bench-time <TIME>                     Benchmark execution time in seconds
-                                          Default: $BENCH_TIME
-                                          Values:
-                                            Any positive number
+  --bench-time <TIME>                Benchmark execution time in seconds
+                                     Default: $BENCH_TIME
+                                     Values:
+                                       Any positive number
 
-  --config-file <FILE>                    Configuration file
-                                          Default: $CONFIG_FILE
-                                          Values:
-                                            Any valid file
+  --config-file <FILE>               Configuration file
+                                     Default: $CONFIG_FILE
+                                     Values:
+                                       Any valid file
 
-  --help                                  Show this help message and exit
+  --help                             Show this help message and exit
 
-  --init-cluster                          Initialize cluster components and logic
-                                          Enable only when bootstrapping for the first time
+  --init-cluster                     Initialize cluster components and logic
+                                       Enable only when bootstrapping for the first time
 
-  --k3s-version <VERSION>                 K3s version
-                                          Default: $K3S_VERSION
-                                          Values:
-                                            Any K3s version
+  --k3s-version <VERSION>            K3s version
+                                     Default: $K3S_VERSION
+                                     Values:
+                                       Any K3s version
 
-  --node-exporter-version <VERSION>       Node exporter version
-                                          Default: $NODE_EXPORTER_VERSION
-                                          Values:
-                                            Any Node exporter version
+  --node-exporter-version <VERSION>  Node exporter version
+                                     Default: $NODE_EXPORTER_VERSION
+                                     Values:
+                                       Any Node exporter version
 
-  --pc-device-api <URL>                   Power consumption device api URL
-                                          Default: $PC_DEVICE_API
-                                          Values:
-                                            Any valid URL
+  --pc-device-api <URL>              Power consumption device api URL
+                                     Default: $PC_DEVICE_API
+                                     Values:
+                                       Any valid URL
 
-  --pc-interval <TIME>                    Power consumption read interval time in seconds
-                                          Default: $PC_INTERVAL
-                                          Values:
-                                            Any positive number
+  --pc-interval <TIME>               Power consumption read interval time in seconds
+                                     Default: $PC_INTERVAL
+                                     Values:
+                                       Any positive number
 
-  --pc-time <TIME>                        Power consumption execution time in seconds
-                                          Default: $PC_TIME
-                                          Values:
-                                            Any positive number
+  --pc-time <TIME>                   Power consumption execution time in seconds
+                                     Default: $PC_TIME
+                                     Values:
+                                       Any positive number
 
-  --pc-warmup <TIME>                      Power consumption warmup time in seconds
-                                          Default: $PC_WARMUP
-                                          Values:
-                                            Any positive number
+  --pc-warmup <TIME>                 Power consumption warmup time in seconds
+                                     Default: $PC_WARMUP
+                                     Values:
+                                       Any positive number
 
-  --ssh-authorized-keys-file <FILE>       SSH authorized keys file
-                                          Default: $SSH_AUTHORIZED_KEYS_FILE
-                                          Values:
-                                            Any valid file
+  --ssh-authorized-keys-file <FILE>  SSH authorized keys file
+                                     Default: $SSH_AUTHORIZED_KEYS_FILE
+                                     Values:
+                                       Any valid file
+
+  --ssh-config-file <FILE>           SSH configuration file
+                                     Default: $SSH_CONFIG_FILE
+                                     Values:
+                                       Any valid file
+
+  --sshd-config-file <FILE>          SSH server configuration file
+                                     Default: $SSHD_CONFIG_FILE
+                                     Values:
+                                       Any valid file
 
 $HELP_COMMONS_OPTIONS
 EOF
@@ -843,6 +857,20 @@ parse_args() {
         SSH_AUTHORIZED_KEYS_FILE=$2
         _shifts=2
         ;;
+      --ssh-config-file)
+        # SSH configuration file
+        parse_args_assert_value "$@"
+
+        SSH_CONFIG_FILE=$2
+        _shifts=2
+        ;;
+      --sshd-config-file)
+        # SSH server configuration file
+        parse_args_assert_value "$@"
+
+        SSHD_CONFIG_FILE=$2
+        _shifts=2
+        ;;
       *)
         # Commons
         parse_args_commons "$@"
@@ -914,7 +942,7 @@ verify_system() {
   [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "reCluster directory '$RECLUSTER_OPT_DIR' already exists"
 
   # Configuration
-  [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' not found"
+  [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' does not exists"
   INFO "Reading configuration file '$CONFIG_FILE'"
   CONFIG=$(yq e --output-format=json --no-colors '.' "$CONFIG_FILE") || FATAL "Error reading configuration file '$CONFIG_FILE'"
   DEBUG "Configuration:" "$CONFIG"
@@ -937,7 +965,7 @@ verify_system() {
   _recluster_server_url=$(echo "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires 'server'"
   [ "$INIT_CLUSTER" = true ] || assert_url_reachability "$_recluster_server_url/health"
 
-  # SSH
+  # SSH Authorized keys
   _ssh_authorized_keys=$(echo "$CONFIG" | jq --exit-status '.ssh_authorized_keys') || FATAL "Configuration requires 'ssh_authorized_keys' array"
   [ "$(echo "$_ssh_authorized_keys" | jq --raw-output 'type == "array"')" = true ] || FATAL "'ssh_authorized_keys' is not an array"
   [ "$(echo "$_ssh_authorized_keys" | jq --raw-output 'length')" -ge 1 ] || FATAL "'ssh_authorized_keys' is empty"
@@ -946,6 +974,10 @@ verify_system() {
   done << EOF
 $(echo "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
 EOF
+  # SSH configuration file
+  [ -f "$SSH_CONFIG_FILE" ] || FATAL "SSH configuration file '$SSH_CONFIG_FILE' does not exists"
+  # SSH server configuration file
+  [ -f "$SSHD_CONFIG_FILE" ] || FATAL "SSH server configuration file '$SSHD_CONFIG_FILE' does not exists"
 
   # Cluster initialization
   if [ "$INIT_CLUSTER" = true ]; then
@@ -1000,22 +1032,6 @@ setup_system() {
   # Temporary directory
   TMP_DIR=$(mktemp --directory -t recluster.XXXXXXXX)
   DEBUG "Created temporary directory '$TMP_DIR'"
-
-  # SSH
-  _ssh_authorized_keys_dir=$(dirname "$SSH_AUTHORIZED_KEYS_FILE")
-  _ssh_authorized_keys=$(echo "$CONFIG" | jq '.ssh_authorized_keys')
-  # Create directory if not exists
-  [ -d "$_ssh_authorized_keys_dir" ] || {
-    WARN "Creating SSH authorized keys directory '$_ssh_authorized_keys_dir'"
-    $SUDO mkdir -p "$_ssh_authorized_keys_dir"
-  }
-  # Add keys
-  while read -r _pub_key; do
-    DEBUG "Adding public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
-    $SUDO echo "$_pub_key" >> "$SSH_AUTHORIZED_KEYS_FILE" || FATAL "Error adding public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
-  done << EOF
-$(echo "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
-EOF
 
   # Airgap
   if [ "$AIRGAP_ENV" = true ]; then
@@ -1727,6 +1743,47 @@ EOF
   INFO "Successfully installed reCluster"
 }
 
+# Setup SSH
+setup_ssh() {
+  _ssh_config_file="/etc/ssh/ssh_config"
+  _ssh_config_dir=$(dirname "$_ssh_config_file")
+  _sshd_config_file="/etc/ssh/sshd_config"
+  _sshd_config_dir=$(dirname "$_sshd_config_file")
+  _ssh_authorized_keys=$(printf "%s\n" "$CONFIG" | jq '.ssh_authorized_keys')
+  _ssh_authorized_keys_dir=$(dirname "$SSH_AUTHORIZED_KEYS_FILE")
+
+  # Directories
+  # SSH configuration
+  [ -d "$_ssh_config_dir" ] || {
+    WARN "Creating SSH configuration directory '$_ssh_config_dir'"
+    $SUDO mkdir -p "$_ssh_config_dir"
+  }
+  # SSH server configuration
+  [ -d "$_sshd_config_dir" ] || {
+    WARN "Creating SSH server configuration directory '$_sshd_config_dir'"
+    $SUDO mkdir -p "$_sshd_config_dir"
+  }
+  # SSH authorized keys
+  [ -d "$_ssh_authorized_keys_dir" ] || {
+    WARN "Creating SSH authorized keys directory '$_ssh_authorized_keys_dir'"
+    $SUDO mkdir -p "$_ssh_authorized_keys_dir"
+  }
+
+  # SSH configuration
+  DEBUG "Copying SSH configuration file from '$SSH_CONFIG_FILE' to '$_ssh_config_file'"
+  yes | $SUDO cp --force "$SSH_CONFIG_FILE" "$_ssh_config_file"
+  # SSH server configuration
+  DEBUG "Copying SSH server configuration file from '$SSHD_CONFIG_FILE' to '$_sshd_config_file'"
+  yes | $SUDO cp --force "$SSHD_CONFIG_FILE" "$_sshd_config_file"
+  # SSH Authorized keys
+  while read -r _pub_key; do
+    DEBUG "Copying SSH public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
+    $SUDO printf "%s\n" "$_pub_key" >> "$SSH_AUTHORIZED_KEYS_FILE" || FATAL "Error adding public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
+  done << EOF
+$(echo "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
+EOF
+}
+
 # Start recluster
 start_recluster() {
   spinner_start "Starting reCluster"
@@ -1761,5 +1818,6 @@ start_recluster() {
   install_node_exporter
   cluster_init
   install_recluster
+  setup_ssh
   start_recluster
 }

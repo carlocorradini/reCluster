@@ -85,7 +85,7 @@ reCluster installation script.
 | ----------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------------------------- |
 | `--airgap`                          | Perform installation in Air-Gap environment                                                | `false`                                         |
 | `--bench-time <TIME>`               | Benchmark execution time in seconds                                                        | `30`                                            | Any positive number       |
-| `--config-file <FILE>`              | Configuration file                                                                         | `config.yml`                                    | Any valid file            |
+| `--config-file <FILE>`              | Configuration file                                                                         | `configs/recluster.yml`                         | Any valid file            |
 | `--help`                            | Show help message and exit                                                                 |
 | `--init-cluster`                    | Initialize cluster components and logic. Enable only when bootstrapping for the first time | `false`                                         |
 | `--k3s-version <VERSION>`           | K3s version                                                                                | `latest`                                        | Any K3s version           |
@@ -95,3 +95,5 @@ reCluster installation script.
 | `--pc-time <TIME>`                  | Power consumption execution time in seconds                                                | `30`                                            | Any positive number       |
 | `--pc-warmup <TIME>`                | Power consumption warmup time in seconds                                                   | `10`                                            | Any positive number       |
 | `--ssh-authorized-keys-file <FILE>` | SSH authorized keys file                                                                   | `/root/.ssh/authorized_keys`                    | Any valid file            |
+| `--ssh-config-file <FILE>`          | SSH configuration file                                                                     | `configs/ssh_config`                            | Any valid file            |
+| `--sshd-config-file <FILE>`         | SSH server configuration file                                                              | `configs/sshd_config`                           | Any valid file            |

@@ -38,3 +38,11 @@ _merge="./controller.config.yml"
 | `--merge-file <FILE>`  | Merge file                 | `config.yml`        | Any valid file |
 | `--out-file <FILE>`    | Output file                | `output.yml`        | Any valid file |
 | `--overwrite`          | Overwrite merge file       | `false`             |
+
+## :bookmark_tabs: [`ssh_config`](./ssh_config)
+
+Visit <https://www.ssh.com/academy/ssh/config> for more information.
+
+## :bookmark_tabs: [`sshd_config`](./sshd_config)
+
+Visit <https://www.ssh.com/academy/ssh/sshd_config> for more information.

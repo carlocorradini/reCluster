@@ -4,5 +4,9 @@
   "eslint.workingDirectories": ["server"],
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "files.associations": {
+    "ssh_config": "ssh_config",
+    "sshd_config": "ssh_config"
   }
 }

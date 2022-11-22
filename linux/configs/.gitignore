@@ -5,3 +5,5 @@
 !/worker.config.yml
 !/configs.sh
 !/README.md
+!/ssh_config
+!/sshd_config
