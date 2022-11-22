@@ -36,6 +36,8 @@ linux:
         ./linux/configs/configs.sh --merge-file ./worker.config.yml --overwrite
     controller.config.yml: true
     worker.config.yml: true
+    ssh_config: true
+    sshd_config: true
   dependencies:
     __:
       run: |-
