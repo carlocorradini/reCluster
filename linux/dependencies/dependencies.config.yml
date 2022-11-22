@@ -20,6 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+autoscaler:
+  url: https://github.com/carlocorradini/autoscaler.git
+  assets:
+    - cluster-autoscaler.amd64.tar.gz
+    - cluster-autoscaler.arm64.tar.gz
+  releases:
+    - latest
+
 k3s:
   url: https://github.com/k3s-io/k3s.git
   assets:
