@@ -1645,6 +1645,7 @@ EOF
 #!/usr/bin/env sh
 
 # Load commons
+# inline skip
 . "$_opt_commons_script_file"
 
 # ================

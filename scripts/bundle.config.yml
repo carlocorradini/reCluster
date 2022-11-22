@@ -24,9 +24,18 @@ README.md: true
 LICENSE: true
 
 linux:
+  __:
+    run: |-
+      ./scripts/inline.sh --in-file ./install.sh --overwrite
   README.md: true
   install.sh: true
-  configs: true
+  configs:
+    __:
+      run: |-
+        ./linux/configs/configs.sh --merge-file ./controller.config.yml --overwrite
+        ./linux/configs/configs.sh --merge-file ./worker.config.yml --overwrite
+    controller.config.yml: true
+    worker.config.yml: true
   dependencies:
     __:
       run: |-
@@ -42,16 +51,12 @@ linux:
       README.md: true
       logo.png: true
       iso: true
-    arch:
-      __:
-        run: |-
-          ./linux/distributions/arch/build.sh
-      README.md: true
-      logo.png: true
-      iso: true
+    arch: false
 
 scripts:
-  __commons.sh: true
+  __:
+    run: |-
+      ./scripts/inline.sh --in-file ./certificates.sh --overwrite
   certificates.sh: true
   README.md: true
 

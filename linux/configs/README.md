@@ -31,9 +31,10 @@ _merge="./controller.config.yml"
 
 > **Note**: [commons arguments](../../scripts/README.md#commons-arguments) available
 
-| **Name**          | **Description**             | **Default**         | **Values**     |
-| ----------------- | --------------------------- | ------------------- | -------------- |
-| `--common <FILE>` | Common configuration file   | `common.config.yml` | Any valid file |
-| `--help`          | Show help message and exit  |
-| `--merge <FILE>`  | Configuration file to merge | `config.yml`        | Any valid file |
-| `--output <FILE>` | Output configuration file   | `output.yml`        | Any valid file |
+| **Name**               | **Description**            | **Default**         | **Values**     |
+| ---------------------- | -------------------------- | ------------------- | -------------- |
+| `--common-file <FILE>` | Common file                | `common.config.yml` | Any valid file |
+| `--help`               | Show help message and exit |
+| `--merge-file <FILE>`  | Merge file                 | `config.yml`        | Any valid file |
+| `--out-file <FILE>`    | Output file                | `output.yml`        | Any valid file |
+| `--overwrite`          | Overwrite merge file       | `false`             |

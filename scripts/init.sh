@@ -61,6 +61,8 @@ download_inline_script() {
 
   INFO "Downloading '$_script_url'"
   download "$_script_file" "$_script_url"
+  DEBUG "Setting 'execute' permission to '$_script_file'"
+  chmod u+x "$_script_file"
 }
 
 # Install dependencies

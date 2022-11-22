@@ -32,12 +32,14 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # ================
 # CONFIGURATION
 # ================
-# Configuration common file
-CONFIG_COMMON_FILE="common.config.yml"
-# Configuration file to merge
-CONFIG_MERGE_FILE="config.yml"
-# Configuration output file
-CONFIG_OUTPUT_FILE="output.yml"
+# Common file
+COMMON_FILE="common.config.yml"
+# Merge file
+MERGE_FILE="config.yml"
+# Output file
+OUT_FILE="output.yml"
+# Overwrite flag
+OVERWRITE=false
 
 # ================
 # FUNCTIONS
@@ -45,43 +47,37 @@ CONFIG_OUTPUT_FILE="output.yml"
 # Show help message
 show_help() {
   cat << EOF
-Usage: $(basename "$0") [--common <PATH>] [--help] [--merge <PATH>] [--output <PATH>]
+Usage: $(basename "$0") [--common-file <FILE>] [--help] [--merge-file <FILE>] [--out-file <FILE>] [--overwrite]
 
 $HELP_COMMONS_USAGE
 
 reCluster configurations script.
 
 Options:
-  --common <FILE>    Common configuration file
-                     Default: $CONFIG_COMMON_FILE
-                     Values:
-                       Any valid file
+  --common-file <FILE>  Common configuration file
+                        Default: $COMMON_FILE
+                        Values:
+                          Any valid file
 
-  --help             Show this help message and exit
+  --help                Show this help message and exit
 
-  --merge <FILE>     Configuration file to merge
-                     Default: $CONFIG_MERGE_FILE
-                     Values:
-                       Any valid file
+  --merge-file <FILE>   Configuration file to merge
+                        Default: $MERGE_FILE
+                        Values:
+                          Any valid file
 
-  --output <FILE>    Output configuration file
-                     Default: $CONFIG_OUTPUT_FILE
-                     Values:
-                       Any valid file
+  --output-file <FILE>  Output configuration file
+                        Default: $OUT_FILE
+                        Values:
+                          Any valid file
+
+  --overwrite           Overwrite merge file
 
 $HELP_COMMONS_OPTIONS
 EOF
 }
 
 ################################################################################################################################
-
-# Verify system
-verify_system() {
-  assert_cmd yq
-
-  [ -f "$CONFIG_MERGE_FILE" ] || FATAL "Merge file '$CONFIG_MERGE_FILE' does not exists"
-  [ -f "$CONFIG_COMMON_FILE" ] || FATAL "Common file '$CONFIG_COMMON_FILE' does not exists"
-}
 
 # Parse command line arguments
 # @param $@ Arguments
@@ -91,11 +87,11 @@ parse_args() {
     _shifts=1
 
     case $1 in
-      --common)
-        # Common config file
+      --common-file)
+        # Common file
         parse_args_assert_value "$@"
 
-        CONFIG_COMMON_FILE=$2
+        COMMON_FILE=$2
         _shifts=2
         ;;
       --help)
@@ -103,19 +99,23 @@ parse_args() {
         show_help
         exit 0
         ;;
-      --merge)
-        # Merge config file
+      --merge-file)
+        # Merge file
         parse_args_assert_value "$@"
 
-        CONFIG_MERGE_FILE=$2
+        MERGE_FILE=$2
         _shifts=2
         ;;
-      --output)
-        # Output config file
+      --out-file)
+        # Output file
         parse_args_assert_value "$@"
 
-        CONFIG_OUTPUT_FILE=$2
+        OUT_FILE=$2
         _shifts=2
+        ;;
+      --overwrite)
+        # Overwrite
+        OVERWRITE=true
         ;;
       *)
         # Commons
@@ -130,19 +130,30 @@ parse_args() {
       _shifts=$((_shifts = _shifts - 1))
     done
   done
+
+  [ "$OVERWRITE" = false ] || OUT_FILE=$MERGE_FILE
+}
+
+# Verify system
+verify_system() {
+  assert_cmd yq
+
+  [ -f "$COMMON_FILE" ] || FATAL "Common file '$COMMON_FILE' does not exists"
+  [ -f "$MERGE_FILE" ] || FATAL "Merge file '$MERGE_FILE' does not exists"
+  if [ "$OVERWRITE" = false ] && [ -f "$OUT_FILE" ]; then FATAL "Output file '$OUT_FILE' already exists"; fi
 }
 
 # Merge files
 merge_files() {
   _merged_file=
 
-  INFO "Merging '$CONFIG_MERGE_FILE' with '$CONFIG_COMMON_FILE'"
+  INFO "Merging '$MERGE_FILE' with '$COMMON_FILE'"
   # shellcheck disable=SC2016
-  _merged_file=$(yq eval-all '. as $item ireduce ({}; . * $item)' "$CONFIG_MERGE_FILE" "$CONFIG_COMMON_FILE") || FATAL "Error merging '$CONFIG_MERGE_FILE' with '$CONFIG_COMMON_FILE'"
+  _merged_file=$(yq eval-all '. as $item ireduce ({}; . * $item)' "$MERGE_FILE" "$COMMON_FILE") || FATAL "Error merging '$MERGE_FILE' with '$COMMON_FILE'"
   DEBUG "Merged file:" "$_merged_file"
 
-  INFO "Saving merged file to '$CONFIG_OUTPUT_FILE'"
-  echo "$_merged_file" | tee "$CONFIG_OUTPUT_FILE" > /dev/null
+  INFO "Saving merged file to '$OUT_FILE'"
+  printf "%s\n" "$_merged_file" | tee "$OUT_FILE" > /dev/null
 }
 
 # ================

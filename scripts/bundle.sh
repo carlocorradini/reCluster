@@ -74,7 +74,7 @@ trap cleanup INT QUIT TERM EXIT
 # Show help message
 show_help() {
   cat << EOF
-Usage: $(basename "$0") [--help] [--out-file <FILE>] [--skip-run]
+Usage: $(basename "$0") [--config-file <FILE>] [--help] [--out-file <FILE>] [--skip-run]
 
 $HELP_COMMONS_USAGE
 
