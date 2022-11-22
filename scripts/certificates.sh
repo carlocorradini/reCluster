@@ -34,18 +34,22 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # ================
 # Output directory
 OUT_DIR="./"
+# SSH comment
+SSH_COMMENT=""
 # SSH key name
 SSH_NAME="ssh"
 # SSH passphrase
 SSH_PASSPHRASE=
-# SSH bits
-SSH_BITS=2048
+# SSH rounds
+SSH_ROUNDS=256
+# Token bits
+TOKEN_BITS=4096
+# Token comment
+TOKEN_COMMENT=""
 # Token key name
 TOKEN_NAME="token"
 # Token passphrase
 TOKEN_PASSPHRASE=
-# Token bits
-TOKEN_BITS=4096
 
 # ================
 # GLOBALS
@@ -77,48 +81,58 @@ trap cleanup INT QUIT TERM EXIT
 show_help() {
   cat << EOF
 Usage: $(basename "$0") [--help] [--out-dir <DIRECTORY>]
-        [--ssh-bits <BITS>] [--ssh-name <NAME>] --ssh-passphrase <PASSPHRASE>
-        [--token-bits <BITS>] [--token-name <NAME>] --token-passphrase <PASSPHRASE>
+        [--ssh-comment <COMMENT>] [--ssh-name <NAME>] --ssh-passphrase <PASSPHRASE> [--ssh-rounds <ROUNDS>]
+        [--token-bits <BITS>] [--token-comment <COMMENT>] [--token-name <NAME>] --token-passphrase <PASSPHRASE>
 
 $HELP_COMMONS_USAGE
 
 reCluster certificates script.
 
 Options:
-  --help                            Show this help message and exit
+  --help                           Show this help message and exit
 
-  --out-dir <DIRECTORY>             Output directory
-                                    Default: $OUT_DIR
-                                    Values:
-                                      Any valid directory
+  --out-dir <DIRECTORY>            Output directory
+                                   Default: $OUT_DIR
+                                   Values:
+                                     Any valid directory
 
-  --ssh-bits <BITS>                 Number of bits in the SSH key
-                                    Default: $SSH_BITS
-                                    Values:
-                                      Any valid number of bits
+  --ssh-comment <COMMENT>          SSH comment
+                                   Default: $SSH_COMMENT
+                                   Values:
+                                     Any valid comment
 
-  --ssh-name <NAME>                 SSH key name
-                                    Default: $SSH_NAME
-                                    Values:
-                                      Any valid name
+  --ssh-name <NAME>                SSH key name
+                                   Default: $SSH_NAME
+                                   Values:
+                                     Any valid name
 
-  --ssh-passphrase <PASSPHRASE>     SSH passphrase
-                                    Values:
-                                      Any valid passphrase
+  --ssh-passphrase <PASSPHRASE>    SSH passphrase
+                                   Values:
+                                     Any valid passphrase
 
-  --token-bits <BITS>               Number of bits in the Token key
-                                    Default: $TOKEN_BITS
-                                    Values:
-                                      Any valid number of bits
+  --ssh-rounds <ROUNDS>            SSH rounds
+                                   Default: $SSH_ROUNDS
+                                   Values:
+                                     Any valid number of rounds
 
-  --token-name <NAME>               Token key name
-                                    Default: $TOKEN_NAME
-                                    Values:
-                                      Any valid name
+  --token-bits <BITS>              Token bits
+                                   Default: $TOKEN_BITS
+                                   Values:
+                                     Any valid number of bits
 
-  --token-passphrase <PASSPHRASE>   Token passphrase
-                                    Values:
-                                      Any valid passphrase
+  --token-comment <COMMENT>        Token comment
+                                   Default: $TOKEN_COMMENT
+                                   Values:
+                                     Any valid comment
+
+  --token-name <NAME>              Token key name
+                                   Default: $TOKEN_NAME
+                                   Values:
+                                     Any valid name
+
+  --token-passphrase <PASSPHRASE>  Token passphrase
+                                   Values:
+                                     Any valid passphrase
 
 $HELP_COMMONS_OPTIONS
 EOF
@@ -146,12 +160,11 @@ parse_args() {
         OUT_DIR=$2
         _shifts=2
         ;;
-      --ssh-bits)
-        # SSH bits
+      --ssh-comment)
+        # SSH comment
         parse_args_assert_value "$@"
-        parse_args_assert_positive_integer "$@"
 
-        SSH_BITS=$2
+        SSH_COMMENT=$2
         _shifts=2
         ;;
       --ssh-name)
@@ -168,12 +181,27 @@ parse_args() {
         SSH_PASSPHRASE=$2
         _shifts=2
         ;;
+      --ssh-rounds)
+        # SSH rounds
+        parse_args_assert_value "$@"
+        parse_args_assert_positive_integer "$@"
+
+        SSH_ROUNDS=$2
+        _shifts=2
+        ;;
       --token-bits)
         # Token bits
         parse_args_assert_value "$@"
         parse_args_assert_positive_integer "$@"
 
         TOKEN_BITS=$2
+        _shifts=2
+        ;;
+      --token-comment)
+        # Token comment
+        parse_args_assert_value "$@"
+
+        TOKEN_COMMENT=$2
         _shifts=2
         ;;
       --token-name)
@@ -212,7 +240,7 @@ verify_system() {
 
   [ -n "$SSH_PASSPHRASE" ] || FATAL "SSH passphrase is required"
   [ -n "$TOKEN_PASSPHRASE" ] || FATAL "Token passphrase is required"
-  [ -d "$OUT_DIR" ] || FATAL "Output directory '$OUT_DIR' is invalid"
+  [ -d "$OUT_DIR" ] || FATAL "Output directory '$OUT_DIR' does not exists"
 }
 
 # Setup system
@@ -226,7 +254,7 @@ setup_system() {
 cert_ssh() {
   INFO "Generating SSH certificate"
 
-  ssh-keygen -b "$SSH_BITS" -t rsa -f "$TMP_DIR/$SSH_NAME.key" -N "$SSH_PASSPHRASE"
+  ssh-keygen -t ed25519 -a "$SSH_ROUNDS" -f "$TMP_DIR/$SSH_NAME.key" -N "$SSH_PASSPHRASE" -C "$SSH_COMMENT"
   mv "$TMP_DIR/$SSH_NAME.key.pub" "$TMP_DIR/$SSH_NAME.pub"
   chmod 600 "$TMP_DIR/$SSH_NAME.key" "$TMP_DIR/$SSH_NAME.pub"
 }
@@ -235,7 +263,7 @@ cert_ssh() {
 cert_token() {
   INFO "Generating Token certificate"
 
-  ssh-keygen -b "$TOKEN_BITS" -t rsa -f "$TMP_DIR/$TOKEN_NAME.key" -N "$TOKEN_PASSPHRASE" -m PEM
+  ssh-keygen -t rsa -b "$TOKEN_BITS" -f "$TMP_DIR/$TOKEN_NAME.key" -N "$TOKEN_PASSPHRASE" -C "$TOKEN_COMMENT" -m PEM
   ssh-keygen -e -m PEM -f "$TMP_DIR/$TOKEN_NAME.key" -P "$TOKEN_PASSPHRASE" > "$TMP_DIR/$TOKEN_NAME.pub"
   rm "$TMP_DIR/$TOKEN_NAME.key.pub"
   chmod 600 "$TMP_DIR/$TOKEN_NAME.key" "$TMP_DIR/$TOKEN_NAME.pub"

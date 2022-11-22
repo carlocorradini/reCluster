@@ -45,16 +45,17 @@ _token_passphrase="password"
 
 > **Note**: [commons arguments](#commons-arguments) available
 
-| **Name**                          | **Description**                 | **Default** | **Values**               |
-| --------------------------------- | ------------------------------- | ----------- | ------------------------ |
-| `--help`                          | Show help message and exit      |
-| `--out-dir <DIRECTORY>`           | Output directory                | `./`        | Any valid directory      |
-| `--ssh-bits <BITS>`               | Number of bits in the SSH key   | `2048`      | Any valid number of bits |
-| `--ssh-name <NAME>`               | SSH key name                    | `ssh`       | Any valid name           |
-| `--ssh-passphrase <PASSPHRASE>`   | SSH passphrase                  |             | Any valid passphrase     |
-| `--token-bits <BITS>`             | Number of bits in the Token key | `4096`      | Any valid number of bits |
-| `--token-name <NAME>`             | Token key name                  | `token`     | Any valid name           |
-| `--token-passphrase <PASSPHRASE>` | Token passphrase                |             | Any valid passphrase     |
+| **Name**                          | **Description**            | **Default** | **Values**                 |
+| --------------------------------- | -------------------------- | ----------- | -------------------------- |
+| `--help`                          | Show help message and exit |
+| `--out-dir <DIRECTORY>`           | Output directory           | `./`        | Any valid directory        |
+| `--ssh-comment <COMMENT>`         | SSH comment                |             | Any valid comment          |
+| `--ssh-name <NAME>`               | SSH key name               | `ssh`       | Any valid name             |
+| `--ssh-passphrase <PASSPHRASE>`   | SSH passphrase             |             | Any valid passphrase       |
+| `--ssh-rounds <ROUNDS>`           | SSH rounds                 | `256`       | Any valid number of rounds |
+| `--token-bits <BITS>`             | Token bits                 | `4096`      | Any valid number of bits   |
+| `--token-name <NAME>`             | Token key name             | `token`     | Any valid name             |
+| `--token-passphrase <PASSPHRASE>` | Token passphrase           |             | Any valid passphrase       |
 
 ## :bookmark_tabs: [`init.sh`](./init.sh)
 

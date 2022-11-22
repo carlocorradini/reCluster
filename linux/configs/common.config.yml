@@ -33,4 +33,4 @@ recluster:
   server: http://192.168.0.25:8080
 
 ssh_authorized_keys:
-  - ssh-rsa ... # TODO Change with SSH public key !
+  - ssh-ed25519 ... # TODO Change with SSH public key !
