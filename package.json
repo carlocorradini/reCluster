@@ -30,8 +30,8 @@
     "prepare": "npx husky install"
   },
   "devDependencies": {
-    "@commitlint/cli": "^17.2.0",
-    "@commitlint/config-conventional": "^17.2.0",
+    "@commitlint/cli": "^17.3.0",
+    "@commitlint/config-conventional": "^17.3.0",
     "@cspell/dict-node": "^4.0.1",
     "@cspell/dict-npm": "^4.0.1",
     "@cspell/dict-shell": "^1.0.0",
