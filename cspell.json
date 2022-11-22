@@ -23,6 +23,7 @@
     "./linux/distributions/arch/profiledef.sh"
   ],
   "words": [
+    "aarch",
     "archinstall",
     "airgap",
     "apollographql",
@@ -32,7 +33,7 @@
     "armhf",
     "armv",
     "argjson",
-    "aarch",
+    "autoscaler",
     "blockdevices",
     "bootloader",
     "carlocorradini",
