@@ -234,7 +234,7 @@ read_power_consumption() {
     _pc=$(_read_power_consumption)
     DEBUG "Reading power consumption: ${_pc}W"
     # Add current power consumption to list
-    _pcs=$(echo "$_pcs" | jq --arg pc "$_pc" '. |= . + [$pc | tonumber]')
+    _pcs=$(printf '%s\n' "$_pcs" | jq --arg pc "$_pc" '. |= . + [$pc | tonumber]')
     # Sleep
     sleep "$PC_INTERVAL"
   done
@@ -248,12 +248,12 @@ read_power_consumption() {
   fi
 
   # Check pcs
-  [ "$(echo "$_pcs" | jq --raw-output 'length')" -ge 2 ] || FATAL "Power consumption readings do not have enough data"
-  [ "$(echo "$_pcs" | jq --raw-output 'add')" -ge 1 ] || FATAL "Power consumption readings are below 1W"
+  [ "$(printf '%s\n' "$_pcs" | jq --raw-output 'length')" -ge 2 ] || FATAL "Power consumption readings do not have enough data"
+  [ "$(printf '%s\n' "$_pcs" | jq --raw-output 'add')" -ge 1 ] || FATAL "Power consumption readings are below 1W"
 
   # Calculate mean
   _mean=$(
-    echo "$_pcs" \
+    printf '%s\n' "$_pcs" \
       | jq \
         --raw-output \
         '
@@ -266,7 +266,7 @@ read_power_consumption() {
 
   # Calculate standard deviation
   _standard_deviation=$(
-    echo "$_pcs" \
+    printf '%s\n' "$_pcs" \
       | jq \
         --raw-output \
         '
@@ -294,7 +294,7 @@ read_power_consumption() {
 # @param $1 JWT token
 decode_token() {
   _decode_token() {
-    echo "$1" | jq --raw-input --arg idx "$2" 'gsub("-";"+") | gsub("_";"/") | split(".") | .[$idx|tonumber] | @base64d | fromjson'
+    printf '%s\n' "$1" | jq --raw-input --arg idx "$2" 'gsub("-";"+") | gsub("_";"/") | split(".") | .[$idx|tonumber] | @base64d | fromjson'
   }
   _token=$1
 
@@ -349,7 +349,7 @@ read_cpu_info() {
   )
 
   # Convert architecture
-  _architecture=$(echo "$_cpu_info" | jq --raw-output '.architecture')
+  _architecture=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.architecture')
   case $_architecture in
     x86_64) _architecture=amd64 ;;
     aarch64) _architecture=arm64 ;;
@@ -358,7 +358,7 @@ read_cpu_info() {
   [ "$_architecture" = "$ARCH" ] || FATAL "CPU architecture '$_architecture' does not match architecture '$ARCH'"
 
   # Convert vendor
-  _vendor=$(echo "$_cpu_info" | jq --raw-output '.vendor')
+  _vendor=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.vendor')
   case $_vendor in
     AuthenticAMD) _vendor=amd ;;
     GenuineIntel) _vendor=intel ;;
@@ -366,14 +366,14 @@ read_cpu_info() {
   esac
 
   # Convert cache to bytes
-  _cache_l1d=$(echo "$_cpu_info" | jq --raw-output '.cacheL1d' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
-  _cache_l1i=$(echo "$_cpu_info" | jq --raw-output '.cacheL1i' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
-  _cache_l2=$(echo "$_cpu_info" | jq --raw-output '.cacheL2' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
-  _cache_l3=$(echo "$_cpu_info" | jq --raw-output '.cacheL3' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _cache_l1d=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL1d' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _cache_l1i=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL1i' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _cache_l2=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL2' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _cache_l3=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL3' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
 
   # Update
   _cpu_info=$(
-    echo "$_cpu_info" \
+    printf '%s\n' "$_cpu_info" \
       | jq \
         --arg architecture "$_architecture" \
         --arg vendor "$_vendor" \
@@ -433,7 +433,7 @@ read_interfaces_info() {
   # Cycle interfaces to obtain additional information
   while read -r _interface; do
     # Name
-    _iname=$(echo "$_interface" | jq --raw-output '.name')
+    _iname=$(printf '%s\n' "$_interface" | jq --raw-output '.name')
     # Speed
     _speed=$($SUDO ethtool "$_iname" | grep Speed | sed 's/Speed://g' | sed 's/[[:space:]]*//g' | sed 's/b.*//' | numfmt --from=si)
     # WoL
@@ -441,7 +441,7 @@ read_interfaces_info() {
 
     # Update interfaces
     _interfaces_info=$(
-      echo "$_interfaces_info" \
+      printf '%s\n' "$_interfaces_info" \
         | jq \
           --arg iname "$_iname" \
           --arg speed "$_speed" \
@@ -449,7 +449,7 @@ read_interfaces_info() {
           'map(if .name == $iname then . + {"speed": $speed | tonumber, "wol": ($wol | split(""))} else . end)'
     )
   done << EOF
-$(echo "$_interfaces_info" | jq --compact-output '.[]')
+$(printf '%s\n' "$_interfaces_info" | jq --compact-output '.[]')
 EOF
 
   # Return
@@ -501,7 +501,7 @@ run_memory_bench() {
       | sed 's/B.*//' \
       | sed 's/[[:space:]]*//g' \
       | numfmt --from=iec-i)
-    echo $((_memory_output * 8))
+    printf '%s\n' $((_memory_output * 8))
   }
 
   # Read sequential
@@ -562,11 +562,11 @@ run_storages_bench() {
     esac
 
     _io_output=$(sysbench --time="$BENCH_TIME" --file-test-mode="$2" --file-io-mode="$3" fileio run | grep "$_io_opt, ")
-    _io_throughput_value=$(echo "$_io_output" | sed 's/^.*: //' | sed 's/[[:space:]]*//g')
-    _io_throughput_unit=$(echo "$_io_output" | sed 's/.*,\(.*\)B\/s.*/\1/' | sed 's/[[:space:]]*//g')
+    _io_throughput_value=$(printf '%s\n' "$_io_output" | sed 's/^.*: //' | sed 's/[[:space:]]*//g')
+    _io_throughput_unit=$(printf '%s\n' "$_io_output" | sed 's/.*,\(.*\)B\/s.*/\1/' | sed 's/[[:space:]]*//g')
 
     _io_throughput=$(printf "%s%s\n" "$_io_throughput_value" "$_io_throughput_unit" | numfmt --from=iec-i)
-    echo $((_io_throughput * 8))
+    printf '%s\n' $((_io_throughput * 8))
   }
 
   # TODO Benchmark per storage
@@ -696,7 +696,7 @@ read_cpu_power_consumption() {
 
 # Register current node
 node_registration() {
-  _server_url=$(echo "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires server URL"
+  _server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires server URL"
   _server_url="$_server_url/graphql"
   # shellcheck disable=SC2016
   _request_data='
@@ -705,7 +705,7 @@ node_registration() {
         createNode(data: $data)
       }",
       "variables": {
-        "data": '"$(echo "$NODE_FACTS" | jq --compact-output .)"'
+        "data": '"$(printf '%s\n' "$NODE_FACTS" | jq --compact-output .)"'
       }
     }
   '
@@ -738,12 +738,12 @@ node_registration() {
   DEBUG "Received node registration response data '$_response_data' from '$_server_url'"
 
   # Check error response
-  if echo "$_response_data" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
+  if printf '%s\n' "$_response_data" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
     FATAL "Error registering node at '$_server_url':" "$_response_data"
   fi
 
   # Extract token
-  _token=$(echo "$_response_data" | jq --raw-output '.data.createNode')
+  _token=$(printf '%s\n' "$_response_data" | jq --raw-output '.data.createNode')
 
   # Decode token
   decode_token "$_token"
@@ -948,31 +948,31 @@ verify_system() {
   DEBUG "Configuration:" "$CONFIG"
 
   # K3s kind
-  _k3s_kind=$(echo "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
+  _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
   [ "$_k3s_kind" = "server" ] || [ "$_k3s_kind" = "agent" ] || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
   # K3s requires token if not server and not init cluster
-  if { [ "$_k3s_kind" = "agent" ] || { [ "$_k3s_kind" = "server" ] && [ "$INIT_CLUSTER" = false ]; }; } && [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(.server and .token))')" = false ]; then
+  if { [ "$_k3s_kind" = "agent" ] || { [ "$_k3s_kind" = "server" ] && [ "$INIT_CLUSTER" = false ]; }; } && [ "$(printf '%s\n' "$CONFIG" | jq --raw-output 'any(.k3s; select(.server and .token))')" = false ]; then
     FATAL "K3s configuration requires 'server' and 'token'"
   fi
   # K3s node name
-  [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."node-name"))')" = false ] || FATAL "K3s 'node-name' must not be provided"
+  [ "$(printf '%s\n' "$CONFIG" | jq --raw-output 'any(.k3s; select(."node-name"))')" = false ] || FATAL "K3s 'node-name' must not be provided"
   # K3s node id
-  [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."with-node-id"))')" = false ] || FATAL "K3s 'with-node-id' must not be provided"
+  [ "$(printf '%s\n' "$CONFIG" | jq --raw-output 'any(.k3s; select(."with-node-id"))')" = false ] || FATAL "K3s 'with-node-id' must not be provided"
   # K3s write-kubeconfig-mode
-  [ "$(echo "$CONFIG" | jq --raw-output 'any(.k3s; select(."write-kubeconfig-mode"))')" = false ] || FATAL "K3s 'write-kubeconfig-mode' must not be provided"
+  [ "$(printf '%s\n' "$CONFIG" | jq --raw-output 'any(.k3s; select(."write-kubeconfig-mode"))')" = false ] || FATAL "K3s 'write-kubeconfig-mode' must not be provided"
 
   # reCluster server URL
-  _recluster_server_url=$(echo "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires 'server'"
+  _recluster_server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires 'server'"
   [ "$INIT_CLUSTER" = true ] || assert_url_reachability "$_recluster_server_url/health"
 
   # SSH Authorized keys
-  _ssh_authorized_keys=$(echo "$CONFIG" | jq --exit-status '.ssh_authorized_keys') || FATAL "Configuration requires 'ssh_authorized_keys' array"
-  [ "$(echo "$_ssh_authorized_keys" | jq --raw-output 'type == "array"')" = true ] || FATAL "'ssh_authorized_keys' is not an array"
-  [ "$(echo "$_ssh_authorized_keys" | jq --raw-output 'length')" -ge 1 ] || FATAL "'ssh_authorized_keys' is empty"
+  _ssh_authorized_keys=$(printf '%s\n' "$CONFIG" | jq --exit-status '.ssh_authorized_keys') || FATAL "Configuration requires 'ssh_authorized_keys' array"
+  [ "$(printf '%s\n' "$_ssh_authorized_keys" | jq --raw-output 'type == "array"')" = true ] || FATAL "'ssh_authorized_keys' is not an array"
+  [ "$(printf '%s\n' "$_ssh_authorized_keys" | jq --raw-output 'length')" -ge 1 ] || FATAL "'ssh_authorized_keys' is empty"
   while read -r _pub_key; do
-    echo "$_pub_key" | ssh-keygen -l -f - > /dev/null 2>&1 || FATAL "'$_pub_key' is not a public key"
+    printf '%s\n' "$_pub_key" | ssh-keygen -l -f - > /dev/null 2>&1 || FATAL "'$_pub_key' is not a public key"
   done << EOF
-$(echo "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
+$(printf '%s\n' "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
 EOF
   # SSH configuration file
   [ -f "$SSH_CONFIG_FILE" ] || FATAL "SSH configuration file '$SSH_CONFIG_FILE' does not exists"
@@ -982,7 +982,7 @@ EOF
   # Cluster initialization
   if [ "$INIT_CLUSTER" = true ]; then
     [ "$_k3s_kind" = server ] || FATAL "Cluster initialization requires K3s 'kind' to be 'server' but '$_k3s_kind' found"
-    [ "$(echo "$CONFIG" | jq --exit-status 'any(.k3s, ."cluster-init" == true)')" = true ] || WARN "Cluster initialization K3s 'cluster-init' not found or set to 'false'"
+    [ "$(printf '%s\n' "$CONFIG" | jq --exit-status 'any(.k3s, ."cluster-init" == true)')" = true ] || WARN "Cluster initialization K3s 'cluster-init' not found or set to 'false'"
   fi
 
   # Airgap
@@ -1004,10 +1004,10 @@ EOF
 
   # Interfaces
   _interfaces=$(read_interfaces)
-  [ "$(echo "$_interfaces" | jq --raw-output 'length')" -ge 1 ] || FATAL "No interfaces found"
+  [ "$(printf '%s\n' "$_interfaces" | jq --raw-output 'length')" -ge 1 ] || FATAL "No interfaces found"
   while read -r _interface; do
     # Name
-    _iname=$(echo "$_interface" | jq --raw-output '.name')
+    _iname=$(printf '%s\n' "$_interface" | jq --raw-output '.name')
     # Supports WoL
     _supports_wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')
 
@@ -1023,7 +1023,7 @@ EOF
         ;;
     esac
   done << EOF
-$(echo "$_interfaces" | jq --compact-output '.[]')
+$(printf '%s\n' "$_interfaces" | jq --compact-output '.[]')
 EOF
 }
 
@@ -1067,7 +1067,7 @@ setup_system() {
 
     # General
     _k3s_airgap_images_name="k3s-airgap-images-$_k3s_images_suffix"
-    _node_exporter_release_name=node_exporter-$(echo "$NODE_EXPORTER_VERSION" | sed 's/^v//').linux-$ARCH
+    _node_exporter_release_name=node_exporter-$(printf '%s\n' "$NODE_EXPORTER_VERSION" | sed 's/^v//').linux-$ARCH
 
     # Globals
     AIRGAP_K3S_BIN="$TMP_DIR/k3s.bin"
@@ -1114,22 +1114,22 @@ read_system_info() {
   read_cpu_info
   _cpu_info=$RETVAL
   DEBUG "CPU info:" "$_cpu_info"
-  INFO "CPU is '$(echo "$_cpu_info" | jq --raw-output .name)'"
+  INFO "CPU is '$(printf '%s\n' "$_cpu_info" | jq --raw-output .name)'"
 
   # Memory
   read_memory_info
   _memory_info=$RETVAL
-  INFO "Memory is '$(echo "$_memory_info" | numfmt --to=iec-i)B'"
+  INFO "Memory is '$(printf '%s\n' "$_memory_info" | numfmt --to=iec-i)B'"
 
   # Storage(s)
   read_storages_info
   _storages_info=$RETVAL
   DEBUG "Storage(s) info:" "$_storages_info"
-  _storages_info_msg="Storage(s) found $(echo "$_storages_info" | jq --raw-output 'length'):"
+  _storages_info_msg="Storage(s) found $(printf '%s\n' "$_storages_info" | jq --raw-output 'length'):"
   while read -r _storage_info; do
-    _storages_info_msg="$_storages_info_msg\n\t'$(echo "$_storage_info" | jq --raw-output .name)' of '$(echo "$_storage_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
+    _storages_info_msg="$_storages_info_msg\n\t'$(printf '%s\n' "$_storage_info" | jq --raw-output .name)' of '$(printf '%s\n' "$_storage_info" | jq --raw-output .size | numfmt --to=iec-i)B'"
   done << EOF
-$(echo "$_storages_info" | jq --compact-output '.[]')
+$(printf '%s\n' "$_storages_info" | jq --compact-output '.[]')
 EOF
   INFO "$_storages_info_msg"
 
@@ -1137,14 +1137,14 @@ EOF
   read_interfaces_info
   _interfaces_info=$RETVAL
   DEBUG "Interface(s) info:" "$_interfaces_info"
-  INFO "Interface(s) found $(echo "$_interfaces_info" | jq --raw-output 'length'):
-    $(echo "$_interfaces_info" | jq --raw-output '.[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
+  INFO "Interface(s) found $(printf '%s\n' "$_interfaces_info" | jq --raw-output 'length'):
+    $(printf '%s\n' "$_interfaces_info" | jq --raw-output '.[] | "\t'\''\(.name)'\'' at '\''\(.address)'\''"')"
 
   spinner_stop
 
   # Update
   NODE_FACTS=$(
-    echo "$NODE_FACTS" \
+    printf '%s\n' "$NODE_FACTS" \
       | jq \
         --argjson cpu "$_cpu_info" \
         --argjson memory "$_memory_info" \
@@ -1187,7 +1187,7 @@ run_benchmarks() {
 
   # Update
   NODE_FACTS=$(
-    echo "$NODE_FACTS" \
+    printf '%s\n' "$NODE_FACTS" \
       | jq \
         --argjson cpu "$_cpu_benchmark" \
         --argjson memory "$_memory_benchmark" \
@@ -1213,7 +1213,7 @@ read_power_consumptions() {
 
   # Update
   NODE_FACTS=$(
-    echo "$NODE_FACTS" \
+    printf '%s\n' "$NODE_FACTS" \
       | jq \
         --argjson cpu "$_cpu_power_consumption" \
         '
@@ -1227,20 +1227,20 @@ read_power_consumptions() {
 finalize_node_facts() {
   spinner_start "Finalizing node facts"
 
-  _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
-  _has_taint_no_execute=$(echo "$CONFIG" | jq --raw-output 'any(select(.k3s."node-taint"); .k3s."node-taint"[] | . == "CriticalAddonsOnly=true:NoExecute")')
+  _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.k3s.kind')
+  _has_taint_no_execute=$(printf '%s\n' "$CONFIG" | jq --raw-output 'any(select(.k3s."node-taint"); .k3s."node-taint"[] | . == "CriticalAddonsOnly=true:NoExecute")')
 
   # Roles
   _roles="[]"
-  if [ "$INIT_CLUSTER" = true ]; then _roles=$(echo "$_roles" | jq '. + ["RECLUSTER_CONTROLLER"]'); fi
-  if [ "$_k3s_kind" = "server" ]; then _roles=$(echo "$_roles" | jq '. + ["K8S_CONTROLLER"]'); fi
+  if [ "$INIT_CLUSTER" = true ]; then _roles=$(printf '%s\n' "$_roles" | jq '. + ["RECLUSTER_CONTROLLER"]'); fi
+  if [ "$_k3s_kind" = "server" ]; then _roles=$(printf '%s\n' "$_roles" | jq '. + ["K8S_CONTROLLER"]'); fi
   if [ "$_k3s_kind" = "agent" ] || { [ "$_k3s_kind" = "server" ] && [ "$_has_taint_no_execute" = false ]; }; then
-    _roles=$(echo "$_roles" | jq '. + ["K8S_WORKER"]')
+    _roles=$(printf '%s\n' "$_roles" | jq '. + ["K8S_WORKER"]')
   fi
   DEBUG "Node roles:" "$_roles"
 
   NODE_FACTS=$(
-    echo "$NODE_FACTS" \
+    printf '%s\n' "$NODE_FACTS" \
       | jq \
         --argjson roles "$_roles" \
         '
@@ -1288,12 +1288,12 @@ install_k3s() {
   { [ -f "$_k3s_install_sh" ] && [ -x "$_k3s_install_sh" ]; } || FATAL "K3s installation script '$_k3s_install_sh' not found or not executable"
 
   # Kind
-  _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
+  _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.k3s.kind')
 
   # Write Configuration
   INFO "Writing K3s configuration to '$_k3s_config_file'"
   $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
-  echo "$CONFIG" \
+  printf '%s\n' "$CONFIG" \
     | jq '.k3s | del(.kind)' \
     | yq e --no-colors '(.. | select(tag == "!!str")) style="double"' - \
     | $SUDO tee "$_k3s_config_file" > /dev/null
@@ -1343,7 +1343,7 @@ install_node_exporter() {
   # Configuration
   INFO "Writing Node exporter configuration"
   _node_exporter_config=$(
-    echo "$CONFIG" \
+    printf '%s\n' "$CONFIG" \
       | jq \
         --raw-output \
         '
@@ -1375,7 +1375,7 @@ cluster_init() {
   INFO "Cluster initialization"
 
   _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
-  _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
+  _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.k3s.kind')
   _kubeconfig_file=~/.kube/config
 
   _wait_k3s_kubeconfig_file_creation() {
@@ -1465,7 +1465,7 @@ install_recluster() {
   mkdir -p "$_opt_dir"
 
   # Write configuration
-  echo "$CONFIG" \
+  printf '%s\n' "$CONFIG" \
     | jq '.recluster' \
     | yq e --no-colors '(.. | select(tag == "!!str")) style="double"' - \
     | tee "$_recluster_config_file" > /dev/null
@@ -1475,15 +1475,15 @@ install_recluster() {
   _registration_data=$RETVAL
 
   # Read node token
-  _node_token=$(echo "$_registration_data" | jq --raw-output '.token')
+  _node_token=$(printf '%s\n' "$_registration_data" | jq --raw-output '.token')
   # Read node id
-  _node_id=$(echo "$_registration_data" | jq --raw-output '.decoded.payload.id')
+  _node_id=$(printf '%s\n' "$_registration_data" | jq --raw-output '.decoded.payload.id')
 
   # Write node token
-  echo "$_node_token" | tee "$_node_token_file" > /dev/null
+  printf '%s\n' "$_node_token" | tee "$_node_token_file" > /dev/null
 
   # K3s node name
-  _k3s_kind=$(echo "$CONFIG" | jq --raw-output '.k3s.kind')
+  _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.k3s.kind')
   case $_k3s_kind in
     server) _node_name="controller.$_node_id" ;;
     agent) _node_name="worker.$_node_id" ;;
@@ -1500,10 +1500,10 @@ install_recluster() {
   #
   # Scripts
   #
-  _etc_recluster_config_file="${RECLUSTER_ETC_DIR}$(echo "$_recluster_config_file" | sed -n -e 's#^.*'"$RECLUSTER_ETC_DIR"'##p')"
-  _etc_node_token_file="${RECLUSTER_ETC_DIR}$(echo "$_node_token_file" | sed -n -e 's#^.*'"$RECLUSTER_ETC_DIR"'##p')"
-  _opt_commons_script_file="${RECLUSTER_OPT_DIR}$(echo "$_commons_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
-  _opt_bootstrap_script_file="${RECLUSTER_OPT_DIR}$(echo "$_bootstrap_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
+  _etc_recluster_config_file="${RECLUSTER_ETC_DIR}$(printf '%s\n' "$_recluster_config_file" | sed -n -e 's#^.*'"$RECLUSTER_ETC_DIR"'##p')"
+  _etc_node_token_file="${RECLUSTER_ETC_DIR}$(printf '%s\n' "$_node_token_file" | sed -n -e 's#^.*'"$RECLUSTER_ETC_DIR"'##p')"
+  _opt_commons_script_file="${RECLUSTER_OPT_DIR}$(printf '%s\n' "$_commons_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
+  _opt_bootstrap_script_file="${RECLUSTER_OPT_DIR}$(printf '%s\n' "$_bootstrap_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
 
   # Commons script
   INFO "Constructing '$(basename "$_commons_script_file")' script"
@@ -1574,7 +1574,7 @@ update_node_status() {
   read_config
   read_node_token
 
-  _server_url=\$(echo "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
+  _server_url=\$(printf '%s\n' "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
   _server_url="\$_server_url/graphql"
   # shellcheck disable=SC2016
   _request_data='
@@ -1620,8 +1620,8 @@ EOF
 
   tee -a "$_commons_script_file" > /dev/null << EOF
   # Check error response
-  if echo "\$_response_data" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
-    FATAL "Error updating node status at '\$_server_url':\\n\$(echo "\$_response_data" | jq .)"
+  if printf '%s\n' "\$_response_data" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
+    FATAL "Error updating node status at '\$_server_url':\\n\$(printf '%s\n' "\$_response_data" | jq .)"
   fi
 }
 
@@ -1780,7 +1780,7 @@ setup_ssh() {
     DEBUG "Copying SSH public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
     $SUDO printf "%s\n" "$_pub_key" >> "$SSH_AUTHORIZED_KEYS_FILE" || FATAL "Error adding public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
   done << EOF
-$(echo "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
+$(printf '%s\n' "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
 EOF
 }
 

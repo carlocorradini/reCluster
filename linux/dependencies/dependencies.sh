@@ -78,25 +78,25 @@ EOF
 # Assert dependency $1 exists
 # @param $1 Dependency name
 assert_dep() {
-  echo "$CONFIG" | jq --exit-status --arg name "$1" 'has($name)' > /dev/null 2>&1 || FATAL "Dependency '$1' does not exists"
+  printf '%s\n' "$CONFIG" | jq --exit-status --arg name "$1" 'has($name)' > /dev/null 2>&1 || FATAL "Dependency '$1' does not exists"
 }
 
 # Return dependency configuration
 # @param $1 Dependency name
 dep_config() {
   assert_dep "$1"
-  echo "$CONFIG" | jq --arg name "$1" '.[$name]'
+  printf '%s\n' "$CONFIG" | jq --arg name "$1" '.[$name]'
 }
 
 # Generate github api url
 # @param $1 Dependency name
 gen_github_api_url() {
   _config=$(dep_config "$1")
-  _url=$(echo "$_config" | jq --raw-output '.url')
-  _owner=$(echo "$_url" | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/' | sed 's#/[^/]*$##') || FATAL "Error reading owner from GitHub URL '$_url'"
-  _repo=$(echo "$_url" | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/' | sed 's#^.*/\([^/]*\)$#\1#') || FATAL "Error reading repository from GitHub URL '$_url'"
+  _url=$(printf '%s\n' "$_config" | jq --raw-output '.url')
+  _owner=$(printf '%s\n' "$_url" | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/' | sed 's#/[^/]*$##') || FATAL "Error reading owner from GitHub URL '$_url'"
+  _repo=$(printf '%s\n' "$_url" | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/' | sed 's#^.*/\([^/]*\)$#\1#') || FATAL "Error reading repository from GitHub URL '$_url'"
 
-  echo "https://api.github.com/repos/$_owner/$_repo/releases"
+  printf '%s\n' "https://api.github.com/repos/$_owner/$_repo/releases"
 }
 
 # Return dependency latest release
@@ -120,7 +120,7 @@ sync_deps_clean() {
 
     if [ -f "$_dep_fd" ]; then
       # File
-      _dep_fd_git_file=$(echo "$_dep_fd" | sed -n -e 's#^.*'"$ROOT_DIR"'/##p')
+      _dep_fd_git_file=$(printf '%s\n' "$_dep_fd" | sed -n -e 's#^.*'"$ROOT_DIR"'/##p')
 
       if ! git_has_file "$_git_files" "$_dep_fd_git_file"; then
         # Remove dependency file
@@ -131,7 +131,7 @@ sync_deps_clean() {
       fi
     elif [ -d "$_dep_fd" ]; then
       # Directory
-      if ! echo "$CONFIG" | jq --exit-status --arg dep "$_dep_fd_basename" 'has($dep)' > /dev/null 2>&1; then
+      if ! printf '%s\n' "$CONFIG" | jq --exit-status --arg dep "$_dep_fd_basename" 'has($dep)' > /dev/null 2>&1; then
         # Remove dependency directory
         INFO "Removing dependency directory '$_dep_fd_basename'"
         rm -rf "$_dep_fd"
@@ -149,7 +149,7 @@ sync_deps_clean() {
 
         if [ -f "$_fd" ]; then
           # Check file
-          if ! echo "$_config" | jq --exit-status --arg file "$_fd_basename" '.files | has($file)' > /dev/null 2>&1; then
+          if ! printf '%s\n' "$_config" | jq --exit-status --arg file "$_fd_basename" '.files | has($file)' > /dev/null 2>&1; then
             # Remove file
             INFO "Removing '$_dep_fd_basename' file '$_fd_basename'"
             rm -f "$_fd"
@@ -157,7 +157,7 @@ sync_deps_clean() {
           fi
         elif [ -d "$_fd" ]; then
           # Skip if 'latest' release and check release directory
-          if ! { echo "$_config" | jq --exit-status '.releases | any(. == "latest")' > /dev/null 2>&1 && [ "$_fd_basename" = "$_latest_release" ]; } && ! echo "$_config" | jq --exit-status --arg dir "$_fd_basename" '.releases | any(. == $dir)' > /dev/null 2>&1; then
+          if ! { printf '%s\n' "$_config" | jq --exit-status '.releases | any(. == "latest")' > /dev/null 2>&1 && [ "$_fd_basename" = "$_latest_release" ]; } && ! printf '%s\n' "$_config" | jq --exit-status --arg dir "$_fd_basename" '.releases | any(. == $dir)' > /dev/null 2>&1; then
             # Remove release directory
             INFO "Removing '$_dep_fd_basename' release directory '$_fd_basename'"
             rm -rf "$_fd"
@@ -170,7 +170,7 @@ sync_deps_clean() {
 
             _ufd_basename=$(basename "$_ufd")
 
-            if [ "$(echo "$_config" | jq --raw-output --arg asset "$_ufd_basename" 'any(.assets[]; ("^" + . + "$") as $keep | $asset | test($keep))')" = false ]; then
+            if [ "$(printf '%s\n' "$_config" | jq --raw-output --arg asset "$_ufd_basename" 'any(.assets[]; ("^" + . + "$") as $keep | $asset | test($keep))')" = false ]; then
               # Remove
               INFO "Removing '$_dep_fd_basename' release '$_fd_basename' file/directory '$_ufd_basename'"
               rm -rf "$_ufd"
@@ -210,7 +210,7 @@ sync_dep_release() {
 
   # Release assets
   _assets=$(download_print "$_github_api_url/$_release_id/assets" | jq --compact-output 'map({name, "url": .browser_download_url})') || FATAL "Download '$_github_api_url/$_release_id/assets' failed"
-  DEBUG "'$_dep_name' assets:\n$(echo "$_assets" | jq .)"
+  DEBUG "'$_dep_name' assets:\n$(printf '%s\n' "$_assets" | jq .)"
 
   # Create release directory if not exists
   _release_dir="$(readlink -f "$DIRNAME")/$_dep_name/$_release"
@@ -221,8 +221,8 @@ sync_dep_release() {
 
   # Download assets
   while read -r _asset; do
-    _asset_name=$(echo "$_asset" | jq --raw-output '.name')
-    _asset_url=$(echo "$_asset" | jq --raw-output .url)
+    _asset_name=$(printf '%s\n' "$_asset" | jq --raw-output '.name')
+    _asset_url=$(printf '%s\n' "$_asset" | jq --raw-output .url)
     _asset_path="$_release_dir/$_asset_name"
 
     # Skip if not force and asset already exists
@@ -231,7 +231,7 @@ sync_dep_release() {
       continue
     fi
     # Skip if ignored
-    if [ "$(echo "$_config" | jq --raw-output --arg asset "$_asset_name" 'any(.assets[]; ("^" + . + "$") as $keep | $asset | test($keep))')" = false ]; then
+    if [ "$(printf '%s\n' "$_config" | jq --raw-output --arg asset "$_asset_name" 'any(.assets[]; ("^" + . + "$") as $keep | $asset | test($keep))')" = false ]; then
       DEBUG "Skipping '$_dep_name' release '$_release' asset '$_asset_name' ignored"
       continue
     fi
@@ -240,7 +240,7 @@ sync_dep_release() {
     INFO "Downloading '$_dep_name' release '$_release' asset '$_asset_name' into '$_asset_path'"
     download "$_asset_path" "$_asset_url"
   done << EOF
-$(echo "$_assets" | jq --compact-output '.[]')
+$(printf '%s\n' "$_assets" | jq --compact-output '.[]')
 EOF
 }
 
@@ -252,8 +252,8 @@ sync_dep_files() {
 
   # Files
   while read -r _file; do
-    _file_name=$(echo "$_file" | jq --raw-output '.key')
-    _file_url=$(echo "$_file" | jq --raw-output '.value')
+    _file_name=$(printf '%s\n' "$_file" | jq --raw-output '.key')
+    _file_url=$(printf '%s\n' "$_file" | jq --raw-output '.value')
     _file_path="$(readlink -f "$DIRNAME")/$_dep_name/$_file_name"
 
     # Skip if not force and file already exists
@@ -266,7 +266,7 @@ sync_dep_files() {
     INFO "Downloading '$_dep_name' file '$_file_name' from '$_file_url' into '$_file_path'"
     download "$_file_path" "$_file_url"
   done << EOF
-$(echo "$_config" | jq --compact-output '.files | to_entries[]')
+$(printf '%s\n' "$_config" | jq --compact-output '.files | to_entries[]')
 EOF
 }
 
@@ -278,15 +278,15 @@ sync_dep() {
 
   # Releases
   while read -r _release; do
-    _release=$(echo "$_release" | jq --raw-output '.')
+    _release=$(printf '%s\n' "$_release" | jq --raw-output '.')
     INFO "Syncing '$_dep_name' release '$_release'"
     sync_dep_release "$_dep_name" "$_release"
   done << EOF
-$(echo "$_config" | jq --compact-output '.releases[]')
+$(printf '%s\n' "$_config" | jq --compact-output '.releases[]')
 EOF
 
   # Files
-  if echo "$_config" | jq --exit-status 'has("files")' > /dev/null 2>&1; then
+  if printf '%s\n' "$_config" | jq --exit-status 'has("files")' > /dev/null 2>&1; then
     INFO "Syncing '$_dep_name' files"
     sync_dep_files "$_dep_name"
   fi
@@ -357,7 +357,7 @@ verify_system() {
 sync_deps() {
   [ "$SYNC" = true ] || return 0
 
-  _num_deps=$(echo "$CONFIG" | jq --raw-output '. | length')
+  _num_deps=$(printf '%s\n' "$CONFIG" | jq --raw-output '. | length')
 
   INFO "Syncing $_num_deps dependencies"
 
@@ -365,11 +365,11 @@ sync_deps() {
   sync_deps_clean
   # Dependencies
   while read -r _dep; do
-    _dep_name=$(echo "$_dep" | jq --raw-output '.key')
+    _dep_name=$(printf '%s\n' "$_dep" | jq --raw-output '.key')
     INFO "Syncing '$_dep_name'"
     sync_dep "$_dep_name"
   done << EOF
-$(echo "$CONFIG" | jq --compact-output 'to_entries[]')
+$(printf '%s\n' "$CONFIG" | jq --compact-output 'to_entries[]')
 EOF
 
   INFO "Successfully synced $_num_deps dependencies"

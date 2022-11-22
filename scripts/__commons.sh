@@ -142,7 +142,7 @@ to_log_level_name() {
     *) FATAL "Unknown log level '$_log_level'" ;;
   esac
 
-  echo "$_log_level_name"
+  printf '%s\n' "$_log_level_name"
 }
 
 # Check if log level is enabled
@@ -551,7 +551,7 @@ git_has_directory() {
   _dir=$2
 
   DEBUG "Checking Git has directory '$_dir'"
-  [ "$(echo "$_git_files" | jq --raw-output --arg dir "$_dir" 'any(.[]; startswith($dir))')" = true ]
+  [ "$(printf '%s\n' "$_git_files" | jq --raw-output --arg dir "$_dir" 'any(.[]; startswith($dir))')" = true ]
 }
 
 # Check if file in git
@@ -564,7 +564,7 @@ git_has_file() {
   _file=$2
 
   DEBUG "Checking Git has file '$_file'"
-  [ "$(echo "$_git_files" | jq --raw-output --arg file "$_file" 'any(.[]; . == $file)')" = true ]
+  [ "$(printf '%s\n' "$_git_files" | jq --raw-output --arg file "$_file" 'any(.[]; . == $file)')" = true ]
 }
 
 # ================

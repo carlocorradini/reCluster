@@ -10,7 +10,7 @@ Timezone must be set to `Etc/UTC`.
 
 ```sh
 cp /usr/share/zoneinfo/Etc/UTC /etc/localtime
-echo "Etc/UTC" > /etc/timezone
+printf '%s\n' "Etc/UTC" > /etc/timezone
 ```
 
 ### :sleeping: Wake-on-Lan

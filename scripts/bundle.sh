@@ -157,9 +157,9 @@ bundle_files() {
   _files="[]"
 
   while read -r _entry; do
-    _path="$(echo "$_entry" | jq --raw-output '.key')"
+    _path="$(printf '%s\n' "$_entry" | jq --raw-output '.key')"
     _path_src="$ROOT_DIR/$_path"
-    _skip=$(echo "$_entry" | jq --raw-output '.value | type == "boolean" and . | not')
+    _skip=$(printf '%s\n' "$_entry" | jq --raw-output '.value | type == "boolean" and . | not')
 
     INFO "Checking '$_path'"
 
@@ -173,7 +173,7 @@ bundle_files() {
     if [ -f "$_path_src" ]; then
       # File
       DEBUG "Adding file '$_path' to bundle files"
-      _files=$(echo "$_files" | jq --arg file "$_path" '. += [$file]')
+      _files=$(printf '%s\n' "$_files" | jq --arg file "$_path" '. += [$file]')
     elif [ -d "$_path_src" ]; then
       # Directory
       DEBUG "Adding directory '$_path' to bundle files"
@@ -183,7 +183,7 @@ bundle_files() {
       if git_has_directory "$GIT_FILES" "$_path"; then
         # Git
         DEBUG "Directory '$_path' in Git"
-        _new_files=$(echo "$GIT_FILES" | jq --arg dir "$_path" 'map(select(startswith($dir) and (contains(".gitignore") | not) and (contains(".gitkeep") | not)))')
+        _new_files=$(printf '%s\n' "$GIT_FILES" | jq --arg dir "$_path" 'map(select(startswith($dir) and (contains(".gitignore") | not) and (contains(".gitkeep") | not)))')
       else
         # No Git
         DEBUG "Directory '$_path' not in Git"
@@ -198,14 +198,14 @@ bundle_files() {
 
       DEBUG "Bundle files from '$_path':" "$_new_files"
       # Add to files
-      _files=$(echo "$_files" | jq --argjson files "$_new_files" '. + $files')
+      _files=$(printf '%s\n' "$_files" | jq --argjson files "$_new_files" '. + $files')
     fi
   done << EOF
-$(echo "$_config" | jq --compact-output '.[]')
+$(printf '%s\n' "$_config" | jq --compact-output '.[]')
 EOF
 
   # Remove duplicates and sort
-  _files=$(echo "$_files" | jq 'unique | sort')
+  _files=$(printf '%s\n' "$_files" | jq 'unique | sort')
 
   # Return
   RETVAL=$_files
@@ -320,7 +320,7 @@ bundle() {
   DEBUG "Bundle files:" "$_files"
 
   while read -r _file; do
-    _file="$(echo "$_file" | jq --raw-output '.')"
+    _file="$(printf '%s\n' "$_file" | jq --raw-output '.')"
     _file_src="$ROOT_DIR/$_file"
     _file_dst="$TMP_DIR/$_file"
     _file_dst_dir=$(dirname "$_file_dst")
@@ -337,7 +337,7 @@ bundle() {
     DEBUG "Copying '$_file_src' to '$_file_dst'"
     cp "$_file_src" "$_file_dst" || FATAL "Error copying '$_file_src' to '$_file_dst'"
   done << EOF
-$(echo "$_files" | jq --compact-output '.[]')
+$(printf '%s\n' "$_files" | jq --compact-output '.[]')
 EOF
 
   # Generate bundle tarball

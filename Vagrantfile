@@ -71,7 +71,7 @@ apk add --update --no-cache \
 
 # Timezone
 cp /usr/share/zoneinfo/Etc/UTC /etc/localtime
-echo "Etc/UTC" > /etc/timezone
+printf '%s\n' "Etc/UTC" > /etc/timezone
 SCRIPT
 
 Vagrant.configure("2") do |config|

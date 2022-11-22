@@ -153,7 +153,7 @@ merge_files() {
   DEBUG "Merged file:" "$_merged_file"
 
   INFO "Saving merged file to '$OUT_FILE'"
-  printf "%s\n" "$_merged_file" | tee "$OUT_FILE" > /dev/null
+  printf '%s\n' "$_merged_file" | tee "$OUT_FILE" > /dev/null
 }
 
 # ================

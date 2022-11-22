@@ -170,6 +170,6 @@ builder() {
   while read -r _arch; do
     builder "$_arch"
   done << EOF
-$(echo "$ARCHS" | jq --compact-output --raw-output '.[]')
+$(printf '%s\n' "$ARCHS" | jq --compact-output --raw-output '.[]')
 EOF
 }

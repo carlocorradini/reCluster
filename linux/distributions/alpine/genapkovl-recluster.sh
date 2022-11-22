@@ -28,7 +28,7 @@ set -o noglob
 
 HOSTNAME="$1"
 if [ -z "$HOSTNAME" ]; then
-  echo "Usage: $0 <hostname>"
+  printf '%s\n' "Usage: $0 <hostname>"
   exit 1
 fi
 

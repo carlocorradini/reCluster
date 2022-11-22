@@ -55,7 +55,7 @@ RUN adduser \
   build
 
 # Give administrative access to abuild group
-RUN echo "%abuild ALL=(ALL) ALL" > /etc/sudoers.d/abuild
+RUN printf '%s\n' "%abuild ALL=(ALL) ALL" > /etc/sudoers.d/abuild
 
 # Create signing keys
 RUN abuild-keygen -n --install --append
