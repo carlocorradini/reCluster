@@ -97,64 +97,64 @@ show_help() {
 Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config-file <FILE>] [--help]
         [--init-cluster] [--k3s-version <VERSION>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-        [--ssh-authorized-keys <FILE>]
+        [--ssh-authorized-keys-file <FILE>]
 
 $HELP_COMMONS_USAGE
 
 reCluster installation script.
 
 Options:
-  --airgap                           Perform installation in Air-Gap environment
+  --airgap                                Perform installation in Air-Gap environment
 
-  --bench-time <TIME>                Benchmark execution time in seconds
-                                     Default: $BENCH_TIME
-                                     Values:
-                                       Any positive number
+  --bench-time <TIME>                     Benchmark execution time in seconds
+                                          Default: $BENCH_TIME
+                                          Values:
+                                            Any positive number
 
-  --config-file <FILE>               Configuration file
-                                     Default: $CONFIG_FILE
-                                     Values:
-                                       Any valid file
+  --config-file <FILE>                    Configuration file
+                                          Default: $CONFIG_FILE
+                                          Values:
+                                            Any valid file
 
-  --help                             Show this help message and exit
+  --help                                  Show this help message and exit
 
-  --init-cluster                     Initialize cluster components and logic
-                                     Enable only when bootstrapping for the first time
+  --init-cluster                          Initialize cluster components and logic
+                                          Enable only when bootstrapping for the first time
 
-  --k3s-version <VERSION>            K3s version
-                                     Default: $K3S_VERSION
-                                     Values:
-                                       Any K3s version
+  --k3s-version <VERSION>                 K3s version
+                                          Default: $K3S_VERSION
+                                          Values:
+                                            Any K3s version
 
-  --node-exporter-version <VERSION>  Node exporter version
-                                     Default: $NODE_EXPORTER_VERSION
-                                     Values:
-                                       Any Node exporter version
+  --node-exporter-version <VERSION>       Node exporter version
+                                          Default: $NODE_EXPORTER_VERSION
+                                          Values:
+                                            Any Node exporter version
 
-  --pc-device-api <URL>              Power consumption device api URL
-                                     Default: $PC_DEVICE_API
-                                     Values:
-                                       Any valid URL
+  --pc-device-api <URL>                   Power consumption device api URL
+                                          Default: $PC_DEVICE_API
+                                          Values:
+                                            Any valid URL
 
-  --pc-interval <TIME>               Power consumption read interval time in seconds
-                                     Default: $PC_INTERVAL
-                                     Values:
-                                       Any positive number
+  --pc-interval <TIME>                    Power consumption read interval time in seconds
+                                          Default: $PC_INTERVAL
+                                          Values:
+                                            Any positive number
 
-  --pc-time <TIME>                   Power consumption execution time in seconds
-                                     Default: $PC_TIME
-                                     Values:
-                                       Any positive number
+  --pc-time <TIME>                        Power consumption execution time in seconds
+                                          Default: $PC_TIME
+                                          Values:
+                                            Any positive number
 
-  --pc-warmup <TIME>                 Power consumption warmup time in seconds
-                                     Default: $PC_WARMUP
-                                     Values:
-                                       Any positive number
+  --pc-warmup <TIME>                      Power consumption warmup time in seconds
+                                          Default: $PC_WARMUP
+                                          Values:
+                                            Any positive number
 
-  --ssh-authorized-keys <FILE>       SSH authorized keys file
-                                     Default: $SSH_AUTHORIZED_KEYS_FILE
-                                     Values:
-                                       Any valid file
+  --ssh-authorized-keys-file <FILE>       SSH authorized keys file
+                                          Default: $SSH_AUTHORIZED_KEYS_FILE
+                                          Values:
+                                            Any valid file
 
 $HELP_COMMONS_OPTIONS
 EOF
@@ -836,7 +836,7 @@ parse_args() {
         PC_WARMUP=$2
         _shifts=2
         ;;
-      --ssh-authorized-keys)
+      --ssh-authorized-keys-file)
         # SSH authorized keys file
         parse_args_assert_value "$@"
 
