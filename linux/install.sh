@@ -37,7 +37,7 @@ AIRGAP_ENV=false
 # Benchmark time in seconds
 BENCH_TIME=30
 # Configuration file
-CONFIG_FILE="configs/recluster.yml"
+CONFIG_FILE="configs/config.yml"
 # Initialize cluster
 INIT_CLUSTER=false
 # K3s version

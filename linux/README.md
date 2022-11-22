@@ -85,7 +85,7 @@ reCluster installation script.
 | ----------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------------------------- |
 | `--airgap`                          | Perform installation in Air-Gap environment                                                | `false`                                         |
 | `--bench-time <TIME>`               | Benchmark execution time in seconds                                                        | `30`                                            | Any positive number       |
-| `--config-file <FILE>`              | Configuration file                                                                         | `configs/recluster.yml`                         | Any valid file            |
+| `--config-file <FILE>`              | Configuration file                                                                         | `configs/config.yml`                            | Any valid file            |
 | `--help`                            | Show help message and exit                                                                 |
 | `--init-cluster`                    | Initialize cluster components and logic. Enable only when bootstrapping for the first time | `false`                                         |
 | `--k3s-version <VERSION>`           | K3s version                                                                                | `latest`                                        | Any K3s version           |
