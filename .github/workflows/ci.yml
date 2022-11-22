@@ -82,6 +82,11 @@ jobs:
         run: |
           find . -type f -name "*.sh" -print0 | xargs -0 chmod u+x
           ./scripts/init.sh
+      - name: Bundle
+        run: |
+          ./scripts/bundle.sh \
+            --config-file ./scripts/bundle.config.yml \
+            --out-file ./recluster.tar.gz
       - name: Build Changelog
         id: changelog
         uses: mikepenz/release-changelog-builder-action@v2
@@ -95,3 +100,5 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body: ${{ steps.changelog.outputs.changelog }}
+          files: |
+            ./recluster.tar.gz
