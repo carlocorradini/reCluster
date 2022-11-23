@@ -94,6 +94,6 @@ reCluster installation script.
 | `--pc-interval <TIME>`              | Power consumption read interval time in seconds                                            | `1`                                             | Any positive number       |
 | `--pc-time <TIME>`                  | Power consumption execution time in seconds                                                | `30`                                            | Any positive number       |
 | `--pc-warmup <TIME>`                | Power consumption warmup time in seconds                                                   | `10`                                            | Any positive number       |
-| `--ssh-authorized-keys-file <FILE>` | SSH authorized keys file                                                                   | `/root/.ssh/authorized_keys`                    | Any valid file            |
 | `--ssh-config-file <FILE>`          | SSH configuration file                                                                     | `configs/ssh_config`                            | Any valid file            |
 | `--sshd-config-file <FILE>`         | SSH server configuration file                                                              | `configs/sshd_config`                           | Any valid file            |
+| `--user <USER>`                     | User                                                                                       | `root`                                          | Any valid user            |

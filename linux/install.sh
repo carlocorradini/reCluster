@@ -56,12 +56,12 @@ PC_WARMUP=10
 RECLUSTER_ETC_DIR="/etc/recluster"
 # reCluster opt directory
 RECLUSTER_OPT_DIR="/opt/recluster"
-# SSH authorized keys file
-SSH_AUTHORIZED_KEYS_FILE="/root/.ssh/authorized_keys"
 # SSH configuration file
 SSH_CONFIG_FILE="configs/ssh_config"
 # SSH server configuration file
 SSHD_CONFIG_FILE="configs/sshd_config"
+# User
+USER="root"
 
 # ================
 # GLOBALS
@@ -101,7 +101,7 @@ show_help() {
 Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config-file <FILE>] [--help]
         [--init-cluster] [--k3s-version <VERSION>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-        [--ssh-authorized-keys-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>]
+        [--ssh-config-file <FILE>] [--sshd-config-file <FILE>] [--user <USER>]
 
 $HELP_COMMONS_USAGE
 
@@ -155,11 +155,6 @@ Options:
                                      Values:
                                        Any positive number
 
-  --ssh-authorized-keys-file <FILE>  SSH authorized keys file
-                                     Default: $SSH_AUTHORIZED_KEYS_FILE
-                                     Values:
-                                       Any valid file
-
   --ssh-config-file <FILE>           SSH configuration file
                                      Default: $SSH_CONFIG_FILE
                                      Values:
@@ -169,6 +164,11 @@ Options:
                                      Default: $SSHD_CONFIG_FILE
                                      Values:
                                        Any valid file
+
+  --user <USER>                      User
+                                     Default: $USER
+                                     Values:
+                                       Any valid user
 
 $HELP_COMMONS_OPTIONS
 EOF
@@ -202,6 +202,90 @@ assert_timezone() {
   [ -f "$_timezone_file" ] || FATAL "Timezone file '$_timezone_file' not found"
   _current_timezone=$(cat $_timezone_file)
   [ "$_current_timezone" = "$_timezone" ] || FATAL "Timezone is not '$_timezone' but '$_current_timezone'"
+}
+
+# Assert user
+assert_user() {
+  id "$USER" > /dev/null 2>&1 || FATAL "User '$USER' does not exists"
+}
+
+# Home directory of user
+user_home_dir() {
+  _home_dir=
+
+  case $USER in
+    root) _home_dir="/root" ;;
+    *) _home_dir="/home/$USER" ;;
+  esac
+
+  printf '%s\n' "$_home_dir"
+}
+
+# Setup SSH
+setup_ssh() {
+  _ssh_config_file="/etc/ssh/ssh_config"
+  _ssh_config_dir=$(dirname "$_ssh_config_file")
+  _sshd_config_file="/etc/ssh/sshd_config"
+  _sshd_config_dir=$(dirname "$_sshd_config_file")
+  _ssh_authorized_keys_file="$(user_home_dir "$USER")/.ssh/authorized_keys"
+  _ssh_authorized_keys_dir=$(dirname "$_ssh_authorized_keys_file")
+
+  spinner_start "Setting up SSH"
+
+  # SSH configuration
+  INFO "Copying SSH configuration file from '$SSH_CONFIG_FILE' to '$_ssh_config_file'"
+  [ -d "$_ssh_config_dir" ] || {
+    WARN "Creating SSH configuration directory '$_ssh_config_dir'"
+    $SUDO mkdir -p "$_ssh_config_dir"
+    $SUDO chown root:root "$_ssh_config_dir"
+    $SUDO chmod 755 "$_ssh_config_dir"
+  }
+  yes | $SUDO cp --force "$SSH_CONFIG_FILE" "$_ssh_config_file"
+  $SUDO chown root:root "$_ssh_config_file"
+  $SUDO chmod 644 "$_ssh_config_file"
+
+  # SSH server configuration
+  INFO "Copying SSH server configuration file from '$SSHD_CONFIG_FILE' to '$_sshd_config_file'"
+  [ -d "$_sshd_config_dir" ] || {
+    WARN "Creating SSH server configuration directory '$_sshd_config_dir'"
+    $SUDO mkdir -p "$_sshd_config_dir"
+    $SUDO chown root:root "$_sshd_config_dir"
+    $SUDO chmod 755 "$_sshd_config_dir"
+  }
+  yes | $SUDO cp --force "$SSHD_CONFIG_FILE" "$_sshd_config_file"
+  $SUDO chown root:root "$_sshd_config_file"
+  $SUDO chmod 644 "$_sshd_config_file"
+
+  # SSH authorized keys
+  [ -d "$_ssh_authorized_keys_dir" ] || {
+    WARN "Creating SSH authorized keys directory '$_ssh_authorized_keys_dir'"
+    $SUDO mkdir -p "$_ssh_authorized_keys_dir"
+    $SUDO chown "$USER:$USER" "$_ssh_authorized_keys_dir"
+    $SUDO chmod 700 "$_ssh_authorized_keys_dir"
+  }
+  while read -r _pub_key; do
+    INFO "Copying SSH public key '$_pub_key' to SSH authorized keys '$_ssh_authorized_keys_file'"
+    $SUDO printf "%s\n" "$_pub_key" >> "$_ssh_authorized_keys_file" || FATAL "Error copying SSH public key '$_pub_key' to SSH authorized keys '$_ssh_authorized_keys_file'"
+  done << EOF
+$(printf "%s\n" "$CONFIG" | jq --compact-output --raw-output '.ssh_authorized_keys[]')
+EOF
+  $SUDO chown "$USER:$USER" "$_ssh_authorized_keys_file"
+  $SUDO chmod 644 "$_ssh_authorized_keys_file"
+
+  # Restart SSH service
+  case $INIT_SYSTEM in
+    openrc)
+      INFO "openrc: Restarting SSH"
+      $SUDO rc-service sshd restart
+      ;;
+    systemd)
+      INFO "systemd: Restarting SSH"
+      $SUDO systemtcl restart ssh
+      ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
+
+  spinner_stop
 }
 
 # Read interfaces
@@ -850,13 +934,6 @@ parse_args() {
         PC_WARMUP=$2
         _shifts=2
         ;;
-      --ssh-authorized-keys-file)
-        # SSH authorized keys file
-        parse_args_assert_value "$@"
-
-        SSH_AUTHORIZED_KEYS_FILE=$2
-        _shifts=2
-        ;;
       --ssh-config-file)
         # SSH configuration file
         parse_args_assert_value "$@"
@@ -869,6 +946,13 @@ parse_args() {
         parse_args_assert_value "$@"
 
         SSHD_CONFIG_FILE=$2
+        _shifts=2
+        ;;
+      --user)
+        # User
+        parse_args_assert_value "$@"
+
+        USER=$2
         _shifts=2
         ;;
       *)
@@ -905,6 +989,7 @@ verify_system() {
   assert_cmd date
   assert_cmd ethtool
   assert_cmd grep
+  assert_cmd id
   assert_cmd ip
   assert_cmd jq
   assert_cmd lscpu
@@ -924,10 +1009,11 @@ verify_system() {
   if [ "$INIT_CLUSTER" = true ]; then
     assert_cmd inotifywait
   fi
-
   # Spinner
   assert_spinner
 
+  # User
+  assert_user
   # Init system
   assert_init_system
   # Timezone
@@ -965,19 +1051,19 @@ verify_system() {
   _recluster_server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires 'server'"
   [ "$INIT_CLUSTER" = true ] || assert_url_reachability "$_recluster_server_url/health"
 
+  # SSH configuration file
+  [ -f "$SSH_CONFIG_FILE" ] || FATAL "SSH configuration file '$SSH_CONFIG_FILE' does not exists"
+  # SSH server configuration file
+  [ -f "$SSHD_CONFIG_FILE" ] || FATAL "SSH server configuration file '$SSHD_CONFIG_FILE' does not exists"
   # SSH Authorized keys
   _ssh_authorized_keys=$(printf '%s\n' "$CONFIG" | jq --exit-status '.ssh_authorized_keys') || FATAL "Configuration requires 'ssh_authorized_keys' array"
   [ "$(printf '%s\n' "$_ssh_authorized_keys" | jq --raw-output 'type == "array"')" = true ] || FATAL "'ssh_authorized_keys' is not an array"
   [ "$(printf '%s\n' "$_ssh_authorized_keys" | jq --raw-output 'length')" -ge 1 ] || FATAL "'ssh_authorized_keys' is empty"
   while read -r _pub_key; do
-    printf '%s\n' "$_pub_key" | ssh-keygen -l -f - > /dev/null 2>&1 || FATAL "'$_pub_key' is not a public key"
+    printf '%s\n' "$_pub_key" | ssh-keygen -l -f - > /dev/null 2>&1 || FATAL "'$_pub_key' is not a valid public key"
   done << EOF
 $(printf '%s\n' "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
 EOF
-  # SSH configuration file
-  [ -f "$SSH_CONFIG_FILE" ] || FATAL "SSH configuration file '$SSH_CONFIG_FILE' does not exists"
-  # SSH server configuration file
-  [ -f "$SSHD_CONFIG_FILE" ] || FATAL "SSH server configuration file '$SSHD_CONFIG_FILE' does not exists"
 
   # Cluster initialization
   if [ "$INIT_CLUSTER" = true ]; then
@@ -1032,6 +1118,9 @@ setup_system() {
   # Temporary directory
   TMP_DIR=$(mktemp --directory -t recluster.XXXXXXXX)
   DEBUG "Created temporary directory '$TMP_DIR'"
+
+  # SSH
+  setup_ssh
 
   # Airgap
   if [ "$AIRGAP_ENV" = true ]; then
@@ -1376,7 +1465,7 @@ cluster_init() {
 
   _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
   _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.k3s.kind')
-  _kubeconfig_file=~/.kube/config
+  _kubeconfig_file="$USER/.kube/config"
 
   _wait_k3s_kubeconfig_file_creation() {
     _k3s_kubeconfig_dir=$(dirname "$_k3s_kubeconfig_file")
@@ -1426,8 +1515,7 @@ EOF
   INFO "Copying K3s kubeconfig from '$_k3s_kubeconfig_file' to '$_kubeconfig_file'"
   _kubeconfig_dir=$(dirname "$_kubeconfig_file")
   [ -d "$_kubeconfig_dir" ] || mkdir -p "$_kubeconfig_dir"
-  [ ! -f "$_kubeconfig_file" ] || rm -f "$_kubeconfig_file"
-  $SUDO cp "$_k3s_kubeconfig_file" "$_kubeconfig_file"
+  yes | $SUDO cp --force "$_k3s_kubeconfig_file" "$_kubeconfig_file"
   $SUDO chmod 0644 "$_kubeconfig_file"
 
   # Read kubeconfig
@@ -1741,47 +1829,6 @@ EOF
 
   # Success
   INFO "Successfully installed reCluster"
-}
-
-# Setup SSH
-setup_ssh() {
-  _ssh_config_file="/etc/ssh/ssh_config"
-  _ssh_config_dir=$(dirname "$_ssh_config_file")
-  _sshd_config_file="/etc/ssh/sshd_config"
-  _sshd_config_dir=$(dirname "$_sshd_config_file")
-  _ssh_authorized_keys=$(printf "%s\n" "$CONFIG" | jq '.ssh_authorized_keys')
-  _ssh_authorized_keys_dir=$(dirname "$SSH_AUTHORIZED_KEYS_FILE")
-
-  # Directories
-  # SSH configuration
-  [ -d "$_ssh_config_dir" ] || {
-    WARN "Creating SSH configuration directory '$_ssh_config_dir'"
-    $SUDO mkdir -p "$_ssh_config_dir"
-  }
-  # SSH server configuration
-  [ -d "$_sshd_config_dir" ] || {
-    WARN "Creating SSH server configuration directory '$_sshd_config_dir'"
-    $SUDO mkdir -p "$_sshd_config_dir"
-  }
-  # SSH authorized keys
-  [ -d "$_ssh_authorized_keys_dir" ] || {
-    WARN "Creating SSH authorized keys directory '$_ssh_authorized_keys_dir'"
-    $SUDO mkdir -p "$_ssh_authorized_keys_dir"
-  }
-
-  # SSH configuration
-  DEBUG "Copying SSH configuration file from '$SSH_CONFIG_FILE' to '$_ssh_config_file'"
-  yes | $SUDO cp --force "$SSH_CONFIG_FILE" "$_ssh_config_file"
-  # SSH server configuration
-  DEBUG "Copying SSH server configuration file from '$SSHD_CONFIG_FILE' to '$_sshd_config_file'"
-  yes | $SUDO cp --force "$SSHD_CONFIG_FILE" "$_sshd_config_file"
-  # SSH Authorized keys
-  while read -r _pub_key; do
-    DEBUG "Copying SSH public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
-    $SUDO printf "%s\n" "$_pub_key" >> "$SSH_AUTHORIZED_KEYS_FILE" || FATAL "Error adding public key '$_pub_key' to SSH authorized keys '$SSH_AUTHORIZED_KEYS_FILE'"
-  done << EOF
-$(printf '%s\n' "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
-EOF
 }
 
 # Start recluster
