@@ -436,8 +436,7 @@ cleanup_docker_container() {
 cleanup_dir() {
   { [ -n "$1" ] && [ -d "$1" ]; } || return 0
 
-  _dir=$1
-  DEBUG "Removing directory '$_dir'"
+  DEBUG "Removing directory '$1'"
   rm -rf "$1" || return 0
 }
 
