@@ -42,6 +42,7 @@ linux:
     __:
       run: |-
         ./linux/dependencies/dependencies.sh --sync-force
+    autoscaler: true
     k3s: true
     node_exporter: true
     prometheus: true
