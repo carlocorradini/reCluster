@@ -438,7 +438,7 @@ cleanup_dir() {
 
   _dir=$1
   DEBUG "Removing directory '$_dir'"
-  rm -rf "$TMP_DIR" || return 0
+  rm -rf "$1" || return 0
 }
 
 # ================
