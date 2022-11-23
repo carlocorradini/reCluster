@@ -782,17 +782,18 @@ read_cpu_power_consumption() {
 node_registration() {
   _server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires server URL"
   _server_url="$_server_url/graphql"
-  # shellcheck disable=SC2016
-  _request_data='
-    {
-      "query": "mutation ($data: CreateNodeInput!) {
-        createNode(data: $data)
-      }",
-      "variables": {
-        "data": '"$(printf '%s\n' "$NODE_FACTS" | jq --compact-output .)"'
-      }
-    }
-  '
+  _request_data=$(
+    jq \
+      --null-input \
+      --compact-output \
+      --argjson data "$NODE_FACTS" \
+      '
+        {
+          "query": "mutation ($data: CreateNodeInput!) { createNode(data: $data) }",
+          "variables": { "data": $data }
+        }
+      '
+  )
   _response_data=
 
   INFO "Registering node at '$_server_url'"
@@ -1664,14 +1665,16 @@ update_node_status() {
 
   _server_url=\$(printf '%s\n' "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
   _server_url="\$_server_url/graphql"
-  # shellcheck disable=SC2016
-  _request_data='
-    {
-      "query": "mutation {
-        updateStatus { id }
-      }"
-    }
-  '
+  _request_data=\$(
+    jq \\
+      --null-input \\
+      --compact-output \\
+      '
+        {
+          "query": "mutation { updateStatus { id } }"
+        }
+      '
+  )
   _response_data=
 
   INFO "Updating node status at '\$_server_url'"
@@ -1782,6 +1785,8 @@ depend() {
   need net
   use dns
   after firewall
+  after network-online
+  want cgroups
 }
 
 command="/usr/bin/env sh $_opt_bootstrap_script_file"
@@ -1865,6 +1870,5 @@ start_recluster() {
   install_node_exporter
   cluster_init
   install_recluster
-  setup_ssh
   start_recluster
 }
