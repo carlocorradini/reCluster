@@ -65,6 +65,15 @@ download_inline_script() {
   chmod u+x "$_script_file"
 }
 
+# Server environment
+server_env() {
+  _env_example_file="$ROOT_DIR/server/.env.example"
+  _env_file="$ROOT_DIR/server/.env"
+
+  INFO "Copying server environment file '$_env_example_file' to '$_env_file'"
+  cp --force "$_env_example_file" "$_env_file"
+}
+
 # Install dependencies
 install_dependencies() {
   INFO "Installing dependencies"
@@ -113,10 +122,9 @@ verify_system() {
 
 # Initialization
 init() {
-  INFO "Initialization"
   download_inline_script
+  server_env
   install_dependencies
-  INFO "Initialization succeeded"
 }
 
 # ================
