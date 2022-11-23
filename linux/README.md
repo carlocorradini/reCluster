@@ -43,7 +43,7 @@ _Wake-on-Lan_ must be enabled if it is supported.
 
      > **Note**: Example device `eth0`
 
-     Edit `/etc/network/interfaces`.
+     Edit `/etc/network/interfaces`
 
      ```diff
        auto eth0

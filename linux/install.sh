@@ -227,7 +227,7 @@ setup_ssh() {
   _ssh_config_dir=$(dirname "$_ssh_config_file")
   _sshd_config_file="/etc/ssh/sshd_config"
   _sshd_config_dir=$(dirname "$_sshd_config_file")
-  _ssh_authorized_keys_file="$(user_home_dir "$USER")/.ssh/authorized_keys"
+  _ssh_authorized_keys_file="$(user_home_dir)/.ssh/authorized_keys"
   _ssh_authorized_keys_dir=$(dirname "$_ssh_authorized_keys_file")
 
   spinner_start "Setting up SSH"
@@ -1465,7 +1465,7 @@ cluster_init() {
 
   _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
   _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.k3s.kind')
-  _kubeconfig_file="$USER/.kube/config"
+  _kubeconfig_file="$(user_home_dir)/.kube/config"
 
   _wait_k3s_kubeconfig_file_creation() {
     _k3s_kubeconfig_dir=$(dirname "$_k3s_kubeconfig_file")
