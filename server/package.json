@@ -34,7 +34,7 @@
     "fix:lint": "npx eslint --fix .",
     "graphql:schema": "npx ts-node ./scripts/schema.ts | npx pino-pretty --translateTime \"UTC:yyyy-mm-dd'T'HH:MM:ss'Z'\"",
     "prepare": "npx ts-patch install -s && npm run db:generate",
-    "start": "build/main.js",
+    "start": "node build/main.js",
     "start:dev": "npx ts-node-dev --respawn --clear --rs --transpile-only --tree-kill --exit-child --require tsconfig-paths/register src/main.ts | npx pino-pretty --translateTime \"UTC:yyyy-mm-dd'T'HH:MM:ss'Z'\""
   },
   "dependencies": {
