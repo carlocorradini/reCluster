@@ -41,7 +41,7 @@ ISO_DIR=$(readlink -f "$DIRNAME/iso")
 # Architectures
 ARCHS='["x86_64"]'
 # Alpine version
-ALPINE_VERSION=edge
+ALPINE_VERSION=3.17
 # Alpine profile file
 ALPINE_PROFILE_FILE=$(readlink -f "$DIRNAME/mkimg.recluster.sh")
 # Alpine apkovl file

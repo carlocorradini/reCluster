@@ -151,6 +151,7 @@
     "tonumber",
     "uncompiled",
     "upsert",
+    "workdir",
     "zoneinfo"
   ]
 }
