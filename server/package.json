@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@apollo/server": "^4.1.1",
-    "@as-integrations/fastify": "^1.1.1",
+    "@as-integrations/fastify": "^1.2.0",
     "@fastify/compress": "^6.1.1",
     "@fastify/cors": "^8.2.0",
     "@fastify/helmet": "^10.0.2",
