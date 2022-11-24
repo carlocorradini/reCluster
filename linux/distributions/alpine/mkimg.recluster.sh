@@ -29,9 +29,8 @@ profile_recluster() {
   desc="reCluster Alpine Linux"
   profile_abbrev="recluster"
   image_ext="iso"
-  arch="x86_64 aarch64 armv7 s390x"
+  arch="x86_64 aarch64"
   output_format="iso"
-  kernel_addons="xtables-addons"
   apks="$apks coreutils ethtool inotify-tools iproute2 jq ncurses openssh procps sudo sysbench tzdata util-linux yq"
   apkovl="genapkovl-recluster.sh"
 }

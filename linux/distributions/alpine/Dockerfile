@@ -24,7 +24,7 @@
 # CONFIGURATION
 # ================
 # Alpine linux version
-ARG ALPINE_VERSION=3.16
+ARG ALPINE_VERSION=edge
 
 FROM alpine:${ALPINE_VERSION}
 

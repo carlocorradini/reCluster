@@ -125,6 +125,9 @@ verify_system() {
   assert_cmd jq
 
   assert_docker_image "$DOCKER_IMAGE" "$DOCKERFILE"
+
+  [ -f "$ARCH_PROFILE_FILE" ] || FATAL "Arch profile file '$ARCH_PROFILE_FILE' does not exists"
+  [ -f "$ARCH_PACKAGES_FILE" ] || FATAL "Arch packages file '$ARCH_PACKAGES_FILE' does not exists"
 }
 
 # Prepare container
@@ -138,10 +141,13 @@ prepare_container() {
       --rm \
       --detach \
       --interactive \
-      --tty \
       --privileged \
       "$DOCKER_IMAGE"
   )
+
+  # File permission
+  docker exec "$CONTAINER_ID" chmod u+x \
+    /tmp/recluster/profile/profiledef.sh
 }
 
 # Build ISO image
@@ -151,12 +157,12 @@ builder() {
 
   INFO "Building Arch Linux architecture '$_arch'"
 
-  docker exec "$CONTAINER_ID" \
+  docker exec --tty "$CONTAINER_ID" \
     mkarchiso \
     -v \
-    -w /tmp/recluster/work \
-    -o /tmp/recluster/out \
-    /tmp/recluster/profile
+    -w "/tmp/recluster/work" \
+    -o "/tmp/recluster/out" \
+    "/tmp/recluster/profile"
 }
 
 # ================

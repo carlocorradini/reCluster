@@ -41,7 +41,7 @@ ISO_DIR=$(readlink -f "$DIRNAME/iso")
 # Architectures
 ARCHS='["x86_64"]'
 # Alpine version
-ALPINE_VERSION=3.16
+ALPINE_VERSION=edge
 # Alpine profile file
 ALPINE_PROFILE_FILE=$(readlink -f "$DIRNAME/mkimg.recluster.sh")
 # Alpine apkovl file
@@ -128,6 +128,9 @@ verify_system() {
   assert_cmd sed
 
   assert_docker_image "$DOCKER_IMAGE" "$DOCKERFILE"
+
+  [ -f "$ALPINE_PROFILE_FILE" ] || FATAL "Alpine profile file '$ALPINE_PROFILE_FILE' does not exists"
+  [ -f "$ALPINE_APKOVL_FILE" ] || FATAL "Alpine apkovl file '$ALPINE_APKOVL_FILE' does not exists"
 }
 
 # Prepare container
@@ -144,12 +147,13 @@ prepare_container() {
       --rm \
       --detach \
       --interactive \
-      --tty \
       "$DOCKER_IMAGE"
   )
 
-  # Script permission
-  docker exec "$CONTAINER_ID" chmod +x "/home/build/aports/scripts/$_profile_file_name"
+  # File permission
+  docker exec "$CONTAINER_ID" chmod u+x \
+    "/home/build/aports/scripts/$_profile_file_name" \
+    "/home/build/aports/scripts/$_apkovl_file_name"
 }
 
 # Build ISO image
@@ -157,16 +161,21 @@ prepare_container() {
 builder() {
   _arch=$1
   _profile_name=$(basename "$ALPINE_PROFILE_FILE" | sed -E 's/.*mkimg\.(.*)\.sh.*/\1/')
+  _alpine_version=
+  case $ALPINE_VERSION in
+    edge) _alpine_version=edge ;;
+    *) _alpine_version="v$ALPINE_VERSION" ;;
+  esac
 
   INFO "Building Alpine Linux architecture '$_arch'"
 
-  docker exec "$CONTAINER_ID" \
-    /home/build/aports/scripts/mkimage.sh \
-    --tag "v$ALPINE_VERSION" \
-    --outdir /home/build/iso \
+  docker exec --workdir "/home/build/aports/scripts" --tty "$CONTAINER_ID" \
+    "/home/build/aports/scripts/mkimage.sh" \
+    --tag "$_alpine_version" \
+    --outdir "/home/build/iso" \
     --arch "$_arch" \
-    --repository "https://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/main" \
-    --repository "https://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/community" \
+    --repository "https://dl-cdn.alpinelinux.org/alpine/$_alpine_version/main" \
+    --repository "https://dl-cdn.alpinelinux.org/alpine/$_alpine_version/community" \
     --profile "$_profile_name"
 }
 
