@@ -42,7 +42,7 @@
     "@as-integrations/fastify": "^1.1.1",
     "@fastify/compress": "^6.1.1",
     "@fastify/cors": "^8.2.0",
-    "@fastify/helmet": "^10.0.2",
+    "@fastify/helmet": "^10.1.0",
     "@fastify/rate-limit": "^7.5.0",
     "@graphql-tools/schema": "^9.0.10",
     "@graphql-tools/utils": "^9.0.1",
