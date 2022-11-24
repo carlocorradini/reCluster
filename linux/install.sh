@@ -1187,10 +1187,10 @@ setup_system() {
     mv "$TMP_DIR/node_exporter" "$AIRGAP_NODE_EXPORTER_BIN"
 
     # Permissions
-    chmod 755 "$AIRGAP_K3S_BIN"
-    chmod 755 "$AIRGAP_NODE_EXPORTER_BIN"
     $SUDO chown root:root "$AIRGAP_K3S_BIN"
+    $SUDO chmod 755 "$AIRGAP_K3S_BIN"
     $SUDO chown root:root "$AIRGAP_NODE_EXPORTER_BIN"
+    $SUDO chmod 755 "$AIRGAP_NODE_EXPORTER_BIN"
 
     spinner_stop
   fi
@@ -1744,8 +1744,8 @@ EOF
   tee -a "$_commons_script_file" > /dev/null << EOF
 }
 EOF
-  $SUDO chmod 755 "$_commons_script_file"
   $SUDO chown root:root "$_commons_script_file"
+  $SUDO chmod 755 "$_commons_script_file"
 
   # Bootstrap script
   INFO "Constructing '$(basename "$_bootstrap_script_file")' script"
@@ -1764,8 +1764,8 @@ EOF
   start_services
 }
 EOF
-  $SUDO chmod 755 "$_bootstrap_script_file"
   $SUDO chown root:root "$_bootstrap_script_file"
+  $SUDO chmod 755 "$_bootstrap_script_file"
 
   #
   # Services
