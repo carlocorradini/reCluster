@@ -22,5 +22,16 @@
  * SOFTWARE.
  */
 
-export * from './UpdateNodePoolArgs';
-export * from './UpdateStatusArgs';
+import { Field, InputType } from 'type-graphql';
+import type { UpdateStatusInput as IUpdateStatusInput } from '~/types';
+import { NodeStatusEnum } from '~/db';
+import { IsIn } from 'class-validator';
+
+@InputType({ description: 'Update Status input' })
+export class UpdateStatusInput
+  implements Required<Pick<IUpdateStatusInput, 'status'>>
+{
+  @Field(() => NodeStatusEnum, { description: 'Status' })
+  @IsIn([NodeStatusEnum.ACTIVE, NodeStatusEnum.INACTIVE])
+  status!: NodeStatusEnum;
+}

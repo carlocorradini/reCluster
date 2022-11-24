@@ -1660,25 +1660,29 @@ read_node_token() {
 }
 
 # Update node status
+# @param \$1 Status
 update_node_status() {
   read_config
   read_node_token
 
+  _status=\$1
   _server_url=\$(printf '%s\n' "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
   _server_url="\$_server_url/graphql"
   _request_data=\$(
     jq \\
       --null-input \\
       --compact-output \\
+      --arg status "\$_status" \\
       '
         {
-          "query": "mutation { updateStatus { id } }"
+          "query": "mutation (\$data: UpdateStatusInput!){ updateStatus(data: \$data) { id } }",
+          "variables": { "data": { "status": \$status } }
         }
       '
   )
   _response_data=
 
-  INFO "Updating node status at '\$_server_url'"
+  INFO "Updating node status '\$_status' at '\$_server_url'"
 
   # Send update request
 EOF
@@ -1760,7 +1764,7 @@ EOF
 # MAIN
 # ================
 {
-  update_node_status
+  update_node_status ACTIVE
   start_services
 }
 EOF

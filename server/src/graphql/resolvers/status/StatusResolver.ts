@@ -29,7 +29,11 @@ import { NodeService, StatusService, TokenTypes } from '~/services';
 import { Applicant, Auth } from '~/helpers';
 import { TokenPayload } from '~/types';
 import { Status } from '../../entities';
-import { FindUniqueStatusArgs, FindManyStatusArgs } from '../../args';
+import {
+  FindUniqueStatusArgs,
+  FindManyStatusArgs,
+  UpdateStatusArgs
+} from '../../args';
 
 // FIXME implements ResolverInterface<Status>
 @Resolver(Status)
@@ -57,13 +61,16 @@ export class StatusResolver {
 
   @Mutation(() => Status, { description: 'Update Status' })
   @Auth({ type: TokenTypes.NODE })
-  public updateStatus(@Applicant() applicant: TokenPayload) {
+  public updateStatus(
+    @Args() args: UpdateStatusArgs,
+    @Applicant() applicant: TokenPayload
+  ) {
     return this.nodeService.update({
       where: { id: applicant.id },
       data: {
-        nodePoolAssigned: true,
+        nodePoolAssigned: args.data.status === NodeStatusEnum.ACTIVE,
         status: {
-          status: NodeStatusEnum.ACTIVE,
+          status: args.data.status,
           reason: 'NodeStatusUpdate',
           message: 'Node sent status update'
         }

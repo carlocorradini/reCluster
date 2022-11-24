@@ -22,5 +22,16 @@
  * SOFTWARE.
  */
 
-export * from './UpdateNodePoolArgs';
-export * from './UpdateStatusArgs';
+import type { Prisma } from '@prisma/client';
+import { ArgsType, Field } from 'type-graphql';
+import { ValidateNested } from 'class-validator';
+import { UpdateStatusInput } from '../../inputs';
+
+type IUpdateStatusArgs = Required<Pick<Prisma.StatusUpdateArgs, 'data'>>;
+
+@ArgsType()
+export class UpdateStatusArgs implements IUpdateStatusArgs {
+  @Field({ description: 'Status data' })
+  @ValidateNested()
+  data!: UpdateStatusInput;
+}

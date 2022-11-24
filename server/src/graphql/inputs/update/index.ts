@@ -23,3 +23,4 @@
  */
 
 export * from './UpdateNodePoolInput';
+export * from './UpdateStatusInput';
