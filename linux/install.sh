@@ -1517,7 +1517,8 @@ EOF
   _kubeconfig_dir=$(dirname "$_kubeconfig_file")
   [ -d "$_kubeconfig_dir" ] || mkdir -p "$_kubeconfig_dir"
   yes | $SUDO cp --force "$_k3s_kubeconfig_file" "$_kubeconfig_file"
-  $SUDO chmod 0644 "$_kubeconfig_file"
+  $SUDO chown "$USER:$USER" "$_kubeconfig_file"
+  $SUDO chmod 644 "$_kubeconfig_file"
 
   # Read kubeconfig
   WARN "kubeconfig:"
