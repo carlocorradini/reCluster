@@ -40,6 +40,7 @@
     "bootloader",
     "carlocorradini",
     "cdpath",
+    "cgroups",
     "codepaths",
     "codeql",
     "commitlint",
