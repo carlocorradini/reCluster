@@ -1538,9 +1538,11 @@ install_recluster() {
   _node_token_file="$_etc_dir/token"
   _commons_script_file="$_opt_dir/__commons.sh"
   _bootstrap_script_file="$_opt_dir/bootstrap.sh"
+  _shutdown_script_file="$_opt_dir/shutdown.sh"
   # Configuration
   _node_label_id="recluster.io/id="
   _bootstrap_service_name=recluster.bootstrap
+  _shutdown_service_name=recluster.shutdown
   # Registration data
   _registration_data=
   _node_token=
@@ -1594,6 +1596,7 @@ install_recluster() {
   _etc_node_token_file="${RECLUSTER_ETC_DIR}$(printf '%s\n' "$_node_token_file" | sed -n -e 's#^.*'"$RECLUSTER_ETC_DIR"'##p')"
   _opt_commons_script_file="${RECLUSTER_OPT_DIR}$(printf '%s\n' "$_commons_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
   _opt_bootstrap_script_file="${RECLUSTER_OPT_DIR}$(printf '%s\n' "$_bootstrap_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
+  _opt_shutdown_script_file="${RECLUSTER_OPT_DIR}$(printf '%s\n' "$_shutdown_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
 
   # Commons script
   INFO "Constructing '$(basename "$_commons_script_file")' script"
@@ -1721,25 +1724,34 @@ EOF
   fi
 }
 
-# Start services
-start_services() {
+# Manage services
+# @param \$1 Operation
+manage_services() {
+  _op=\$1
+  _op_message=
+
+  case \$_op in
+    start) _op_message="Starting" ;;
+    stop) _op_message="Stopping" ;;
+    * ) FATAL "Unknown operation '\$_op'"
+  esac
 EOF
 
   case $INIT_SYSTEM in
     openrc)
       tee -a "$_commons_script_file" > /dev/null << EOF
-      INFO "openrc: Starting Node exporter"
-      rc-service node_exporter start
-      INFO "openrc: Starting K3s"
-      rc-service k3s-recluster start
+  INFO "openrc: \$_op_message Node exporter"
+  rc-service node_exporter \$_op
+  INFO "openrc: \$_op_message K3s"
+  rc-service k3s-recluster \$_op
 EOF
       ;;
     systemd)
       tee -a "$_commons_script_file" > /dev/null << EOF
-      INFO "systemd: Starting Node exporter"
-      systemtcl start node_exporter
-      INFO "systemd: Starting K3s"
-      systemctl start k3s-recluster
+  INFO "systemd: \$_op_message Node exporter"
+  systemtcl \$_op node_exporter
+  INFO "systemd: \$_op_message K3s"
+  systemctl \$_op k3s-recluster
 EOF
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
@@ -1765,11 +1777,30 @@ EOF
 # ================
 {
   update_node_status ACTIVE
-  start_services
+  manage_services start
 }
 EOF
   $SUDO chown root:root "$_bootstrap_script_file"
   $SUDO chmod 755 "$_bootstrap_script_file"
+
+  # Shutdown script
+  INFO "Constructing '$(basename "$_shutdown_script_file")' script"
+  tee "$_shutdown_script_file" > /dev/null << EOF
+#!/usr/bin/env sh
+
+# Load commons
+# inline skip
+. "$_opt_commons_script_file"
+
+# ================
+# MAIN
+# ================
+{
+  update_node_status INACTIVE
+}
+EOF
+  $SUDO chown root:root "$_shutdown_script_file"
+  $SUDO chmod 755 "$_shutdown_script_file"
 
   #
   # Services
@@ -1796,9 +1827,10 @@ depend() {
 
 command="/usr/bin/env sh $_opt_bootstrap_script_file"
 EOF
+      $SUDO chown root:root "$_openrc_bootstrap_service_file"
       $SUDO chmod 0755 "$_openrc_bootstrap_service_file"
 
-      INFO "openrc: Enabling bootstrap service '$_bootstrap_service_name' for default runlevel"
+      INFO "openrc: Enabling bootstrap service '$_bootstrap_service_name' at startup"
       $SUDO rc-update add "$_bootstrap_service_name" default > /dev/null
       ;;
     systemd)
@@ -1818,10 +1850,56 @@ ExecStart=/usr/bin/env sh $_opt_bootstrap_script_file
 [Install]
 WantedBy=multi-user.target
 EOF
+      $SUDO chown root:root "$_systemd_bootstrap_service_file"
       $SUDO chmod 0755 "$_systemd_bootstrap_service_file"
 
-      INFO "systemd: Enabling bootstrap service '$_bootstrap_service_name' unit"
+      INFO "systemd: Enabling bootstrap service '$_bootstrap_service_name' at startup"
       $SUDO systemctl enable "$_bootstrap_service_name" > /dev/null
+      $SUDO systemctl daemon-reload > /dev/null
+      ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
+
+  # Shutdown service
+  INFO "Constructing shutdown service '$_shutdown_service_name'"
+  case $INIT_SYSTEM in
+    openrc)
+      _openrc_shutdown_service_file="/etc/local.d/$_shutdown_service_name.stop"
+
+      INFO "openrc: Constructing shutdown service file '$_openrc_shutdown_service_file'"
+      $SUDO tee "$_openrc_shutdown_service_file" > /dev/null << EOF
+#!/usr/bin/env sh
+
+# Fail on error
+set -o errexit
+# Disable wildcard character expansion
+set -o noglob
+
+/usr/bin/env sh $_opt_shutdown_script_file"
+EOF
+      $SUDO chown root:root "$_openrc_shutdown_service_file"
+      $SUDO chmod 0755 "$_openrc_shutdown_service_file"
+      ;;
+    systemd)
+      _systemd_shutdown_service_file="/etc/systemd/system/$_shutdown_service_name.service"
+
+      INFO "systemd: Constructing shutdown service file '$_systemd_shutdown_service_file'"
+      $SUDO tee "$_systemd_shutdown_service_file" > /dev/null << EOF
+[Unit]
+Description=reCluster shutdown
+DefaultDependencies=no
+Before=reboot.target shutdown.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env sh $_opt_shutdown_script_file
+
+[Install]
+WantedBy=reboot.target shutdown.target
+EOF
+      $SUDO chown root:root "$_systemd_shutdown_service_file"
+      $SUDO chmod 0755 "$_systemd_shutdown_service_file"
+
       $SUDO systemctl daemon-reload > /dev/null
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
