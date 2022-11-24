@@ -59,8 +59,8 @@ linux:
 scripts:
   __:
     run: |-
-      ./scripts/inline.sh --in-file ./certificates.sh --overwrite
-  certificates.sh: true
+      ./scripts/inline.sh --in-file ./certs.sh --overwrite
+  certs.sh: true
   README.md: true
 
 server:

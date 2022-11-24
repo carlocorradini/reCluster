@@ -53,7 +53,7 @@ CERTS_DIR="$DIRNAME/../certs"
 # Certificates passphrase
 CERTS_PASSPHRASE=password
 # Certificates script
-CERTS_SCRIPT="$DIRNAME/../../scripts/certificates.sh"
+CERTS_SCRIPT="$DIRNAME/../../scripts/certs.sh"
 # Skip certificates
 SKIP_CERTS=false
 # Skip cluster

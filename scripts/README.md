@@ -26,7 +26,7 @@ reCluster bundle script.
 | `--out-file <FILE>`    | Output file                | `bundle.tar.gz`     | Any valid file |
 | `--skip-run`           | Skip run                   | `false`             |
 
-## :bookmark_tabs: [`certificates.sh`](./certificates.sh)
+## :bookmark_tabs: [`certs.sh`](./certs.sh)
 
 reCluster certificates script.
 
@@ -34,7 +34,7 @@ reCluster certificates script.
 _ssh_passphrase="password"
 _token_passphrase="password"
 
-./certificates.sh \
+./certs.sh \
   --ssh-passphrase "$_ssh_passphrase" \
   --token-passphrase "$_token_passphrase"
 ```
