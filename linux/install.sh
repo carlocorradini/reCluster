@@ -1348,9 +1348,7 @@ install_k3s() {
   _k3s_version="$K3S_VERSION"
   _k3s_install_sh=
   _k3s_kind=
-  _k3s_node_name=
   _k3s_config_file=/etc/rancher/k3s/config.yaml
-  _k3s_config=
 
   spinner_start "Installing K3s '$K3S_VERSION'"
 
@@ -1587,7 +1585,7 @@ install_recluster() {
 
   # Update K3s configuration
   INFO "Updating K3s configuration '$_k3s_config_file'"
-  $SUDO yq e '.node-name = "'"$_k3s_node_name"'" | .node-label += ["'"$_node_label_id"'"] | (.. | select(tag == "!!str")) style="double"' -i "$_k3s_config_file"
+  $SUDO yq e '.node-name = "'"$_node_name"'" | .node-label += ["'"$_node_label_id"'"] | (.. | select(tag == "!!str")) style="double"' -i "$_k3s_config_file"
 
   #
   # Scripts
