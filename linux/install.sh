@@ -60,6 +60,8 @@ PC_WARMUP=10
 RECLUSTER_ETC_DIR="/etc/recluster"
 # reCluster opt directory
 RECLUSTER_OPT_DIR="/opt/recluster"
+# reCluster server certificates directory
+RECLUSTER_SERVER_CERTS_DIR="configs/certs"
 # reCluster server environment file
 RECLUSTER_SERVER_ENV_FILE="configs/server.env"
 # SSH configuration file
@@ -118,7 +120,8 @@ Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config-file <FILE>] 
         [--init-cluster] [--k3s-config-file <FILE>] [--k3s-version <VERSION>]
         [--node-exporter-config-file <FILE>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-        [--server-env-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>] [--user <USER>]
+        [--server-certs-dir <DIR>] [--server-env-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>]
+        [--user <USER>]
 
 $HELP_COMMONS_USAGE
 
@@ -181,6 +184,11 @@ Options:
                                       Default: $PC_WARMUP
                                       Values:
                                         Any positive number
+
+  --server-certs-dir <DIR>            Server certificates directory
+                                      Default: $RECLUSTER_SERVER_CERTS_DIR
+                                      Values:
+                                        Any valid directory
 
   --server-env-file <FILE>            Server environment file
                                       Default: $RECLUSTER_SERVER_ENV_FILE
@@ -981,6 +989,13 @@ parse_args() {
         PC_WARMUP=$2
         _shifts=2
         ;;
+      --server-certs-dir)
+        # Server certificates directory
+        parse_args_assert_value "$@"
+
+        RECLUSTER_SERVER_CERTS_DIR=$2
+        _shifts=2
+        ;;
       --server-env-file)
         # Server environment file
         parse_args_assert_value "$@"
@@ -1085,6 +1100,9 @@ verify_system() {
 
   # Server env
   [ -f "$RECLUSTER_SERVER_ENV_FILE" ] || FATAL "Server environment file '$RECLUSTER_SERVER_ENV_FILE' does not exists"
+  # Server certs dir
+  [ -d "$RECLUSTER_SERVER_CERTS_DIR" ] || FATAL "Server certificates directory '$RECLUSTER_SERVER_CERTS_DIR' does not exists"
+  [ -n "$(ls --almost-all "$RECLUSTER_SERVER_CERTS_DIR")" ] || FATAL "Server certificates directory '$RECLUSTER_SERVER_CERTS_DIR' is empty"
 
   # Configuration
   [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' does not exists"
@@ -1551,7 +1569,8 @@ cluster_init() {
   _kubeconfig_file="$(user_home_dir)/.kube/config"
   _server_service_name=recluster.server
   _server_env_file="$RECLUSTER_ETC_DIR/server.env"
-  _server_opt_dir="$RECLUSTER_OPT_DIR/server"
+  _server_certs_dir="$RECLUSTER_ETC_DIR/certs"
+  _server_dir="$RECLUSTER_OPT_DIR/server"
 
   _wait_k3s_kubeconfig_file_creation() {
     _k3s_kubeconfig_dir=$(dirname "$_k3s_kubeconfig_file")
@@ -1606,11 +1625,11 @@ EOF
   $SUDO chmod 644 "$_kubeconfig_file"
 
   # Copy server
-  INFO "Copying server from '$DIRNAME/../server' to '$_server_opt_dir'"
-  [ -d "$_server_opt_dir" ] || $SUDO mkdir "$_server_opt_dir"
-  yes | $SUDO cp --force --archive "$DIRNAME/../server/." "$_server_opt_dir"
-  $SUDO chown --recursive root:root "$_server_opt_dir"
-  $SUDO chmod 755 "$_server_opt_dir"
+  INFO "Copying server from '$DIRNAME/../server' to '$_server_dir'"
+  [ -d "$_server_dir" ] || $SUDO mkdir -p "$_server_dir"
+  yes | $SUDO cp --force --archive "$DIRNAME/../server/." "$_server_dir"
+  $SUDO chown --recursive root:root "$_server_dir"
+  $SUDO chmod --recursive 755 "$_server_dir"
 
   # Copy server env file
   INFO "Copying server environment file from '$RECLUSTER_SERVER_ENV_FILE' to '$_server_env_file'"
@@ -1618,19 +1637,26 @@ EOF
   $SUDO chown root:root "$_server_env_file"
   $SUDO chmod 600 "$_server_env_file"
 
+  # Copy server certs directory
+  INFO "Copying server certificates directory from '$RECLUSTER_SERVER_CERTS_DIR' to '$_server_certs_dir'"
+  [ -d "$_server_certs_dir" ] || $SUDO mkdir -p "$_server_certs_dir"
+  yes | $SUDO cp --force --archive "$RECLUSTER_SERVER_CERTS_DIR/." "$_server_certs_dir"
+  $SUDO chown --recursive root:root "$_server_certs_dir"
+  $SUDO chmod --recursive 600 "$_server_certs_dir"
+
   # Setup server
   INFO "Setting up server"
   DEBUG "Installing server dependencies"
-  $SUDO npm --prefix "$_server_opt_dir" ci --ignore-scripts
-  yes | $SUDO cp --force "$_server_env_file" "$_server_opt_dir/.env"
+  $SUDO npm --prefix "$_server_dir" ci --ignore-scripts
+  yes | $SUDO cp --force "$_server_env_file" "$_server_dir/.env"
   DEBUG "Generating database assets"
-  $SUDO npm --prefix "$_server_opt_dir" run db:generate
+  $SUDO npm --prefix "$_server_dir" run db:generate
   INFO "Applying migrations to production database"
-  $SUDO npm --prefix "$_server_opt_dir" run db:deploy
+  $SUDO npm --prefix "$_server_dir" run db:deploy
   DEBUG "Removing development dependencies"
-  $SUDO npm --prefix "$_server_opt_dir" prune --production
-  $SUDO rm -rf "$_server_opt_dir/prisma"
-  $SUDO rm -f "$_server_opt_dir/.env"
+  $SUDO npm --prefix "$_server_dir" prune --production
+  $SUDO rm -rf "$_server_dir/prisma"
+  $SUDO rm -f "$_server_dir/.env"
 
   # Server service
   INFO "Constructing server service '$_server_service_name'"
@@ -1651,7 +1677,7 @@ depend() {
 
 supervisor=supervise-daemon
 name=recluster.server
-command=/usr/bin/node $_server_opt_dir/build/main.js
+command=/usr/bin/node $_server_dir/build/main.js
 
 output_log=$_openrc_server_log_file
 output_log=$_openrc_server_log_file
@@ -1694,7 +1720,7 @@ TasksMax=infinity
 TimeoutStartSec=0
 Restart=always
 RestartSec=3s
-ExecStart=/usr/bin/node $_server_opt_dir/build/main.js
+ExecStart=/usr/bin/node $_server_dir/build/main.js
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=recluster.server

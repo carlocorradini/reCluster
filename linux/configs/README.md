@@ -2,6 +2,10 @@
 
 reCluster configurations.
 
+## :file_folder: [certs](./certs/)
+
+See [certs](../../scripts/README.md#📑-certssh) for more information.
+
 ## :bookmark_tabs: [`config.yml`](./config.yml)
 
 reCluster configuration.
