@@ -12,7 +12,6 @@
     "**/build/",
     "**/coverage/",
     "**/node_modules/",
-    "./Vagrantfile",
     "./license.json",
     "./server/prisma/migrations/",
     "./linux/configs/ssh_config",

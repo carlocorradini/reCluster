@@ -1,6 +1,5 @@
 {
   "recommendations": [
-    "bbenoist.vagrant",
     "bierner.markdown-emoji",
     "DavidAnson.vscode-markdownlint",
     "dbaeumer.vscode-eslint",

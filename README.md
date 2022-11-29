@@ -32,13 +32,12 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 ### Requirements
 
-| **Name**  | **Homepage**                |
-| --------- | --------------------------- |
-| `Docker`  | <https://www.docker.com>    |
-| `K3d`     | <https://k3d.io>            |
-| `Node.js` | <https://nodejs.org>        |
-| `npm`     | <https://www.npmjs.com>     |
-| `Vagrant` | <https://www.vagrantup.com> |
+| **Name**  | **Homepage**             |
+| --------- | ------------------------ |
+| `Docker`  | <https://www.docker.com> |
+| `K3d`     | <https://k3d.io>         |
+| `Node.js` | <https://nodejs.org>     |
+| `npm`     | <https://www.npmjs.com>  |
 
 ### Preparation
 
@@ -59,50 +58,6 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
    ```sh
    ./scripts/init.sh
-   ```
-
-## Simulate Cluster
-
-> **Note**: Destroy machines with `vagrant destroy --graceful --force`
-
-1. Install `vagrant-hosts` plugin:
-
-   ```sh
-   vagrant plugin install vagrant-hosts
-   ```
-
-1. Creates and configures machines
-
-   ```sh
-   vagrant up
-   ```
-
-### Controller
-
-1. SSH
-
-   ```sh
-   vagrant ssh controller
-   ```
-
-1. Install
-
-   ```sh
-   ./linux/install.sh --config ./linux/configs/controller.config.yml --pc-device-api "http://192.168.0.61/cm?cmnd=status%2010" --init-cluster
-   ```
-
-### Worker
-
-1. SSH
-
-   ```sh
-   vagrant ssh worker
-   ```
-
-1. Install
-
-   ```sh
-   ./linux/install.sh --config ./linux/configs/worker.config.yml --pc-device-api "http://192.168.0.61/cm?cmnd=status%2010"
    ```
 
 ### Scripts
