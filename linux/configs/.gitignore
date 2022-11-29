@@ -1,9 +1,10 @@
 *
 !/.gitignore
-!/common.config.yml
-!/controller.config.yml
-!/worker.config.yml
-!/configs.sh
 !/README.md
+!/config.yml
+!/k3s.controller.yml
+!/k3s.worker.yml
+!/node_exporter.yml
+!/server.env
 !/ssh_config
 !/sshd_config

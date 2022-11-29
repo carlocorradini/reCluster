@@ -77,6 +77,8 @@ inotify-tools
 iproute2
 jq
 ncurses
+nodejs
+npm
 openssh
 procps
 sudo

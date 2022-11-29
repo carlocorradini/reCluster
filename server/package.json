@@ -22,6 +22,7 @@
     "check:db": "npm run db:format",
     "check:lint": "npx eslint .",
     "dev": "./scripts/dev.sh --k3d-config-file ./k3d.config.yml",
+    "db:deploy": "npx prisma migrate deploy",
     "db:format": "npx prisma format",
     "db:generate": "npx prisma generate",
     "db:reset": "npx prisma migrate reset",
@@ -89,7 +90,7 @@
     "ts-node-dev": "^2.0.0",
     "ts-patch": "^2.0.2",
     "tsconfig-paths": "^4.1.0",
-    "typescript": "^4.9.3",
+    "typescript": "^4.8.4",
     "typescript-transform-paths": "^3.4.4",
     "yargs": "^17.6.2"
   },

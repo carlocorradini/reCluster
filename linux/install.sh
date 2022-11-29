@@ -40,8 +40,12 @@ BENCH_TIME=30
 CONFIG_FILE="configs/config.yml"
 # Initialize cluster
 INIT_CLUSTER=false
+# K3s configuration file
+K3S_CONFIG_FILE="configs/k3s.yml"
 # K3s version
 K3S_VERSION=latest
+# Node exporter configuration file
+NODE_EXPORTER_CONFIG_FILE="configs/node_exporter.yml"
 # Node exporter version
 NODE_EXPORTER_VERSION=latest
 # Power consumption device api url
@@ -56,6 +60,8 @@ PC_WARMUP=10
 RECLUSTER_ETC_DIR="/etc/recluster"
 # reCluster opt directory
 RECLUSTER_OPT_DIR="/opt/recluster"
+# reCluster server environment file
+RECLUSTER_SERVER_ENV_FILE="configs/server.env"
 # SSH configuration file
 SSH_CONFIG_FILE="configs/ssh_config"
 # SSH server configuration file
@@ -68,6 +74,10 @@ USER="root"
 # ================
 # Configuration
 CONFIG=
+# K3s configuration
+K3S_CONFIG=
+# Node exporter configuration
+NODE_EXPORTER_CONFIG=
 # Node facts
 NODE_FACTS="{}"
 # Temporary directory
@@ -86,6 +96,12 @@ cleanup() {
   # Cleanup spinner
   cleanup_spinner
 
+  if [ $_exit_code != 0 ]; then
+    # Cleanup etc and opt directories
+    [ ! -d "$RECLUSTER_ETC_DIR" ] || $SUDO rm -rf "$RECLUSTER_ETC_DIR" || :
+    [ ! -d "$RECLUSTER_OPT_DIR" ] || $SUDO rm -rf "$RECLUSTER_OPT_DIR" || :
+  fi
+
   exit "$_exit_code"
 }
 
@@ -99,76 +115,92 @@ trap cleanup INT QUIT TERM EXIT
 show_help() {
   cat << EOF
 Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config-file <FILE>] [--help]
-        [--init-cluster] [--k3s-version <VERSION>] [--node-exporter-version <VERSION>]
+        [--init-cluster] [--k3s-config-file <FILE>] [--k3s-version <VERSION>]
+        [--node-exporter-config-file <FILE>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-        [--ssh-config-file <FILE>] [--sshd-config-file <FILE>] [--user <USER>]
+        [--server-env-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>] [--user <USER>]
 
 $HELP_COMMONS_USAGE
 
 reCluster installation script.
 
 Options:
-  --airgap                           Perform installation in Air-Gap environment
+  --airgap                            Perform installation in Air-Gap environment
 
-  --bench-time <TIME>                Benchmark execution time in seconds
-                                     Default: $BENCH_TIME
-                                     Values:
-                                       Any positive number
+  --bench-time <TIME>                 Benchmark execution time in seconds
+                                      Default: $BENCH_TIME
+                                      Values:
+                                        Any positive number
 
-  --config-file <FILE>               Configuration file
-                                     Default: $CONFIG_FILE
-                                     Values:
-                                       Any valid file
+  --config-file <FILE>                Configuration file
+                                      Default: $CONFIG_FILE
+                                      Values:
+                                        Any valid file
 
-  --help                             Show this help message and exit
+  --help                              Show this help message and exit
 
-  --init-cluster                     Initialize cluster components and logic
-                                       Enable only when bootstrapping for the first time
+  --init-cluster                      Initialize cluster components and logic
+                                        Enable only when bootstrapping for the first time
 
-  --k3s-version <VERSION>            K3s version
-                                     Default: $K3S_VERSION
-                                     Values:
-                                       Any K3s version
+  --k3s-config-file <FILE>            K3s configuration file
+                                      Default: $K3S_CONFIG_FILE
+                                      Values:
+                                        Any valid file
 
-  --node-exporter-version <VERSION>  Node exporter version
-                                     Default: $NODE_EXPORTER_VERSION
-                                     Values:
-                                       Any Node exporter version
+  --k3s-version <VERSION>             K3s version
+                                      Default: $K3S_VERSION
+                                      Values:
+                                        Any K3s version
 
-  --pc-device-api <URL>              Power consumption device api URL
-                                     Default: $PC_DEVICE_API
-                                     Values:
-                                       Any valid URL
+  --node-exporter-config-file <FILE>  Node exporter configuration file
+                                      Default: $NODE_EXPORTER_CONFIG_FILE
+                                      Values:
+                                        Any valid file
 
-  --pc-interval <TIME>               Power consumption read interval time in seconds
-                                     Default: $PC_INTERVAL
-                                     Values:
-                                       Any positive number
+  --node-exporter-version <VERSION>   Node exporter version
+                                      Default: $NODE_EXPORTER_VERSION
+                                      Values:
+                                        Any Node exporter version
 
-  --pc-time <TIME>                   Power consumption execution time in seconds
-                                     Default: $PC_TIME
-                                     Values:
-                                       Any positive number
+  --pc-device-api <URL>               Power consumption device api URL
+                                      Default: $PC_DEVICE_API
+                                      Values:
+                                        Any valid URL
 
-  --pc-warmup <TIME>                 Power consumption warmup time in seconds
-                                     Default: $PC_WARMUP
-                                     Values:
-                                       Any positive number
+  --pc-interval <TIME>                Power consumption read interval time in seconds
+                                      Default: $PC_INTERVAL
+                                      Values:
+                                        Any positive number
 
-  --ssh-config-file <FILE>           SSH configuration file
-                                     Default: $SSH_CONFIG_FILE
-                                     Values:
-                                       Any valid file
+  --pc-time <TIME>                    Power consumption execution time in seconds
+                                      Default: $PC_TIME
+                                      Values:
+                                        Any positive number
 
-  --sshd-config-file <FILE>          SSH server configuration file
-                                     Default: $SSHD_CONFIG_FILE
-                                     Values:
-                                       Any valid file
+  --pc-warmup <TIME>                  Power consumption warmup time in seconds
+                                      Default: $PC_WARMUP
+                                      Values:
+                                        Any positive number
 
-  --user <USER>                      User
-                                     Default: $USER
-                                     Values:
-                                       Any valid user
+  --server-env-file <FILE>            Server environment file
+                                      Default: $RECLUSTER_SERVER_ENV_FILE
+                                      Values:
+                                        Any valid file
+
+  --ssh-config-file <FILE>            SSH configuration file
+                                      Default: $SSH_CONFIG_FILE
+                                      Values:
+                                        Any valid file
+
+  --sshd-config-file <FILE>           SSH server configuration file
+                                      Default: $SSHD_CONFIG_FILE
+                                      Values:
+                                        Any valid file
+
+  --user <USER>                       User
+                                      Default: $USER
+                                      Values:
+                                        Any valid user
 
 $HELP_COMMONS_OPTIONS
 EOF
@@ -265,7 +297,7 @@ setup_ssh() {
   }
   while read -r _pub_key; do
     INFO "Copying SSH public key '$_pub_key' to SSH authorized keys '$_ssh_authorized_keys_file'"
-    $SUDO printf "%s\n" "$_pub_key" >> "$_ssh_authorized_keys_file" || FATAL "Error copying SSH public key '$_pub_key' to SSH authorized keys '$_ssh_authorized_keys_file'"
+    printf "%s\n" "$_pub_key" | $SUDO tee -a "$_ssh_authorized_keys_file" > /dev/null || FATAL "Error copying SSH public key '$_pub_key' to SSH authorized keys '$_ssh_authorized_keys_file'"
   done << EOF
 $(printf "%s\n" "$CONFIG" | jq --compact-output --raw-output '.ssh_authorized_keys[]')
 EOF
@@ -280,7 +312,7 @@ EOF
       ;;
     systemd)
       INFO "systemd: Restarting SSH"
-      $SUDO systemtcl restart ssh
+      $SUDO systemctl restart ssh
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
@@ -890,11 +922,25 @@ parse_args() {
         # Initialize cluster
         INIT_CLUSTER=true
         ;;
+      --k3s-config-file)
+        # K3s configuration file
+        parse_args_assert_value "$@"
+
+        K3S_CONFIG_FILE=$2
+        _shifts=2
+        ;;
       --k3s-version)
         # K3s version
         parse_args_assert_value "$@"
 
         K3S_VERSION=$2
+        _shifts=2
+        ;;
+      --node-exporter-config-file)
+        # Node exporter configuration file
+        parse_args_assert_value "$@"
+
+        NODE_EXPORTER_CONFIG_FILE=$2
         _shifts=2
         ;;
       --node-exporter-version)
@@ -933,6 +979,13 @@ parse_args() {
         parse_args_assert_positive_integer "$1" "$2"
 
         PC_WARMUP=$2
+        _shifts=2
+        ;;
+      --server-env-file)
+        # Server environment file
+        parse_args_assert_value "$@"
+
+        RECLUSTER_SERVER_ENV_FILE=$2
         _shifts=2
         ;;
       --ssh-config-file)
@@ -1009,6 +1062,8 @@ verify_system() {
   assert_cmd yq
   if [ "$INIT_CLUSTER" = true ]; then
     assert_cmd inotifywait
+    assert_cmd node
+    assert_cmd npm
   fi
   # Spinner
   assert_spinner
@@ -1025,51 +1080,73 @@ verify_system() {
   assert_url_reachability "$PC_DEVICE_API"
 
   # Directories
-  [ ! -d "$RECLUSTER_ETC_DIR" ] || FATAL "reCluster directory '$RECLUSTER_ETC_DIR' already exists"
-  [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "reCluster directory '$RECLUSTER_OPT_DIR' already exists"
+  [ ! -d "$RECLUSTER_ETC_DIR" ] || FATAL "Directory '$RECLUSTER_ETC_DIR' already exists"
+  [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "Directory '$RECLUSTER_OPT_DIR' already exists"
+
+  # Server env
+  [ -f "$RECLUSTER_SERVER_ENV_FILE" ] || FATAL "Server environment file '$RECLUSTER_SERVER_ENV_FILE' does not exists"
 
   # Configuration
   [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' does not exists"
   INFO "Reading configuration file '$CONFIG_FILE'"
   CONFIG=$(yq e --output-format=json --no-colors '.' "$CONFIG_FILE") || FATAL "Error reading configuration file '$CONFIG_FILE'"
   DEBUG "Configuration:" "$CONFIG"
+  # Kind
+  _kind=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.kind') || FATAL "Configuration requires 'kind'"
+  [ "$_kind" = "controller" ] || [ "$_kind" = "worker" ] || FATAL "Configuration 'kind' must be 'controller' or 'worker' but '$_kind' found"
+  # reCluster server URL
+  _recluster_server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "Configuration requires 'recluster.server'"
+  [ "$INIT_CLUSTER" = true ] || assert_url_reachability "$_recluster_server_url/health"
 
-  # K3s kind
-  _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.k3s.kind') || FATAL "K3s configuration requires 'kind'"
-  [ "$_k3s_kind" = "server" ] || [ "$_k3s_kind" = "agent" ] || FATAL "K3s configuration 'kind' value must be 'server' or 'agent' but '$_k3s_kind' found"
-  # K3s requires token if not server and not init cluster
-  if { [ "$_k3s_kind" = "agent" ] || { [ "$_k3s_kind" = "server" ] && [ "$INIT_CLUSTER" = false ]; }; } && [ "$(printf '%s\n' "$CONFIG" | jq --raw-output 'any(.k3s; select(.server and .token))')" = false ]; then
+  # K3s configuration
+  [ -f "$K3S_CONFIG_FILE" ] || FATAL "K3s configuration file '$K3S_CONFIG_FILE' does not exists"
+  INFO "Reading K3s configuration file '$K3S_CONFIG_FILE'"
+  K3S_CONFIG=$(yq e --output-format=json --no-colors '.' "$K3S_CONFIG_FILE") || FATAL "Error reading K3s configuration file '$K3S_CONFIG_FILE'"
+  DEBUG "K3s configuration:" "$K3S_CONFIG"
+  # K3s requires server and token if worker or controller (no init cluster)
+  if { [ "$_kind" = "worker" ] || { [ "$_kind" = "controller" ] && [ "$INIT_CLUSTER" = false ]; }; } && [ "$(printf '%s\n' "$K3S_CONFIG" | jq --raw-output 'any(select(.server and .token))')" = false ]; then
     FATAL "K3s configuration requires 'server' and 'token'"
   fi
   # K3s node name
-  [ "$(printf '%s\n' "$CONFIG" | jq --raw-output 'any(.k3s; select(."node-name"))')" = false ] || FATAL "K3s 'node-name' must not be provided"
+  [ "$(printf '%s\n' "$K3S_CONFIG" | jq --raw-output 'any(.; select(."node-name"))')" = false ] || {
+    WARN "K3s configuration 'node-name' must not be provided"
+    K3S_CONFIG=$(printf '%s\n' "$K3S_CONFIG" | jq 'del(."node-name")')
+  }
   # K3s node id
-  [ "$(printf '%s\n' "$CONFIG" | jq --raw-output 'any(.k3s; select(."with-node-id"))')" = false ] || FATAL "K3s 'with-node-id' must not be provided"
+  [ "$(printf '%s\n' "$K3S_CONFIG" | jq --raw-output 'any(.; select(."with-node-id"))')" = false ] || {
+    WARN "K3s configuration 'with-node-id' must not be provided"
+    K3S_CONFIG=$(printf '%s\n' "$K3S_CONFIG" | jq 'del(."with-node-id")')
+  }
   # K3s write-kubeconfig-mode
-  [ "$(printf '%s\n' "$CONFIG" | jq --raw-output 'any(.k3s; select(."write-kubeconfig-mode"))')" = false ] || FATAL "K3s 'write-kubeconfig-mode' must not be provided"
+  [ "$(printf '%s\n' "$K3S_CONFIG" | jq --raw-output 'any(.; select(."write-kubeconfig-mode"))')" = false ] || {
+    WARN "K3s configuration 'write-kubeconfig-mode' must not be provided"
+    K3S_CONFIG=$(printf '%s\n' "$K3S_CONFIG" | jq 'del(."write-kubeconfig-mode")')
+  }
 
-  # reCluster server URL
-  _recluster_server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires 'server'"
-  [ "$INIT_CLUSTER" = true ] || assert_url_reachability "$_recluster_server_url/health"
+  # Node exporter configuration
+  [ -f "$NODE_EXPORTER_CONFIG_FILE" ] || FATAL "Node exporter configuration file '$NODE_EXPORTER_CONFIG_FILE' does not exists"
+  INFO "Reading Node exporter configuration file '$NODE_EXPORTER_CONFIG_FILE'"
+  NODE_EXPORTER_CONFIG=$(yq e --output-format=json --no-colors '.' "$NODE_EXPORTER_CONFIG_FILE") || FATAL "Error reading Node exporter configuration file '$NODE_EXPORTER_CONFIG_FILE'"
+  DEBUG "Node exporter configuration:" "$NODE_EXPORTER_CONFIG"
 
   # SSH configuration file
   [ -f "$SSH_CONFIG_FILE" ] || FATAL "SSH configuration file '$SSH_CONFIG_FILE' does not exists"
   # SSH server configuration file
   [ -f "$SSHD_CONFIG_FILE" ] || FATAL "SSH server configuration file '$SSHD_CONFIG_FILE' does not exists"
   # SSH Authorized keys
-  _ssh_authorized_keys=$(printf '%s\n' "$CONFIG" | jq --exit-status '.ssh_authorized_keys') || FATAL "Configuration requires 'ssh_authorized_keys' array"
+  _ssh_authorized_keys=$(printf '%s\n' "$CONFIG" | jq --exit-status '.ssh_authorized_keys') || FATAL "Configuration requires 'ssh_authorized_keys'"
   [ "$(printf '%s\n' "$_ssh_authorized_keys" | jq --raw-output 'type == "array"')" = true ] || FATAL "'ssh_authorized_keys' is not an array"
   [ "$(printf '%s\n' "$_ssh_authorized_keys" | jq --raw-output 'length')" -ge 1 ] || FATAL "'ssh_authorized_keys' is empty"
   while read -r _pub_key; do
-    printf '%s\n' "$_pub_key" | ssh-keygen -l -f - > /dev/null 2>&1 || FATAL "'$_pub_key' is not a valid public key"
+    printf '%s\n' "$_pub_key" | ssh-keygen -l -f - > /dev/null 2>&1 || FATAL "'$_pub_key' is not a valid SSH public key"
   done << EOF
 $(printf '%s\n' "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
 EOF
 
   # Cluster initialization
   if [ "$INIT_CLUSTER" = true ]; then
-    [ "$_k3s_kind" = server ] || FATAL "Cluster initialization requires K3s 'kind' to be 'server' but '$_k3s_kind' found"
-    [ "$(printf '%s\n' "$CONFIG" | jq --exit-status 'any(.k3s, ."cluster-init" == true)')" = true ] || WARN "Cluster initialization K3s 'cluster-init' not found or set to 'false'"
+    [ "$_kind" = controller ] || FATAL "Cluster initialization requires configuration 'kind' value 'controller' but '$_kind' found"
+    [ "$(printf '%s\n' "$K3S_CONFIG" | jq --exit-status 'any(.; ."cluster-init" == true)')" = true ] || WARN "Cluster initialization K3s configuration 'cluster-init' not found or set to 'false'"
   fi
 
   # Airgap
@@ -1119,6 +1196,10 @@ setup_system() {
   # Temporary directory
   TMP_DIR=$(mktemp --directory -t recluster.XXXXXXXX)
   DEBUG "Created temporary directory '$TMP_DIR'"
+
+  # Directories
+  $SUDO mkdir -p "$RECLUSTER_ETC_DIR" || FATAL "Error creating directory '$RECLUSTER_ETC_DIR'"
+  $SUDO mkdir -p "$RECLUSTER_OPT_DIR" || FATAL "Error creating directory '$RECLUSTER_OPT_DIR'"
 
   # SSH
   setup_ssh
@@ -1317,14 +1398,14 @@ read_power_consumptions() {
 finalize_node_facts() {
   spinner_start "Finalizing node facts"
 
-  _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.k3s.kind')
-  _has_taint_no_execute=$(printf '%s\n' "$CONFIG" | jq --raw-output 'any(select(.k3s."node-taint"); .k3s."node-taint"[] | . == "CriticalAddonsOnly=true:NoExecute")')
+  _kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.kind')
+  _has_taint_no_execute=$(printf '%s\n' "$K3S_CONFIG" | jq --raw-output 'any(select(."node-taint"); ."node-taint"[] | . == "CriticalAddonsOnly=true:NoExecute")')
 
   # Roles
   _roles="[]"
   if [ "$INIT_CLUSTER" = true ]; then _roles=$(printf '%s\n' "$_roles" | jq '. + ["RECLUSTER_CONTROLLER"]'); fi
-  if [ "$_k3s_kind" = "server" ]; then _roles=$(printf '%s\n' "$_roles" | jq '. + ["K8S_CONTROLLER"]'); fi
-  if [ "$_k3s_kind" = "agent" ] || { [ "$_k3s_kind" = "server" ] && [ "$_has_taint_no_execute" = false ]; }; then
+  if [ "$_kind" = "controller" ]; then _roles=$(printf '%s\n' "$_roles" | jq '. + ["K8S_CONTROLLER"]'); fi
+  if [ "$_kind" = "worker" ] || { [ "$_kind" = "controller" ] && [ "$_has_taint_no_execute" = false ]; }; then
     _roles=$(printf '%s\n' "$_roles" | jq '. + ["K8S_WORKER"]')
   fi
   DEBUG "Node roles:" "$_roles"
@@ -1347,8 +1428,8 @@ finalize_node_facts() {
 install_k3s() {
   _k3s_version="$K3S_VERSION"
   _k3s_install_sh=
-  _k3s_kind=
   _k3s_config_file=/etc/rancher/k3s/config.yaml
+  _k3s_kind=
 
   spinner_start "Installing K3s '$K3S_VERSION'"
 
@@ -1376,13 +1457,17 @@ install_k3s() {
   { [ -f "$_k3s_install_sh" ] && [ -x "$_k3s_install_sh" ]; } || FATAL "K3s installation script '$_k3s_install_sh' not found or not executable"
 
   # Kind
-  _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.k3s.kind')
+  _kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.kind')
+  case $_kind in
+    controller) _k3s_kind=server ;;
+    worker) _k3s_kind=agent ;;
+    *) FATAL "Unknown kind '$_kind'" ;;
+  esac
 
   # Write Configuration
   INFO "Writing K3s configuration to '$_k3s_config_file'"
   $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
-  printf '%s\n' "$CONFIG" \
-    | jq '.k3s | del(.kind)' \
+  printf '%s\n' "$K3S_CONFIG" \
     | yq e --no-colors '(.. | select(tag == "!!str")) style="double"' - \
     | $SUDO tee "$_k3s_config_file" > /dev/null
 
@@ -1431,11 +1516,11 @@ install_node_exporter() {
   # Configuration
   INFO "Writing Node exporter configuration"
   _node_exporter_config=$(
-    printf '%s\n' "$CONFIG" \
+    printf '%s\n' "$NODE_EXPORTER_CONFIG" \
       | jq \
         --raw-output \
         '
-          .node_exporter.collector
+          .collector
           | to_entries
           | map(if .value == true then ("--collector."+.key) else ("--no-collector."+.key) end)
           | join(" ")
@@ -1463,8 +1548,10 @@ cluster_init() {
   INFO "Cluster initialization"
 
   _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
-  _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.k3s.kind')
   _kubeconfig_file="$(user_home_dir)/.kube/config"
+  _server_service_name=recluster.server
+  _server_env_file="$RECLUSTER_ETC_DIR/server.env"
+  _server_opt_dir="$RECLUSTER_OPT_DIR/server"
 
   _wait_k3s_kubeconfig_file_creation() {
     _k3s_kubeconfig_dir=$(dirname "$_k3s_kubeconfig_file")
@@ -1513,30 +1600,137 @@ EOF
   # Copy kubeconfig
   INFO "Copying K3s kubeconfig from '$_k3s_kubeconfig_file' to '$_kubeconfig_file'"
   _kubeconfig_dir=$(dirname "$_kubeconfig_file")
-  [ -d "$_kubeconfig_dir" ] || mkdir -p "$_kubeconfig_dir"
+  [ -d "$_kubeconfig_dir" ] || $SUDO mkdir "$_kubeconfig_dir"
   yes | $SUDO cp --force "$_k3s_kubeconfig_file" "$_kubeconfig_file"
   $SUDO chown "$USER:$USER" "$_kubeconfig_file"
   $SUDO chmod 644 "$_kubeconfig_file"
 
-  # Read kubeconfig
-  WARN "kubeconfig:"
-  $SUDO yq e --prettyPrint '.' "$_kubeconfig_file"
+  # Copy server
+  INFO "Copying server from '$DIRNAME/../server' to '$_server_opt_dir'"
+  [ -d "$_server_opt_dir" ] || $SUDO mkdir "$_server_opt_dir"
+  yes | $SUDO cp --force --archive "$DIRNAME/../server/." "$_server_opt_dir"
+  $SUDO chown --recursive root:root "$_server_opt_dir"
+  $SUDO chmod 755 "$_server_opt_dir"
 
-  # TODO Start server
+  # Copy server env file
+  INFO "Copying server environment file from '$RECLUSTER_SERVER_ENV_FILE' to '$_server_env_file'"
+  yes | $SUDO cp --force "$RECLUSTER_SERVER_ENV_FILE" "$_server_env_file"
+  $SUDO chown root:root "$_server_env_file"
+  $SUDO chmod 600 "$_server_env_file"
+
+  # Setup server
+  INFO "Setting up server"
+  DEBUG "Installing server dependencies"
+  $SUDO npm --prefix "$_server_opt_dir" ci --ignore-scripts
+  yes | $SUDO cp --force "$_server_env_file" "$_server_opt_dir/.env"
+  DEBUG "Generating database assets"
+  $SUDO npm --prefix "$_server_opt_dir" run db:generate
+  INFO "Applying migrations to production database"
+  $SUDO npm --prefix "$_server_opt_dir" run db:deploy
+  DEBUG "Removing development dependencies"
+  $SUDO npm --prefix "$_server_opt_dir" prune --production
+  $SUDO rm -rf "$_server_opt_dir/prisma"
+  $SUDO rm -f "$_server_opt_dir/.env"
+
+  # Server service
+  INFO "Constructing server service '$_server_service_name'"
+  case $INIT_SYSTEM in
+    openrc)
+      _openrc_server_service_file="/etc/init.d/$_server_service_name"
+      _openrc_server_log_file=/var/log/recluster.server.log
+
+      INFO "openrc: Constructing server service file '$_openrc_server_service_file'"
+      $SUDO tee $_openrc_server_service_file > /dev/null << EOF
+#!/sbin/openrc-run
+
+description="reCluster server"
+
+depend() {
+  after network-online
+}
+
+supervisor=supervise-daemon
+name=recluster.server
+command=/usr/bin/node $_server_opt_dir/build/main.js
+
+output_log=$_openrc_server_log_file
+output_log=$_openrc_server_log_file
+
+pidfile=/var/run/recluster.server.pid
+respawn_delay=3
+respawn_max=0
+
+set -o allexport
+source $_server_env_file
+set +o allexport
+EOF
+      $SUDO chown root:root $_openrc_server_service_file
+      $SUDO chmod 755 $_openrc_server_service_file
+
+      $SUDO tee /etc/logrotate.d/recluster.server > /dev/null << EOF
+$_openrc_server_log_file {
+	missingok
+	notifempty
+	copytruncate
+}
+EOF
+      ;;
+    systemd)
+      _systemd_server_service_file="/etc/systemd/system/$_server_service_name.service"
+
+      INFO "systemd: Constructing server service file '$_systemd_server_service_file'"
+      $SUDO tee $_systemd_server_service_file > /dev/null << EOF
+[Unit]
+Description=reCluster server
+After=network-online.target network.target
+Wants=network-online.target network.target
+
+[Service]
+Type=simple
+EnvironmentFile=$_server_env_file
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+TimeoutStartSec=0
+Restart=always
+RestartSec=3s
+ExecStart=/usr/bin/node $_server_opt_dir/build/main.js
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=recluster.server
+
+[Install]
+WantedBy=multi-user.target
+EOF
+      $SUDO chown root:root $_systemd_server_service_file
+      $SUDO chmod 755 $_systemd_server_service_file
+      ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
+
+  # Start server
+  case $INIT_SYSTEM in
+    openrc)
+      INFO "openrc: Starting server"
+      $SUDO rc-service recluster.server restart
+      ;;
+    systemd)
+      INFO "systemd: Starting server"
+      $SUDO systemctl restart recluster.server
+      ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
 }
 
 # Install reCluster
 install_recluster() {
-  # Directories
-  _etc_dir="${TMP_DIR}${RECLUSTER_ETC_DIR}"
-  _opt_dir="${TMP_DIR}${RECLUSTER_OPT_DIR}"
   # Files
   _k3s_config_file=/etc/rancher/k3s/config.yaml
-  _recluster_config_file="$_etc_dir/config.yml"
-  _node_token_file="$_etc_dir/token"
-  _commons_script_file="$_opt_dir/__commons.sh"
-  _bootstrap_script_file="$_opt_dir/bootstrap.sh"
-  _shutdown_script_file="$_opt_dir/shutdown.sh"
+  _recluster_config_file="$RECLUSTER_ETC_DIR/config.yml"
+  _node_token_file="$RECLUSTER_ETC_DIR/token"
+  _commons_script_file="$RECLUSTER_OPT_DIR/__commons.sh"
+  _bootstrap_script_file="$RECLUSTER_OPT_DIR/bootstrap.sh"
+  _shutdown_script_file="$RECLUSTER_OPT_DIR/shutdown.sh"
   # Configuration
   _node_label_id="recluster.io/id="
   _bootstrap_service_name=recluster.bootstrap
@@ -1546,38 +1740,33 @@ install_recluster() {
   _node_token=
   _node_id=
   _node_name=
-  _k3s_kind=
 
   spinner_start "Installing reCluster"
-
-  # Make temporary directories
-  mkdir -p "$_etc_dir"
-  mkdir -p "$_opt_dir"
 
   # Write configuration
   printf '%s\n' "$CONFIG" \
     | jq '.recluster' \
     | yq e --no-colors '(.. | select(tag == "!!str")) style="double"' - \
-    | tee "$_recluster_config_file" > /dev/null
+    | $SUDO tee "$_recluster_config_file" > /dev/null
+  $SUDO chown root:root "$_recluster_config_file"
+  $SUDO chmod 644 "$_recluster_config_file"
 
   # Register node
   node_registration
   _registration_data=$RETVAL
-
-  # Read node token
   _node_token=$(printf '%s\n' "$_registration_data" | jq --raw-output '.token')
-  # Read node id
   _node_id=$(printf '%s\n' "$_registration_data" | jq --raw-output '.decoded.payload.id')
 
   # Write node token
-  printf '%s\n' "$_node_token" | tee "$_node_token_file" > /dev/null
+  printf '%s\n' "$_node_token" | $SUDO tee "$_node_token_file" > /dev/null
+  $SUDO chown root:root "$_node_token_file"
+  $SUDO chmod 600 "$_node_token_file"
 
   # K3s node name
-  _k3s_kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.k3s.kind')
-  case $_k3s_kind in
-    server) _node_name="controller.$_node_id" ;;
-    agent) _node_name="worker.$_node_id" ;;
-    *) FATAL "Unknown K3s kind '$_k3s_kind'" ;;
+  _kind=$(printf '%s\n' "$CONFIG" | jq --raw-output '.kind')
+  case $_kind in
+    controller | worker) _node_name="$_kind.$_node_id" ;;
+    *) FATAL "Unknown kind '$_kind'" ;;
   esac
 
   # K3s label
@@ -1590,15 +1779,9 @@ install_recluster() {
   #
   # Scripts
   #
-  _etc_recluster_config_file="${RECLUSTER_ETC_DIR}$(printf '%s\n' "$_recluster_config_file" | sed -n -e 's#^.*'"$RECLUSTER_ETC_DIR"'##p')"
-  _etc_node_token_file="${RECLUSTER_ETC_DIR}$(printf '%s\n' "$_node_token_file" | sed -n -e 's#^.*'"$RECLUSTER_ETC_DIR"'##p')"
-  _opt_commons_script_file="${RECLUSTER_OPT_DIR}$(printf '%s\n' "$_commons_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
-  _opt_bootstrap_script_file="${RECLUSTER_OPT_DIR}$(printf '%s\n' "$_bootstrap_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
-  _opt_shutdown_script_file="${RECLUSTER_OPT_DIR}$(printf '%s\n' "$_shutdown_script_file" | sed -n -e 's#^.*'"$RECLUSTER_OPT_DIR"'##p')"
-
   # Commons script
   INFO "Constructing '$(basename "$_commons_script_file")' script"
-  tee "$_commons_script_file" > /dev/null << EOF
+  $SUDO tee "$_commons_script_file" > /dev/null << EOF
 #!/usr/bin/env sh
 
 # Fail on error
@@ -1610,9 +1793,9 @@ set -o noglob
 # CONFIGURATION
 # ================
 # Configuration file
-RECLUSTER_CONFIG_FILE="$_etc_recluster_config_file"
+RECLUSTER_CONFIG_FILE="$_recluster_config_file"
 # Node token file
-RECLUSTER_NODE_TOKEN_FILE="$_etc_node_token_file"
+RECLUSTER_NODE_TOKEN_FILE="$_node_token_file"
 
 # ================
 # GLOBALS
@@ -1690,7 +1873,7 @@ EOF
 
   case $DOWNLOADER in
     curl)
-      tee -a "$_commons_script_file" > /dev/null << EOF
+      $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
       _response_data=\$(
         curl --fail --silent --location --show-error \\
           --request POST \\
@@ -1702,7 +1885,7 @@ EOF
 EOF
       ;;
     wget)
-      tee -a "$_commons_script_file" > /dev/null << EOF
+      $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
       _response_data=\$(
         wget --quiet --output-document=- \\
           --header='Content-Type: application/json' \\
@@ -1715,7 +1898,7 @@ EOF
     *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
   esac
 
-  tee -a "$_commons_script_file" > /dev/null << EOF
+  $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
   # Check error response
   if printf '%s\n' "\$_response_data" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
     FATAL "Error updating node status at '\$_server_url':\\n\$(printf '%s\n' "\$_response_data" | jq .)"
@@ -1737,7 +1920,13 @@ EOF
 
   case $INIT_SYSTEM in
     openrc)
-      tee -a "$_commons_script_file" > /dev/null << EOF
+      if [ "$INIT_CLUSTER" = true ]; then
+        $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
+  INFO "openrc: \$_op_message Server"
+  rc-service recluster.server \$_op
+EOF
+      fi
+      $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
   INFO "openrc: \$_op_message Node exporter"
   rc-service node_exporter \$_op
   INFO "openrc: \$_op_message K3s"
@@ -1745,9 +1934,15 @@ EOF
 EOF
       ;;
     systemd)
-      tee -a "$_commons_script_file" > /dev/null << EOF
+      if [ "$INIT_CLUSTER" = true ]; then
+        $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
+  INFO "systemd: \$_op_message Server"
+  systemctl \$_op recluster.server
+EOF
+      fi
+      $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
   INFO "systemd: \$_op_message Node exporter"
-  systemtcl \$_op node_exporter
+  systemctl \$_op node_exporter
   INFO "systemd: \$_op_message K3s"
   systemctl \$_op k3s-recluster
 EOF
@@ -1755,7 +1950,7 @@ EOF
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
-  tee -a "$_commons_script_file" > /dev/null << EOF
+  $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
 }
 EOF
   $SUDO chown root:root "$_commons_script_file"
@@ -1763,12 +1958,12 @@ EOF
 
   # Bootstrap script
   INFO "Constructing '$(basename "$_bootstrap_script_file")' script"
-  tee "$_bootstrap_script_file" > /dev/null << EOF
+  $SUDO tee "$_bootstrap_script_file" > /dev/null << EOF
 #!/usr/bin/env sh
 
 # Load commons
 # inline skip
-. "$_opt_commons_script_file"
+. "$_commons_script_file"
 
 # ================
 # MAIN
@@ -1783,12 +1978,12 @@ EOF
 
   # Shutdown script
   INFO "Constructing '$(basename "$_shutdown_script_file")' script"
-  tee "$_shutdown_script_file" > /dev/null << EOF
+  $SUDO tee "$_shutdown_script_file" > /dev/null << EOF
 #!/usr/bin/env sh
 
 # Load commons
 # inline skip
-. "$_opt_commons_script_file"
+. "$_commons_script_file"
 
 # ================
 # MAIN
@@ -1823,7 +2018,7 @@ depend() {
   want cgroups
 }
 
-command="/usr/bin/env sh $_opt_bootstrap_script_file"
+command="/usr/bin/env sh $_bootstrap_script_file"
 EOF
       $SUDO chown root:root "$_openrc_bootstrap_service_file"
       $SUDO chmod 0755 "$_openrc_bootstrap_service_file"
@@ -1843,7 +2038,7 @@ Wants=network-online.target network.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/env sh $_opt_bootstrap_script_file
+ExecStart=/usr/bin/env sh $_bootstrap_script_file
 
 [Install]
 WantedBy=multi-user.target
@@ -1873,7 +2068,7 @@ set -o errexit
 # Disable wildcard character expansion
 set -o noglob
 
-/usr/bin/env sh $_opt_shutdown_script_file"
+/usr/bin/env sh $_shutdown_script_file"
 EOF
       $SUDO chown root:root "$_openrc_shutdown_service_file"
       $SUDO chmod 0755 "$_openrc_shutdown_service_file"
@@ -1890,7 +2085,7 @@ Before=reboot.target shutdown.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/env sh $_opt_shutdown_script_file
+ExecStart=/usr/bin/env sh $_shutdown_script_file
 
 [Install]
 WantedBy=reboot.target shutdown.target
@@ -1902,14 +2097,6 @@ EOF
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
-
-  # etc directory
-  INFO "Writing reCluster etc directory '$RECLUSTER_ETC_DIR'"
-  $SUDO mv "$_etc_dir" "$RECLUSTER_ETC_DIR"
-
-  # opt directory
-  INFO "Writing reCluster opt directory '$RECLUSTER_OPT_DIR'"
-  $SUDO mv "$_opt_dir" "$RECLUSTER_OPT_DIR"
 
   spinner_stop
 
@@ -1928,7 +2115,7 @@ start_recluster() {
       ;;
     systemd)
       INFO "systemd: Starting reCluster"
-      $SUDO systemtcl restart recluster.bootstrap
+      $SUDO systemctl restart recluster.bootstrap
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac

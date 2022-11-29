@@ -2,42 +2,25 @@
 
 reCluster configurations.
 
-## :bookmark_tabs: [`common.config.yml`](./common.config.yml)
+## :bookmark_tabs: [`config.yml`](./config.yml)
 
-Common configuration.
+reCluster configuration.
 
-## :bookmark_tabs: [`controller.config.yml`](./controller.config.yml)
+## :bookmark_tabs: [`k3s.controller.yml`](./k3s.controller.yml)
 
-Controller configuration.
+K3s controller configuration.
 
-## :bookmark_tabs: [`worker.config.yml`](./worker.config.yml)
+## :bookmark_tabs: [`k3s.worker.yml`](./k3s.worker.yml)
 
-Worker configuration.
+K3s worker configuration.
 
-## :bookmark_tabs: [`configs.sh`](./configs.sh)
+## :bookmark_tabs: [`node_exporter.yml`](./node_exporter.yml)
 
-reCluster configurations script.
+Node exporter configuration.
 
-```sh
-_merge="./controller.config.yml"
+## :bookmark_tabs: [`server.env`](./server.env)
 
-./configs.sh \
-  --merge "$_merge"
-```
-
-### Arguments
-
-> **Note**: Type `--help` for more information
-
-> **Note**: [commons arguments](../../scripts/README.md#commons-arguments) available
-
-| **Name**               | **Description**            | **Default**         | **Values**     |
-| ---------------------- | -------------------------- | ------------------- | -------------- |
-| `--common-file <FILE>` | Common file                | `common.config.yml` | Any valid file |
-| `--help`               | Show help message and exit |
-| `--merge-file <FILE>`  | Merge file                 | `config.yml`        | Any valid file |
-| `--out-file <FILE>`    | Output file                | `output.yml`        | Any valid file |
-| `--overwrite`          | Overwrite merge file       | `false`             |
+See [server environment](../../server/README.md#environment) for more information.
 
 ## :bookmark_tabs: [`ssh_config`](./ssh_config)
 

@@ -20,6 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-k3s:
-  kind: agent
-  server: https://10.0.0.10:6443
+token: 4646f99bc4cbae3d5eceed856b337c9d3284be0d4056a3909f780c0c385fbf93
+cluster-init: true # TODO First controller only !
+cluster-domain: recluster.local
+flannel-backend: host-gw
+node-taint:
+  - CriticalAddonsOnly=true:NoExecute

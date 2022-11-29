@@ -20,10 +20,5 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-k3s:
-  kind: server
-  cluster-init: true # TODO First controller only !
-  cluster-domain: recluster.local
-  flannel-backend: host-gw
-  node-taint:
-    - CriticalAddonsOnly=true:NoExecute
+token: 4646f99bc4cbae3d5eceed856b337c9d3284be0d4056a3909f780c0c385fbf93
+server: https://192.168.0.25:6443

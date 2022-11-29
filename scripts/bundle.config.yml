@@ -30,12 +30,12 @@ linux:
   README.md: true
   install.sh: true
   configs:
-    __:
-      run: |-
-        ./linux/configs/configs.sh --merge-file ./controller.config.yml --overwrite
-        ./linux/configs/configs.sh --merge-file ./worker.config.yml --overwrite
-    controller.config.yml: true
-    worker.config.yml: true
+    README.md: true
+    config.yml: true
+    k3s.controller.yml: true
+    k3s.worker.yml: true
+    node_exporter.yml: true
+    server.env: true
     ssh_config: true
     sshd_config: true
   dependencies:

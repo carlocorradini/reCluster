@@ -1,4 +1,3 @@
-#!/usr/bin/env sh
 # MIT License
 #
 # Copyright (c) 2022-2022 Carlo Corradini
@@ -21,16 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# shellcheck disable=SC2034
-
-profile_recluster() {
-  profile_base
-  title="reCluster"
-  desc="reCluster Alpine Linux"
-  profile_abbrev="recluster"
-  image_ext="iso"
-  arch="x86_64 aarch64"
-  output_format="iso"
-  apks="$apks coreutils ethtool inotify-tools iproute2 jq ncurses nodejs npm openssh procps sudo sysbench tzdata util-linux yq"
-  apkovl="genapkovl-recluster.sh"
-}
+collector:
+  disable-defaults: true
+  cpu: true
+  meminfo: true

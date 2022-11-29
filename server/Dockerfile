@@ -72,9 +72,6 @@ WORKDIR $WORKDIR
 # Install packages
 RUN apk add --no-cache dumb-init
 
-# Change user
-USER node
-
 # Copy package.json and package-lock.json
 COPY --from=builder --chown=node:node $WORKDIR/package.json $WORKDIR/package-lock.json ./
 # Copy build files
@@ -85,6 +82,9 @@ RUN npm ci --production --ignore-scripts
 
 # Copy prisma
 COPY --from=builder --chown=node:node $WORKDIR/node_modules/.prisma $WORKDIR/node_modules/.prisma
+
+# Change user
+USER node
 
 # Expose
 EXPOSE $PORT

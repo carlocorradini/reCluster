@@ -73,6 +73,7 @@ reCluster server.
 | `build:watch`    | Compile server every time a file is updated.                                             |
 | `check`          | Check for errors.                                                                        |
 | `dev`            | Prepare and start development environment.                                               |
+| `db:deploy`      | Apply migrations in a production database.                                               |
 | `db:generate`    | Generate database assets.                                                                |
 | `db:reset`       | Deletes and recreates the database.                                                      |
 | `db:seed`        | Seed database.                                                                           |
