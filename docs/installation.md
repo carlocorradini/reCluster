@@ -31,9 +31,11 @@ See [Installation requirements](./installation_requirements.md) for more informa
    _token_passphrase="password"
    _out_dir="configs/certs"
    
-   mkdir "$_out_dir" # Create certs directory
-   ./scripts/certs.sh \ # Generate certificates
-   --ssh-passphrase "$_ssh_passphrase" \
+   # Create certs directory
+   mkdir "$_out_dir"
+   # Generate certificates
+   ./scripts/certs.sh \
+     --ssh-passphrase "$_ssh_passphrase" \
      --token-passphrase "$_token_passphrase" \
      --out-dir "$_out_dir"
    ```

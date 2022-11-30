@@ -44,8 +44,8 @@ Controller installation.
 ```sh
 ./install.sh \
   --k3s-config-file configs/k3s.controller.yml \
-  --init-cluster \ # First controller only!
-...
+  --init-cluster \
+  ...
 ```
 
 ## Worker
