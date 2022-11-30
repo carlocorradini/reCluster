@@ -1625,9 +1625,9 @@ EOF
   $SUDO chmod 644 "$_kubeconfig_file"
 
   # Copy server
-  INFO "Copying server from '$DIRNAME/../server' to '$_server_dir'"
+  INFO "Copying server from '$DIRNAME/server' to '$_server_dir'"
   [ -d "$_server_dir" ] || $SUDO mkdir -p "$_server_dir"
-  yes | $SUDO cp --force --archive "$DIRNAME/../server/." "$_server_dir"
+  yes | $SUDO cp --force --archive "$DIRNAME/server/." "$_server_dir"
   $SUDO chown --recursive root:root "$_server_dir"
   $SUDO chmod --recursive 755 "$_server_dir"
 
