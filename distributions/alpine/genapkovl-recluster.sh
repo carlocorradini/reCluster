@@ -67,6 +67,7 @@ auto eth0
 iface eth0 inet dhcp
 EOF
 
+# FIXME Remove openssl1.1-compat
 mkdir -p "$tmp"/etc/apk
 makefile root:root 0644 "$tmp"/etc/apk/world << EOF
 alpine-base
@@ -80,6 +81,7 @@ ncurses
 nodejs
 npm
 openssh
+openssl1.1-compat
 procps
 sudo
 sysbench

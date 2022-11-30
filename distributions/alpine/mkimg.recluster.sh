@@ -31,6 +31,7 @@ profile_recluster() {
   image_ext="iso"
   arch="x86_64 aarch64"
   output_format="iso"
-  apks="$apks coreutils ethtool inotify-tools iproute2 jq ncurses nodejs npm openssh procps sudo sysbench tzdata util-linux yq"
+  # FIXME Remove openssl1.1-compat
+  apks="$apks coreutils ethtool inotify-tools iproute2 jq ncurses nodejs npm openssh openssl1.1-compat procps sudo sysbench tzdata util-linux yq"
   apkovl="genapkovl-recluster.sh"
 }
