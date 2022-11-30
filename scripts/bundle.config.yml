@@ -22,6 +22,7 @@
 
 README.md: true
 LICENSE: true
+install.sh: true
 configs: true
 dependencies:
   __:
