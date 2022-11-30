@@ -21,4 +21,4 @@
 # SOFTWARE.
 
 token: 4646f99bc4cbae3d5eceed856b337c9d3284be0d4056a3909f780c0c385fbf93
-server: https://192.168.0.10:6443
+server: https://127.0.0.1:6443 # TODO Change

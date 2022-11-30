@@ -22,16 +22,16 @@
  * SOFTWARE.
  */
 
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 export class CryptoService {
   public static readonly SALT_ROUNDS: number = 12;
 
-  public async hash(data: string | Buffer): Promise<string> {
+  public async hash(data: string): Promise<string> {
     return bcrypt.hash(data, CryptoService.SALT_ROUNDS);
   }
 
-  public compare(data: string | Buffer, encrypted: string): Promise<boolean> {
+  public compare(data: string, encrypted: string): Promise<boolean> {
     return bcrypt.compare(data, encrypted);
   }
 }

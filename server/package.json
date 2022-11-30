@@ -49,7 +49,7 @@
     "@graphql-tools/utils": "^9.0.1",
     "@kubernetes/client-node": "^0.17.1",
     "@prisma/client": "^4.7.0",
-    "bcrypt": "^5.1.0",
+    "bcryptjs": "^2.4.3",
     "class-validator": "^0.13.2",
     "convert": "^4.7.1",
     "dotenv": "^16.0.3",
@@ -68,7 +68,7 @@
     "wake_on_lan": "^1.0.0"
   },
   "devDependencies": {
-    "@types/bcrypt": "^5.0.0",
+    "@types/bcryptjs": "^2.4.2",
     "@types/jsonwebtoken": "^8.5.9",
     "@types/ssh2": "^1.11.6",
     "@types/wake_on_lan": "^0.0.30",

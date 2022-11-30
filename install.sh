@@ -846,8 +846,8 @@ node_registration() {
         curl --fail --silent --location --show-error \
           --request POST \
           --header 'Content-Type: application/json' \
-          --url "$_server_url" \
-          --data "$_request_data"
+          --data "$_request_data" \
+          --url "$_server_url"
       ) || FATAL "Error sending node registration request to '$_server_url'"
       ;;
     wget)
@@ -1571,6 +1571,9 @@ cluster_init() {
   _server_env_file="$RECLUSTER_ETC_DIR/server.env"
   _server_certs_dir="$RECLUSTER_ETC_DIR/certs"
   _server_dir="$RECLUSTER_OPT_DIR/server"
+  _wait_server_max_attempts=3
+  _wait_server_sleep=3
+  _server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server')
 
   _wait_k3s_kubeconfig_file_creation() {
     _k3s_kubeconfig_dir=$(dirname "$_k3s_kubeconfig_file")
@@ -1677,7 +1680,7 @@ depend() {
 
 supervisor=supervise-daemon
 name=recluster.server
-command=/usr/bin/node $_server_dir/build/main.js
+command="/usr/bin/node $_server_dir/build/main.js"
 
 output_log=$_openrc_server_log_file
 output_log=$_openrc_server_log_file
@@ -1747,6 +1750,20 @@ EOF
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
+
+  # Wait server
+  INFO "Waiting server reachability"
+  while [ "$_wait_server_max_attempts" -gt 0 ]; do
+    if (assert_url_reachability "$_server_url/health" > /dev/null 2>&1); then
+      DEBUG "Server is reachable"
+      break
+    fi
+
+    DEBUG "Server is not reachable, sleeping $_wait_server_sleep"
+    sleep "$_wait_server_sleep"
+    _wait_server_max_attempts=$((_wait_server_max_attempts = _wait_server_max_attempts - 1))
+  done
+  [ "$_wait_server_max_attempts" -gt 0 ] || FATAL "Server is not reachable, maximum attempts reached"
 }
 
 # Install reCluster
@@ -1776,7 +1793,7 @@ install_recluster() {
     | yq e --no-colors '(.. | select(tag == "!!str")) style="double"' - \
     | $SUDO tee "$_recluster_config_file" > /dev/null
   $SUDO chown root:root "$_recluster_config_file"
-  $SUDO chmod 644 "$_recluster_config_file"
+  $SUDO chmod 600 "$_recluster_config_file"
 
   # Register node
   node_registration

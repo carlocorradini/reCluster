@@ -49,14 +49,14 @@ reCluster server.
 1. Execute Queries
 
    - Apollo Studio \
-     Visit <http://localhost:8080> in your browser
+     Visit <http://localhost:8080/graphql> in your browser
 
    - Manually
 
    ```sh
    curl --request POST \
      --header 'content-type: application/json' \
-     --url 'http://localhost:8080' \
+     --url 'http://localhost:8080/graphql' \
      --data '{ "query": "query { __typename }" }'
    ```
 
