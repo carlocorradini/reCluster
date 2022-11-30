@@ -1998,13 +1998,13 @@ EOF
 EOF
   if [ "$INIT_CLUSTER" = true ]; then
     $SUDO tee -a "$_bootstrap_script_file" > /dev/null << EOF
-    manage_services start
-    update_node_status ACTIVE
+  manage_services start
+  update_node_status ACTIVE
 EOF
   else
     $SUDO tee -a "$_bootstrap_script_file" > /dev/null << EOF
-    update_node_status ACTIVE
-    manage_services start
+  update_node_status ACTIVE
+  manage_services start
 EOF
   fi
   $SUDO tee -a "$_bootstrap_script_file" > /dev/null << EOF
