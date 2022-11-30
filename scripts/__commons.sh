@@ -149,6 +149,8 @@ to_log_level_name() {
 # @param $1 Log level
 is_log_level_enabled() {
   [ "$1" -le "$LOG_LEVEL" ]
+
+  return $?
 }
 
 # Print log message
@@ -551,6 +553,8 @@ git_has_directory() {
 
   DEBUG "Checking Git has directory '$_dir'"
   [ "$(printf '%s\n' "$_git_files" | jq --raw-output --arg dir "$_dir" 'any(.[]; startswith($dir))')" = true ]
+
+  return $?
 }
 
 # Check if file in git
@@ -564,6 +568,8 @@ git_has_file() {
 
   DEBUG "Checking Git has file '$_file'"
   [ "$(printf '%s\n' "$_git_files" | jq --raw-output --arg file "$_file" 'any(.[]; . == $file)')" = true ]
+
+  return $?
 }
 
 # ================

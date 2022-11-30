@@ -1,81 +1,12 @@
-# :penguin: Linux
+# Installation script
 
-Linux.
-
-## :warning: Requirements
-
-### :hourglass: Timezone
-
-Timezone must be set to `Etc/UTC`.
-
-```sh
-cp /usr/share/zoneinfo/Etc/UTC /etc/localtime
-printf '%s\n' "Etc/UTC" > /etc/timezone
-```
-
-### :sleeping: Wake-on-Lan
-
-_Wake-on-Lan_ must be enabled if it is supported.
-
-- Check if supported
-
-  > **Note**: If empty, _Wake-on-Lan_ is not supported
-
-  ```sh
-  _dev="eth0"
-  
-  sudo ethtool "$_dev" | grep 'Supports Wake-on'
-  ```
-
-- Check if enabled
-
-  > **Note**: Value `d` indicates that it is disabled
-
-  ```sh
-  _dev="eth0"
-  
-  sudo ethtool "$_dev" | grep 'Wake-on' | grep --invert-match 'Supports Wake-on'
-  ```
-
-  1. Enable
-
-     > **Warning**: _Wake-on-Lan_ must be enabled also in the _BIOS_
-
-     > **Note**: Example device `eth0`
-
-     Edit `/etc/network/interfaces`
-
-     ```diff
-       auto eth0
-       iface eth0 inet dhcp
-     +   pre-up /usr/sbin/ethtool -s eth0 wol g
-     ```
-
-  2. Reboot
-
-     ```sh
-     sudo reboot
-     ```
-
-## :file_folder: Directories
-
-> **Note**: Refer to the `README.md` of each directory for more information
-
-| **Name**                            | **Description** |
-| ----------------------------------- | --------------- |
-| [`configs`](./configs/)             | Configurations  |
-| [`dependencies`](./dependencies/)   | Dependencies    |
-| [`distributions`](./distributions/) | Distributions   |
-
-## :bookmark_tabs: [`install.sh`](./install.sh)
-
-reCluster installation script.
+Installation script.
 
 ```sh
 ./install.sh
 ```
 
-### Arguments
+## Arguments
 
 > **Note**: Type `--help` for more information
 
@@ -101,3 +32,30 @@ reCluster installation script.
 | `--ssh-config-file <FILE>`           | SSH configuration file                                                                     | `configs/ssh_config`                            | Any valid file            |
 | `--sshd-config-file <FILE>`          | SSH server configuration file                                                              | `configs/sshd_config`                           | Any valid file            |
 | `--user <USER>`                      | User                                                                                       | `root`                                          | Any valid user            |
+
+## Controller
+
+> **Warning**: Argument `--init-cluster` and `cluster-init: true` property of [`configs/k3s.controller.yml`](../configs/k3s.controller.yml) must be set only for the first controller
+
+> **Note**: `kind` property of [`configs/config.yml`](../configs/config.yml) must be set to `controller`
+
+Controller installation.
+
+```sh
+./install.sh \
+  --k3s-config-file configs/k3s.controller.yml \
+  --init-cluster \ # First controller only!
+...
+```
+
+## Worker
+
+> **Note**: `kind` property of [`configs/config.yml`](../configs/config.yml) must be set to to `worker`
+
+Worker installation.
+
+```sh
+./install.sh \
+  --k3s-config-file configs/k3s.worker.yml \
+  ...
+```

@@ -26,8 +26,8 @@
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 # Load commons
-# shellcheck source=../../../scripts/__commons.sh
-. "$DIRNAME/../../../scripts/__commons.sh"
+# shellcheck source=../../scripts/__commons.sh
+. "$DIRNAME/../../scripts/__commons.sh"
 
 # ================
 # CONFIGURATION

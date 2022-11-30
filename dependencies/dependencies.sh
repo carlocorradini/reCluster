@@ -26,8 +26,8 @@
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 # Load commons
-# shellcheck source=../../scripts/__commons.sh
-. "$DIRNAME/../../scripts/__commons.sh"
+# shellcheck source=../scripts/__commons.sh
+. "$DIRNAME/../scripts/__commons.sh"
 
 # ================
 # CONFIGURATION
@@ -35,7 +35,7 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # Configuration file
 CONFIG_FILE="dependencies.config.yml"
 # Root directory
-ROOT_DIR="$(readlink -f "$DIRNAME/../..")"
+ROOT_DIR="$(readlink -f "$DIRNAME/..")"
 # Synchronize flag
 SYNC=false
 # Synchronize force flag

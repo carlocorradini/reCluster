@@ -20,5 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-token: 4646f99bc4cbae3d5eceed856b337c9d3284be0d4056a3909f780c0c385fbf93
-server: https://192.168.0.25:6443
+kind: controller
+# kind: server
+
+recluster:
+  server: http://192.168.0.10:8080
+
+ssh_authorized_keys:
+  - ssh-ed25519 ... # TODO Change with SSH public key !

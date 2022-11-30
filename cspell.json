@@ -14,14 +14,14 @@
     "**/node_modules/",
     "./license.json",
     "./server/prisma/migrations/",
-    "./linux/configs/ssh_config",
-    "./linux/configs/sshd_config",
-    "./linux/distributions/alpine/Dockerfile",
-    "./linux/distributions/alpine/mkimg.recluster.sh",
-    "./linux/distributions/alpine/genapkovl-recluster.sh",
-    "./linux/distributions/arch/Dockerfile",
-    "./linux/distributions/arch/packages.x86_64",
-    "./linux/distributions/arch/profiledef.sh"
+    "./configs/ssh_config",
+    "./configs/sshd_config",
+    "./distributions/alpine/Dockerfile",
+    "./distributions/alpine/mkimg.recluster.sh",
+    "./distributions/alpine/genapkovl-recluster.sh",
+    "./distributions/arch/Dockerfile",
+    "./distributions/arch/packages.x86_64",
+    "./distributions/arch/profiledef.sh"
   ],
   "words": [
     "aarch",
@@ -150,6 +150,7 @@
     "uncompiled",
     "upsert",
     "workdir",
+    "xvzf",
     "zoneinfo"
   ]
 }

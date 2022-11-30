@@ -9,26 +9,33 @@
 
 reCluster is an architecture for a data center that actively reduces its impact and minimizes its resource utilization.
 
-## Members
+## :busts_in_silhouette: Members
 
 | Name  |  Surname  |     Username     |    MAT     |
 | :---: | :-------: | :--------------: | :--------: |
 | Carlo | Corradini | `carlocorradini` | **223811** |
 
+## :books: Documentation
+
+See [docs](./docs/) directory for more information.
+
 ## :file_folder: Directories
 
 > **Note**: Refer to the `README.md` of each directory for more information
 
-| **Name**                | **Description**                                                   |
-| ----------------------- | ----------------------------------------------------------------- |
-| [`.github`](./.github/) | [GitHub](https://github.com) configuration                        |
-| [`.husky`](./.husky/)   | [husky](https://typicode.github.io/husky) configuration           |
-| [`.vscode`](./.vscode/) | [Visual Studio Code](https://code.visualstudio.com) configuration |
-| [`linux`](./linux/)     | `Linux`-related resources                                         |
-| [`scripts`](./scripts/) | `Shell` scripts                                                   |
-| [`server`](./server/)   | `reCluster` server                                                |
+| **Name**                            | **Description**                                                   |
+| ----------------------------------- | ----------------------------------------------------------------- |
+| [`.github`](./.github/)             | [GitHub](https://github.com) configuration                        |
+| [`.husky`](./.husky/)               | [husky](https://typicode.github.io/husky) configuration           |
+| [`.vscode`](./.vscode/)             | [Visual Studio Code](https://code.visualstudio.com) configuration |
+| [`configs`](./configs/)             | Configuration files                                               |
+| [`dependencies`](./dependencies/)   | Dependencies                                                      |
+| [`distributions`](./distributions/) | Distributions                                                     |
+| [`docs`](./docs/)                   | Documentation                                                     |
+| [`scripts`](./scripts/)             | `Shell` scripts                                                   |
+| [`server`](./server/)               | `reCluster` server                                                |
 
-## Development
+## :computer: Development
 
 ### Requirements
 
@@ -64,10 +71,10 @@ reCluster is an architecture for a data center that actively reduces its impact 
 
 > **Note**: Execute with `npm run <NAME>`
 
-| **Name** | **Description**   |
-| -------- | ----------------- |
-| `check`  | Check for errors. |
-| `fix`    | Fix errors.       |
+| **Name** | **Description**  |
+| -------- | ---------------- |
+| `check`  | Check for errors |
+| `fix`    | Fix errors       |
 
 ## License
 

@@ -22,54 +22,37 @@
 
 README.md: true
 LICENSE: true
-
-linux:
+configs: true
+dependencies:
   __:
     run: |-
-      ./scripts/inline.sh --in-file ./install.sh --overwrite
-  README.md: true
-  install.sh: true
-  configs:
-    README.md: true
-    config.yml: true
-    k3s.controller.yml: true
-    k3s.worker.yml: true
-    node_exporter.yml: true
-    server.env: true
-    ssh_config: true
-    sshd_config: true
-  dependencies:
+      ./dependencies/dependencies.sh --sync-force
+  autoscaler: true
+  k3s: true
+  node_exporter: true
+  prometheus: true
+distributions:
+  alpine:
     __:
       run: |-
-        ./linux/dependencies/dependencies.sh --sync-force
-    autoscaler: true
-    k3s: true
-    node_exporter: true
-    prometheus: true
-  distributions:
-    alpine:
-      __:
-        run: |-
-          ./linux/distributions/alpine/build.sh
-      README.md: true
-      logo.png: true
-      iso: true
-    arch: false
-
+        ./distributions/alpine/build.sh
+    README.md: true
+    logo.png: true
+    iso: true
+  arch: false
+docs: true
 scripts:
   __:
     run: |-
       ./scripts/inline.sh --in-file ./certs.sh --overwrite
   certs.sh: true
   README.md: true
-
 server:
   __:
     run: |-
       npm run build:clean
       npm run build
   README.md: true
-  .env.example: true
   package.json: true
   package-lock.json: true
   build: true

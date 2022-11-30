@@ -66,21 +66,21 @@ reCluster server.
 
 > **Warning**: On _Windows_, a script may fail to execute. Run it directly from `scripts` directory
 
-| **Name**         | **Description**                                                                          |
-| ---------------- | ---------------------------------------------------------------------------------------- |
-| `build`          | Compile server.                                                                          |
-| `build:clean`    | Clean compilation directory.                                                             |
-| `build:watch`    | Compile server every time a file is updated.                                             |
-| `check`          | Check for errors.                                                                        |
-| `dev`            | Prepare and start development environment.                                               |
-| `db:deploy`      | Apply migrations in a production database.                                               |
-| `db:generate`    | Generate database assets.                                                                |
-| `db:reset`       | Deletes and recreates the database.                                                      |
-| `db:seed`        | Seed database.                                                                           |
-| `db:studio`      | Start a local web server with a web app that allows to interact and manage the database. |
-| `db:sync`        | Synchronize database using migrations.                                                   |
-| `dockerize`      | Generate Docker image.                                                                   |
-| `fix`            | Fix errors.                                                                              |
-| `graphql:schema` | Save GraphQL schema to file.                                                             |
-| `start`          | Start compiled server.                                                                   |
-| `start:dev`      | Start development/uncompiled server.                                                     |
+| **Name**         | **Description**                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `build`          | Compile server                                                                          |
+| `build:clean`    | Clean compilation directory                                                             |
+| `build:watch`    | Compile server every time a file is updated                                             |
+| `check`          | Check for errors                                                                        |
+| `dev`            | Prepare and start development environment                                               |
+| `db:deploy`      | Apply migrations in a production database                                               |
+| `db:generate`    | Generate database assets                                                                |
+| `db:reset`       | Deletes and recreates the database                                                      |
+| `db:seed`        | Seed database                                                                           |
+| `db:studio`      | Start a local web server with a web app that allows to interact and manage the database |
+| `db:sync`        | Synchronize database using migrations                                                   |
+| `dockerize`      | Generate Docker image                                                                   |
+| `fix`            | Fix errors                                                                              |
+| `graphql:schema` | Save GraphQL schema to file                                                             |
+| `start`          | Start compiled server                                                                   |
+| `start:dev`      | Start development/uncompiled server                                                     |
