@@ -20,6 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+__:
+  run: |-
+    ./scripts/inline.sh --in-file ./install.sh --overwrite
 README.md: true
 LICENSE: true
 install.sh: true
