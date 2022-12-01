@@ -16,12 +16,12 @@ Installation script.
 | ------------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------------------------- |
 | `--airgap`                           | Perform installation in Air-Gap environment                                                | `false`                                         |
 | `--bench-time <TIME>`                | Benchmark execution time in seconds                                                        | `30`                                            | Any positive number       |
-| `--config-file <FILE>`               | Configuration file                                                                         | `configs/config.yml`                            | Any valid file            |
+| `--config-file <FILE>`               | Configuration file                                                                         | `configs/config.yaml`                           | Any valid file            |
 | `--help`                             | Show help message and exit                                                                 |
 | `--init-cluster`                     | Initialize cluster components and logic. Enable only when bootstrapping for the first time | `false`                                         |
-| `--k3s-config-file <FILE>`           | K3s configuration file                                                                     | `configs/k3s.yml`                               | Any valid file            |
+| `--k3s-config-file <FILE>`           | K3s configuration file                                                                     | `configs/k3s.yaml`                              | Any valid file            |
 | `--k3s-version <VERSION>`            | K3s version                                                                                | `latest`                                        | Any K3s version           |
-| `--node-exporter-config-file <FILE>` | Node exporter configuration file                                                           | `configs/node_exporter.yml`                     | Any valid file            |
+| `--node-exporter-config-file <FILE>` | Node exporter configuration file                                                           | `configs/node_exporter.yaml`                    | Any valid file            |
 | `--node-exporter-version <VERSION>`  | Node exporter version                                                                      | `latest`                                        | Any Node exporter version |
 | `--pc-device-api <URL>`              | Power consumption device api url                                                           | `http://pc.recluster.local/cm?cmnd=status%2010` | Any valid URL             |
 | `--pc-interval <TIME>`               | Power consumption read interval time in seconds                                            | `1`                                             | Any positive number       |
@@ -35,27 +35,27 @@ Installation script.
 
 ## Controller
 
-> **Warning**: Argument `--init-cluster` and `cluster-init: true` property of [`configs/k3s.controller.yml`](../configs/k3s.controller.yml) must be set only for the first controller
+> **Warning**: Argument `--init-cluster` and `cluster-init: true` property of [`configs/k3s.controller.yaml`](../configs/k3s.controller.yaml) must be set only for the first controller
 
-> **Note**: `kind` property of [`configs/config.yml`](../configs/config.yml) must be set to `controller`
+> **Note**: `kind` property of [`configs/config.yaml`](../configs/config.yaml) must be set to `controller`
 
 Controller installation.
 
 ```sh
 ./install.sh \
-  --k3s-config-file configs/k3s.controller.yml \
+  --k3s-config-file configs/k3s.controller.yaml \
   --init-cluster \
   ...
 ```
 
 ## Worker
 
-> **Note**: `kind` property of [`configs/config.yml`](../configs/config.yml) must be set to to `worker`
+> **Note**: `kind` property of [`configs/config.yaml`](../configs/config.yaml) must be set to to `worker`
 
 Worker installation.
 
 ```sh
 ./install.sh \
-  --k3s-config-file configs/k3s.worker.yml \
+  --k3s-config-file configs/k3s.worker.yaml \
   ...
 ```

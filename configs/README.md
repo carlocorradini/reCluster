@@ -6,23 +6,23 @@ reCluster configurations.
 
 See [certs](../../scripts/README.md#📑-certssh) for more information.
 
-## :bookmark_tabs: [`config.controller.yml`](./config.controller.yml)
+## :bookmark_tabs: [`config.controller.yaml`](./config.controller.yaml)
 
 reCluster controller configuration.
 
-## :bookmark_tabs: [`config.worker.yml`](./config.worker.yml)
+## :bookmark_tabs: [`config.worker.yaml`](./config.worker.yaml)
 
 reCluster worker configuration.
 
-## :bookmark_tabs: [`k3s.controller.yml`](./k3s.controller.yml)
+## :bookmark_tabs: [`k3s.controller.yaml`](./k3s.controller.yaml)
 
 K3s controller configuration.
 
-## :bookmark_tabs: [`k3s.worker.yml`](./k3s.worker.yml)
+## :bookmark_tabs: [`k3s.worker.yaml`](./k3s.worker.yaml)
 
 K3s worker configuration.
 
-## :bookmark_tabs: [`node_exporter.yml`](./node_exporter.yml)
+## :bookmark_tabs: [`node_exporter.yaml`](./node_exporter.yaml)
 
 Node exporter configuration.
 

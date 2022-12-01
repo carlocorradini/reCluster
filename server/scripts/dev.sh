@@ -33,7 +33,7 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # CONFIGURATION
 # ================
 # K3d configuration file
-K3D_CONFIG_FILE="k3d.config.yml"
+K3D_CONFIG_FILE="k3d.config.yaml"
 # npm prefix
 NPM_PREFIX="$DIRNAME/.."
 # Postgres version

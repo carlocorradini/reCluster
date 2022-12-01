@@ -2,7 +2,7 @@
 
 reCluster dependencies.
 
-## :bookmark_tabs: [`dependencies.yml`](./dependencies.yml)
+## :bookmark_tabs: [`dependencies.yaml`](./dependencies.yaml)
 
 Dependencies file.
 
@@ -21,9 +21,9 @@ Dependencies script.
 
 > **Note**: [commons arguments](../../scripts/README.md#commons-arguments) available
 
-| **Name**               | **Description**                                                    | **Default**               | **Values**     |
-| ---------------------- | ------------------------------------------------------------------ | ------------------------- | -------------- |
-| `--config-file <FILE>` | Configuration file                                                 | `dependencies.config.yml` | Any valid file |
+| **Name**               | **Description**                                                    | **Default**                | **Values**     |
+| ---------------------- | ------------------------------------------------------------------ | -------------------------- | -------------- |
+| `--config-file <FILE>` | Configuration file                                                 | `dependencies.config.yaml` | Any valid file |
 | `--help`               | Show help message and exit                                         |
-| `--sync`               | Synchronize dependencies                                           | `false`                   |
-| `--sync-force`         | Synchronize dependencies replacing assets that are already present | `false`                   |
+| `--sync`               | Synchronize dependencies                                           | `false`                    |
+| `--sync-force`         | Synchronize dependencies replacing assets that are already present | `false`                    |

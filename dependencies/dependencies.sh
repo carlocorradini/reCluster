@@ -33,7 +33,7 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # CONFIGURATION
 # ================
 # Configuration file
-CONFIG_FILE="dependencies.config.yml"
+CONFIG_FILE="dependencies.config.yaml"
 # Root directory
 ROOT_DIR="$(readlink -f "$DIRNAME/..")"
 # Synchronize flag

@@ -19,12 +19,12 @@ reCluster bundle script.
 
 > **Note**: [commons arguments](#commons-arguments) available
 
-| **Name**               | **Description**            | **Default**         | **Values**     |
-| ---------------------- | -------------------------- | ------------------- | -------------- |
-| `--config-file <FILE>` | Configuration file         | `bundle.config.yml` | Any valid file |
+| **Name**               | **Description**            | **Default**          | **Values**     |
+| ---------------------- | -------------------------- | -------------------- | -------------- |
+| `--config-file <FILE>` | Configuration file         | `bundle.config.yaml` | Any valid file |
 | `--help`               | Show help message and exit |
-| `--out-file <FILE>`    | Output file                | `bundle.tar.gz`     | Any valid file |
-| `--skip-run`           | Skip run                   | `false`             |
+| `--out-file <FILE>`    | Output file                | `bundle.tar.gz`      | Any valid file |
+| `--skip-run`           | Skip run                   | `false`              |
 
 ## :bookmark_tabs: [`certs.sh`](./certs.sh)
 

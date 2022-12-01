@@ -33,7 +33,7 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # CONFIGURATION
 # ================
 # Configuration file
-CONFIG_FILE="bundle.config.yml"
+CONFIG_FILE="bundle.config.yaml"
 # Output file
 OUT_FILE="bundle.tar.gz"
 # Root directory

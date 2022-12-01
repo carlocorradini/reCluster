@@ -37,15 +37,15 @@ AIRGAP_ENV=false
 # Benchmark time in seconds
 BENCH_TIME=30
 # Configuration file
-CONFIG_FILE="configs/config.yml"
+CONFIG_FILE="configs/config.yaml"
 # Initialize cluster
 INIT_CLUSTER=false
 # K3s configuration file
-K3S_CONFIG_FILE="configs/k3s.yml"
+K3S_CONFIG_FILE="configs/k3s.yaml"
 # K3s version
 K3S_VERSION=latest
 # Node exporter configuration file
-NODE_EXPORTER_CONFIG_FILE="configs/node_exporter.yml"
+NODE_EXPORTER_CONFIG_FILE="configs/node_exporter.yaml"
 # Node exporter version
 NODE_EXPORTER_VERSION=latest
 # Power consumption device api url
@@ -1768,7 +1768,7 @@ EOF
 install_recluster() {
   # Files
   _k3s_config_file=/etc/rancher/k3s/config.yaml
-  _recluster_config_file="$RECLUSTER_ETC_DIR/config.yml"
+  _recluster_config_file="$RECLUSTER_ETC_DIR/config.yaml"
   _node_token_file="$RECLUSTER_ETC_DIR/token"
   _commons_script_file="$RECLUSTER_OPT_DIR/__commons.sh"
   _bootstrap_script_file="$RECLUSTER_OPT_DIR/bootstrap.sh"
@@ -2229,6 +2229,7 @@ start_recluster() {
 
   # K8s manifests
   if [ "$INIT_CLUSTER" = true ]; then
+    # TODO
     _node_name=$($SUDO grep 'node-name:' /etc/rancher/k3s/config.yaml | sed -e 's/node-name://g' -e 's/[[:space:]]*//' -e 's/^"//' -e 's/"$//')
   fi
 

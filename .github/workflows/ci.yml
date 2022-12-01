@@ -85,7 +85,7 @@ jobs:
       - name: Bundle
         run: |
           ./scripts/bundle.sh \
-            --config-file ./scripts/bundle.config.yml \
+            --config-file ./scripts/bundle.config.yaml \
             --out-file ./recluster.tar.gz
       - name: Build Changelog
         id: changelog

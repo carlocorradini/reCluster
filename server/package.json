@@ -21,7 +21,7 @@
     "check": "npx npm-run-all --npm-path npm --serial check:*",
     "check:db": "npm run db:format",
     "check:lint": "npx eslint .",
-    "dev": "./scripts/dev.sh --k3d-config-file ./k3d.config.yml",
+    "dev": "./scripts/dev.sh --k3d-config-file ./k3d.config.yaml",
     "db:deploy": "npx prisma migrate deploy",
     "db:format": "npx prisma format",
     "db:generate": "npx prisma generate",
