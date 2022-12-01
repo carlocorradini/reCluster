@@ -20,11 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-token: 4646f99bc4cbae3d5eceed856b337c9d3284be0d4056a3909f780c0c385fbf93
-cluster-init: true # TODO First controller only !
-cluster-domain: recluster.local
-flannel-backend: host-gw
-disable:
-  - servicelb
-node-taint:
-  - CriticalAddonsOnly=true:NoExecute
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - 10.0.0.100-10.0.0.200 # TODO Change
+
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: pool
+  namespace: metallb-system
