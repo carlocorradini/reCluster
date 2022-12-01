@@ -20,19 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
----
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: pool
-  namespace: metallb-system
-spec:
-  addresses:
-    - 10.0.0.100-10.0.0.200 # TODO Change
-
----
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  name: pool
-  namespace: metallb-system
+mirrors:
+  recluster.io:
+    endpoint:
+      - "http://10.0.0.100:5000" # TODO Change
