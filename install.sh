@@ -484,10 +484,10 @@ read_cpu_info() {
   esac
 
   # Convert cache to bytes
-  _cache_l1d=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL1d' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
-  _cache_l1i=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL1i' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
-  _cache_l2=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL2' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
-  _cache_l3=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL3' | sed 's/B.*//' | sed 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _cache_l1d=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL1d' | sed -e 's/B.*//' -e 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _cache_l1i=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL1i' | sed -e 's/B.*//' -e 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _cache_l2=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL2' | sed -e 's/B.*//' -e 's/[[:space:]]*//g' | numfmt --from=iec-i)
+  _cache_l3=$(printf '%s\n' "$_cpu_info" | jq --raw-output '.cacheL3' | sed -e 's/B.*//' -e 's/[[:space:]]*//g' | numfmt --from=iec-i)
 
   # Update
   _cpu_info=$(
@@ -517,9 +517,7 @@ read_cpu_info() {
 read_memory_info() {
   _memory_info=$(
     grep MemTotal /proc/meminfo \
-      | sed 's/MemTotal://g' \
-      | sed 's/[[:space:]]*//g' \
-      | sed 's/B.*//' \
+      | sed -e 's/MemTotal://g' -e 's/[[:space:]]*//g' -e 's/B.*//' \
       | tr '[:lower:]' '[:upper:]' \
       | numfmt --from iec
   )
@@ -553,9 +551,9 @@ read_interfaces_info() {
     # Name
     _iname=$(printf '%s\n' "$_interface" | jq --raw-output '.name')
     # Speed
-    _speed=$($SUDO ethtool "$_iname" | grep Speed | sed 's/Speed://g' | sed 's/[[:space:]]*//g' | sed 's/b.*//' | numfmt --from=si)
+    _speed=$($SUDO ethtool "$_iname" | grep Speed | sed -e 's/Speed://g' -e 's/[[:space:]]*//g' -e 's/b.*//' | numfmt --from=si)
     # WoL
-    _wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')
+    _wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed -e 's/Supports Wake-on://g' -e 's/[[:space:]]*//g')
 
     # Update interfaces
     _interfaces_info=$(
@@ -579,8 +577,7 @@ run_cpu_bench() {
   _run_cpu_bench() {
     sysbench --time="$BENCH_TIME" --threads="$1" cpu run \
       | grep 'events per second' \
-      | sed 's/events per second://g' \
-      | sed 's/[[:space:]]*//g' \
+      | sed -e 's/events per second://g' -e 's/[[:space:]]*//g' \
       | xargs printf "%.0f"
   }
   _threads=$(grep -c ^processor /proc/cpuinfo)
@@ -615,9 +612,7 @@ run_memory_bench() {
   _run_memory_bench() {
     _memory_output=$(sysbench --time="$BENCH_TIME" --memory-oper="$1" --memory-access-mode="$2" memory run \
       | grep 'transferred' \
-      | sed 's/.*(\(.*\))/\1/' \
-      | sed 's/B.*//' \
-      | sed 's/[[:space:]]*//g' \
+      | sed -e 's/.*(\(.*\))/\1/' -e 's/B.*//' -e 's/[[:space:]]*//g' \
       | numfmt --from=iec-i)
     printf '%s\n' $((_memory_output * 8))
   }
@@ -680,8 +675,8 @@ run_storages_bench() {
     esac
 
     _io_output=$(sysbench --time="$BENCH_TIME" --file-test-mode="$2" --file-io-mode="$3" fileio run | grep "$_io_opt, ")
-    _io_throughput_value=$(printf '%s\n' "$_io_output" | sed 's/^.*: //' | sed 's/[[:space:]]*//g')
-    _io_throughput_unit=$(printf '%s\n' "$_io_output" | sed 's/.*,\(.*\)B\/s.*/\1/' | sed 's/[[:space:]]*//g')
+    _io_throughput_value=$(printf '%s\n' "$_io_output" | sed -e 's/^.*: //' -e 's/[[:space:]]*//g')
+    _io_throughput_unit=$(printf '%s\n' "$_io_output" | sed -e 's/.*,\(.*\)B\/s.*/\1/' -e 's/[[:space:]]*//g')
 
     _io_throughput=$(printf "%s%s\n" "$_io_throughput_value" "$_io_throughput_unit" | numfmt --from=iec-i)
     printf '%s\n' $((_io_throughput * 8))
@@ -1205,12 +1200,12 @@ EOF
     # Name
     _iname=$(printf '%s\n' "$_interface" | jq --raw-output '.name')
     # Supports WoL
-    _supports_wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed 's/Supports Wake-on://g' | sed 's/[[:space:]]*//g')
+    _supports_wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed -e 's/Supports Wake-on://g' -e 's/[[:space:]]*//g')
 
     case $_supports_wol in
       *g*)
         # WoL supported
-        _wol=$($SUDO ethtool "$_iname" | grep 'Wake-on' | grep -v 'Supports Wake-on' | sed 's/Wake-on://g' | sed 's/[[:space:]]*//g')
+        _wol=$($SUDO ethtool "$_iname" | grep 'Wake-on' | grep -v 'Supports Wake-on' | sed -e 's/Wake-on://g' -e 's/[[:space:]]*//g')
         [ "$_wol" != d ] || FATAL "Interface '$_iname' Wake-on-Lan is disabled"
         ;;
       *)
@@ -2231,6 +2226,11 @@ start_recluster() {
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
+
+  # K8s manifests
+  if [ "$INIT_CLUSTER" = true ]; then
+    _node_name=$($SUDO grep 'node-name:' /etc/rancher/k3s/config.yaml | sed -e 's/node-name://g' -e 's/[[:space:]]*//' -e 's/^"//' -e 's/"$//')
+  fi
 
   spinner_stop
 }
