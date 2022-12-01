@@ -40,6 +40,10 @@ See [Installation requirements](./installation_requirements.md) for more informa
      --out-dir "$_out_dir"
    ```
 
+1. Copy the text from `configs/certs/ssh.pub` and put it in the `ssh_authorized_keys` property of [`configs/config.yml`](../configs/config.yml) (`ssh-ed25519 ...`).
+
+   > **Warning**: All files from `configs/certs` should be copied and saved in a well known and secure place
+
 1. Start a PostgreSQL database instance
 
    > **Note**: Visit <https://www.postgresql.org> for more information
@@ -47,10 +51,6 @@ See [Installation requirements](./installation_requirements.md) for more informa
 1. Edit [configuration files](../configs/) to match your environment
 
    > **Note**: Remember to change `DATABASE_URL` in [`server.env`](../configs/server.env)
-
-1. Copy the text from `configs/certs/ssh.pub` and put it in the `ssh_authorized_keys` property of [`configs/config.yml`](../configs/config.yml) (`ssh-ed25519 ...`).
-
-   > **Warning**: All files from `configs/certs` should be copied and saved in a well known and secure place
 
 1. Place all files and directories on a flash drive
 
