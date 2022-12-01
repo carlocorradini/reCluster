@@ -1506,8 +1506,11 @@ install_k3s() {
   INFO "Writing K3s configuration to '$_k3s_config_file'"
   $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
   printf '%s\n' "$K3S_CONFIG" \
+    | yq e --no-colors --prettyPrint - \
     | yq e --no-colors '(.. | select(tag == "!!str")) style="double"' - \
     | $SUDO tee "$_k3s_config_file" > /dev/null
+  $SUDO chown root:root "$_k3s_config_file"
+  $SUDO chmod 600 "$_k3s_config_file"
 
   # Install
   INSTALL_K3S_SKIP_ENABLE=true \
@@ -1796,6 +1799,7 @@ install_recluster() {
   # Write configuration
   printf '%s\n' "$CONFIG" \
     | jq '.recluster' \
+    | yq e --no-colors --prettyPrint - \
     | yq e --no-colors '(.. | select(tag == "!!str")) style="double"' - \
     | $SUDO tee "$_recluster_config_file" > /dev/null
   $SUDO chown root:root "$_recluster_config_file"
