@@ -98,12 +98,6 @@ cleanup() {
   # Cleanup spinner
   cleanup_spinner
 
-  if [ $_exit_code != 0 ]; then
-    # Cleanup etc and opt directories
-    [ ! -d "$RECLUSTER_ETC_DIR" ] || $SUDO rm -rf "$RECLUSTER_ETC_DIR" || :
-    [ ! -d "$RECLUSTER_OPT_DIR" ] || $SUDO rm -rf "$RECLUSTER_OPT_DIR" || :
-  fi
-
   exit "$_exit_code"
 }
 
