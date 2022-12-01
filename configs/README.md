@@ -6,9 +6,13 @@ reCluster configurations.
 
 See [certs](../../scripts/README.md#📑-certssh) for more information.
 
-## :bookmark_tabs: [`config.yml`](./config.yml)
+## :bookmark_tabs: [`config.controller.yml`](./config.controller.yml)
 
-reCluster configuration.
+reCluster controller configuration.
+
+## :bookmark_tabs: [`config.worker.yml`](./config.worker.yml)
+
+reCluster worker configuration.
 
 ## :bookmark_tabs: [`k3s.controller.yml`](./k3s.controller.yml)
 

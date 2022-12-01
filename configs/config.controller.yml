@@ -21,10 +21,9 @@
 # SOFTWARE.
 
 kind: controller
-# kind: server
 
 recluster:
-  server: http://127.0.0.1:8080 # TODO Change
+  server: http://10.0.0.10:8080 # TODO Change
 
 ssh_authorized_keys:
-  - ssh-ed25519 ... # TODO Change with SSH public key !
+  - ssh-ed25519 ... # TODO Change
