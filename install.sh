@@ -818,6 +818,26 @@ read_cpu_power_consumption() {
   )
 }
 
+# Wait server reachability
+wait_server_reachability() {
+  _wait_server_max_attempts=3
+  _wait_server_sleep=3
+  _server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server')
+
+  INFO "Waiting server reachability"
+  while [ "$_wait_server_max_attempts" -gt 0 ]; do
+    if (assert_url_reachability "$_server_url/health" > /dev/null 2>&1); then
+      DEBUG "Server is reachable"
+      break
+    fi
+
+    DEBUG "Server is not reachable, sleeping $_wait_server_sleep seconds"
+    sleep "$_wait_server_sleep"
+    _wait_server_max_attempts=$((_wait_server_max_attempts = _wait_server_max_attempts - 1))
+  done
+  [ "$_wait_server_max_attempts" -gt 0 ] || FATAL "Server is not reachable, maximum attempts reached"
+}
+
 # Register current node
 node_registration() {
   _server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires server URL"
@@ -1571,9 +1591,6 @@ cluster_init() {
   _server_env_file="$RECLUSTER_ETC_DIR/server.env"
   _server_certs_dir="$RECLUSTER_ETC_DIR/certs"
   _server_dir="$RECLUSTER_OPT_DIR/server"
-  _wait_server_max_attempts=3
-  _wait_server_sleep=3
-  _server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server')
 
   _wait_k3s_kubeconfig_file_creation() {
     _k3s_kubeconfig_dir=$(dirname "$_k3s_kubeconfig_file")
@@ -1752,18 +1769,7 @@ EOF
   esac
 
   # Wait server
-  INFO "Waiting server reachability"
-  while [ "$_wait_server_max_attempts" -gt 0 ]; do
-    if (assert_url_reachability "$_server_url/health" > /dev/null 2>&1); then
-      DEBUG "Server is reachable"
-      break
-    fi
-
-    DEBUG "Server is not reachable, sleeping $_wait_server_sleep"
-    sleep "$_wait_server_sleep"
-    _wait_server_max_attempts=$((_wait_server_max_attempts = _wait_server_max_attempts - 1))
-  done
-  [ "$_wait_server_max_attempts" -gt 0 ] || FATAL "Server is not reachable, maximum attempts reached"
+  wait_server_reachability
 }
 
 # Install reCluster
@@ -1873,7 +1879,7 @@ DEBUG() {
 read_config() {
   [ -z "\$RECLUSTER_CONFIG" ] || return 0
 
-  INFO "Reading reCluster configuration file '\$RECLUSTER_CONFIG_FILE'"
+  DEBUG "Reading reCluster configuration file '\$RECLUSTER_CONFIG_FILE'"
   [ -f \$RECLUSTER_CONFIG_FILE ] || FATAL "reCluster configuration file '\$RECLUSTER_CONFIG_FILE' not found"
   RECLUSTER_CONFIG=\$(yq e --output-format=json --no-colors '.' "\$RECLUSTER_CONFIG_FILE") || FATAL "Error reading reCluster configuration file '\$RECLUSTER_CONFIG_FILE'"
 }
@@ -1882,7 +1888,7 @@ read_config() {
 read_node_token() {
   [ -z "\$RECLUSTER_NODE_TOKEN" ] || return 0
 
-  INFO "Reading node token file '\$RECLUSTER_NODE_TOKEN_FILE'"
+  DEBUG "Reading node token file '\$RECLUSTER_NODE_TOKEN_FILE'"
   [ -f \$RECLUSTER_NODE_TOKEN_FILE ] || FATAL "Node token file '\$RECLUSTER_NODE_TOKEN_FILE' not found"
   RECLUSTER_NODE_TOKEN=\$(cat "\$RECLUSTER_NODE_TOKEN_FILE") || FATAL "Error reading node token file '\$RECLUSTER_NODE_TOKEN_FILE'"
 }
@@ -1910,7 +1916,7 @@ update_node_status() {
   )
   _response_data=
 
-  INFO "Updating node status '\$_status' at '\$_server_url'"
+  DEBUG "Updating node status '\$_status' at '\$_server_url'"
 
   # Send update request
 EOF
@@ -1947,6 +1953,58 @@ EOF
   if printf '%s\n' "\$_response_data" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
     FATAL "Error updating node status at '\$_server_url':\\n\$(printf '%s\n' "\$_response_data" | jq .)"
   fi
+}
+
+# Assert URL is reachable
+# @param \$1 URL address
+# @param \$2 Timeout in seconds
+assert_url_reachability() {
+  # URL address
+  _url_address=\$1
+  # Timeout in seconds
+  _timeout=\${2:-10}
+
+  DEBUG "Testing URL '\$_url_address' reachability"
+EOF
+
+  case $DOWNLOADER in
+    curl)
+      $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
+  curl --fail --silent --show-error --max-time "\$_timeout" "\$_url_address" > /dev/null || FATAL "URL address '\$_url_address' is unreachable"
+EOF
+      ;;
+    wget)
+      $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
+  wget --quiet --spider --timeout="\$_timeout" --tries=1 "\$_url_address" 2>&1 || FATAL "URL address '\$_url_address' is unreachable"
+EOF
+      ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
+  esac
+
+  $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
+}
+
+# Wait server reachability
+wait_server_reachability() {
+  read_config
+
+  _wait_server_max_attempts=3
+  _wait_server_sleep=3
+  _server_url=\$(printf '%s\n' "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
+  _server_url="\$_server_url/health"
+
+  INFO "Waiting server reachability"
+  while [ "\$_wait_server_max_attempts" -gt 0 ]; do
+    if (assert_url_reachability "\$_server_url" > /dev/null 2>&1); then
+      DEBUG "Server is reachable"
+      break
+    fi
+
+    DEBUG "Server is not reachable, sleeping \$_wait_server_sleep seconds"
+    sleep "\$_wait_server_sleep"
+    _wait_server_max_attempts=\$((_wait_server_max_attempts = _wait_server_max_attempts - 1))
+  done
+  [ "\$_wait_server_max_attempts" -gt 0 ] || FATAL "Server is not reachable, maximum attempts reached"
 }
 
 # Manage services
@@ -2017,6 +2075,7 @@ EOF
   if [ "$INIT_CLUSTER" = true ]; then
     $SUDO tee -a "$_bootstrap_script_file" > /dev/null << EOF
   manage_services start
+  wait_server_reachability
   update_node_status ACTIVE
 EOF
   else
