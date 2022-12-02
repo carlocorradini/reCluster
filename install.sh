@@ -2253,13 +2253,28 @@ start_recluster() {
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
-  # K8s manifests
-  if [ "$INIT_CLUSTER" = true ]; then
-    # TODO
-    _node_name=$($SUDO grep 'node-name:' /etc/rancher/k3s/config.yaml | sed -e 's/node-name://g' -e 's/[[:space:]]*//' -e 's/^"//' -e 's/"$//')
-  fi
-
   spinner_stop
+}
+
+# Configure K8s
+configure_k8s() {
+  [ "$INIT_CLUSTER" = true ] || return 0
+  assert_cmd kubectl
+
+  _node_name=$($SUDO grep 'node-name:' /etc/rancher/k3s/config.yaml | sed -e 's/node-name://g' -e 's/[[:space:]]*//' -e 's/^"//' -e 's/"$//')
+  _wait_sleep=3
+
+  INFO "Waiting node '$_node_name' is ready"
+  while ! "$(kubectl get node "$_node_name" | grep -q -E "$_node_name\s+Ready\s+")"; do
+    DEBUG "Node '$_node_name' is not ready, sleeping  $_wait_sleep seconds"
+    sleep "$_wait_sleep"
+  done
+
+  INFO "Waiting 'kube-dns' pod to be running"
+  while ! "$(kubectl get pod --selector k8s-app=kube-dns --namespace kube-system | grep -q -E '\s+Running\s+')"; do
+    DEBUG "'kube-dns' is not running, sleeping $_wait_sleep seconds"
+    sleep 3
+  done
 }
 
 # ================
@@ -2278,4 +2293,5 @@ start_recluster() {
   cluster_init
   install_recluster
   start_recluster
+  configure_k8s
 }

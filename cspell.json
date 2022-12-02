@@ -25,6 +25,7 @@
   ],
   "words": [
     "aarch",
+    "addext",
     "archinstall",
     "airgap",
     "apollographql",
@@ -84,6 +85,7 @@
     "iface",
     "inet",
     "keygen",
+    "keyout",
     "kibibit",
     "kibibyte",
     "kubeconfig",
@@ -103,6 +105,7 @@
     "mkimg",
     "mktemp",
     "missingok",
+    "newkey",
     "numfmt",
     "notifempty",
     "nproc",
