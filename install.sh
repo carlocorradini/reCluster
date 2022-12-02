@@ -42,6 +42,8 @@ CONFIG_FILE="configs/config.yaml"
 INIT_CLUSTER=false
 # K3s configuration file
 K3S_CONFIG_FILE="configs/k3s.yaml"
+# K3s registry configuration file
+K3S_REGISTRY_CONFIG_FILE="configs/registries.yaml"
 # K3s version
 K3S_VERSION=latest
 # Node exporter configuration file
@@ -111,7 +113,7 @@ trap cleanup INT QUIT TERM EXIT
 show_help() {
   cat << EOF
 Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config-file <FILE>] [--help]
-        [--init-cluster] [--k3s-config-file <FILE>] [--k3s-version <VERSION>]
+        [--init-cluster] [--k3s-config-file <FILE>] [--k3s-registry-config-file <FILE>] [--k3s-version <VERSION>]
         [--node-exporter-config-file <FILE>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
         [--server-certs-dir <DIR>] [--server-env-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>]
@@ -141,6 +143,11 @@ Options:
 
   --k3s-config-file <FILE>            K3s configuration file
                                       Default: $K3S_CONFIG_FILE
+                                      Values:
+                                        Any valid file
+
+  --k3s-registry-config-file <FILE>   K3s registry configuration file
+                                      Default: $K3S_REGISTRY_CONFIG_FILE
                                       Values:
                                         Any valid file
 
@@ -946,6 +953,13 @@ parse_args() {
         K3S_CONFIG_FILE=$2
         _shifts=2
         ;;
+      --k3s-registry-config-file)
+        # K3s registry configuration file
+        parse_args_assert_value "$@"
+
+        K3S_REGISTRY_CONFIG_FILE=$2
+        _shifts=2
+        ;;
       --k3s-version)
         # K3s version
         parse_args_assert_value "$@"
@@ -1149,6 +1163,8 @@ verify_system() {
     WARN "K3s configuration 'write-kubeconfig-mode' must not be provided"
     K3S_CONFIG=$(printf '%s\n' "$K3S_CONFIG" | jq 'del(."write-kubeconfig-mode")')
   }
+  # K3s registry configuration file
+  [ -f "$K3S_REGISTRY_CONFIG_FILE" ] || FATAL "K3s registry configuration file '$K3S_REGISTRY_CONFIG_FILE' does not exists"
 
   # Node exporter configuration
   [ -f "$NODE_EXPORTER_CONFIG_FILE" ] || FATAL "Node exporter configuration file '$NODE_EXPORTER_CONFIG_FILE' does not exists"
@@ -1455,7 +1471,9 @@ finalize_node_facts() {
 install_k3s() {
   _k3s_version="$K3S_VERSION"
   _k3s_install_sh=
-  _k3s_config_file=/etc/rancher/k3s/config.yaml
+  _k3s_etc_dir=/etc/rancher/k3s
+  _k3s_config_file="$_k3s_etc_dir/config.yaml"
+  _k3s_registry_config_file="$_k3s_etc_dir/registries.yaml"
   _k3s_kind=
 
   spinner_start "Installing K3s '$K3S_VERSION'"
@@ -1491,15 +1509,23 @@ install_k3s() {
     *) FATAL "Unknown kind '$_kind'" ;;
   esac
 
-  # Write Configuration
+  # Etc directory
+  [ -d "$_k3s_etc_dir" ] || $SUDO mkdir -p "$_k3s_etc_dir"
+
+  # Write configuration
   INFO "Writing K3s configuration to '$_k3s_config_file'"
-  $SUDO mkdir -p "$(dirname "$_k3s_config_file")"
   printf '%s\n' "$K3S_CONFIG" \
     | yq e --no-colors --prettyPrint - \
     | yq e --no-colors '(.. | select(tag == "!!str")) style="double"' - \
     | $SUDO tee "$_k3s_config_file" > /dev/null
   $SUDO chown root:root "$_k3s_config_file"
-  $SUDO chmod 600 "$_k3s_config_file"
+  $SUDO chmod 644 "$_k3s_config_file"
+
+  # Registry configuration
+  INFO "Copying K3s registry configuration file from '$K3S_REGISTRY_CONFIG_FILE' to '$_k3s_registry_config_file'"
+  yes | $SUDO cp --force "$K3S_REGISTRY_CONFIG_FILE" "$_k3s_registry_config_file"
+  $SUDO chown root:root "$_k3s_config_file"
+  $SUDO chmod 644 "$_k3s_config_file"
 
   # Install
   INSTALL_K3S_SKIP_ENABLE=true \

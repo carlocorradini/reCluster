@@ -23,4 +23,9 @@
 mirrors:
   recluster.io:
     endpoint:
-      - "http://10.0.0.100:5000" # TODO Change
+      - 'https://10.0.0.100:5000' # TODO Change
+configs:
+  '10.0.0.100:5000': # TODO Change
+    tls:
+      ca_file: '/etc/recluster/certs/registry.crt'
+      key_file: '/etc/recluster/certs/registry.key'

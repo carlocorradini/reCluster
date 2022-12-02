@@ -22,25 +22,21 @@ See [Installation requirements](./installation_requirements.md) for more informa
 
 1. Generate certificates
 
-   > **Warning**: Change `_ssh_passphrase` and `_token_passphrase` passphrase
-
    > **Info**: See [certs](../scripts/README.md#📑-certssh) for more information
 
    ```sh
-   _ssh_passphrase="password"
-   _token_passphrase="password"
+   _registry_ip="10.0.0.100" # TODO Change
    _out_dir="configs/certs"
    
    # Create certs directory
    mkdir "$_out_dir"
    # Generate certificates
    ./scripts/certs.sh \
-     --ssh-passphrase "$_ssh_passphrase" \
-     --token-passphrase "$_token_passphrase" \
+     --registry-ip "$_registry_ip" \
      --out-dir "$_out_dir"
    ```
 
-1. Copy the text from `configs/certs/ssh.pub` and put it in the `ssh_authorized_keys` property of `configs/config.yaml` (`ssh-ed25519 ...`)
+1. Copy the text from `configs/certs/ssh.crt` and put it in the `ssh_authorized_keys` property of `configs/config.yaml` (`ssh-ed25519 ...`)
 
    > **Warning**: All files from `configs/certs` should be copied and saved in a well known and secure place
 
@@ -56,16 +52,45 @@ See [Installation requirements](./installation_requirements.md) for more informa
 
    > **Note**: See <https://askubuntu.com/a/802675/1149269> for more information
 
-1. Pick a Linux distribution from [`distributions`](../distributions/) and install it
+1. Install [Alpine Linux](../distributions/alpine/) distribution
+
+   > **Note**: Other [distributions](../distributions/) are available
 
    > **Note**: For further information on how to install a distribution, see its accompanying `README.md` file
 
    > **Note**: Remember to connect the Power Consumption device
 
-1. Mount the flash drive on the node
+1. For every node
 
-1. Launch `install.sh` installation script
+   1. Mount the flash drive on the node
 
-   > See [Installation script](./installation_script.md) for more information
+   1. Launch `install.sh` installation script
 
-1. Congratulations! You have successfully installed reCluster
+      > See [Installation script](./installation_script.md) for more information
+
+      - Controller
+
+        > **Warning**: Argument `--init-cluster` and `cluster-init: true` property of [`configs/k3s.controller.yaml`](../configs/k3s.controller.yaml) must be set only for the first controller
+
+        > **Note**: `kind` property of [`configs/config.yaml`](../configs/config.yaml) must be set to `controller`
+
+        Controller installation.
+
+        ```sh
+        ./install.sh \
+          --k3s-config-file configs/k3s.controller.yaml \
+          --init-cluster \
+          ...
+        ```
+
+      - Worker
+
+        > **Note**: `kind` property of [`configs/config.yaml`](../configs/config.yaml) must be set to to `worker`
+
+        Worker installation.
+
+        ```sh
+        ./install.sh \
+          --k3s-config-file configs/k3s.worker.yaml \
+          ...
+        ```

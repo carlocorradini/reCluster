@@ -31,12 +31,7 @@ reCluster bundle script.
 reCluster certificates script.
 
 ```sh
-_ssh_passphrase="password"
-_token_passphrase="password"
-
-./certs.sh \
-  --ssh-passphrase "$_ssh_passphrase" \
-  --token-passphrase "$_token_passphrase"
+./certs.sh
 ```
 
 ### Arguments
@@ -45,17 +40,21 @@ _token_passphrase="password"
 
 > **Note**: [commons arguments](#commons-arguments) available
 
-| **Name**                          | **Description**            | **Default** | **Values**                 |
-| --------------------------------- | -------------------------- | ----------- | -------------------------- |
+| **Name**                          | **Description**            | **Default**       | **Values**                 |
+| --------------------------------- | -------------------------- | ----------------- | -------------------------- |
 | `--help`                          | Show help message and exit |
-| `--out-dir <DIRECTORY>`           | Output directory           | `./`        | Any valid directory        |
-| `--ssh-comment <COMMENT>`         | SSH comment                |             | Any valid comment          |
-| `--ssh-name <NAME>`               | SSH key name               | `ssh`       | Any valid name             |
-| `--ssh-passphrase <PASSPHRASE>`   | SSH passphrase             |             | Any valid passphrase       |
-| `--ssh-rounds <ROUNDS>`           | SSH rounds                 | `256`       | Any valid number of rounds |
-| `--token-bits <BITS>`             | Token bits                 | `4096`      | Any valid number of bits   |
-| `--token-name <NAME>`             | Token key name             | `token`     | Any valid name             |
-| `--token-passphrase <PASSPHRASE>` | Token passphrase           |             | Any valid passphrase       |
+| `--out-dir <DIRECTORY>`           | Output directory           | `./`              | Any valid directory        |
+| `--registry-bits <BITS>`          | Registry bits              | `4096`            | Any valid number of bits   |
+| `--registry-domain <DOMAIN>`      | Registry domain            | `recluster.local` | Any valid domain           |
+| `--registry-ip <IP>`              | Registry IP address        | `10.0.0.100`      | Any valid IP address       |
+| `--registry-name <NAME>`          | Registry key name          | `registry`        | Any valid name             |
+| `--ssh-comment <COMMENT>`         | SSH comment                |                   | Any valid comment          |
+| `--ssh-name <NAME>`               | SSH key name               | `ssh`             | Any valid name             |
+| `--ssh-passphrase <PASSPHRASE>`   | SSH passphrase             |                   | Any valid passphrase       |
+| `--ssh-rounds <ROUNDS>`           | SSH rounds                 | `256`             | Any valid number of rounds |
+| `--token-bits <BITS>`             | Token bits                 | `4096`            | Any valid number of bits   |
+| `--token-name <NAME>`             | Token key name             | `token`           | Any valid name             |
+| `--token-passphrase <PASSPHRASE>` | Token passphrase           |                   | Any valid passphrase       |
 
 ## :bookmark_tabs: [`init.sh`](./init.sh)
 

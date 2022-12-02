@@ -50,8 +50,6 @@ POSTGRES_PASSWORD=password
 POSTGRES_DB=recluster
 # Certificates directory
 CERTS_DIR="$DIRNAME/../certs"
-# Certificates passphrase
-CERTS_PASSPHRASE=password
 # Certificates script
 CERTS_SCRIPT="$DIRNAME/../../scripts/certs.sh"
 # Skip certificates
@@ -211,10 +209,7 @@ setup_system() {
 setup_certs() {
   [ "$SKIP_CERTS" = false ] || { WARN "Skipping certificates" && return 0; }
 
-  $CERTS_SCRIPT \
-    --out-dir "$CERTS_DIR" \
-    --ssh-passphrase "$CERTS_PASSPHRASE" \
-    --token-passphrase "$CERTS_PASSPHRASE"
+  $CERTS_SCRIPT --out-dir "$CERTS_DIR"
 }
 
 # Setup cluster

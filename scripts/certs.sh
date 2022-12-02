@@ -34,6 +34,14 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # ================
 # Output directory
 OUT_DIR="./"
+# Registry bits
+REGISTRY_BITS=4096
+# Registry domain
+REGISTRY_DOMAIN="recluster.local"
+# Registry IP address
+REGISTRY_IP="10.0.0.100"
+# Registry key name
+REGISTRY_NAME="registry"
 # SSH comment
 SSH_COMMENT=""
 # SSH key name
@@ -81,8 +89,9 @@ trap cleanup INT QUIT TERM EXIT
 show_help() {
   cat << EOF
 Usage: $(basename "$0") [--help] [--out-dir <DIRECTORY>]
-        [--ssh-comment <COMMENT>] [--ssh-name <NAME>] --ssh-passphrase <PASSPHRASE> [--ssh-rounds <ROUNDS>]
-        [--token-bits <BITS>] [--token-comment <COMMENT>] [--token-name <NAME>] --token-passphrase <PASSPHRASE>
+        [--registry-bits <BITS>] [--registry-domain <DOMAIN>] [--registry-ip <IP>] [--registry-name <NAME>]
+        [--ssh-comment <COMMENT>] [--ssh-name <NAME>] [--ssh-passphrase <PASSPHRASE>] [--ssh-rounds <ROUNDS>]
+        [--token-bits <BITS>] [--token-comment <COMMENT>] [--token-name <NAME>] [--token-passphrase <PASSPHRASE>]
 
 $HELP_COMMONS_USAGE
 
@@ -95,6 +104,26 @@ Options:
                                    Default: $OUT_DIR
                                    Values:
                                      Any valid directory
+
+  --registry-bits <BITS>           Registry bits
+                                   Default: $REGISTRY_BITS
+                                   Values:
+                                     Any valid number of bits
+
+  --registry-domain <DOMAIN>       Registry domain
+                                   Default: $REGISTRY_DOMAIN
+                                   Values:
+                                     Any valid domain
+
+  --registry-ip <IP>               Registry IP address
+                                   Default: $REGISTRY_IP
+                                   Values:
+                                     Any valid IP address
+
+  --registry-name <NAME>           Registry key name
+                                   Default: $REGISTRY_NAME
+                                   Values:
+                                     Any valid name
 
   --ssh-comment <COMMENT>          SSH comment
                                    Default: $SSH_COMMENT
@@ -158,6 +187,35 @@ parse_args() {
         parse_args_assert_value "$@"
 
         OUT_DIR=$2
+        _shifts=2
+        ;;
+      --registry-bits)
+        # Registry bits
+        parse_args_assert_value "$@"
+        parse_args_assert_positive_integer "$@"
+
+        REGISTRY_BITS=$2
+        _shifts=2
+        ;;
+      --registry-domain)
+        # Registry domain
+        parse_args_assert_value "$@"
+
+        REGISTRY_DOMAIN=$2
+        _shifts=2
+        ;;
+      --registry-ip)
+        # Registry IP address
+        parse_args_assert_value "$@"
+
+        REGISTRY_IP=$2
+        _shifts=2
+        ;;
+      --registry-name)
+        # Registry key name
+        parse_args_assert_value "$@"
+
+        REGISTRY_NAME=$2
         _shifts=2
         ;;
       --ssh-comment)
@@ -236,10 +294,9 @@ parse_args() {
 # Verify system
 verify_system() {
   assert_cmd mktemp
+  assert_cmd openssl
   assert_cmd ssh-keygen
 
-  [ -n "$SSH_PASSPHRASE" ] || FATAL "SSH passphrase is required"
-  [ -n "$TOKEN_PASSPHRASE" ] || FATAL "Token passphrase is required"
   [ -d "$OUT_DIR" ] || FATAL "Output directory '$OUT_DIR' does not exists"
 }
 
@@ -255,8 +312,8 @@ cert_ssh() {
   INFO "Generating SSH certificate"
 
   ssh-keygen -t ed25519 -a "$SSH_ROUNDS" -f "$TMP_DIR/$SSH_NAME.key" -N "$SSH_PASSPHRASE" -C "$SSH_COMMENT"
-  mv "$TMP_DIR/$SSH_NAME.key.pub" "$TMP_DIR/$SSH_NAME.pub"
-  chmod 600 "$TMP_DIR/$SSH_NAME.key" "$TMP_DIR/$SSH_NAME.pub"
+  mv "$TMP_DIR/$SSH_NAME.key.pub" "$TMP_DIR/$SSH_NAME.crt"
+  chmod 600 "$TMP_DIR/$SSH_NAME.key" "$TMP_DIR/$SSH_NAME.crt"
 }
 
 # Token certificate
@@ -264,9 +321,21 @@ cert_token() {
   INFO "Generating Token certificate"
 
   ssh-keygen -t rsa -b "$TOKEN_BITS" -f "$TMP_DIR/$TOKEN_NAME.key" -N "$TOKEN_PASSPHRASE" -C "$TOKEN_COMMENT" -m PEM
-  ssh-keygen -e -m PEM -f "$TMP_DIR/$TOKEN_NAME.key" -P "$TOKEN_PASSPHRASE" > "$TMP_DIR/$TOKEN_NAME.pub"
+  ssh-keygen -e -m PEM -f "$TMP_DIR/$TOKEN_NAME.key" -P "$TOKEN_PASSPHRASE" > "$TMP_DIR/$TOKEN_NAME.crt"
   rm "$TMP_DIR/$TOKEN_NAME.key.pub"
-  chmod 600 "$TMP_DIR/$TOKEN_NAME.key" "$TMP_DIR/$TOKEN_NAME.pub"
+  chmod 600 "$TMP_DIR/$TOKEN_NAME.key" "$TMP_DIR/$TOKEN_NAME.crt"
+}
+
+# Registry certificate
+cert_registry() {
+  INFO "Generating Registry certificate"
+
+  openssl req -x509 -days 3650 \
+    -newkey "rsa:$REGISTRY_BITS" -nodes -sha256 -keyout "$TMP_DIR/$REGISTRY_NAME.key" \
+    -subj "/CN=registry.$REGISTRY_DOMAIN" \
+    -addext "subjectAltName=DNS:*.$REGISTRY_DOMAIN,IP:$REGISTRY_IP" \
+    -out "$TMP_DIR/$REGISTRY_NAME.crt"
+  chmod 600 "$TMP_DIR/$REGISTRY_NAME.key" "$TMP_DIR/$REGISTRY_NAME.crt"
 }
 
 # Move certificates
@@ -287,5 +356,6 @@ move_certs() {
   setup_system
   cert_ssh
   cert_token
+  cert_registry
   move_certs
 }

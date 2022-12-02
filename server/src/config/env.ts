@@ -46,8 +46,8 @@ export const env = cleanEnv(process.env, {
   DATABASE_URL: url({ desc: 'Database URL' }),
   SSH_USERNAME: str({ default: 'root', desc: 'SSH username' }),
   SSH_PRIVATE_KEY: fileValidator({ desc: 'SSH private key' }),
-  SSH_PASSPHRASE: str({ desc: 'SSH passphrase' }),
+  SSH_PASSPHRASE: str({ default: '', desc: 'SSH passphrase' }),
   TOKEN_PRIVATE_KEY: fileValidator({ desc: 'Token private key' }),
   TOKEN_PUBLIC_KEY: fileValidator({ desc: 'Token public key' }),
-  TOKEN_PASSPHRASE: str({ desc: 'Token passphrase' })
+  TOKEN_PASSPHRASE: str({ default: '', desc: 'Token passphrase' })
 });

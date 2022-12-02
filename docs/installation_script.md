@@ -20,6 +20,7 @@ Installation script.
 | `--help`                             | Show help message and exit                                                                 |
 | `--init-cluster`                     | Initialize cluster components and logic. Enable only when bootstrapping for the first time | `false`                                         |
 | `--k3s-config-file <FILE>`           | K3s configuration file                                                                     | `configs/k3s.yaml`                              | Any valid file            |
+| `--k3s-registry-config-file <FILE>`  | K3s registry configuration file                                                            | `configs/registries.yaml`                       | Any valid file            |
 | `--k3s-version <VERSION>`            | K3s version                                                                                | `latest`                                        | Any K3s version           |
 | `--node-exporter-config-file <FILE>` | Node exporter configuration file                                                           | `configs/node_exporter.yaml`                    | Any valid file            |
 | `--node-exporter-version <VERSION>`  | Node exporter version                                                                      | `latest`                                        | Any Node exporter version |
@@ -32,30 +33,3 @@ Installation script.
 | `--ssh-config-file <FILE>`           | SSH configuration file                                                                     | `configs/ssh_config`                            | Any valid file            |
 | `--sshd-config-file <FILE>`          | SSH server configuration file                                                              | `configs/sshd_config`                           | Any valid file            |
 | `--user <USER>`                      | User                                                                                       | `root`                                          | Any valid user            |
-
-## Controller
-
-> **Warning**: Argument `--init-cluster` and `cluster-init: true` property of [`configs/k3s.controller.yaml`](../configs/k3s.controller.yaml) must be set only for the first controller
-
-> **Note**: `kind` property of [`configs/config.yaml`](../configs/config.yaml) must be set to `controller`
-
-Controller installation.
-
-```sh
-./install.sh \
-  --k3s-config-file configs/k3s.controller.yaml \
-  --init-cluster \
-  ...
-```
-
-## Worker
-
-> **Note**: `kind` property of [`configs/config.yaml`](../configs/config.yaml) must be set to to `worker`
-
-Worker installation.
-
-```sh
-./install.sh \
-  --k3s-config-file configs/k3s.worker.yaml \
-  ...
-```

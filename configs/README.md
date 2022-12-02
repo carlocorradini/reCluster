@@ -26,6 +26,10 @@ K3s worker configuration.
 
 Node exporter configuration.
 
+## :bookmark_tabs: [`registries.yaml`](./registries.yaml)
+
+K3s private registry configuration.
+
 ## :bookmark_tabs: [`server.env`](./server.env)
 
 See [server environment](../../server/README.md#environment) for more information.

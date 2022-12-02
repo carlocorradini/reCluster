@@ -18,6 +18,8 @@
 Host *
 #   ForwardAgent no
 #   ForwardX11 no
+    AddKeysToAgent yes
+    IdentitiesOnly yes
     PasswordAuthentication no
     ChallengeResponseAuthentication no
     PubkeyAuthentication yes
