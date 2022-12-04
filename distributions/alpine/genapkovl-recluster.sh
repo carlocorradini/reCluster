@@ -82,6 +82,7 @@ nodejs
 npm
 openssh
 openssl1.1-compat
+postgresql
 procps
 sudo
 sysbench

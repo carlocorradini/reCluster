@@ -30,6 +30,7 @@ ncurses
 nodejs
 npm
 openssh
+postgresql
 procps
 sudo
 sysbench

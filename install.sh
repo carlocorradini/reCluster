@@ -814,6 +814,25 @@ read_cpu_power_consumption() {
   )
 }
 
+# Wait database reachability
+wait_database_reachability() {
+  _wait_database_max_attempts=3
+  _wait_database_sleep=3
+
+  INFO "Waiting database reachability"
+  while [ "$_wait_database_max_attempts" -gt 0 ]; do
+    if ($SUDO su postgres -c "pg_isready"); then
+      DEBUG "Database is reachable"
+      break
+    fi
+
+    DEBUG "Database is not reachable, sleeping $_wait_database_sleep seconds"
+    sleep "$_wait_database_sleep"
+    _wait_database_max_attempts=$((_wait_database_max_attempts = _wait_database_max_attempts - 1))
+  done
+  [ "$_wait_database_max_attempts" -gt 0 ] || FATAL "Database is not reachable, maximum attempts reached"
+}
+
 # Wait server reachability
 wait_server_reachability() {
   _wait_server_max_attempts=3
@@ -1102,6 +1121,10 @@ verify_system() {
     assert_cmd inotifywait
     assert_cmd node
     assert_cmd npm
+    assert_cmd pg_ctl
+    assert_cmd pg_isready
+
+    assert_user postgres
   fi
   # Spinner
   assert_spinner
@@ -1603,8 +1626,10 @@ cluster_init() {
 
   INFO "Cluster initialization"
 
-  _k3s_kubeconfig_file=/etc/rancher/k3s/k3s.yaml
+  _k3s_kubeconfig_file="/etc/rancher/k3s/k3s.yaml"
   _kubeconfig_file="$(user_home_dir)/.kube/config"
+  _database_service_name=postgresql
+  _database_data="/var/lib/postgresql/data"
   _server_service_name=recluster.server
   _server_env_file="$RECLUSTER_ETC_DIR/server.env"
   _server_certs_dir="$RECLUSTER_ETC_DIR/certs"
@@ -1662,6 +1687,106 @@ EOF
   $SUDO chown "$USER:$USER" "$_kubeconfig_file"
   $SUDO chmod 644 "$_kubeconfig_file"
 
+  # Setup database
+  INFO "Setting up database"
+  DEBUG "Creating PostgreSQL socket directory"
+  $SUDO mkdir /run/postgresql
+  $SUDO chown postgres:postgres /run/postgresql
+
+  DEBUG "Creating PostgreSQL data directory"
+  $SUDO mkdir $_database_data
+  $SUDO chown postgres:postgres $_database_data
+  $SUDO chmod 700 $_database_data
+
+  DEBUG "Creating PostgreSQL database cluster"
+  $SUDO su postgres -c "initdb --locale=C.UTF-8 --encoding=UTF8 --data-checksums -D $_database_data"
+
+  DEBUG "Constructing PostgreSQL database service '$_database_service_name'"
+  case $INIT_SYSTEM in
+    openrc)
+      _openrc_database_service_file="/etc/init.d/$_database_service_name"
+      _openrc_database_log_file="/var/log/$_database_service_name.log"
+
+      INFO "openrc: Constructing PostgreSQL service file '$_openrc_database_service_file'"
+      $SUDO tee $_openrc_database_service_file > /dev/null << EOF
+#!/sbin/openrc-run
+
+description="PostgreSQL database"
+
+PGDATA=$_database_data
+
+depend() {
+  after network-online
+  want network-online
+}
+
+supervisor=supervise-daemon
+name=postgresql
+
+command_user="postgres:postgres"
+
+output_log=$_openrc_database_log_file
+error_log=$_openrc_database_log_file
+
+pidfile=/var/run/postgresql.pid
+respawn_delay=3
+respawn_max=0
+
+start() {
+  /usr/local/pgsql/bin/pg_ctl start -D \$PGDATA -s -w
+}
+
+stop() {
+  /usr/local/pgsql/bin/pg_ctl stop -D \$PGDATA -s -m fast
+}
+
+reload() {
+  /usr/local/pgsql/bin/pg_ctl reload -D \$PGDATA -s
+}
+EOF
+      $SUDO chown root:root $_openrc_database_service_file
+      $SUDO chmod 755 $_openrc_database_service_file
+
+      $SUDO tee "/etc/logrotate.d/$_database_service_name" > /dev/null << EOF
+$_openrc_database_log_file {
+	missingok
+	notifempty
+	copytruncate
+}
+EOF
+      ;;
+    systemd)
+      _systemd_database_service_file="/etc/systemd/system/$_database_service_name.service"
+
+      INFO "systemd: Constructing PostgreSQL service file '$_systemd_database_service_file'"
+      $SUDO tee $_systemd_database_service_file > /dev/null << EOF
+[Unit]
+Description=PostgreSQL database
+Documentation=man:postgres(1)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+User=postgres
+Group=postgres
+Environment=PGDATA=$_database_data
+ExecStart=/usr/local/pgsql/bin/pg_ctl start -D \$PGDATA -s -w
+ExecStop=/usr/local/pgsql/bin/pg_ctl stop -D \$PGDATA -s -m fast
+ExecReload=/usr/local/pgsql/bin/pg_ctl reload -D \$PGDATA -s
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target
+EOF
+      $SUDO chown root:root $_systemd_database_service_file
+      $SUDO chmod 755 $_systemd_database_service_file
+
+      $SUDO systemctl daemon-reload > /dev/null
+      ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
+
   # Copy server
   INFO "Copying server from '$DIRNAME/server' to '$_server_dir'"
   [ -d "$_server_dir" ] || $SUDO mkdir -p "$_server_dir"
@@ -1701,7 +1826,7 @@ EOF
   case $INIT_SYSTEM in
     openrc)
       _openrc_server_service_file="/etc/init.d/$_server_service_name"
-      _openrc_server_log_file=/var/log/recluster.server.log
+      _openrc_server_log_file="/var/log/$_server_service_name.log"
 
       INFO "openrc: Constructing server service file '$_openrc_server_service_file'"
       $SUDO tee $_openrc_server_service_file > /dev/null << EOF
@@ -1711,6 +1836,7 @@ description="reCluster server"
 
 depend() {
   after network-online
+  want network-online
 }
 
 supervisor=supervise-daemon
@@ -1718,7 +1844,7 @@ name=recluster.server
 command="/usr/bin/node $_server_dir/build/main.js"
 
 output_log=$_openrc_server_log_file
-output_log=$_openrc_server_log_file
+error_log=$_openrc_server_log_file
 
 pidfile=/var/run/recluster.server.pid
 respawn_delay=3
@@ -1732,7 +1858,7 @@ EOF
       $SUDO chown root:root $_openrc_server_service_file
       $SUDO chmod 755 $_openrc_server_service_file
 
-      $SUDO tee /etc/logrotate.d/recluster.server > /dev/null << EOF
+      $SUDO tee "/etc/logrotate.d/$_server_service_name" > /dev/null << EOF
 $_openrc_server_log_file {
 	missingok
 	notifempty
@@ -1769,25 +1895,32 @@ WantedBy=multi-user.target
 EOF
       $SUDO chown root:root $_systemd_server_service_file
       $SUDO chmod 755 $_systemd_server_service_file
+
+      $SUDO systemctl daemon-reload > /dev/null
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
-  # Start server
+  # Start database and server
   case $INIT_SYSTEM in
     openrc)
+      INFO "openrc: Starting database"
+      $SUDO rc-service postgresql restart
+      wait_database_reachability
       INFO "openrc: Starting server"
       $SUDO rc-service recluster.server restart
+      wait_server_reachability
       ;;
     systemd)
+      INFO "systemd: Starting database"
+      $SUDO systemctl restart postgresql
+      wait_database_reachability
       INFO "systemd: Starting server"
       $SUDO systemctl restart recluster.server
+      wait_server_reachability
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
-
-  # Wait server
-  wait_server_reachability
 }
 
 # Install reCluster
@@ -2003,6 +2136,25 @@ EOF
   $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
 }
 
+# Wait database reachability
+wait_database_reachability() {
+  _wait_database_max_attempts=3
+  _wait_database_sleep=3
+
+  INFO "Waiting database reachability"
+  while [ "\$_wait_database_max_attempts" -gt 0 ]; do
+    if (su postgres -c "pg_isready"); then
+      DEBUG "Database is reachable"
+      break
+    fi
+
+    DEBUG "Database is not reachable, sleeping \$_wait_database_sleep seconds"
+    sleep "\_wait_database_sleep"
+    _wait_database_max_attempts=\$((_wait_database_max_attempts = _wait_database_max_attempts - 1))
+  done
+  [ "\$_wait_database_max_attempts" -gt 0 ] || FATAL "Database is not reachable, maximum attempts reached"
+}
+
 # Wait server reachability
 wait_server_reachability() {
   read_config
@@ -2043,8 +2195,12 @@ EOF
     openrc)
       if [ "$INIT_CLUSTER" = true ]; then
         $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
+  INFO "openrc: \$_op_message Database"
+  rc-service postgresql \$_op
+  [ "\$_op" = start ] && wait_database_reachability
   INFO "openrc: \$_op_message Server"
   rc-service recluster.server \$_op
+  [ "\$_op" = start ] && wait_server_reachability
 EOF
       fi
       $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
@@ -2057,8 +2213,12 @@ EOF
     systemd)
       if [ "$INIT_CLUSTER" = true ]; then
         $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
+  INFO "systemd: \$_op_message Database"
+  systemctl \$_op postgresql
+  [ "\$_op" = start ] && wait_database_reachability
   INFO "systemd: \$_op_message Server"
   systemctl \$_op recluster.server
+  [ "\$_op" = start ] && wait_server_reachability
 EOF
       fi
       $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
@@ -2094,7 +2254,6 @@ EOF
   if [ "$INIT_CLUSTER" = true ]; then
     $SUDO tee -a "$_bootstrap_script_file" > /dev/null << EOF
   manage_services start
-  wait_server_reachability
   update_node_status ACTIVE
 EOF
   else
