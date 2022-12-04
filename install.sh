@@ -1754,6 +1754,10 @@ $_openrc_database_log_file {
 	copytruncate
 }
 EOF
+
+      INFO "openrc: Starting database"
+      $SUDO rc-service postgresql restart
+      wait_database_reachability
       ;;
     systemd)
       _systemd_database_service_file="/etc/systemd/system/$_database_service_name.service"
@@ -1783,9 +1787,20 @@ EOF
       $SUDO chmod 755 $_systemd_database_service_file
 
       $SUDO systemctl daemon-reload > /dev/null
+
+      INFO "systemd: Starting database"
+      $SUDO systemctl restart postgresql
+      wait_database_reachability
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
+
+  DEBUG "Creating database 'recluster'"
+  $SUDO su postgres -c 'psql -c "CREATE DATABASE recluster;"'
+  DEBUG "Creating user 'recluster'"
+  $SUDO su postgres -c 'psql -c "CREATE USER recluster WITH ENCRYPTED PASSWORD \"password\";"'
+  DEBUG "Assigning user 'recluster' to database 'recluster'"
+  $SUDO su postgres -c 'psql -c "GRANT ALL PRIVILEGES ON DATABASE recluster TO recluster;"'
 
   # Copy server
   INFO "Copying server from '$DIRNAME/server' to '$_server_dir'"
@@ -1865,6 +1880,10 @@ $_openrc_server_log_file {
 	copytruncate
 }
 EOF
+
+      INFO "openrc: Starting server"
+      $SUDO rc-service recluster.server restart
+      wait_server_reachability
       ;;
     systemd)
       _systemd_server_service_file="/etc/systemd/system/$_server_service_name.service"
@@ -1897,24 +1916,7 @@ EOF
       $SUDO chmod 755 $_systemd_server_service_file
 
       $SUDO systemctl daemon-reload > /dev/null
-      ;;
-    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
-  esac
 
-  # Start database and server
-  case $INIT_SYSTEM in
-    openrc)
-      INFO "openrc: Starting database"
-      $SUDO rc-service postgresql restart
-      wait_database_reachability
-      INFO "openrc: Starting server"
-      $SUDO rc-service recluster.server restart
-      wait_server_reachability
-      ;;
-    systemd)
-      INFO "systemd: Starting database"
-      $SUDO systemctl restart postgresql
-      wait_database_reachability
       INFO "systemd: Starting server"
       $SUDO systemctl restart recluster.server
       wait_server_reachability
@@ -2428,12 +2430,20 @@ configure_k8s() {
     DEBUG "Node '$_node_name' is not ready, sleeping  $_wait_sleep seconds"
     sleep "$_wait_sleep"
   done
-
   INFO "Waiting 'kube-dns' pod to be running"
   while ! "$(kubectl get pod --selector k8s-app=kube-dns --namespace kube-system | grep -q -E '\s+Running\s+')"; do
     DEBUG "'kube-dns' is not running, sleeping $_wait_sleep seconds"
-    sleep 3
+    sleep "$_wait_sleep"
   done
+
+  # MetalLB
+  INFO "Setting up MetalLB"
+  $SUDO kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+  $SUDO kubectl apply -f "$DIRNAME/configs/k8s/metallb/config.yaml"
+
+  # Registry
+  INFO "Setting up Registry"
+  $SUDO kubectl apply -f "$DIRNAME/configs/k8s/registry/deployment.yaml"
 }
 
 # ================
