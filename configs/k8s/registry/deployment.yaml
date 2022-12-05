@@ -34,8 +34,8 @@ metadata:
   name: registry-secret
   namespace: registry-system
 data:
-  registry.crt: # TODO Change base64 certs/registry.crt
-  registry.key: # TODO Change base64 certs/registry.key
+  registry.crt: '${{ registry.crt }}'
+  registry.key: '${{ registry.key }}'
 
 ---
 apiVersion: v1
@@ -73,7 +73,7 @@ spec:
         - name: registry
           image: registry:2
           ports:
-            - containerPort: 5000
+            - containerPort: ${{ registry.port }}
           env:
             - name: REGISTRY_HTTP_TLS_CERTIFICATE
               value: '/certs/registry.crt'
@@ -114,6 +114,6 @@ spec:
   ports:
     - name: registry-port
       protocol: TCP
-      port: 5000
-      targetPort: 5000
-  loadBalancerIP: 10.0.0.100 # TODO Change
+      port: ${{ registry.port }}
+      targetPort: ${{ registry.port }}
+  loadBalancerIP: ${{ registry.host }}

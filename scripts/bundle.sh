@@ -153,7 +153,6 @@ EOF
 
 # Bundle files
 bundle_files() {
-  _config=$(config_no__)
   _files="[]"
 
   while read -r _entry; do
@@ -201,7 +200,7 @@ bundle_files() {
       _files=$(printf '%s\n' "$_files" | jq --argjson files "$_new_files" '. + $files')
     fi
   done << EOF
-$(printf '%s\n' "$_config" | jq --compact-output '.[]')
+$(printf '%s\n' "$(config_no__)" | jq --compact-output '.[]')
 EOF
 
   # Remove duplicates and sort
@@ -239,6 +238,7 @@ parse_args() {
       --config-file)
         # Configuration file
         parse_args_assert_value "$@"
+
         CONFIG_FILE=$2
         _shifts=2
         ;;
@@ -250,6 +250,7 @@ parse_args() {
       --out-file)
         # Output file
         parse_args_assert_value "$@"
+
         OUT_FILE=$2
         _shifts=2
         ;;
@@ -286,7 +287,7 @@ verify_system() {
   [ ! -f "$OUT_FILE" ] || WARN "Output file '$OUT_FILE' already exists"
 
   # Configuration
-  [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' not found"
+  [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' does not exists"
   INFO "Reading configuration file '$CONFIG_FILE'"
   CONFIG=$(yq e --output-format=json --no-colors '.' "$CONFIG_FILE") || FATAL "Error reading configuration file '$CONFIG_FILE'"
   DEBUG "Configuration:" "$CONFIG"

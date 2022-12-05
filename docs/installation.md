@@ -25,32 +25,29 @@ See [Installation requirements](./installation_requirements.md) for more informa
    > **Info**: See [certs](../scripts/README.md#📑-certssh) for more information
 
    ```sh
-   _registry_ip="10.0.0.100" # TODO Change
-   _out_dir="configs/certs"
+   _registry_ip='10.0.0.100' # TODO Change
+   _out_dir='configs/certs'
    
-   # Create certs directory
-   mkdir "$_out_dir"
-   # Generate certificates
    ./scripts/certs.sh \
      --registry-ip "$_registry_ip" \
      --out-dir "$_out_dir"
    ```
 
-1. Copy the text from `configs/certs/ssh.crt` and put it in the `ssh_authorized_keys` property of `configs/config.yaml` (`ssh-ed25519 ...`)
+1. Edit [`configs.config.yaml`](../scripts/configs.config.yaml) to match your environment
 
-   > **Warning**: All files from `configs/certs` should be copied and saved in a well known and secure place
+1. Generate configurations
 
-1. Start a PostgreSQL database instance
+   > **Info**: See [configs](../scripts/README.md#📑-configssh) for more information
 
-   > **Note**: Visit <https://www.postgresql.org> for more information
-
-1. Edit [configuration files](../configs/) to match your environment
-
-   > **Note**: Remember to change `DATABASE_URL` in [`server.env`](../configs/server.env)
+   ```sh
+   _config_file='./scripts/configs.config.yaml'
+   
+   ./scripts/configs.sh \
+     --config-file "$_config_file" \
+     --overwrite
+   ```
 
 1. Place all files and directories on a flash drive
-
-   > **Note**: See <https://askubuntu.com/a/802675/1149269> for more information
 
 1. Install [Alpine Linux](../distributions/alpine/) distribution
 

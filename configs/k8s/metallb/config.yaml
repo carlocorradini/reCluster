@@ -28,7 +28,7 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-    - 10.0.0.100-10.0.0.200 # TODO Change
+    - ${{ loadbalancer.ip.from }}-${{ loadbalancer.ip.to }}
 
 ---
 apiVersion: metallb.io/v1beta1

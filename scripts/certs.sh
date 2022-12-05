@@ -296,8 +296,6 @@ verify_system() {
   assert_cmd mktemp
   assert_cmd openssl
   assert_cmd ssh-keygen
-
-  [ -d "$OUT_DIR" ] || FATAL "Output directory '$OUT_DIR' does not exists"
 }
 
 # Setup system
@@ -340,7 +338,12 @@ cert_registry() {
 
 # Move certificates
 move_certs() {
-  DEBUG "Moving certificates from '$TMP_DIR' to '$OUT_DIR'"
+  INFO "Moving certificates from '$TMP_DIR' to '$OUT_DIR'"
+
+  [ -d "$OUT_DIR" ] || {
+    DEBUG "Creating directory '$OUT_DIR'"
+    mkdir -p "$OUT_DIR"
+  }
 
   set +o noglob
   mv "$TMP_DIR"/* "$OUT_DIR"

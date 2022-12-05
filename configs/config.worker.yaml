@@ -23,7 +23,7 @@
 kind: worker
 
 recluster:
-  server: http://10.0.0.10:8080 # TODO Change
+  server: http://${{ recluster.server.host }}:${{ recluster.server.port }}
 
 ssh_authorized_keys:
-  - ssh-ed25519 ... # TODO Change
+  - ${{ ssh.authorized_key }}

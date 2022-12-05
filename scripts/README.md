@@ -56,6 +56,28 @@ reCluster certificates script.
 | `--token-name <NAME>`             | Token key name             | `token`           | Any valid name             |
 | `--token-passphrase <PASSPHRASE>` | Token passphrase           |                   | Any valid passphrase       |
 
+## :bookmark_tabs: [`configs.sh`](./configs.sh)
+
+reCluster configurations script.
+
+```sh
+./configs.sh
+```
+
+### Arguments
+
+> **Note**: Type `--help` for more information
+
+> **Note**: [commons arguments](#commons-arguments) available
+
+| **Name**               | **Description**            | **Default**           | **Values**          |
+| ---------------------- | -------------------------- | --------------------- | ------------------- |
+| `--config-file <FILE>` | Configuration file         | `configs.config.yaml` | Configuration file  |
+| `--help`               | Show help message and exit |
+| `--in-dir <DIR>`       | Input directory            | `configs`             | Any valid directory |
+| `--out-dir <DIR>`      | Output directory           | `./`                  | Any valid directory |
+| `--overwrite`          | Overwrite input directory  | `false`               |
+
 ## :bookmark_tabs: [`init.sh`](./init.sh)
 
 reCluster initialization script.

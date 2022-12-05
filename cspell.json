@@ -130,6 +130,7 @@
     "poweroff",
     "pgsql",
     "pgdata",
+    "psql",
     "recluster",
     "respawn",
     "retval",
