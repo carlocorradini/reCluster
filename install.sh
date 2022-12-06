@@ -1796,9 +1796,9 @@ EOF
   esac
 
   DEBUG "Creating database 'recluster'"
-  $SUDO su postgres -c 'psql -c "CREATE DATABASE recluster;"'
+  $SUDO su postgres -c 'psql -c "CREATE DATABASE IF NOT EXISTS recluster;"'
   DEBUG "Creating user 'recluster'"
-  $SUDO su postgres -c 'psql -c "CREATE USER recluster WITH ENCRYPTED PASSWORD \"password\";"'
+  $SUDO su postgres -c 'psql -c "CREATE USER IF NOT EXISTS recluster WITH ENCRYPTED PASSWORD \"password\";"'
   DEBUG "Assigning user 'recluster' to database 'recluster'"
   $SUDO su postgres -c 'psql -c "GRANT ALL PRIVILEGES ON DATABASE recluster TO recluster;"'
 
