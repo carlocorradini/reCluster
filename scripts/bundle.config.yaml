@@ -52,7 +52,7 @@ scripts:
       ./scripts/inline.sh --in-file ./configs.sh --overwrite
   README.md: true
   certs.sh: true
-  configs: true
+  configs.sh: true
   configs.config.yaml: true
 server:
   __:
