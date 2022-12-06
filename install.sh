@@ -1779,15 +1779,15 @@ respawn_delay=3
 respawn_max=0
 
 start() {
-  /usr/local/pgsql/bin/pg_ctl start -D \$PGDATA -s -w
+  /usr/bin/pg_ctl start -D \$PGDATA -s -w
 }
 
 stop() {
-  /usr/local/pgsql/bin/pg_ctl stop -D \$PGDATA -s -m fast
+  /usr/bin/pg_ctl stop -D \$PGDATA -s -m fast
 }
 
 reload() {
-  /usr/local/pgsql/bin/pg_ctl reload -D \$PGDATA -s
+  /usr/bin/pg_ctl reload -D \$PGDATA -s
 }
 EOF
       $SUDO chown root:root $_openrc_database_service_file
@@ -1821,9 +1821,9 @@ Type=forking
 User=postgres
 Group=postgres
 Environment=PGDATA=$_database_data
-ExecStart=/usr/local/pgsql/bin/pg_ctl start -D \$PGDATA -s -w
-ExecStop=/usr/local/pgsql/bin/pg_ctl stop -D \$PGDATA -s -m fast
-ExecReload=/usr/local/pgsql/bin/pg_ctl reload -D \$PGDATA -s
+ExecStart=/usr/bin/pg_ctl start -D \$PGDATA -s -w
+ExecStop=/usr/bin/pg_ctl stop -D \$PGDATA -s -m fast
+ExecReload=/usr/bin/pg_ctl reload -D \$PGDATA -s
 TimeoutSec=300
 
 [Install]
