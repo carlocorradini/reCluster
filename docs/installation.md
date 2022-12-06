@@ -33,7 +33,7 @@ See [Installation requirements](./installation_requirements.md) for more informa
      --out-dir "$_out_dir"
    ```
 
-1. Edit [`configs.config.yaml`](../scripts/configs.config.yaml) to match your environment
+1. Edit [`scripts/configs.config.yaml`](../scripts/configs.config.yaml) to match your environment
 
 1. Generate configurations
 
@@ -47,7 +47,7 @@ See [Installation requirements](./installation_requirements.md) for more informa
      --overwrite
    ```
 
-1. Place all files and directories on a flash drive
+1. Copy all files and directories on a flash drive
 
 1. Install [Alpine Linux](../distributions/alpine/) distribution
 
@@ -55,7 +55,7 @@ See [Installation requirements](./installation_requirements.md) for more informa
 
    > **Note**: For further information on how to install a distribution, see its accompanying `README.md` file
 
-   > **Note**: Remember to connect the Power Consumption device
+   > **Note**: See [Installation requirements](./installation_requirements.md) for more information
 
 1. For every node
 
