@@ -1245,7 +1245,7 @@ EOF
     INFO "Autoscaler latest release is '$AUTOSCALER_VERSION'"
   fi
   AUTOSCALER_DIR="$DIRNAME/dependencies/autoscaler/$AUTOSCALER_VERSION"
-  [ -d "$AUTOSCALER_VERSION" ] || FATAL "Autoscaler directory '$AUTOSCALER_DIR' does not exists"
+  [ -d "$AUTOSCALER_DIR" ] || FATAL "Autoscaler directory '$AUTOSCALER_DIR' does not exists"
 
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
