@@ -64,8 +64,8 @@ PC_WARMUP=10
 RECLUSTER_ETC_DIR="/etc/recluster"
 # reCluster opt directory
 RECLUSTER_OPT_DIR="/opt/recluster"
-# reCluster server certificates directory
-RECLUSTER_SERVER_CERTS_DIR="configs/certs"
+# reCluster certificates directory
+RECLUSTER_CERTS_DIR="configs/certs"
 # reCluster server environment file
 RECLUSTER_SERVER_ENV_FILE="configs/server.env"
 # SSH configuration file
@@ -116,12 +116,11 @@ trap cleanup INT QUIT TERM EXIT
 # Show help message
 show_help() {
   cat << EOF
-Usage: $(basename "$0") [--airgap] [--autoscaler-version <VERSION>] [--bench-time <TIME>] [--config-file <FILE>] [--help]
-        [--init-cluster] [--k3s-config-file <FILE>] [--k3s-registry-config-file <FILE>] [--k3s-version <VERSION>]
+Usage: $(basename "$0") [--airgap] [--autoscaler-version <VERSION>] [--bench-time <TIME>] [--certs-dir <DIR>] [--config-file <FILE>]
+        [--help] [--init-cluster] [--k3s-config-file <FILE>] [--k3s-registry-config-file <FILE>] [--k3s-version <VERSION>]
         [--node-exporter-config-file <FILE>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-        [--server-certs-dir <DIR>] [--server-env-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>]
-        [--user <USER>]
+        [--server-env-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>] [--user <USER>]
 
 $HELP_COMMONS_USAGE
 
@@ -139,6 +138,11 @@ Options:
                                       Default: $BENCH_TIME
                                       Values:
                                         Any positive number
+
+  --certs-dir <DIR>                   Server certificates directory
+                                      Default: $RECLUSTER_CERTS_DIR
+                                      Values:
+                                        Any valid directory
 
   --config-file <FILE>                Configuration file
                                       Default: $CONFIG_FILE
@@ -194,11 +198,6 @@ Options:
                                       Default: $PC_WARMUP
                                       Values:
                                         Any positive number
-
-  --server-certs-dir <DIR>            Server certificates directory
-                                      Default: $RECLUSTER_SERVER_CERTS_DIR
-                                      Values:
-                                        Any valid directory
 
   --server-env-file <FILE>            Server environment file
                                       Default: $RECLUSTER_SERVER_ENV_FILE
@@ -965,6 +964,13 @@ parse_args() {
         BENCH_TIME=$2
         _shifts=2
         ;;
+      --certs-dir)
+        # Certificates directory
+        parse_args_assert_value "$@"
+
+        RECLUSTER_CERTS_DIR=$2
+        _shifts=2
+        ;;
       --config-file)
         # Configuration file
         parse_args_assert_value "$@"
@@ -1045,13 +1051,6 @@ parse_args() {
         parse_args_assert_positive_integer "$1" "$2"
 
         PC_WARMUP=$2
-        _shifts=2
-        ;;
-      --server-certs-dir)
-        # Server certificates directory
-        parse_args_assert_value "$@"
-
-        RECLUSTER_SERVER_CERTS_DIR=$2
         _shifts=2
         ;;
       --server-env-file)
@@ -1160,12 +1159,12 @@ verify_system() {
   # Directories
   [ ! -d "$RECLUSTER_ETC_DIR" ] || FATAL "Directory '$RECLUSTER_ETC_DIR' already exists"
   [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "Directory '$RECLUSTER_OPT_DIR' already exists"
+  # Certificates
+  [ -d "$RECLUSTER_CERTS_DIR" ] || FATAL "Certificates directory '$RECLUSTER_CERTS_DIR' does not exists"
+  [ -n "$(ls --almost-all "$RECLUSTER_CERTS_DIR")" ] || FATAL "Certificates directory '$RECLUSTER_CERTS_DIR' is empty"
 
   # Server env
   [ -f "$RECLUSTER_SERVER_ENV_FILE" ] || FATAL "Server environment file '$RECLUSTER_SERVER_ENV_FILE' does not exists"
-  # Server certs dir
-  [ -d "$RECLUSTER_SERVER_CERTS_DIR" ] || FATAL "Server certificates directory '$RECLUSTER_SERVER_CERTS_DIR' does not exists"
-  [ -n "$(ls --almost-all "$RECLUSTER_SERVER_CERTS_DIR")" ] || FATAL "Server certificates directory '$RECLUSTER_SERVER_CERTS_DIR' is empty"
 
   # Configuration
   [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' does not exists"
@@ -1668,11 +1667,11 @@ cluster_init() {
 
   _k3s_kubeconfig_file="/etc/rancher/k3s/k3s.yaml"
   _kubeconfig_file="$(user_home_dir)/.kube/config"
+  _certs_dir="$RECLUSTER_ETC_DIR/certs"
   _database_service_name=postgresql
   _database_data="/var/lib/postgresql/data"
   _server_service_name=recluster.server
   _server_env_file="$RECLUSTER_ETC_DIR/server.env"
-  _server_certs_dir="$RECLUSTER_ETC_DIR/certs"
   _server_dir="$RECLUSTER_OPT_DIR/server"
 
   _wait_k3s_kubeconfig_file_creation() {
@@ -1726,6 +1725,13 @@ EOF
   yes | $SUDO cp --force "$_k3s_kubeconfig_file" "$_kubeconfig_file"
   $SUDO chown "$USER:$USER" "$_kubeconfig_file"
   $SUDO chmod 644 "$_kubeconfig_file"
+
+  # Copy certs directory
+  INFO "Copying certificates directory from '$RECLUSTER_CERTS_DIR' to '$_certs_dir'"
+  [ -d "$_certs_dir" ] || $SUDO mkdir -p "$_certs_dir"
+  yes | $SUDO cp --force --archive "$RECLUSTER_CERTS_DIR/." "$_certs_dir"
+  $SUDO chown --recursive root:root "$_certs_dir"
+  $SUDO chmod --recursive 600 "$_certs_dir"
 
   # Setup database
   INFO "Setting up database"
@@ -1854,13 +1860,6 @@ EOF
   yes | $SUDO cp --force "$RECLUSTER_SERVER_ENV_FILE" "$_server_env_file"
   $SUDO chown root:root "$_server_env_file"
   $SUDO chmod 600 "$_server_env_file"
-
-  # Copy server certs directory
-  INFO "Copying server certificates directory from '$RECLUSTER_SERVER_CERTS_DIR' to '$_server_certs_dir'"
-  [ -d "$_server_certs_dir" ] || $SUDO mkdir -p "$_server_certs_dir"
-  yes | $SUDO cp --force --archive "$RECLUSTER_SERVER_CERTS_DIR/." "$_server_certs_dir"
-  $SUDO chown --recursive root:root "$_server_certs_dir"
-  $SUDO chmod --recursive 600 "$_server_certs_dir"
 
   # Setup server
   INFO "Setting up server"
