@@ -46,6 +46,7 @@ k3s:
   server:
     host: '10.0.0.10'
     port: 6443
+    path: 'graphql'
 
 ssh:
   authorized_key:

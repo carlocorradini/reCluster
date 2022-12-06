@@ -34,6 +34,8 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # ================
 # Airgap environment flag
 AIRGAP_ENV=false
+# Autoscaler version
+AUTOSCALER_VERSION=latest
 # Benchmark time in seconds
 BENCH_TIME=30
 # Configuration file
@@ -76,6 +78,8 @@ USER="root"
 # ================
 # GLOBALS
 # ================
+# Autoscaler directory
+AUTOSCALER_DIR=
 # Configuration
 CONFIG=
 # K3s configuration
@@ -83,7 +87,7 @@ K3S_CONFIG=
 # Node exporter configuration
 NODE_EXPORTER_CONFIG=
 # Node facts
-NODE_FACTS="{}"
+NODE_FACTS='{}'
 # Temporary directory
 TMP_DIR=
 
@@ -112,7 +116,7 @@ trap cleanup INT QUIT TERM EXIT
 # Show help message
 show_help() {
   cat << EOF
-Usage: $(basename "$0") [--airgap] [--bench-time <TIME>] [--config-file <FILE>] [--help]
+Usage: $(basename "$0") [--airgap] [--autoscaler-version <VERSION>] [--bench-time <TIME>] [--config-file <FILE>] [--help]
         [--init-cluster] [--k3s-config-file <FILE>] [--k3s-registry-config-file <FILE>] [--k3s-version <VERSION>]
         [--node-exporter-config-file <FILE>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
@@ -125,6 +129,11 @@ reCluster installation script.
 
 Options:
   --airgap                            Perform installation in Air-Gap environment
+
+  --autoscaler-version <VERSION>      Autoscaler version
+                                      Default: $AUTOSCALER_VERSION
+                                      Values:
+                                        Any Autoscaler version
 
   --bench-time <TIME>                 Benchmark execution time in seconds
                                       Default: $BENCH_TIME
@@ -941,6 +950,13 @@ parse_args() {
         # Airgap environment
         AIRGAP_ENV=true
         ;;
+      --autoscaler-version)
+        #Autoscaler version
+        parse_args_assert_value "$@"
+
+        AUTOSCALER_VERSION=$2
+        _shifts=2
+        ;;
       --bench-time)
         # Benchmark time
         parse_args_assert_value "$@"
@@ -1118,6 +1134,7 @@ verify_system() {
   assert_cmd uname
   assert_cmd yq
   if [ "$INIT_CLUSTER" = true ]; then
+    assert_cmd docker
     assert_cmd inotifywait
     assert_cmd node
     assert_cmd npm
@@ -1217,9 +1234,19 @@ EOF
 
   # Airgap
   if [ "$AIRGAP_ENV" = true ]; then
+    [ "$AUTOSCALER_VERSION" != latest ] || FATAL "Autoscaler version '$AUTOSCALER_VERSION' not available in Air-Gap environment"
     [ "$K3S_VERSION" != latest ] || FATAL "K3s version '$K3S_VERSION' not available in Air-Gap environment"
     [ "$NODE_EXPORTER_VERSION" != latest ] || FATAL "Node exporter version '$NODE_EXPORTER_VERSION' not available in Air-Gap environment"
   fi
+
+  # Autoscaler
+  if [ "$AUTOSCALER_VERSION" = latest ]; then
+    INFO "Finding Autoscaler latest release"
+    AUTOSCALER_VERSION=$(download_print 'https://api.github.com/repos/carlocorradini/autoscaler/releases/latest' | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    INFO "Autoscaler latest release is '$AUTOSCALER_VERSION'"
+  fi
+  AUTOSCALER_DIR="$DIRNAME/dependencies/autoscaler/$AUTOSCALER_VERSION"
+  [ -d "$AUTOSCALER_VERSION" ] || FATAL "Autoscaler directory '$AUTOSCALER_DIR' does not exists"
 
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
@@ -1264,11 +1291,24 @@ setup_system() {
   DEBUG "Created temporary directory '$TMP_DIR'"
 
   # Directories
+  DEBUG "Creating directory '$RECLUSTER_ETC_DIR'"
   $SUDO mkdir -p "$RECLUSTER_ETC_DIR" || FATAL "Error creating directory '$RECLUSTER_ETC_DIR'"
+  DEBUG "Creating directory '$RECLUSTER_OPT_DIR'"
   $SUDO mkdir -p "$RECLUSTER_OPT_DIR" || FATAL "Error creating directory '$RECLUSTER_OPT_DIR'"
 
   # SSH
   setup_ssh
+
+  # Cluster initialization
+  if [ "$INIT_CLUSTER" = true ]; then
+    spinner_start "Preparing Cluster initialization"
+
+    # Docker
+    DEBUG "Adding user '$USER' to group 'docker'"
+    $SUDO addgroup "$USER" docker
+
+    spinner_stop
+  fi
 
   # Airgap
   if [ "$AIRGAP_ENV" = true ]; then
@@ -2420,30 +2460,83 @@ start_recluster() {
 # Configure K8s
 configure_k8s() {
   [ "$INIT_CLUSTER" = true ] || return 0
+  _timeout=60s
+  _metallb_deployment="https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml"
+  _metallb_config="$DIRNAME/configs/k8s/metallb/config.yaml"
+  _registry_deployment="$DIRNAME/configs/k8s/registry/deployment.yaml"
+  _cluster_autoscaler_archive="$AUTOSCALER_DIR/cluster-autoscaler.$ARCH.tar.gz"
+  _cluster_autoscaler_tag="recluster.io/recluster/cluster-autoscaler"
+  _cluster_autoscaler_tag_version="$_cluster_autoscaler_tag:$AUTOSCALER_VERSION"
+  _cluster_autoscaler_tag_latest="$_cluster_autoscaler_tag:latest"
+  _cluster_autoscaler_deployment="$DIRNAME/configs/k8s/autoscaler/ca/deployment.yaml"
+
   assert_cmd kubectl
+  assert_url_reachability "$_metallb_deployment"
+  [ -f "$_metallb_config" ] || FATAL "MetalLB configuration file '$_metallb_config' does not exists"
+  [ -f "$_registry_deployment" ] || FATAL "Registry deployment file '$_registry_deployment' does not exists"
+  [ -f "$_cluster_autoscaler_archive" ] || FATAL "Cluster Autoscaler archive file '$_cluster_autoscaler_archive' does not exists"
+  [ -f "$_cluster_autoscaler_deployment" ] || FATAL "Cluster Autoscaler deployment file '$_cluster_autoscaler_deployment' does not exists"
 
-  _node_name=$($SUDO grep 'node-name:' /etc/rancher/k3s/config.yaml | sed -e 's/node-name://g' -e 's/[[:space:]]*//' -e 's/^"//' -e 's/"$//')
-  _wait_sleep=3
+  spinner_start "Configuring K8s"
 
-  INFO "Waiting node '$_node_name' is ready"
-  while ! "$(kubectl get node "$_node_name" | grep -q -E "$_node_name\s+Ready\s+")"; do
-    DEBUG "Node '$_node_name' is not ready, sleeping  $_wait_sleep seconds"
-    sleep "$_wait_sleep"
-  done
-  INFO "Waiting 'kube-dns' pod to be running"
-  while ! "$(kubectl get pod --selector k8s-app=kube-dns --namespace kube-system | grep -q -E '\s+Running\s+')"; do
-    DEBUG "'kube-dns' is not running, sleeping $_wait_sleep seconds"
-    sleep "$_wait_sleep"
-  done
+  # K8s node
+  INFO "Waiting K8s node is ready"
+  $SUDO kubectl wait \
+    --for-condition=ready node \
+    --all \
+    --timeout="$_timeout"
+
+  # K8s kube-dns
+  INFO "Waiting K8s kube-dns is ready"
+  $SUDO kubectl wait \
+    --namespace kube-system \
+    --for=condition=ready pod \
+    --selector=k8s-app=kube-dns \
+    --timeout="$_timeout"
 
   # MetalLB
-  INFO "Setting up MetalLB"
-  $SUDO kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
-  $SUDO kubectl apply -f "$DIRNAME/configs/k8s/metallb/config.yaml"
+  INFO "Applying MetalLB deployment '$_metallb_deployment'"
+  $SUDO kubectl apply -f "$_metallb_deployment"
+  INFO "Waiting MetalLB is ready"
+  $SUDO kubectl wait \
+    --namespace metallb-system \
+    --for=condition=ready pod \
+    --selector=app=metallb \
+    --timeout="$_timeout"
+  INFO "Applying MetalLB configuration '$_metallb_config'"
+  $SUDO kubectl apply -f "$_metallb_config"
 
   # Registry
-  INFO "Setting up Registry"
-  $SUDO kubectl apply -f "$DIRNAME/configs/k8s/registry/deployment.yaml"
+  INFO "Applying Registry deployment '$_registry_deployment'"
+  $SUDO kubectl apply -f "$_registry_deployment"
+  INFO "Waiting Registry is ready"
+  $SUDO kubectl wait \
+    --namespace registry-system \
+    --for=condition=ready pod \
+    --selector=app=registry \
+    --timeout="$_timeout"
+
+  # Cluster Autoscaler
+  INFO "Loading Cluster Autoscaler image '$_cluster_autoscaler_archive'"
+  $SUDO docker load --input "$_cluster_autoscaler_archive"
+  INFO "Tagging Cluster Autoscaler image '$_cluster_autoscaler_tag_version'"
+  $SUDO docker tag "recluster/cluster-autoscaler:latest" "$_cluster_autoscaler_tag_version"
+  INFO "Tagging Cluster Autoscaler image '$_cluster_autoscaler_tag_latest'"
+  $SUDO docker tag "recluster/cluster-autoscaler:latest" "$_cluster_autoscaler_tag_latest"
+  INFO "Pushing Cluster Autoscaler image $_cluster_autoscaler_tag_version"
+  $SUDO docker push "$_cluster_autoscaler_tag_version"
+  INFO "Pushing Cluster Autoscaler image '$_cluster_autoscaler_tag_latest'"
+  $SUDO docker push "$_cluster_autoscaler_tag_latest"
+  INFO "Applying Cluster Autoscaler deployment '$_cluster_autoscaler_deployment'"
+  $SUDO kubectl apply -f "$_cluster_autoscaler_deployment"
+  INFO "Waiting Cluster Autoscaler is ready"
+  $SUDO kubectl wait \
+    --namespace kube-system \
+    --for=condition=ready pod \
+    --selector=app=cluster-autoscaler \
+    --timeout="$_timeout"
+
+  spinner_stop
 }
 
 # ================

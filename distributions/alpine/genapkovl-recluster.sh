@@ -73,6 +73,7 @@ makefile root:root 0644 "$tmp"/etc/apk/world << EOF
 alpine-base
 
 coreutils
+docker
 ethtool
 inotify-tools
 iproute2

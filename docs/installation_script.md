@@ -15,6 +15,7 @@ Installation script.
 | **Name**                             | **Description**                                                                            | **Default**                                     | **Values**                |
 | ------------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------------------------- |
 | `--airgap`                           | Perform installation in Air-Gap environment                                                | `false`                                         |
+| `--autoscaler-version <VERSION>`     | Autoscaler version                                                                         | `latest`                                        | Any Autoscaler version    |
 | `--bench-time <TIME>`                | Benchmark execution time in seconds                                                        | `30`                                            | Any positive number       |
 | `--config-file <FILE>`               | Configuration file                                                                         | `configs/config.yaml`                           | Any valid file            |
 | `--help`                             | Show help message and exit                                                                 |

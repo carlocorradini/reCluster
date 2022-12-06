@@ -67,8 +67,12 @@ spec:
       labels:
         app: registry
     spec:
-      nodeSelector:
-        node-type: worker
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: registry
           image: registry:2
