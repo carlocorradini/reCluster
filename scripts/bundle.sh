@@ -101,20 +101,18 @@ EOF
 
 # Configuration __
 config__() {
-  printf '%s\n' "$CONFIG" | jq 'map(select(.key | contains("/__/")))'
+  printf '%s\n' "$CONFIG" | jq 'map(select(.key | test(".*\/?__\/.*")))'
 }
 
 # Configuration without __
 config_no__() {
-  printf '%s\n' "$CONFIG" | jq 'map(select(.key | (contains("/__/") | not)))'
+  printf '%s\n' "$CONFIG" | jq 'map(select(.key | (test(".*\/?__\/.*") | not)))'
 }
 
 # Prepare bundle
 bundle_prepare() {
-  _config=$(config__)
-
   while read -r _entry; do
-    _path="$(printf '%s\n' "$_entry" | jq --raw-output '.key | sub("(\/__\/).*"; "")')"
+    _path="$(printf '%s\n' "$_entry" | jq --raw-output '.key | sub("\/?__\/.*"; "")')"
     _path_src="$ROOT_DIR/$_path"
     _has_run="$(printf '%s\n' "$_entry" | jq --raw-output 'any(.key; endswith("run"))')"
 
@@ -147,7 +145,7 @@ $(printf '%s\n' "$_runs" | jq --compact-output '.[]')
 EOF
     ) || FATAL "Error 'run' of '$_path'"
   done << EOF
-$(printf '%s\n' "$_config" | jq --compact-output '.[]')
+$(printf '%s\n' "$(config__)" | jq --compact-output '.[]')
 EOF
 }
 
@@ -284,7 +282,7 @@ verify_system() {
   assert_cmd tar
   assert_cmd yq
 
-  [ ! -f "$OUT_FILE" ] || WARN "Output file '$OUT_FILE' already exists"
+  [ ! -f "$OUT_FILE" ] || FATAL "Output file '$OUT_FILE' already exists"
 
   # Configuration
   [ -f "$CONFIG_FILE" ] || FATAL "Configuration file '$CONFIG_FILE' does not exists"
