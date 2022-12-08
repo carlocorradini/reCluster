@@ -26,5 +26,5 @@ cluster-domain: recluster.local
 flannel-backend: host-gw
 disable:
   - servicelb
-node-taint:
-  - CriticalAddonsOnly=true:NoExecute
+#node-taint:
+#  - CriticalAddonsOnly=true:NoExecute

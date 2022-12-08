@@ -39,7 +39,7 @@ REGISTRY_BITS=4096
 # Registry domain
 REGISTRY_DOMAIN="recluster.local"
 # Registry IP address
-REGISTRY_IP="10.0.0.100"
+REGISTRY_IP="192.168.0.222"
 # Registry key name
 REGISTRY_NAME="registry"
 # SSH comment
@@ -331,7 +331,7 @@ cert_registry() {
   openssl req -x509 -days 3650 \
     -newkey "rsa:$REGISTRY_BITS" -nodes -sha256 -keyout "$TMP_DIR/$REGISTRY_NAME.key" \
     -subj "/CN=registry.$REGISTRY_DOMAIN" \
-    -addext "subjectAltName=DNS:*.$REGISTRY_DOMAIN,IP:$REGISTRY_IP" \
+    -addext "subjectAltName=DNS:registry.$REGISTRY_DOMAIN,DNS:*.$REGISTRY_DOMAIN,IP:$REGISTRY_IP" \
     -out "$TMP_DIR/$REGISTRY_NAME.crt"
   chmod 600 "$TMP_DIR/$REGISTRY_NAME.key" "$TMP_DIR/$REGISTRY_NAME.crt"
 }

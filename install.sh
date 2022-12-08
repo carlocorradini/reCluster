@@ -270,6 +270,60 @@ user_home_dir() {
   printf '%s\n' "$_home_dir"
 }
 
+# Create uninstall
+create_uninstall() {
+  _uninstall_script_file="/usr/local/bin/recluster.uninstall.sh"
+
+  INFO "Creating uninstall script '$_uninstall_script_file'"
+  $SUDO tee "$_uninstall_script_file" > /dev/null << EOF
+#!/usr/bin/env sh
+
+[ \$(id -u) -eq 0 ] || exec sudo \$0 \$@
+
+[ -s '/etc/systemd/system/recluster.service' ] && systemctl stop recluster.service
+[ -x '/etc/init.d/recluster' ] && /etc/init.d/recluster stop
+
+[ -x '/usr/local/bin/k3s-recluster-uninstall.sh' ] && k3s-recluster-uninstall.sh
+[ -x '/usr/local/bin/node_exporter.uninstall.sh' ] && node_exporter.uninstall.sh
+
+if command -v systemctl; then
+  systemctl disable recluster.server
+  systemctl disable recluster
+  systemctl reset-failed recluster.server
+  systemctl reset-failed recluster
+  systemctl daemon-reload
+fi
+if command -v rc-update; then
+  rc-update delete recluster.server default
+  rc-update delete recluster default
+fi
+
+rm -f /etc/systemd/system/recluster.server.service
+rm -f /etc/init.d/recluster.server
+rm -f /var/log/recluster.server.log
+
+rm -f /etc/systemd/system/recluster.service
+rm -f /etc/init.d/recluster
+rm -f /var/log/recluster.log
+
+# Certificates
+rm -f /usr/local/share/ca-certificates/registry.crt
+rm -f /usr/local/share/ca-certificates/registry.key
+update-ca-certificates
+
+rm -rf "$RECLUSTER_ETC_DIR"
+rm -rf "$RECLUSTER_OPT_DIR"
+
+remove_uninstall() {
+  rm -f "$_uninstall_script_file"
+}
+trap remove_uninstall EXIT
+EOF
+
+  $SUDO chown root:root "$_uninstall_script_file"
+  $SUDO chmod 754 "$_uninstall_script_file"
+}
+
 # Setup SSH
 setup_ssh() {
   _ssh_config_file="/etc/ssh/ssh_config"
@@ -337,6 +391,57 @@ EOF
   spinner_stop
 }
 
+# Setup certificates
+setup_certificates() {
+  _certs_dir="$RECLUSTER_ETC_DIR/certs"
+  _ssh_crt_src="$DIRNAME/configs/certs/ssh.crt"
+  _ssh_crt_dst="$_certs_dir/ssh.crt"
+  _ssh_key_src="$DIRNAME/configs/certs/ssh.key"
+  _ssh_key_dst="$_certs_dir/ssh.key"
+  _token_crt_src="$DIRNAME/configs/certs/token.crt"
+  _token_crt_dst="$_certs_dir/token.crt"
+  _token_key_src="$DIRNAME/configs/certs/token.key"
+  _token_key_dst="$_certs_dir/token.key"
+  _registry_crt_src="$DIRNAME/configs/certs/registry.crt"
+  _registry_crt_dst="/usr/local/share/ca-certificates/registry.crt"
+  _registry_key_src="$DIRNAME/configs/certs/registry.key"
+  _registry_key_dst="/usr/local/share/ca-certificates/registry.key"
+
+  spinner_start "Setting up certificates"
+
+  [ -f "$_ssh_crt_src" ] || FATAL "SSH certificate file '$_ssh_crt_src' does not exists"
+  [ -f "$_ssh_key_src" ] || FATAL "SSH certificate file '$_ssh_key_src' does not exists"
+  [ -f "$_token_crt_src" ] || FATAL "Token certificate file '$_token_crt_src' does not exists"
+  [ -f "$_token_key_src" ] || FATAL "Token certificate file '$_token_key_src' does not exists"
+  [ -f "$_registry_crt_src" ] || FATAL "Registry certificate file '$_registry_crt_src' does not exists"
+  [ -f "$_registry_key_src" ] || FATAL "Registry certificate file '$_registry_key_src' does not exists"
+
+  DEBUG "Creating reCluster certificates directory '$_certs_dir'"
+  $SUDO rm -rf "$_certs_dir"
+  $SUDO mkdir "$_certs_dir"
+
+  DEBUG "Copying SSH certificate file '$_ssh_crt_src' to '$_ssh_crt_dst'"
+  yes | $SUDO cp --force "$_ssh_crt_src" "$_ssh_crt_dst"
+  DEBUG "Copying SSH certificate file '$_ssh_key_src' to '$_ssh_key_dst'"
+  yes | $SUDO cp --force "$_ssh_key_src" "$_ssh_key_dst"
+  DEBUG "Copying Token certificate file '$_token_crt_src' to '$_token_crt_dst'"
+  yes | $SUDO cp --force "$_token_crt_src" "$_token_crt_dst"
+  DEBUG "Copying Token certificate file '$_token_key_src' to '$_token_key_dst'"
+  yes | $SUDO cp --force "$_token_key_src" "$_token_key_dst"
+  DEBUG "Copying Registry certificate file '$_registry_crt_src' to '$_registry_crt_dst'"
+  yes | $SUDO cp --force "$_registry_crt_src" "$_registry_crt_dst"
+  DEBUG "Copying Registry certificate file '$_registry_key_src' to '$_registry_key_dst'"
+  yes | $SUDO cp --force "$_registry_key_src" "$_registry_key_dst"
+
+  INFO "Updating reCluster certificates directory '$_certs_dir' permissions"
+  $SUDO chown --recursive root:root "$_certs_dir"
+  $SUDO chmod --recursive 600 "$_certs_dir"
+  INFO "Updating CA certificates"
+  $SUDO update-ca-certificates
+
+  spinner_stop
+}
+
 # Read interfaces
 read_interfaces() {
   ip -details -json link show \
@@ -355,7 +460,9 @@ read_power_consumption() {
     download_print "$PC_DEVICE_API" | jq --raw-output '.StatusSNS.ENERGY.Power'
   }
   _pid=$1
-  _pcs="[]"
+  _pcs='[]'
+  # Standard deviation max tolerance inclusive
+  _standard_deviation_tolerance=5
 
   # Warmup
   sleep "$PC_WARMUP"
@@ -381,7 +488,7 @@ read_power_consumption() {
   fi
 
   # Check pcs
-  [ "$(printf '%s\n' "$_pcs" | jq --raw-output 'length')" -ge 2 ] || FATAL "Power consumption readings do not have enough data"
+  [ "$(printf '%s\n' "$_pcs" | jq --raw-output 'length')" -ge 2 ] || FATAL "Power consumption readings not enough data"
   [ "$(printf '%s\n' "$_pcs" | jq --raw-output 'add')" -ge 1 ] || FATAL "Power consumption readings are below 1W"
 
   # Calculate mean
@@ -395,7 +502,8 @@ read_power_consumption() {
           | floor
         '
   )
-  DEBUG "PC mean: $_mean"
+  [ "$_mean" -ge 1 ] || FATAL "Power consumption mean is below 1W"
+  DEBUG "Power consumption mean: $_mean"
 
   # Calculate standard deviation
   _standard_deviation=$(
@@ -408,7 +516,8 @@ read_power_consumption() {
           | sqrt
         '
   )
-  DEBUG "PC standard deviation: $_standard_deviation"
+  [ "$(printf '%s <= %s' "${_standard_deviation#-}" "$_standard_deviation_tolerance" | bc)" -eq 1 ] || FATAL "Power consumption standard deviation $_standard_deviation exceeds tolerance $_standard_deviation_tolerance"
+  DEBUG "Power consumption standard deviation: $_standard_deviation"
 
   # Return
   RETVAL=$(
@@ -822,14 +931,70 @@ read_cpu_power_consumption() {
   )
 }
 
+# Wait K8s reachability
+wait_k8s_reachability() {
+  assert_cmd kubectl
+
+  _wait_k8s_max_attempts_default=20
+  _wait_k8s_max_attempts=$_wait_k8s_max_attempts_default
+  _wait_k8s_sleep=3
+  _node_name=$($SUDO grep 'node-name:' /etc/rancher/k3s/config.yaml | sed -e 's/node-name://g' -e 's/[[:space:]]*//' -e 's/^"//' -e 's/"$//')
+
+  INFO "Waiting K8s reachability"
+
+  DEBUG "Waiting K8s control plane reachability"
+  _wait_k8s_max_attempts=$_wait_k8s_max_attempts_default
+  while [ "$_wait_k8s_max_attempts" -gt 0 ]; do
+    if $SUDO kubectl cluster-info > /dev/null 2>&1; then
+      DEBUG "K8s control plane is reachable"
+      break
+    fi
+
+    DEBUG "K8s control plane is not reachable, sleeping $_wait_k8s_sleep seconds"
+    sleep "$_wait_k8s_sleep"
+    _wait_k8s_max_attempts=$((_wait_k8s_max_attempts = _wait_k8s_max_attempts - 1))
+  done
+  [ "$_wait_k8s_max_attempts" -gt 0 ] || FATAL "K8s control plane is not reachable, maximum attempts reached"
+
+  DEBUG "Waiting K8s node '$_node_name' reachability"
+  _wait_k8s_max_attempts=$_wait_k8s_max_attempts_default
+  while [ "$_wait_k8s_max_attempts" -gt 0 ]; do
+    if $SUDO kubectl get node "$_node_name" 2>&1 | grep -q -E "$_node_name\s+Ready\s+"; then
+      DEBUG "K8s node is reachable"
+      break
+    fi
+
+    DEBUG "K8s node '$_node_name' is not reachable, sleeping $_wait_k8s_sleep seconds"
+    sleep "$_wait_k8s_sleep"
+    _wait_k8s_max_attempts=$((_wait_k8s_max_attempts = _wait_k8s_max_attempts - 1))
+  done
+  [ "$_wait_k8s_max_attempts" -gt 0 ] || FATAL "K8s node '$_node_name' is not reachable, maximum attempts reached"
+
+  DEBUG "Waiting K8s kube-dns reachability"
+  _wait_k8s_max_attempts=$_wait_k8s_max_attempts_default
+  while [ "$_wait_k8s_max_attempts" -gt 0 ]; do
+    if $SUDO kubectl get pod --selector k8s-app=kube-dns --namespace kube-system 2>&1 | grep -q -E '\s+Running\s+'; then
+      DEBUG "K8s kube-dns is reachable"
+      break
+    fi
+
+    DEBUG "K8s kube-dns is not reachable, sleeping $_wait_k8s_sleep seconds"
+    sleep "$_wait_k8s_sleep"
+    _wait_k8s_max_attempts=$((_wait_k8s_max_attempts = _wait_k8s_max_attempts - 1))
+  done
+  [ "$_wait_k8s_max_attempts" -gt 0 ] || FATAL "K8s kube-dns is not reachable, maximum attempts reached"
+
+  DEBUG "K8s is reachable"
+}
+
 # Wait database reachability
 wait_database_reachability() {
-  _wait_database_max_attempts=3
+  _wait_database_max_attempts=20
   _wait_database_sleep=3
 
   INFO "Waiting database reachability"
   while [ "$_wait_database_max_attempts" -gt 0 ]; do
-    if ($SUDO su postgres -c "pg_isready"); then
+    if ($SUDO su postgres -c "pg_isready" > /dev/null 2>&1); then
       DEBUG "Database is reachable"
       break
     fi
@@ -843,7 +1008,7 @@ wait_database_reachability() {
 
 # Wait server reachability
 wait_server_reachability() {
-  _wait_server_max_attempts=3
+  _wait_server_max_attempts=20
   _wait_server_sleep=3
   _server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server')
 
@@ -1111,6 +1276,7 @@ verify_system() {
   esac
 
   # Commands
+  assert_cmd bc
   assert_cmd cp
   assert_cmd date
   assert_cmd ethtool
@@ -1285,6 +1451,9 @@ EOF
 
 # Setup system
 setup_system() {
+  # Create uninstall
+  create_uninstall
+
   # Temporary directory
   TMP_DIR=$(mktemp --directory -t recluster.XXXXXXXX)
   DEBUG "Created temporary directory '$TMP_DIR'"
@@ -1298,6 +1467,9 @@ setup_system() {
   # SSH
   setup_ssh
 
+  # Certificates
+  setup_certificates
+
   # Cluster initialization
   if [ "$INIT_CLUSTER" = true ]; then
     spinner_start "Preparing Cluster initialization"
@@ -1305,6 +1477,17 @@ setup_system() {
     # Docker
     DEBUG "Adding user '$USER' to group 'docker'"
     $SUDO addgroup "$USER" docker
+    case $INIT_SYSTEM in
+      openrc)
+        INFO "openrc: Starting Docker service"
+        $SUDO rc-service docker restart
+        ;;
+      systemd)
+        INFO "systemd: Starting Docker service"
+        $SUDO systemctl restart docker
+        ;;
+      *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+    esac
 
     spinner_stop
   fi
@@ -1540,6 +1723,9 @@ install_k3s() {
 
   spinner_start "Installing K3s '$K3S_VERSION'"
 
+  DEBUG "Uninstalling K3s"
+  $SUDO k3s-recluster-uninstall.sh || :
+
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
     # Airgap enabled
@@ -1612,6 +1798,9 @@ install_node_exporter() {
 
   spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
 
+  DEBUG "Uninstalling Node exporter"
+  $SUDO node_exporter.uninstall.sh || :
+
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
     # Airgap enabled
@@ -1668,8 +1857,6 @@ cluster_init() {
   _k3s_kubeconfig_file="/etc/rancher/k3s/k3s.yaml"
   _kubeconfig_file="$(user_home_dir)/.kube/config"
   _certs_dir="$RECLUSTER_ETC_DIR/certs"
-  _database_service_name=postgresql
-  _database_data="/var/lib/postgresql/data"
   _server_service_name=recluster.server
   _server_env_file="$RECLUSTER_ETC_DIR/server.env"
   _server_dir="$RECLUSTER_OPT_DIR/server"
@@ -1726,127 +1913,52 @@ EOF
   $SUDO chown "$USER:$USER" "$_kubeconfig_file"
   $SUDO chmod 644 "$_kubeconfig_file"
 
-  # Copy certs directory
-  INFO "Copying certificates directory from '$RECLUSTER_CERTS_DIR' to '$_certs_dir'"
-  [ -d "$_certs_dir" ] || $SUDO mkdir -p "$_certs_dir"
-  yes | $SUDO cp --force --archive "$RECLUSTER_CERTS_DIR/." "$_certs_dir"
-  $SUDO chown --recursive root:root "$_certs_dir"
-  $SUDO chmod --recursive 600 "$_certs_dir"
-
   # Setup database
   INFO "Setting up database"
-  DEBUG "Creating PostgreSQL socket directory"
-  $SUDO mkdir /run/postgresql
-  $SUDO chown postgres:postgres /run/postgresql
+  DEBUG "Stopping database"
+  case $INIT_SYSTEM in
+    openrc) $SUDO rc-service postgresql stop > /dev/null 2>&1 || $SUDO rc-service postgresql zap > /dev/null 2>&1 || : ;;
+    systemd) $SUDO systemctl stop postgresql > /dev/null 2>&1 || $SUDO systemctl kill postgresql > /dev/null 2>&1 || : ;;
+    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
+  esac
 
-  DEBUG "Creating PostgreSQL data directory"
-  $SUDO mkdir $_database_data
-  $SUDO chown postgres:postgres $_database_data
-  $SUDO chmod 700 $_database_data
+  DEBUG "Removing PostgreSQL data directory"
+  $SUDO rm -rf /var/lib/postgresql
 
-  DEBUG "Creating PostgreSQL database cluster"
-  $SUDO su postgres -c "initdb --locale=C.UTF-8 --encoding=UTF8 --data-checksums -D $_database_data"
-
-  DEBUG "Constructing PostgreSQL database service '$_database_service_name'"
   case $INIT_SYSTEM in
     openrc)
-      _openrc_database_service_file="/etc/init.d/$_database_service_name"
-      _openrc_database_log_file="/var/log/$_database_service_name.log"
-
-      INFO "openrc: Constructing PostgreSQL service file '$_openrc_database_service_file'"
-      $SUDO tee $_openrc_database_service_file > /dev/null << EOF
-#!/sbin/openrc-run
-
-description="PostgreSQL database"
-
-PGDATA=$_database_data
-
-depend() {
-  after network-online
-  want network-online
-}
-
-supervisor=supervise-daemon
-name=postgresql
-
-command_user="postgres:postgres"
-
-output_log=$_openrc_database_log_file
-error_log=$_openrc_database_log_file
-
-pidfile=/var/run/postgresql.pid
-respawn_delay=3
-respawn_max=0
-
-start() {
-  /usr/bin/pg_ctl start -D \$PGDATA -s -w
-}
-
-stop() {
-  /usr/bin/pg_ctl stop -D \$PGDATA -s -m fast
-}
-
-reload() {
-  /usr/bin/pg_ctl reload -D \$PGDATA -s
-}
-EOF
-      $SUDO chown root:root $_openrc_database_service_file
-      $SUDO chmod 755 $_openrc_database_service_file
-
-      $SUDO tee "/etc/logrotate.d/$_database_service_name" > /dev/null << EOF
-$_openrc_database_log_file {
-	missingok
-	notifempty
-	copytruncate
-}
-EOF
+      INFO "openrc: Creating PostgreSQL database cluster"
+      $SUDO rc-service postgresql setup
 
       INFO "openrc: Starting database"
-      $SUDO rc-service postgresql restart
+      $SUDO rc-service postgresql start
       wait_database_reachability
       ;;
     systemd)
-      _systemd_database_service_file="/etc/systemd/system/$_database_service_name.service"
-
-      INFO "systemd: Constructing PostgreSQL service file '$_systemd_database_service_file'"
-      $SUDO tee $_systemd_database_service_file > /dev/null << EOF
-[Unit]
-Description=PostgreSQL database
-Documentation=man:postgres(1)
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=forking
-User=postgres
-Group=postgres
-Environment=PGDATA=$_database_data
-ExecStart=/usr/bin/pg_ctl start -D \$PGDATA -s -w
-ExecStop=/usr/bin/pg_ctl stop -D \$PGDATA -s -m fast
-ExecReload=/usr/bin/pg_ctl reload -D \$PGDATA -s
-TimeoutSec=300
-
-[Install]
-WantedBy=multi-user.target
-EOF
-      $SUDO chown root:root $_systemd_database_service_file
-      $SUDO chmod 755 $_systemd_database_service_file
-
-      $SUDO systemctl daemon-reload > /dev/null
+      INFO "systemd: Creating PostgreSQL database cluster"
+      # TODO
+      FATAL "systemd: Creating PostgreSQL database cluster not implemented"
 
       INFO "systemd: Starting database"
-      $SUDO systemctl restart postgresql
+      $SUDO systemctl start postgresql
       wait_database_reachability
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
+  DEBUG "Removing database 'recluster'"
+  $SUDO su postgres -c 'psql -c "DROP DATABASE IF EXISTS recluster;"'
+  DEBUG "Removing user 'recluster'"
+  $SUDO su postgres -c 'psql -c "DROP USER IF EXISTS recluster;"'
   DEBUG "Creating database 'recluster'"
-  $SUDO su postgres -c 'psql -c "CREATE DATABASE IF NOT EXISTS recluster;"'
+  $SUDO su postgres -c 'psql -c "CREATE DATABASE recluster;"'
   DEBUG "Creating user 'recluster'"
-  $SUDO su postgres -c 'psql -c "CREATE USER IF NOT EXISTS recluster WITH ENCRYPTED PASSWORD \"password\";"'
-  DEBUG "Assigning user 'recluster' to database 'recluster'"
+  $SUDO su postgres -c 'psql -c "CREATE USER recluster WITH PASSWORD '\''password'\'';"'
+  DEBUG "Defining access privileges for 'recluster'"
   $SUDO su postgres -c 'psql -c "GRANT ALL PRIVILEGES ON DATABASE recluster TO recluster;"'
+  $SUDO su postgres -c 'psql -c "GRANT ALL PRIVILEGES ON SCHEMA public TO recluster;"'
+  $SUDO su postgres -c 'psql -c "ALTER USER recluster SUPERUSER;"'
+  $SUDO su postgres -c 'psql -c "ALTER USER recluster CREATEDB"'
 
   # Copy server
   INFO "Copying server from '$DIRNAME/server' to '$_server_dir'"
@@ -1975,8 +2087,7 @@ install_recluster() {
   _shutdown_script_file="$RECLUSTER_OPT_DIR/shutdown.sh"
   # Configuration
   _node_label_id="recluster.io/id="
-  _bootstrap_service_name=recluster.bootstrap
-  _shutdown_service_name=recluster.shutdown
+  _service_name=recluster
   # Registration data
   _registration_data=
   _node_token=
@@ -2228,6 +2339,7 @@ manage_services() {
   case \$_op in
     start) _op_message="Starting" ;;
     stop) _op_message="Stopping" ;;
+    restart) _op_message="Restarting" ;;
     * ) FATAL "Unknown operation '\$_op'"
   esac
 EOF
@@ -2238,10 +2350,10 @@ EOF
         $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
   INFO "openrc: \$_op_message Database"
   rc-service postgresql \$_op
-  [ "\$_op" = start ] && wait_database_reachability
+  { [ "\$_op" = start ] || [ "\$_op" = restart ]; } && wait_database_reachability
   INFO "openrc: \$_op_message Server"
   rc-service recluster.server \$_op
-  [ "\$_op" = start ] && wait_server_reachability
+  { [ "\$_op" = start ] || [ "\$_op" = restart ]; } && wait_server_reachability
 EOF
       fi
       $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
@@ -2256,10 +2368,10 @@ EOF
         $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
   INFO "systemd: \$_op_message Database"
   systemctl \$_op postgresql
-  [ "\$_op" = start ] && wait_database_reachability
+  { [ "\$_op" = start ] || [ "\$_op" = restart ]; } && wait_database_reachability
   INFO "systemd: \$_op_message Server"
   systemctl \$_op recluster.server
-  [ "\$_op" = start ] && wait_server_reachability
+  { [ "\$_op" = start ] || [ "\$_op" = restart ]; } && wait_server_reachability
 EOF
       fi
       $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
@@ -2323,6 +2435,7 @@ EOF
 # ================
 {
   update_node_status INACTIVE
+  manage_services stop
 }
 EOF
   $SUDO chown root:root "$_shutdown_script_file"
@@ -2331,17 +2444,17 @@ EOF
   #
   # Services
   #
-  # Bootstrap service
-  INFO "Constructing bootstrap service '$_bootstrap_service_name'"
+  # reCluster service
+  INFO "Constructing reCluster service '$_service_name'"
   case $INIT_SYSTEM in
     openrc)
-      _openrc_bootstrap_service_file="/etc/init.d/$_bootstrap_service_name"
+      _openrc_service_file="/etc/init.d/$_service_name"
 
-      INFO "openrc: Constructing bootstrap service file '$_openrc_bootstrap_service_file'"
-      $SUDO tee "$_openrc_bootstrap_service_file" > /dev/null << EOF
+      INFO "openrc: Constructing reCluster service file '$_openrc_service_file'"
+      $SUDO tee "$_openrc_service_file" > /dev/null << EOF
 #!/sbin/openrc-run
 
-description="reCluster bootstrap"
+description="reCluster"
 
 depend() {
   need net
@@ -2351,81 +2464,43 @@ depend() {
   want cgroups
 }
 
-command="/usr/bin/env sh $_bootstrap_script_file"
-EOF
-      $SUDO chown root:root "$_openrc_bootstrap_service_file"
-      $SUDO chmod 0755 "$_openrc_bootstrap_service_file"
+start() {
+  /usr/bin/env sh $_bootstrap_script_file
+}
 
-      INFO "openrc: Enabling bootstrap service '$_bootstrap_service_name' at startup"
-      $SUDO rc-update add "$_bootstrap_service_name" default > /dev/null
+stop() {
+  /usr/bin/env sh $_shutdown_script_file
+}
+EOF
+      $SUDO chown root:root "$_openrc_service_file"
+      $SUDO chmod 0755 "$_openrc_service_file"
+
+      INFO "openrc: Enabling reCluster service '$_service_name' at startup"
+      $SUDO rc-update add "$_service_name" default > /dev/null
       ;;
     systemd)
-      _systemd_bootstrap_service_file="/etc/systemd/system/$_bootstrap_service_name.service"
+      _systemd_service_file="/etc/systemd/system/$_service_name.service"
 
-      INFO "systemd: Constructing bootstrap service file '$_systemd_bootstrap_service_file'"
-      $SUDO tee "$_systemd_bootstrap_service_file" > /dev/null << EOF
+      INFO "systemd: Constructing reCluster service file '$_systemd_service_file'"
+      $SUDO tee "$_systemd_service_file" > /dev/null << EOF
 [Unit]
-Description=reCluster bootstrap
+Description=reCluster
 After=network-online.target network.target
 Wants=network-online.target network.target
 
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/env sh $_bootstrap_script_file
+ExecStop=/usr/bin/env sh $_shutdown_script_file
 
 [Install]
 WantedBy=multi-user.target
 EOF
-      $SUDO chown root:root "$_systemd_bootstrap_service_file"
-      $SUDO chmod 0755 "$_systemd_bootstrap_service_file"
+      $SUDO chown root:root "$_systemd_service_file"
+      $SUDO chmod 0755 "$_systemd_service_file"
 
-      INFO "systemd: Enabling bootstrap service '$_bootstrap_service_name' at startup"
-      $SUDO systemctl enable "$_bootstrap_service_name" > /dev/null
-      $SUDO systemctl daemon-reload > /dev/null
-      ;;
-    *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
-  esac
-
-  # Shutdown service
-  INFO "Constructing shutdown service '$_shutdown_service_name'"
-  case $INIT_SYSTEM in
-    openrc)
-      _openrc_shutdown_service_file="/etc/local.d/$_shutdown_service_name.stop"
-
-      INFO "openrc: Constructing shutdown service file '$_openrc_shutdown_service_file'"
-      $SUDO tee "$_openrc_shutdown_service_file" > /dev/null << EOF
-#!/usr/bin/env sh
-
-# Fail on error
-set -o errexit
-# Disable wildcard character expansion
-set -o noglob
-
-/usr/bin/env sh $_shutdown_script_file"
-EOF
-      $SUDO chown root:root "$_openrc_shutdown_service_file"
-      $SUDO chmod 0755 "$_openrc_shutdown_service_file"
-      ;;
-    systemd)
-      _systemd_shutdown_service_file="/etc/systemd/system/$_shutdown_service_name.service"
-
-      INFO "systemd: Constructing shutdown service file '$_systemd_shutdown_service_file'"
-      $SUDO tee "$_systemd_shutdown_service_file" > /dev/null << EOF
-[Unit]
-Description=reCluster shutdown
-DefaultDependencies=no
-Before=reboot.target shutdown.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/env sh $_shutdown_script_file
-
-[Install]
-WantedBy=reboot.target shutdown.target
-EOF
-      $SUDO chown root:root "$_systemd_shutdown_service_file"
-      $SUDO chmod 0755 "$_systemd_shutdown_service_file"
-
+      INFO "systemd: Enabling reCluster service '$_service_name' at startup"
+      $SUDO systemctl enable "$_service_name" > /dev/null
       $SUDO systemctl daemon-reload > /dev/null
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
@@ -2444,11 +2519,11 @@ start_recluster() {
   case $INIT_SYSTEM in
     openrc)
       INFO "openrc: Starting reCluster"
-      $SUDO rc-service recluster.bootstrap restart
+      $SUDO rc-service recluster restart
       ;;
     systemd)
       INFO "systemd: Starting reCluster"
-      $SUDO systemctl restart recluster.bootstrap
+      $SUDO systemctl restart recluster.service
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
@@ -2459,39 +2534,28 @@ start_recluster() {
 # Configure K8s
 configure_k8s() {
   [ "$INIT_CLUSTER" = true ] || return 0
-  _timeout=60s
+  _k8s_timeout="2m"
   _metallb_deployment="https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml"
   _metallb_config="$DIRNAME/configs/k8s/metallb/config.yaml"
+  _registry_url=$(yq e --no-colors '.mirrors | to_entries | .[0].key' "$DIRNAME/configs/registries.yaml") || FATAL "Error reading registry URL from '$DIRNAME/configs/registries.yaml'"
   _registry_deployment="$DIRNAME/configs/k8s/registry/deployment.yaml"
-  _cluster_autoscaler_archive="$AUTOSCALER_DIR/cluster-autoscaler.$ARCH.tar.gz"
-  _cluster_autoscaler_tag="recluster.io/recluster/cluster-autoscaler"
-  _cluster_autoscaler_tag_version="$_cluster_autoscaler_tag:$AUTOSCALER_VERSION"
-  _cluster_autoscaler_tag_latest="$_cluster_autoscaler_tag:latest"
-  _cluster_autoscaler_deployment="$DIRNAME/configs/k8s/autoscaler/ca/deployment.yaml"
+  _autoscaler_ca_archive="$AUTOSCALER_DIR/cluster-autoscaler.$ARCH.tar.gz"
+  _autoscaler_ca_tag="$_registry_url/recluster/cluster-autoscaler"
+  _autoscaler_ca_tag_version="$_autoscaler_ca_tag:$AUTOSCALER_VERSION"
+  _autoscaler_ca_tag_latest="$_autoscaler_ca_tag:latest"
+  _autoscaler_ca_deployment="$DIRNAME/configs/k8s/autoscaler/ca/deployment.yaml"
 
   assert_cmd kubectl
   assert_url_reachability "$_metallb_deployment"
   [ -f "$_metallb_config" ] || FATAL "MetalLB configuration file '$_metallb_config' does not exists"
   [ -f "$_registry_deployment" ] || FATAL "Registry deployment file '$_registry_deployment' does not exists"
-  [ -f "$_cluster_autoscaler_archive" ] || FATAL "Cluster Autoscaler archive file '$_cluster_autoscaler_archive' does not exists"
-  [ -f "$_cluster_autoscaler_deployment" ] || FATAL "Cluster Autoscaler deployment file '$_cluster_autoscaler_deployment' does not exists"
+  [ -f "$_autoscaler_ca_archive" ] || FATAL "Autoscaler CA archive file '$_autoscaler_ca_archive' does not exists"
+  [ -f "$_autoscaler_ca_deployment" ] || FATAL "Autoscaler CA deployment file '$_autoscaler_ca_deployment' does not exists"
 
   spinner_start "Configuring K8s"
 
-  # K8s node
-  INFO "Waiting K8s node is ready"
-  $SUDO kubectl wait \
-    --for-condition=ready node \
-    --all \
-    --timeout="$_timeout"
-
-  # K8s kube-dns
-  INFO "Waiting K8s kube-dns is ready"
-  $SUDO kubectl wait \
-    --namespace kube-system \
-    --for=condition=ready pod \
-    --selector=k8s-app=kube-dns \
-    --timeout="$_timeout"
+  # K8s
+  wait_k8s_reachability
 
   # MetalLB
   INFO "Applying MetalLB deployment '$_metallb_deployment'"
@@ -2501,7 +2565,7 @@ configure_k8s() {
     --namespace metallb-system \
     --for=condition=ready pod \
     --selector=app=metallb \
-    --timeout="$_timeout"
+    "--timeout=$_k8s_timeout"
   INFO "Applying MetalLB configuration '$_metallb_config'"
   $SUDO kubectl apply -f "$_metallb_config"
 
@@ -2513,27 +2577,25 @@ configure_k8s() {
     --namespace registry-system \
     --for=condition=ready pod \
     --selector=app=registry \
-    --timeout="$_timeout"
+    "--timeout=$_k8s_timeout"
 
-  # Cluster Autoscaler
-  INFO "Loading Cluster Autoscaler image '$_cluster_autoscaler_archive'"
-  $SUDO docker load --input "$_cluster_autoscaler_archive"
-  INFO "Tagging Cluster Autoscaler image '$_cluster_autoscaler_tag_version'"
-  $SUDO docker tag "recluster/cluster-autoscaler:latest" "$_cluster_autoscaler_tag_version"
-  INFO "Tagging Cluster Autoscaler image '$_cluster_autoscaler_tag_latest'"
-  $SUDO docker tag "recluster/cluster-autoscaler:latest" "$_cluster_autoscaler_tag_latest"
-  INFO "Pushing Cluster Autoscaler image $_cluster_autoscaler_tag_version"
-  $SUDO docker push "$_cluster_autoscaler_tag_version"
-  INFO "Pushing Cluster Autoscaler image '$_cluster_autoscaler_tag_latest'"
-  $SUDO docker push "$_cluster_autoscaler_tag_latest"
-  INFO "Applying Cluster Autoscaler deployment '$_cluster_autoscaler_deployment'"
-  $SUDO kubectl apply -f "$_cluster_autoscaler_deployment"
-  INFO "Waiting Cluster Autoscaler is ready"
+  # Autoscaler CA
+  INFO "Loading Autoscaler CA image '$_autoscaler_ca_archive'"
+  $SUDO docker load --input "$_autoscaler_ca_archive"
+  INFO "Tagging Autoscaler CA image '$_autoscaler_ca_tag_version'"
+  $SUDO docker tag "recluster/cluster-autoscaler:latest" "$_autoscaler_ca_tag_version"
+  INFO "Tagging Autoscaler CA image '$_autoscaler_ca_tag_latest'"
+  $SUDO docker tag "recluster/cluster-autoscaler:latest" "$_autoscaler_ca_tag_latest"
+  INFO "Pushing Autoscaler CA image(s) '$_autoscaler_ca_tag'"
+  $SUDO docker push --all-tags "$_autoscaler_ca_tag"
+  INFO "Applying Autoscaler CA deployment '$_autoscaler_ca_deployment'"
+  $SUDO kubectl apply -f "$_autoscaler_ca_deployment"
+  INFO "Waiting Autoscaler CA is ready"
   $SUDO kubectl wait \
     --namespace kube-system \
     --for=condition=ready pod \
     --selector=app=cluster-autoscaler \
-    --timeout="$_timeout"
+    "--timeout=$_k8s_timeout"
 
   spinner_stop
 }
@@ -2555,4 +2617,5 @@ configure_k8s() {
   install_recluster
   start_recluster
   configure_k8s
+  INFO "--> SUCCESS <--"
 }

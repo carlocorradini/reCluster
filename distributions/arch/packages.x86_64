@@ -22,6 +22,7 @@ parted
 # reCluster
 # ================
 coreutils
+docker
 ethtool
 inotify-tools
 iproute2

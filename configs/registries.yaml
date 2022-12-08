@@ -21,11 +21,11 @@
 # SOFTWARE.
 
 mirrors:
-  recluster.io:
+  '${{ registry.host }}:${{ registry.port }}':
     endpoint:
       - 'https://${{ registry.host }}:${{ registry.port }}'
 configs:
-  '${{ registry.host }}:${{ registry.port }}':
+  '${{ registry.host }}':
     tls:
-      ca_file: '/etc/recluster/certs/registry.crt'
-      key_file: '/etc/recluster/certs/registry.key'
+      ca_file: '/usr/local/share/ca-certificates/registry.crt'
+      key_file: '/usr/local/share/ca-certificates/registry.key'

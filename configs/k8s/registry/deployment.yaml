@@ -34,8 +34,8 @@ metadata:
   name: registry-secret
   namespace: registry-system
 data:
-  registry.crt: '${{ registry.crt }}'
-  registry.key: '${{ registry.key }}'
+  tls.crt: '${{ registry.crt }}'
+  tls.key: '${{ registry.key }}'
 
 ---
 apiVersion: v1
@@ -73,6 +73,9 @@ spec:
         - key: node-role.kubernetes.io/master
           operator: Exists
           effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: registry
           image: registry:2
@@ -80,9 +83,9 @@ spec:
             - containerPort: ${{ registry.port }}
           env:
             - name: REGISTRY_HTTP_TLS_CERTIFICATE
-              value: '/certs/registry.crt'
+              value: '/certs/tls.crt'
             - name: REGISTRY_HTTP_TLS_KEY
-              value: '/certs/registry.key'
+              value: '/certs/tls.key'
           volumeMounts:
             - name: registry-certs
               mountPath: '/certs'
