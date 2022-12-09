@@ -1001,7 +1001,7 @@ wait_database_reachability() {
 
   INFO "Waiting database reachability"
   while [ "$_wait_database_max_attempts" -gt 0 ]; do
-    if ($SUDO su postgres -c "pg_isready" > /dev/null 2>&1); then
+    if $SUDO su postgres -c "pg_isready" > /dev/null 2>&1; then
       DEBUG "Database is reachable"
       break
     fi
@@ -1021,7 +1021,7 @@ wait_server_reachability() {
 
   INFO "Waiting server reachability"
   while [ "$_wait_server_max_attempts" -gt 0 ]; do
-    if (assert_url_reachability "$_server_url/health" > /dev/null 2>&1); then
+    if assert_url_reachability "$_server_url/health" > /dev/null 2>&1; then
       DEBUG "Server is reachable"
       break
     fi
