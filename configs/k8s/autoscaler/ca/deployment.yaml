@@ -184,7 +184,7 @@ spec:
           operator: Exists
           effect: NoSchedule
       containers:
-        - image: ${{ registry.host }}:${{ registry.port }}/recluster/cluster-autoscaler
+        - image: ${{ k8s.registry.mirror.host }}:${{ k8s.registry.mirror.port }}/recluster/cluster-autoscaler
           name: cluster-autoscaler
           resources:
             limits:

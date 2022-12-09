@@ -20,5 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-token: 4646f99bc4cbae3d5eceed856b337c9d3284be0d4056a3909f780c0c385fbf93
-server: https://${{ k3s.server.host }}:${{ k3s.server.port }}
+mirrors:
+  '${{ k8s.registry.mirror.host }}:${{ k8s.registry.mirror.port }}':
+    endpoint:
+      - 'https://${{ k8s.registry.endpoint.host }}:${{ k8s.registry.endpoint.port }}'
+configs:
+  '${{ k8s.registry.mirror.host }}':
+    tls:
+      ca_file: '/usr/local/share/ca-certificates/registry.crt'
+      key_file: '/usr/local/share/ca-certificates/registry.key'

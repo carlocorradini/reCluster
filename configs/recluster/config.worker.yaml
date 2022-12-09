@@ -20,19 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
----
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: default
-  namespace: metallb-system
-spec:
-  addresses:
-    - ${{ loadbalancer.ip.from }}-${{ loadbalancer.ip.to }}
+kind: worker
 
----
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  name: default
-  namespace: metallb-system
+recluster:
+  server: http://${{ recluster.server.host }}:${{ recluster.server.port }}

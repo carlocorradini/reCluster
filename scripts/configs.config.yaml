@@ -20,43 +20,49 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-loadbalancer:
-  ip:
-    from: '192.168.0.200'
-    to: '192.168.0.250'
+k3s:
+  token: '4646f99bc4cbae3d5eceed856b337c9d3284be0d4056a3909f780c0c385fbf93'
+  server:
+    host: '192.168.0.100'
+    port: 6443
 
-registry:
-  host: '192.168.0.222'
-  port: 5000
-  crt:
-    __:
-      run: |-
-        base64 -w 0 ./certs/registry.crt
-  key:
-    __:
-      run: |-
-        base64 -w 0 ./certs/registry.key
+k8s:
+  loadbalancer:
+    ip:
+      from: '192.168.0.200'
+      to: '192.168.0.250'
+  registry:
+    mirror:
+      host: 'registry.recluster.local'
+      port: 5000
+    endpoint:
+      host: '192.168.0.202'
+      port: 5000
+    storage: '32Gi'
+    tls:
+      crt:
+        __:
+          run: |-
+            base64 -w 0 ./certs/registry.crt
+      key:
+        __:
+          run: |-
+            base64 -w 0 ./certs/registry.key
 
 recluster:
   server:
     host: '192.168.0.100'
     port: 8080
     path: 'graphql'
-
-k3s:
-  server:
-    host: '192.168.0.100'
-    port: 6443
+  database:
+    user: 'recluster'
+    password: 'password'
+    host: 'localhost'
+    port: 5432
+    db: 'recluster'
 
 ssh:
   authorized_key:
     __:
       run: |-
         cat ./certs/ssh.crt
-
-database:
-  user: 'recluster'
-  password: 'password'
-  host: 'localhost'
-  port: 5432
-  db: 'recluster'

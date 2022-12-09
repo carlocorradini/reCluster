@@ -34,8 +34,8 @@ metadata:
   name: registry-secret
   namespace: registry-system
 data:
-  tls.crt: '${{ registry.crt }}'
-  tls.key: '${{ registry.key }}'
+  tls.crt: '${{ k8s.registry.tls.crt }}'
+  tls.key: '${{ k8s.registry.tls.key }}'
 
 ---
 apiVersion: v1
@@ -49,7 +49,7 @@ spec:
   storageClassName: local-path
   resources:
     requests:
-      storage: 32Gi
+      storage: ${{ k8s.registry.storage }}
 
 ---
 apiVersion: apps/v1
@@ -80,7 +80,7 @@ spec:
         - name: registry
           image: registry:2
           ports:
-            - containerPort: ${{ registry.port }}
+            - containerPort: 5000
           env:
             - name: REGISTRY_HTTP_TLS_CERTIFICATE
               value: '/certs/tls.crt'
@@ -121,6 +121,6 @@ spec:
   ports:
     - name: registry-port
       protocol: TCP
-      port: ${{ registry.port }}
-      targetPort: ${{ registry.port }}
-  loadBalancerIP: ${{ registry.host }}
+      port: ${{ k8s.registry.endpoint.port }}
+      targetPort: 5000
+  loadBalancerIP: ${{ k8s.registry.endpoint.host }}

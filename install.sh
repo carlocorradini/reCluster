@@ -39,17 +39,17 @@ AUTOSCALER_VERSION=latest
 # Benchmark time in seconds
 BENCH_TIME=30
 # Configuration file
-CONFIG_FILE="configs/config.yaml"
+CONFIG_FILE="configs/recluster/config.yaml"
 # Initialize cluster
 INIT_CLUSTER=false
 # K3s configuration file
-K3S_CONFIG_FILE="configs/k3s.yaml"
+K3S_CONFIG_FILE="configs/k3s/config.yaml"
 # K3s registry configuration file
-K3S_REGISTRY_CONFIG_FILE="configs/registries.yaml"
+K3S_REGISTRY_CONFIG_FILE="configs/k3s/registries.yaml"
 # K3s version
 K3S_VERSION=latest
 # Node exporter configuration file
-NODE_EXPORTER_CONFIG_FILE="configs/node_exporter.yaml"
+NODE_EXPORTER_CONFIG_FILE="configs/node_exporter/config.yaml"
 # Node exporter version
 NODE_EXPORTER_VERSION=latest
 # Power consumption device api url
@@ -67,11 +67,13 @@ RECLUSTER_OPT_DIR="/opt/recluster"
 # reCluster certificates directory
 RECLUSTER_CERTS_DIR="configs/certs"
 # reCluster server environment file
-RECLUSTER_SERVER_ENV_FILE="configs/server.env"
+RECLUSTER_SERVER_ENV_FILE="configs/recluster/server.env"
+# SSH authorized keys file
+SSH_AUTHORIZED_KEYS_FILE="configs/ssh/authorized_keys"
 # SSH configuration file
-SSH_CONFIG_FILE="configs/ssh_config"
+SSH_CONFIG_FILE="configs/ssh/ssh_config"
 # SSH server configuration file
-SSHD_CONFIG_FILE="configs/sshd_config"
+SSHD_CONFIG_FILE="configs/ssh/sshd_config"
 # User
 USER="root"
 
@@ -120,7 +122,7 @@ Usage: $(basename "$0") [--airgap] [--autoscaler-version <VERSION>] [--bench-tim
         [--help] [--init-cluster] [--k3s-config-file <FILE>] [--k3s-registry-config-file <FILE>] [--k3s-version <VERSION>]
         [--node-exporter-config-file <FILE>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-        [--server-env-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>] [--user <USER>]
+        [--server-env-file <FILE>] [--ssh-authorized-keys-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>] [--user <USER>]
 
 $HELP_COMMONS_USAGE
 
@@ -201,6 +203,11 @@ Options:
 
   --server-env-file <FILE>            Server environment file
                                       Default: $RECLUSTER_SERVER_ENV_FILE
+                                      Values:
+                                        Any valid file
+
+  --ssh-authorized-keys-file <FILE>   SSH authorized keys file
+                                      Default: $SSH_AUTHORIZED_KEYS_FILE
                                       Values:
                                         Any valid file
 
@@ -366,11 +373,11 @@ setup_ssh() {
     $SUDO chown "$USER:$USER" "$_ssh_authorized_keys_dir"
     $SUDO chmod 700 "$_ssh_authorized_keys_dir"
   }
-  while read -r _pub_key; do
-    INFO "Copying SSH public key '$_pub_key' to SSH authorized keys '$_ssh_authorized_keys_file'"
-    printf "%s\n" "$_pub_key" | $SUDO tee -a "$_ssh_authorized_keys_file" > /dev/null || FATAL "Error copying SSH public key '$_pub_key' to SSH authorized keys '$_ssh_authorized_keys_file'"
+  while read -r _ssh_authorized_key; do
+    INFO "Copying SSH authorized key '$_ssh_authorized_key' to SSH authorized keys '$_ssh_authorized_keys_file'"
+    printf "%s\n" "$_ssh_authorized_key" | $SUDO tee -a "$_ssh_authorized_keys_file" > /dev/null || FATAL "Error copying SSH authorized key '$_ssh_authorized_key' to SSH authorized keys '$_ssh_authorized_keys_file'"
   done << EOF
-$(printf "%s\n" "$CONFIG" | jq --compact-output --raw-output '.ssh_authorized_keys[]')
+$(cat "$SSH_AUTHORIZED_KEYS_FILE")
 EOF
   $SUDO chown "$USER:$USER" "$_ssh_authorized_keys_file"
   $SUDO chmod 644 "$_ssh_authorized_keys_file"
@@ -1225,6 +1232,13 @@ parse_args() {
         RECLUSTER_SERVER_ENV_FILE=$2
         _shifts=2
         ;;
+      --ssh-authorized-keys-file)
+        # SSH authorized keys file
+        parse_args_assert_value "$@"
+
+        SSH_AUTHORIZED_KEYS_FILE=$2
+        _shifts=2
+        ;;
       --ssh-config-file)
         # SSH configuration file
         parse_args_assert_value "$@"
@@ -1327,7 +1341,6 @@ verify_system() {
   [ ! -d "$RECLUSTER_OPT_DIR" ] || FATAL "Directory '$RECLUSTER_OPT_DIR' already exists"
   # Certificates
   [ -d "$RECLUSTER_CERTS_DIR" ] || FATAL "Certificates directory '$RECLUSTER_CERTS_DIR' does not exists"
-  [ -n "$(ls --almost-all "$RECLUSTER_CERTS_DIR")" ] || FATAL "Certificates directory '$RECLUSTER_CERTS_DIR' is empty"
 
   # Server env
   [ -f "$RECLUSTER_SERVER_ENV_FILE" ] || FATAL "Server environment file '$RECLUSTER_SERVER_ENV_FILE' does not exists"
@@ -1381,14 +1394,13 @@ verify_system() {
   [ -f "$SSH_CONFIG_FILE" ] || FATAL "SSH configuration file '$SSH_CONFIG_FILE' does not exists"
   # SSH server configuration file
   [ -f "$SSHD_CONFIG_FILE" ] || FATAL "SSH server configuration file '$SSHD_CONFIG_FILE' does not exists"
-  # SSH Authorized keys
-  _ssh_authorized_keys=$(printf '%s\n' "$CONFIG" | jq --exit-status '.ssh_authorized_keys') || FATAL "Configuration requires 'ssh_authorized_keys'"
-  [ "$(printf '%s\n' "$_ssh_authorized_keys" | jq --raw-output 'type == "array"')" = true ] || FATAL "'ssh_authorized_keys' is not an array"
-  [ "$(printf '%s\n' "$_ssh_authorized_keys" | jq --raw-output 'length')" -ge 1 ] || FATAL "'ssh_authorized_keys' is empty"
-  while read -r _pub_key; do
-    printf '%s\n' "$_pub_key" | ssh-keygen -l -f - > /dev/null 2>&1 || FATAL "'$_pub_key' is not a valid SSH public key"
+  # SSH authorized keys file
+  [ -f "$SSH_AUTHORIZED_KEYS_FILE" ] || FATAL "SSH authorized keys file '$SSH_AUTHORIZED_KEYS_FILE' does not exists"
+  [ -s "$SSH_AUTHORIZED_KEYS_FILE" ] || FATAL "SSH authorized keys file '$SSH_AUTHORIZED_KEYS_FILE' is empty"
+  while read -r _ssh_authorized_key; do
+    printf '%s\n' "$_ssh_authorized_key" | ssh-keygen -l -f - > /dev/null 2>&1 || FATAL "SSH authorized key '$_ssh_authorized_key' is not valid"
   done << EOF
-$(printf '%s\n' "$_ssh_authorized_keys" | jq --compact-output --raw-output '.[]')
+$(cat "$SSH_AUTHORIZED_KEYS_FILE")
 EOF
 
   # Cluster initialization
@@ -1723,8 +1735,11 @@ install_k3s() {
 
   spinner_start "Installing K3s '$K3S_VERSION'"
 
-  DEBUG "Uninstalling K3s"
-  $SUDO k3s-recluster-uninstall.sh || :
+  # Uninstall
+  if [ -x /usr/local/bin/k3s-recluster-uninstall.sh ]; then
+    DEBUG "Uninstalling K3s"
+    $SUDO /usr/local/bin/k3s-recluster-uninstall.sh
+  fi
 
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
@@ -1798,8 +1813,11 @@ install_node_exporter() {
 
   spinner_start "Installing Node exporter '$NODE_EXPORTER_VERSION'"
 
-  DEBUG "Uninstalling Node exporter"
-  $SUDO node_exporter.uninstall.sh || :
+  # Uninstall
+  if [ -x /usr/local/bin/node_exporter.uninstall.sh ]; then
+    DEBUG "Uninstalling Node exporter"
+    $SUDO /usr/local/bin/node_exporter.uninstall.sh
+  fi
 
   # Check airgap environment
   if [ "$AIRGAP_ENV" = true ]; then
@@ -2002,7 +2020,6 @@ description="reCluster server"
 
 depend() {
   after network-online
-  want network-online
 }
 
 supervisor=supervise-daemon
@@ -2535,39 +2552,53 @@ start_recluster() {
 configure_k8s() {
   [ "$INIT_CLUSTER" = true ] || return 0
   _k8s_timeout="2m"
-  _metallb_deployment="https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml"
-  _metallb_config="$DIRNAME/configs/k8s/metallb/config.yaml"
-  _registry_url=$(yq e --no-colors '.mirrors | to_entries | .[0].key' "$DIRNAME/configs/registries.yaml") || FATAL "Error reading registry URL from '$DIRNAME/configs/registries.yaml'"
-  _registry_deployment="$DIRNAME/configs/k8s/registry/deployment.yaml"
+  _etc_hosts="/etc/hosts"
+  _loadbalancer_dir="$DIRNAME/configs/k8s/loadbalancer"
+  _loadbalancer_deployment="$_loadbalancer_dir/deployment.yaml"
+  _loadbalancer_config="$_loadbalancer_dir/config.yaml"
+  _registry_dir="$DIRNAME/configs/k8s/registry"
+  _registry_deployment="$_registry_dir/deployment.yaml"
+  _registry_k3s="$DIRNAME/configs/k3s/registries.yaml"
+  _autoscaler_ca_dir="$DIRNAME/configs/k8s/autoscaler"
+  _autoscaler_ca_deployment="$_autoscaler_ca_dir/deployment.yaml"
   _autoscaler_ca_archive="$AUTOSCALER_DIR/cluster-autoscaler.$ARCH.tar.gz"
-  _autoscaler_ca_tag="$_registry_url/recluster/cluster-autoscaler"
-  _autoscaler_ca_tag_version="$_autoscaler_ca_tag:$AUTOSCALER_VERSION"
-  _autoscaler_ca_tag_latest="$_autoscaler_ca_tag:latest"
-  _autoscaler_ca_deployment="$DIRNAME/configs/k8s/autoscaler/ca/deployment.yaml"
 
   assert_cmd kubectl
-  assert_url_reachability "$_metallb_deployment"
-  [ -f "$_metallb_config" ] || FATAL "MetalLB configuration file '$_metallb_config' does not exists"
+  [ -f "$_loadbalancer_deployment" ] || "Load Balancer deployment file '$_loadbalancer_deployment' does not exists"
+  [ -f "$_loadbalancer_config" ] || FATAL "Load Balancer configuration file '$_loadbalancer_config' does not exists"
   [ -f "$_registry_deployment" ] || FATAL "Registry deployment file '$_registry_deployment' does not exists"
-  [ -f "$_autoscaler_ca_archive" ] || FATAL "Autoscaler CA archive file '$_autoscaler_ca_archive' does not exists"
+  [ -f "$_registry_k3s" ] || FATAL "Registry K3s file '$_registry_k3s' does not exists"
   [ -f "$_autoscaler_ca_deployment" ] || FATAL "Autoscaler CA deployment file '$_autoscaler_ca_deployment' does not exists"
+  [ -f "$_autoscaler_ca_archive" ] || FATAL "Autoscaler CA archive file '$_autoscaler_ca_archive' does not exists"
+
+  _registry_mirror=$($SUDO yq e --no-colors '.mirrors | to_entries | .[0].key' "$_registry_k3s") || FATAL "Error reading Registry mirror from '$_registry_k3s'"
+  _registry_mirror_host=$(printf '%s\n' "$_registry_mirror" | sed 's/\([^:/]*\).*/\1/')
+  _registry_endpoint_host=$($SUDO yq e --no-colors '.mirrors | to_entries | .[0].value.endpoint[0]' "$_registry_k3s" | sed 's/[^/]*\/\/\([^@]*@\)\?\([^:/]*\).*/\2/') || FATAL "Error reading Registry endpoint from '$_registry_k3s'"
+  _registry_etc_host="$_registry_endpoint_host $_registry_mirror_host"
+  _autoscaler_ca_tag="$_registry_mirror/recluster/cluster-autoscaler"
+  _autoscaler_ca_tag_version="$_autoscaler_ca_tag:$AUTOSCALER_VERSION"
+  _autoscaler_ca_tag_latest="$_autoscaler_ca_tag:latest"
 
   spinner_start "Configuring K8s"
+
+  # Hosts add
+  DEBUG "Adding host entry '$_registry_etc_host' to '$_etc_hosts'"
+  printf '%s\n' "$_registry_etc_host" | $SUDO tee -a "$_etc_hosts" > /dev/null
 
   # K8s
   wait_k8s_reachability
 
-  # MetalLB
-  INFO "Applying MetalLB deployment '$_metallb_deployment'"
-  $SUDO kubectl apply -f "$_metallb_deployment"
-  INFO "Waiting MetalLB is ready"
+  # Load Balancer
+  INFO "Applying Load Balancer deployment '$_loadbalancer_deployment'"
+  $SUDO kubectl apply -f "$_loadbalancer_deployment"
+  INFO "Waiting Load Balancer is ready"
   $SUDO kubectl wait \
     --namespace metallb-system \
     --for=condition=ready pod \
     --selector=app=metallb \
     "--timeout=$_k8s_timeout"
-  INFO "Applying MetalLB configuration '$_metallb_config'"
-  $SUDO kubectl apply -f "$_metallb_config"
+  INFO "Applying Load Balancer configuration '$_loadbalancer_config'"
+  $SUDO kubectl apply -f "$_loadbalancer_config"
 
   # Registry
   INFO "Applying Registry deployment '$_registry_deployment'"
@@ -2596,6 +2627,10 @@ configure_k8s() {
     --for=condition=ready pod \
     --selector=app=cluster-autoscaler \
     "--timeout=$_k8s_timeout"
+
+  # Hosts remove
+  DEBUG "Removing host entry '$_registry_etc_host' from '$_etc_hosts'"
+  $SUDO sed -i "/$_registry_etc_host/d" "$_etc_hosts"
 
   spinner_stop
 }

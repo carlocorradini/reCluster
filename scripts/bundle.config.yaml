@@ -23,10 +23,27 @@
 __:
   run: |-
     ./scripts/inline.sh --in-file ./install.sh --overwrite
-README.md: true
-LICENSE: true
 install.sh: true
-configs: true
+LICENSE: true
+README.md: true
+configs:
+  README.md: true
+  certs: true
+  k3s: true
+  k8s:
+    README.md: true
+    autoscaler: true
+    loadbalancer:
+      __:
+        run: |-
+          wget --output-document=deployment.yaml https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+      config.yaml: true
+      deployment.yaml: true
+      README.md: true
+    registry: true
+  node_exporter: true
+  recluster: true
+  ssh: true
 dependencies:
   __:
     run: |-

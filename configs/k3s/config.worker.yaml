@@ -20,10 +20,5 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-kind: controller
-
-recluster:
-  server: http://${{ recluster.server.host }}:${{ recluster.server.port }}
-
-ssh_authorized_keys:
-  - ${{ ssh.authorized_key }}
+token: ${{ k3s.token }}
+server: https://${{ k3s.server.host }}:${{ k3s.server.port }}

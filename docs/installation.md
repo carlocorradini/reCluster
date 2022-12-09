@@ -25,7 +25,7 @@ See [Installation requirements](./installation_requirements.md) for more informa
    > **Info**: See [certs](../scripts/README.md#📑-certssh) for more information
 
    ```sh
-   _registry_ip='192.168.0.222' # TODO Change
+   _registry_ip='192.168.0.202' # TODO Change
    _out_dir='configs/certs'
    
    ./scripts/certs.sh \

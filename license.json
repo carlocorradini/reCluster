@@ -63,8 +63,9 @@
     "**/.shellcheckrc",
     "**/cspell.json",
     "./server/prisma/migrations",
-    "./configs/ssh_config",
-    "./configs/sshd_config",
+    "./configs/ssh/authorized_keys",
+    "./configs/ssh/ssh_config",
+    "./configs/ssh/sshd_config",
     "./distributions/arch/packages.x86_64"
   ]
 }

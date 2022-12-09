@@ -20,12 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-mirrors:
-  '${{ registry.host }}:${{ registry.port }}':
-    endpoint:
-      - 'https://${{ registry.host }}:${{ registry.port }}'
-configs:
-  '${{ registry.host }}':
-    tls:
-      ca_file: '/usr/local/share/ca-certificates/registry.crt'
-      key_file: '/usr/local/share/ca-certificates/registry.key'
+token: ${{ k3s.token }}
+cluster-init: true # TODO First controller only !
+# server: https://${{ k3s.server.host }}:${{ k3s.server.port }} # TODO Non first controller only !
+cluster-domain: recluster.local
+flannel-backend: host-gw
+disable:
+  - servicelb
+#node-taint:
+#  - CriticalAddonsOnly=true:NoExecute
