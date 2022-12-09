@@ -2559,7 +2559,7 @@ configure_k8s() {
   _registry_dir="$DIRNAME/configs/k8s/registry"
   _registry_deployment="$_registry_dir/deployment.yaml"
   _registry_k3s="$DIRNAME/configs/k3s/registries.yaml"
-  _autoscaler_ca_dir="$DIRNAME/configs/k8s/autoscaler"
+  _autoscaler_ca_dir="$DIRNAME/configs/k8s/autoscaler/ca"
   _autoscaler_ca_deployment="$_autoscaler_ca_dir/deployment.yaml"
   _autoscaler_ca_archive="$AUTOSCALER_DIR/cluster-autoscaler.$ARCH.tar.gz"
 
