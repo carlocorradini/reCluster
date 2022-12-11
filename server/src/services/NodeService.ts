@@ -149,9 +149,7 @@ export class NodeService {
           select: { id: true, roles: true, permissions: true },
           data: {
             name: `${
-              roles.some((role) => role === NodeRoleEnum.K8S_WORKER)
-                ? 'worker'
-                : 'controller'
+              roles.includes(NodeRoleEnum.K8S_WORKER) ? 'worker' : 'controller'
             }.${id}`
           }
         },

@@ -24,6 +24,7 @@
 
 import { NodePool as PrismaNodePool, Prisma } from '@prisma/client';
 import { delay, inject, injectable } from 'tsyringe';
+import { convert } from 'convert';
 import type {
   CreateNodeInput,
   UpdateNodePoolInput,
@@ -104,48 +105,23 @@ export class NodePoolService {
     const fn = async (prisma: Prisma.TransactionClient) => {
       logger.info(`Node pool service upsert: ${JSON.stringify(args)}`);
 
-      const isWorker = args.data.roles.some(
-        (role) => role === NodeRoleEnum.K8S_WORKER
-      );
-      let nodePool: PrismaNodePool | null = null;
+      const isController = !args.data.roles.includes(NodeRoleEnum.K8S_WORKER);
+      // FIXME BigInt/Number conversion
+      const name = isController
+        ? config.nodePool.controller.name
+        : `cpu${args.data.cpu}.memory${Math.round(
+            Number(convert(BigInt(args.data.memory), 'B').to('GiB') * 2n) / 2
+          )}`;
 
-      if (isWorker) {
-        // Worker
-        nodePool = (await prisma.nodePool.findFirst({
-          where: {
-            nodes: {
-              some: {
-                cpu: { cores: args.data.cpu },
-                memory: args.data.memory
-              }
-            }
-          },
-          select: args.select
-        })) as PrismaNodePool;
-      } else {
-        // Controller
-        nodePool = await this.findUnique(
-          {
-            where: { name: config.nodePool.controller.name },
-            select: args.select
-          },
-          prisma
-        );
-      }
-
-      // Return if found
-      if (nodePool) return nodePool;
-
-      // Create if not found
-      return prisma.nodePool.create({
-        data: {
-          name: isWorker
-            ? `cpu${args.data.cpu}.memory${args.data.memory}`
-            : config.nodePool.controller.name,
+      return prisma.nodePool.upsert({
+        select: args.select,
+        where: { name },
+        update: {},
+        create: {
+          name,
           minNodes: 1,
-          ...(!isWorker && { autoScale: false })
-        },
-        select: args.select
+          ...(isController && { autoScale: false })
+        }
       }) as unknown as Promise<PrismaNodePool>;
     };
 
