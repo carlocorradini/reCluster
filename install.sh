@@ -2307,18 +2307,18 @@ EOF
 
 # Wait database reachability
 wait_database_reachability() {
-  _wait_database_max_attempts=3
+  _wait_database_max_attempts=20
   _wait_database_sleep=3
 
   INFO "Waiting database reachability"
   while [ "\$_wait_database_max_attempts" -gt 0 ]; do
-    if (su postgres -c "pg_isready"); then
+    if su postgres -c "pg_isready" > /dev/null 2>&1; then
       DEBUG "Database is reachable"
       break
     fi
 
     DEBUG "Database is not reachable, sleeping \$_wait_database_sleep seconds"
-    sleep "\_wait_database_sleep"
+    sleep "\$_wait_database_sleep"
     _wait_database_max_attempts=\$((_wait_database_max_attempts = _wait_database_max_attempts - 1))
   done
   [ "\$_wait_database_max_attempts" -gt 0 ] || FATAL "Database is not reachable, maximum attempts reached"
@@ -2328,14 +2328,13 @@ wait_database_reachability() {
 wait_server_reachability() {
   read_config
 
-  _wait_server_max_attempts=3
+  _wait_server_max_attempts=20
   _wait_server_sleep=3
   _server_url=\$(printf '%s\n' "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
-  _server_url="\$_server_url/health"
 
   INFO "Waiting server reachability"
   while [ "\$_wait_server_max_attempts" -gt 0 ]; do
-    if (assert_url_reachability "\$_server_url" > /dev/null 2>&1); then
+    if (assert_url_reachability "\$_server_url/health" > /dev/null 2>&1); then
       DEBUG "Server is reachable"
       break
     fi
