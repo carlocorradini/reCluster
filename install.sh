@@ -2611,6 +2611,7 @@ configure_k8s() {
     "--timeout=$_k8s_timeout"
 
   # Autoscaler CA
+  # TODO Do for all images
   INFO "Loading Autoscaler CA image '$_autoscaler_ca_archive'"
   $SUDO docker load --input "$_autoscaler_ca_archive"
   INFO "Tagging Autoscaler CA image '$_autoscaler_ca_tag_version'"
