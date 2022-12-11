@@ -24,17 +24,24 @@
 
 import { Field, InputType } from 'type-graphql';
 import { GraphQLNonEmptyString } from 'graphql-scalars';
-import { MaxLength } from 'class-validator';
+import { IsStrongPassword, MaxLength } from 'class-validator';
 import type { CreateUserInput as ICreateUserInput } from '~/types';
 import { config } from '~/config';
 
 @InputType({ description: 'Create User input' })
 export class CreateUserInput implements ICreateUserInput {
   @Field(() => GraphQLNonEmptyString, { description: 'User username' })
-  @MaxLength(config.user.maxUsernameLength)
+  @MaxLength(config.user.username.validation.maxLength)
   username!: string;
 
   @Field(() => GraphQLNonEmptyString, { description: 'User password' })
-  @MaxLength(config.user.maxPasswordLength)
+  @MaxLength(config.user.password.validation.maxLength)
+  @IsStrongPassword({
+    minLength: config.user.password.validation.minLength,
+    minLowercase: config.user.password.validation.minLowercase,
+    minUppercase: config.user.password.validation.minUppercase,
+    minNumbers: config.user.password.validation.minNumbers,
+    minSymbols: config.user.password.validation.minSymbols
+  })
   password!: string;
 }

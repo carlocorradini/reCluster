@@ -25,18 +25,14 @@
 import type { User as PrismaUser } from '@prisma/client';
 import { GraphQLNonEmptyString } from 'graphql-scalars';
 import { ArgsType, Field } from 'type-graphql';
-import { MaxLength } from 'class-validator';
-import { config } from '~/config';
 
 @ArgsType()
 export class SignInArgs
   implements Required<Pick<PrismaUser, 'username' | 'password'>>
 {
   @Field(() => GraphQLNonEmptyString, { description: 'User username' })
-  @MaxLength(config.user.maxUsernameLength)
   username!: string;
 
   @Field(() => GraphQLNonEmptyString, { description: 'User password' })
-  @MaxLength(config.user.maxPasswordLength)
   password!: string;
 }

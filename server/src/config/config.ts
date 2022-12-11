@@ -59,8 +59,16 @@ export const config: Config = {
     label: { node: { id: 'recluster.io/id' } }
   },
   user: {
-    maxUsernameLength: 64,
-    maxPasswordLength: 16
+    username: { validation: { maxLength: 64 } },
+    password: {
+      validation: {
+        minLength: 8,
+        maxLength: 32,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 1
+      }
+    }
   },
   nodePool: { controller: { name: 'controllers' } }
 };

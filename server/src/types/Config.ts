@@ -63,8 +63,21 @@ export type Config = {
     };
   };
   user: {
-    maxUsernameLength: number;
-    maxPasswordLength: number;
+    username: {
+      validation: {
+        maxLength: number;
+      };
+    };
+    password: {
+      validation: {
+        minLength: number;
+        maxLength: number;
+        minLowercase?: number;
+        minUppercase?: number;
+        minNumbers?: number;
+        minSymbols?: number;
+      };
+    };
   };
   nodePool: {
     controller: {
