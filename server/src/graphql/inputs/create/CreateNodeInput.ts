@@ -86,10 +86,10 @@ export class CreateNodeInput
   cpu!: CreateCpuInput;
 
   @Field(() => [CreateStorageInput], { description: 'Node storages' })
-  @ValidateNested()
+  @ValidateNested({ each: true })
   storages!: CreateStorageInput[];
 
   @Field(() => [CreateInterfaceInput], { description: 'Node interfaces' })
-  @ValidateNested()
+  @ValidateNested({ each: true })
   interfaces!: CreateInterfaceInput[];
 }
