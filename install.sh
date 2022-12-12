@@ -287,21 +287,21 @@ create_uninstall() {
 
 [ \$(id -u) -eq 0 ] || exec sudo \$0 \$@
 
-if [ -s '/etc/systemd/system/recluster.service' ]; then
+if command -v rc-service; then
   rc-service postgresql stop
   rc-service recluster.server stop
   rc-service node_exporter stop
   rc-service k3s-recluster stop
 fi
-if [ -x '/etc/init.d/recluster' ]; then
+if command -v systemctl; then
   systemctl stop postgresql
   systemctl stop recluster.server
   systemctl stop node_exporter
   systemctl stop k3s-recluster
 fi
 
-[ -x '/usr/local/bin/k3s-recluster-uninstall.sh' ] && k3s-recluster-uninstall.sh
-[ -x '/usr/local/bin/node_exporter.uninstall.sh' ] && node_exporter.uninstall.sh
+[ -x '/usr/local/bin/k3s-recluster-uninstall.sh' ] && /usr/local/bin/k3s-recluster-uninstall.sh
+[ -x '/usr/local/bin/node_exporter.uninstall.sh' ] && /usr/local/bin/node_exporter.uninstall.sh
 
 if command -v systemctl; then
   systemctl disable recluster.server
