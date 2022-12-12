@@ -15,6 +15,13 @@ reCluster is an architecture for a data center that actively reduces its impact 
 | :---: | :-------: | :--------------: | :--------: |
 | Carlo | Corradini | `carlocorradini` | **223811** |
 
+## :fountain_pen: References
+
+- [_Conceptualising Resources-aware Higher Education Digital Infrastructure through Self-hosting: a Multi-disciplinary View_](https://doi.org/10.21428/bf6fb269.8b989f2c) \
+  Angeli Lorenzo, Okur Özge, Corradini Carlo, Stolin Marcel, Huang Yilin, Brazier Frances and Marchese Maurizio \
+  [Eighth Workshop on Computing within Limits 2022](https://computingwithinlimits.org/2022) \
+  `doi:10.21428/bf6fb269.8b989f2c`
+
 ## :books: Documentation
 
 See [docs](./docs/) directory for more information.
