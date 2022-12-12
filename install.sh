@@ -952,7 +952,7 @@ read_cpu_power_consumption() {
 wait_k8s_reachability() {
   assert_cmd kubectl
 
-  _wait_k8s_max_attempts_default=20
+  _wait_k8s_max_attempts_default=40
   _wait_k8s_max_attempts=$_wait_k8s_max_attempts_default
   _wait_k8s_sleep=3
   _node_name=$($SUDO grep 'node-name:' /etc/rancher/k3s/config.yaml | sed -e 's/node-name://g' -e 's/[[:space:]]*//' -e 's/^"//' -e 's/"$//')
@@ -1006,7 +1006,7 @@ wait_k8s_reachability() {
 
 # Wait database reachability
 wait_database_reachability() {
-  _wait_database_max_attempts=20
+  _wait_database_max_attempts=40
   _wait_database_sleep=3
 
   INFO "Waiting database reachability"
@@ -1025,7 +1025,7 @@ wait_database_reachability() {
 
 # Wait server reachability
 wait_server_reachability() {
-  _wait_server_max_attempts=20
+  _wait_server_max_attempts=40
   _wait_server_sleep=3
   _server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server')
 
@@ -2317,7 +2317,7 @@ EOF
 
 # Wait database reachability
 wait_database_reachability() {
-  _wait_database_max_attempts=20
+  _wait_database_max_attempts=40
   _wait_database_sleep=3
 
   INFO "Waiting database reachability"
@@ -2338,7 +2338,7 @@ wait_database_reachability() {
 wait_server_reachability() {
   read_config
 
-  _wait_server_max_attempts=20
+  _wait_server_max_attempts=40
   _wait_server_sleep=3
   _server_url=\$(printf '%s\n' "\$RECLUSTER_CONFIG" | jq --exit-status --raw-output '.server') || FATAL "reCluster configuration requires server URL"
 
