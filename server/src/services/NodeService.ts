@@ -31,9 +31,10 @@ import type {
   WithRequired
 } from '~/types';
 import { NodeError } from '~/errors';
-import { prisma, NodeStatusEnum, NodeRoleEnum } from '~/db';
+import { prisma, NodeStatusEnum } from '~/db';
 import { logger } from '~/logger';
 import { SSH } from '~/ssh';
+import { isControllerNode } from '~/helpers';
 import { TokenService, TokenTypes } from './TokenService';
 import { CpuService } from './CpuService';
 // eslint-disable-next-line import/no-cycle
@@ -148,9 +149,7 @@ export class NodeService {
           where: { id },
           select: { id: true, roles: true, permissions: true },
           data: {
-            name: `${
-              roles.includes(NodeRoleEnum.K8S_WORKER) ? 'worker' : 'controller'
-            }.${id}`
+            name: `${isControllerNode(roles) ? 'controller' : 'worker'}.${id}`
           }
         },
         prisma

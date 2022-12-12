@@ -25,7 +25,7 @@
 import { Directive } from 'type-graphql';
 import type { AuthData } from '~/types';
 import type { UserRoleEnum, NodeRoleEnum } from '~/db';
-import { TokenTypes } from '~/services';
+import { TokenTypes } from '~/services/TokenService';
 
 type AuthArgs<T extends TokenTypes> = {
   type?: T;

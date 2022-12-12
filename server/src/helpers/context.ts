@@ -25,7 +25,7 @@
 import { container } from 'tsyringe';
 import type { ApolloFastifyContextFunction } from '@as-integrations/fastify';
 import type { Context, TokenPayload } from '~/types';
-import { TokenService } from '~/services';
+import { TokenService } from '~/services/TokenService';
 import { AuthenticationError } from '~/errors';
 
 export const context: ApolloFastifyContextFunction<Context> = async ({

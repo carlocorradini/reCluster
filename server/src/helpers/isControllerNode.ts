@@ -22,7 +22,21 @@
  * SOFTWARE.
  */
 
-export * from './decorators';
-export * from './context';
-export * from './formatError';
-export * from './isControllerNode';
+import { NodeRoleEnum } from '~/db';
+
+const controllerRoles: NodeRoleEnum[] = [
+  NodeRoleEnum.K8S_CONTROLLER,
+  NodeRoleEnum.RECLUSTER_CONTROLLER
+];
+
+export function isControllerNode(role: NodeRoleEnum): boolean;
+export function isControllerNode(roles: NodeRoleEnum[]): boolean;
+export function isControllerNode(
+  roleOrRoles: NodeRoleEnum | NodeRoleEnum[]
+): boolean {
+  const roles: NodeRoleEnum[] = Array.isArray(roleOrRoles)
+    ? roleOrRoles
+    : [roleOrRoles];
+
+  return controllerRoles.some((role) => roles.includes(role));
+}

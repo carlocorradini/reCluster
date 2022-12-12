@@ -32,8 +32,9 @@ import type {
 } from '~/types';
 import { NodePoolError } from '~/errors';
 import { config } from '~/config';
-import { prisma, NodeRoleEnum, NodeStatusEnum } from '~/db';
+import { prisma, NodeStatusEnum } from '~/db';
 import { logger } from '~/logger';
+import { isControllerNode } from '~/helpers';
 // eslint-disable-next-line import/no-cycle
 import { NodeService } from './NodeService';
 
@@ -105,7 +106,7 @@ export class NodePoolService {
     const fn = async (prisma: Prisma.TransactionClient) => {
       logger.info(`Node pool service upsert: ${JSON.stringify(args)}`);
 
-      const isController = !args.data.roles.includes(NodeRoleEnum.K8S_WORKER);
+      const isController = isControllerNode(args.data.roles);
       // FIXME BigInt/Number conversion
       const name = isController
         ? config.nodePool.controller.name
