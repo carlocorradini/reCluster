@@ -109,9 +109,9 @@ export class NodePoolService {
       // FIXME BigInt/Number conversion
       const name = isController
         ? config.nodePool.controller.name
-        : `cpu${args.data.cpu}.memory${Math.round(
-            Number(convert(BigInt(args.data.memory), 'B').to('GiB') * 2n) / 2
-          )}`;
+        : `cpu${args.data.cpu}.memory${
+            Math.round(convert(Number(args.data.memory), 'B').to('GiB') * 2) / 2
+          }`;
 
       return prisma.nodePool.upsert({
         select: args.select,
