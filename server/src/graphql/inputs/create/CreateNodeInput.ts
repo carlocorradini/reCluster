@@ -86,8 +86,7 @@ export class CreateNodeInput
   cpu!: CreateCpuInput;
 
   @Field(() => [CreateStorageInput], { description: 'Node storages' })
-  // FIXME If CreateStorageInput use class-validator remove comment
-  // @ValidateNested({ each: true })
+  @ValidateNested({ each: true })
   storages!: CreateStorageInput[];
 
   @Field(() => [CreateInterfaceInput], { description: 'Node interfaces' })

@@ -70,7 +70,9 @@ const { typeDefs, resolvers } = buildTypeDefsAndResolversSync({
     StatusNodeResolver,
     UserResolver
   ],
-  container: { get: (cls) => container.resolve(cls) }
+  container: { get: (cls) => container.resolve(cls) },
+  // FIXME forbidUnknownValues must be set to true
+  validate: { forbidUnknownValues: false }
 });
 
 const executableSchema = makeExecutableSchema({
