@@ -25,6 +25,7 @@
     "./distributions/arch/profiledef.sh"
   ],
   "words": [
+    "angeli",
     "aarch",
     "addext",
     "archinstall",
@@ -40,6 +41,7 @@
     "addgroup",
     "blockdevices",
     "bootloader",
+    "conceptualising",
     "carlocorradini",
     "cdpath",
     "cgroups",
@@ -100,6 +102,7 @@
     "linkinfo",
     "loadbalancer",
     "localtime",
+    "maurizio",
     "mdev",
     "mkarchiso",
     "mirrorlist",
@@ -116,6 +119,7 @@
     "numfmt",
     "notifempty",
     "nproc",
+    "okur",
     "oflag",
     "openrc",
     "outdir",
@@ -148,6 +152,7 @@
     "runlevel",
     "replicationcontrollers",
     "replicasets",
+    "stolin",
     "sfdisk",
     "sortings",
     "supergraph",
@@ -175,6 +180,8 @@
     "upsert",
     "workdir",
     "xvzf",
-    "zoneinfo"
+    "yilin",
+    "zoneinfo",
+    "özge"
   ]
 }
