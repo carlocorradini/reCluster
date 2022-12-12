@@ -287,8 +287,18 @@ create_uninstall() {
 
 [ \$(id -u) -eq 0 ] || exec sudo \$0 \$@
 
-[ -s '/etc/systemd/system/recluster.service' ] && systemctl stop recluster.service
-[ -x '/etc/init.d/recluster' ] && /etc/init.d/recluster stop
+if [ -s '/etc/systemd/system/recluster.service' ]; then
+  rc-service postgresql stop
+  rc-service recluster.server stop
+  rc-service node_exporter stop
+  rc-service k3s-recluster stop
+fi
+if [ -x '/etc/init.d/recluster' ]; then
+  systemctl stop postgresql
+  systemctl stop recluster.server
+  systemctl stop node_exporter
+  systemctl stop k3s-recluster
+fi
 
 [ -x '/usr/local/bin/k3s-recluster-uninstall.sh' ] && k3s-recluster-uninstall.sh
 [ -x '/usr/local/bin/node_exporter.uninstall.sh' ] && node_exporter.uninstall.sh
@@ -664,7 +674,7 @@ read_storages_info() {
       | jq \
         '
           .blockdevices
-          | map(select(.type == "disk"))
+          | map(select((.type == "disk") and (.rm == false)))
           | map({name, size})
         '
   )
