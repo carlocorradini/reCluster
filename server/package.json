@@ -55,7 +55,7 @@
     "dotenv": "^16.0.3",
     "envalid": "^7.3.1",
     "fastify": "^4.10.2",
-    "fastify-healthcheck": "^4.2.0",
+    "fastify-healthcheck": "^4.3.0",
     "graphql": "^16.6.0",
     "graphql-scalars": "^1.20.1",
     "json-bigint-patch": "^0.0.8",
