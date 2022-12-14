@@ -24,7 +24,7 @@
 
 import { GraphQLBoolean } from 'graphql';
 import { Field, InputType } from 'type-graphql';
-import { GraphQLNonEmptyString, GraphQLPositiveInt } from 'graphql-scalars';
+import { GraphQLNonEmptyString, GraphQLNonNegativeInt } from 'graphql-scalars';
 import type { UpdateNodePoolInput as IUpdateNodePoolInput } from '~/types';
 
 @InputType({ description: 'Update Node pool input' })
@@ -41,13 +41,13 @@ export class UpdateNodePoolInput implements IUpdateNodePoolInput {
   })
   autoScale?: boolean;
 
-  @Field(() => GraphQLPositiveInt, {
+  @Field(() => GraphQLNonNegativeInt, {
     nullable: true,
     description: 'Node pool node count'
   })
   count?: number;
 
-  @Field(() => GraphQLPositiveInt, {
+  @Field(() => GraphQLNonNegativeInt, {
     nullable: true,
     description: 'Node pool minimum number of nodes'
   })

@@ -120,7 +120,7 @@ export class NodePoolService {
         update: { ...(isController && { minNodes: { increment: 1 } }) },
         create: {
           name,
-          minNodes: 1,
+          minNodes: isController ? 1 : config.nodePool.worker.minNodes,
           ...(isController && { autoScale: false })
         }
       }) as unknown as Promise<PrismaNodePool>;

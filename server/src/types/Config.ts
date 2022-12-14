@@ -83,5 +83,8 @@ export type Config = {
     controller: {
       name: string;
     };
+    worker: {
+      minNodes: number;
+    };
   };
 };

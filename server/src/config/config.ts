@@ -70,5 +70,5 @@ export const config: Config = {
       }
     }
   },
-  nodePool: { controller: { name: 'controllers' } }
+  nodePool: { controller: { name: 'controllers' }, worker: { minNodes: 0 } }
 };
