@@ -117,7 +117,7 @@ export class NodePoolService {
       return prisma.nodePool.upsert({
         select: args.select,
         where: { name },
-        update: {},
+        update: { ...(isController && { minNodes: { increment: 1 } }) },
         create: {
           name,
           minNodes: 1,
