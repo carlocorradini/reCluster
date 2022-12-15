@@ -37,7 +37,9 @@ import { inject, injectable } from 'tsyringe';
 import { GraphQLBigInt, GraphQLJWT } from 'graphql-scalars';
 import { convert } from 'convert';
 import type { Context } from '~/types';
+import { UserRoleEnum } from '~/db';
 import { NodeService } from '~/services';
+import { Auth } from '~/helpers';
 import { DigitalUnitEnum } from '../../enums';
 import { Node } from '../../entities';
 import {
@@ -77,6 +79,7 @@ export class NodeResolver implements ResolverInterface<Node> {
   }
 
   @Mutation(() => Node, { description: 'Unassign node from node pool' })
+  @Auth({ roles: UserRoleEnum.ADMIN })
   public unassignNode(@Args() args: UnassignNodeArgs) {
     return this.nodeService.unassign({ where: { id: args.id } });
   }

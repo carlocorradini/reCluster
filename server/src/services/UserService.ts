@@ -24,7 +24,7 @@
 
 import type { User as PrismaUser, Prisma } from '@prisma/client';
 import { inject, injectable } from 'tsyringe';
-import type { CreateUserInput } from '~/types';
+import type { CreateUserInput, UpdateUserInput, WithRequired } from '~/types';
 import { prisma } from '~/db';
 import { logger } from '~/logger';
 import { AuthenticationError } from '~/errors';
@@ -43,6 +43,11 @@ type FindUniqueArgs = Omit<Prisma.UserFindUniqueArgs, 'include'>;
 
 type FindUniqueOrThrowArgs = Omit<Prisma.UserFindUniqueOrThrowArgs, 'include'>;
 
+type UpdateArgs = Omit<Prisma.UserUpdateArgs, 'include' | 'where' | 'data'> & {
+  where: WithRequired<Pick<Prisma.UserWhereUniqueInput, 'id'>, 'id'>;
+  data: UpdateUserInput;
+};
+
 type SignInArgs = Required<Pick<PrismaUser, 'username' | 'password'>>;
 
 @injectable()
@@ -58,6 +63,16 @@ export class UserService {
     // eslint-disable-next-line @typescript-eslint/no-shadow
     const fn = async (prisma: Prisma.TransactionClient) => {
       logger.info(`User service create: ${JSON.stringify(args)}`);
+
+      // Extract data
+      const { data } = args;
+
+      // Update data
+      data.password = await this.cryptoService.hash(data.password);
+
+      // Write data
+      // eslint-disable-next-line no-param-reassign
+      args.data = data;
 
       return prisma.user.create(args);
     };
@@ -93,6 +108,29 @@ export class UserService {
     logger.debug(`User service find unique or throw: ${JSON.stringify(args)}`);
 
     return prismaTxn.user.findUniqueOrThrow(args);
+  }
+
+  public update(args: UpdateArgs, prismaTxn?: Prisma.TransactionClient) {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const fn = async (prisma: Prisma.TransactionClient) => {
+      logger.info(`User service update: ${JSON.stringify(args)}`);
+
+      // Extract data
+      const { data } = args;
+
+      // Update data
+      if (data.password) {
+        data.password = await this.cryptoService.hash(data.password);
+      }
+
+      // Write data
+      // eslint-disable-next-line no-param-reassign
+      args.data = data;
+
+      return prisma.user.update(args);
+    };
+
+    return prismaTxn ? fn(prismaTxn) : prisma.$transaction(fn);
   }
 
   public signIn(args: SignInArgs, prismaTxn?: Prisma.TransactionClient) {

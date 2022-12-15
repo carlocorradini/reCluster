@@ -38,16 +38,22 @@ model User {
   permissions UserPermissionEnum[] @default([])
   createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt   DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("user")
 }
 
 enum UserRoleEnum {
   ADMIN
   SIMPLE
+
+  @@map("user_role_enum")
 }
 
 enum UserPermissionEnum {
   // FIXME
   UNKNOWN
+
+  @@map("user_permission_enum")
 }
 
 model Node {
@@ -71,17 +77,23 @@ model Node {
   maxPowerConsumption            Int                  @map("max_power_consumption")
   createdAt                      DateTime             @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt                      DateTime             @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("node")
 }
 
 enum NodeRoleEnum {
   RECLUSTER_CONTROLLER
   K8S_CONTROLLER
   K8S_WORKER
+
+  @@map("node_role_enum")
 }
 
 enum NodePermissionEnum {
   // FIXME
   UNKNOWN
+
+  @@map("node_permission_enum")
 }
 
 model Status {
@@ -93,6 +105,8 @@ model Status {
   lastHeartbeat  DateTime?      @map("last_heartbeat") @db.Timestamptz()
   lastTransition DateTime       @map("last_transition") @db.Timestamptz()
   updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("status")
 }
 
 enum NodeStatusEnum {
@@ -103,6 +117,8 @@ enum NodeStatusEnum {
   BOOTING
   INACTIVE
   UNKNOWN
+
+  @@map("node_status_enum")
 }
 
 model Storage {
@@ -115,6 +131,7 @@ model Storage {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@unique([nodeId, name])
+  @@map("storage")
 }
 
 model Interface {
@@ -130,6 +147,7 @@ model Interface {
 
   @@unique([nodeId, name])
   @@unique([address])
+  @@map("interface")
 }
 
 enum WoLFlagEnum {
@@ -140,6 +158,8 @@ enum WoLFlagEnum {
   p
   s
   u
+
+  @@map("wol_flag_enum")
 }
 
 model Cpu {
@@ -165,16 +185,21 @@ model Cpu {
   updatedAt            DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@unique([vendor, family, model])
+  @@map("cpu")
 }
 
 enum CpuArchitectureEnum {
   AMD64
   ARM64
+
+  @@map("cpu_architecture_enum")
 }
 
 enum CpuVendorEnum {
   AMD
   INTEL
+
+  @@map("cpu_vendor_enum")
 }
 
 model NodePool {
@@ -185,4 +210,6 @@ model NodePool {
   nodes     Node[]
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("node_pool")
 }

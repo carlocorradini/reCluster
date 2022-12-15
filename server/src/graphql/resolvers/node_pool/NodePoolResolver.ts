@@ -34,6 +34,8 @@ import {
 } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { NodePoolService } from '~/services';
+import { Auth } from '~/helpers';
+import { UserRoleEnum } from '~/db';
 import { NodePool } from '../../entities';
 import {
   FindManyNodePoolArgs,
@@ -63,6 +65,7 @@ export class NodePoolResolver implements ResolverInterface<NodePool> {
   }
 
   @Mutation(() => NodePool, { description: 'Update Node pool' })
+  @Auth({ roles: UserRoleEnum.ADMIN })
   public updateNodePool(@Args() args: UpdateNodePoolArgs) {
     return this.nodePoolService.update({
       where: { id: args.id },

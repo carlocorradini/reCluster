@@ -32,8 +32,16 @@ DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # ================
 # CONFIGURATION
 # ================
+# Admin username
+ADMIN_USERNAME="admin"
+# Admin password
+ADMIN_PASSWORD="Password\$0"
 # Airgap environment flag
 AIRGAP_ENV=false
+# Autoscaler username
+AUTOSCALER_USERNAME="autoscaler"
+# Autoscaler password
+AUTOSCALER_PASSWORD="Password\$0"
 # Autoscaler version
 AUTOSCALER_VERSION=latest
 # Benchmark time in seconds
@@ -82,6 +90,8 @@ USER="root"
 # ================
 # Autoscaler directory
 AUTOSCALER_DIR=
+# Autoscaler token
+AUTOSCALER_TOKEN=
 # Configuration
 CONFIG=
 # K3s configuration
@@ -118,18 +128,41 @@ trap cleanup INT QUIT TERM EXIT
 # Show help message
 show_help() {
   cat << EOF
-Usage: $(basename "$0") [--airgap] [--autoscaler-version <VERSION>] [--bench-time <TIME>] [--certs-dir <DIR>] [--config-file <FILE>]
-        [--help] [--init-cluster] [--k3s-config-file <FILE>] [--k3s-registry-config-file <FILE>] [--k3s-version <VERSION>]
+Usage: $(basename "$0") [--admin-username <USERNAME>] [--admin-password <PASSWORD>] [--airgap]
+        [--autoscaler-username <USERNAME>] [--autoscaler-password <PASSWORD>] [--autoscaler-version <VERSION>]
+        [--bench-time <TIME>] [--certs-dir <DIR>] [--config-file <FILE>] [--help]
+        [--init-cluster] [--k3s-config-file <FILE>] [--k3s-registry-config-file <FILE>] [--k3s-version <VERSION>]
         [--node-exporter-config-file <FILE>] [--node-exporter-version <VERSION>]
         [--pc-device-api <URL>] [--pc-interval <TIME>] [--pc-time <TIME>] [--pc-warmup <TIME>]
-        [--server-env-file <FILE>] [--ssh-authorized-keys-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>] [--user <USER>]
+        [--server-env-file <FILE>] [--ssh-authorized-keys-file <FILE>] [--ssh-config-file <FILE>] [--sshd-config-file <FILE>]
+        [--user <USER>]
 
 $HELP_COMMONS_USAGE
 
 reCluster installation script.
 
 Options:
+  --admin-username <USERNAME>         Admin username
+                                      Default: $ADMIN_USERNAME
+                                      Values:
+                                        Any valid username
+
+  --admin-password <PASSWORD>         Admin password
+                                      Default: $ADMIN_PASSWORD
+                                      Values:
+                                        Any valid password
+
   --airgap                            Perform installation in Air-Gap environment
+
+  --autoscaler-username <USERNAME>    Autoscaler username
+                                      Default: $AUTOSCALER_USERNAME
+                                      Values:
+                                        Any valid username
+
+  --autoscaler-password <PASSWORD>    Autoscaler password
+                                      Default: $AUTOSCALER_PASSWORD
+                                      Values:
+                                        Any valid password
 
   --autoscaler-version <VERSION>      Autoscaler version
                                       Default: $AUTOSCALER_VERSION
@@ -576,6 +609,144 @@ decode_token() {
         {
           "header": $header,
           "payload": $payload
+        }
+      '
+  )
+}
+
+# Send server request
+# @param $1 Request data
+# @param $2 Server URL
+send_server_request() {
+  _req_data=$1
+  _res_data=
+  if [ -n "$2" ]; then
+    _server_url=$2
+  else
+    _server_url="$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server')/graphql"
+  fi
+
+  # Send request
+  DEBUG "Sending server request data to '$_server_url':" "$_req_data"
+  case $DOWNLOADER in
+    curl)
+      _res_data=$(
+        curl --fail --silent --location --show-error \
+          --request POST \
+          --header 'Content-Type: application/json' \
+          --data "$_req_data" \
+          --url "$_server_url"
+      ) || FATAL "Error sending server request to '$_server_url'"
+      ;;
+    wget)
+      _res_data=$(
+        wget --quiet --output-document=- \
+          --header='Content-Type: application/json' \
+          --post-data="$_req_data" \
+          "$_server_url" 2>&1
+      ) || FATAL "Error sending server request to '$_server_url'"
+      ;;
+    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
+  esac
+  DEBUG "Received server response data from '$_server_url':" "$_res_data"
+
+  # Check error response
+  if printf '%s\n' "$_res_data" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
+    FATAL "Server '$_server_url' response data error:" "$_res_data"
+  fi
+
+  # Return
+  RETVAL=$_res_data
+}
+
+# Create server user
+# @param $1 Username
+# @param $2 Password
+create_server_user() {
+  _username=$1
+  _password=$2
+  _user_data=$(
+    jq \
+      --null-input \
+      --compact-output \
+      --arg username "$_username" \
+      --arg password "$_password" \
+      '
+        {
+          "username": $username,
+          "password": $password
+        }
+      '
+  )
+  _user_req_data=$(
+    jq \
+      --null-input \
+      --compact-output \
+      --argjson data "$_user_data" \
+      '
+        {
+          "query": "mutation ($data: CreateUserInput!) { createUser(data: $data) { id } }",
+          "variables": { "data": $data }
+        }
+      '
+  )
+  _user_res_data=
+
+  # Send request
+  INFO "Creating user '$_username'"
+  send_server_request "$_user_req_data"
+  _user_res_data="$(printf '%s\n' "$RETVAL" | jq '.data.createUser')"
+
+  # Return
+  RETVAL=$_user_res_data
+}
+
+# Sign in server user
+# @param $1 Username
+# @param $2 Password
+sign_in_server_user() {
+  _username=$1
+  _password=$2
+  _sign_in_req_data=$(
+    jq \
+      --null-input \
+      --compact-output \
+      --arg username "$_username" \
+      --arg password "$_password" \
+      '
+        {
+          "query": "mutation ($username: NonEmptyString!, $password: NonEmptyString!) { signIn(username: $username, password: $password) }",
+          "variables": { "username": $username, "password": $password }
+        }
+      '
+  )
+  _sign_in_res_data=
+
+  # Send request
+  INFO "Signing in user '$_username'"
+  send_server_request "$_sign_in_req_data"
+  _sign_in_res_data=$RETVAL
+
+  # Extract token
+  _token=$(printf '%s\n' "$_sign_in_res_data" | jq --raw-output '.data.signIn')
+
+  # Decode token
+  decode_token "$_token"
+  _token_decoded=$RETVAL
+
+  # Success
+  INFO "Successfully signed in user '$_username'"
+
+  # Return
+  RETVAL=$(
+    jq \
+      --null-input \
+      --arg token "$_token" \
+      --argjson decoded "$_token_decoded" \
+      '
+        {
+          "token": $token,
+          "decoded": $decoded
         }
       '
   )
@@ -1047,9 +1218,7 @@ wait_server_reachability() {
 
 # Register current node
 node_registration() {
-  _server_url=$(printf '%s\n' "$CONFIG" | jq --exit-status --raw-output '.recluster.server') || FATAL "reCluster configuration requires server URL"
-  _server_url="$_server_url/graphql"
-  _request_data=$(
+  _req_data=$(
     jq \
       --null-input \
       --compact-output \
@@ -1061,48 +1230,22 @@ node_registration() {
         }
       '
   )
-  _response_data=
 
-  INFO "Registering node at '$_server_url'"
+  INFO "Registering node"
 
-  # Send node registration request
-  DEBUG "Sending node registration request data to '$_server_url'" "$_request_data"
-  case $DOWNLOADER in
-    curl)
-      _response_data=$(
-        curl --fail --silent --location --show-error \
-          --request POST \
-          --header 'Content-Type: application/json' \
-          --data "$_request_data" \
-          --url "$_server_url"
-      ) || FATAL "Error sending node registration request to '$_server_url'"
-      ;;
-    wget)
-      _response_data=$(
-        wget --quiet --output-document=- \
-          --header='Content-Type: application/json' \
-          --post-data="$_request_data" \
-          "$_server_url" 2>&1
-      ) || FATAL "Error sending node registration request to '$_server_url'"
-      ;;
-    *) FATAL "Unknown downloader '$DOWNLOADER'" ;;
-  esac
-  DEBUG "Received node registration response data '$_response_data' from '$_server_url'"
-
-  # Check error response
-  if printf '%s\n' "$_response_data" | jq --exit-status 'has("errors")' > /dev/null 2>&1; then
-    FATAL "Error registering node at '$_server_url':" "$_response_data"
-  fi
+  # Send request
+  send_server_request "$_req_data"
+  _res_data=$RETVAL
 
   # Extract token
-  _token=$(printf '%s\n' "$_response_data" | jq --raw-output '.data.createNode')
+  _token=$(printf '%s\n' "$_res_data" | jq --raw-output '.data.createNode')
 
   # Decode token
   decode_token "$_token"
   _token_decoded=$RETVAL
 
   # Success
-  INFO "Successfully registered node:" "$_token_decoded"
+  INFO "Successfully registered node"
 
   # Return
   RETVAL=$(
@@ -1129,9 +1272,37 @@ parse_args() {
     _shifts=1
 
     case $1 in
+      --admin-username)
+        # Admin username
+        parse_args_assert_value "$@"
+
+        ADMIN_USERNAME=$2
+        _shifts=2
+        ;;
+      --admin-password)
+        # Admin password
+        parse_args_assert_value "$@"
+
+        ADMIN_PASSWORD=$2
+        _shifts=2
+        ;;
       --airgap)
         # Airgap environment
         AIRGAP_ENV=true
+        ;;
+      --autoscaler-username)
+        # Autoscaler username
+        parse_args_assert_value "$@"
+
+        AUTOSCALER_USERNAME=$2
+        _shifts=2
+        ;;
+      --autoscaler-password)
+        # Autoscaler password
+        parse_args_assert_value "$@"
+
+        AUTOSCALER_PASSWORD=$2
+        _shifts=2
         ;;
       --autoscaler-version)
         #Autoscaler version
@@ -1417,8 +1588,25 @@ EOF
 
   # Cluster initialization
   if [ "$INIT_CLUSTER" = true ]; then
+    # Password: 1 uppercase, 1 symbol, 1 number, length between 8 and 32
+    _password_regex='^.{8,32}$'
+
     [ "$_kind" = controller ] || FATAL "Cluster initialization requires configuration 'kind' value 'controller' but '$_kind' found"
     [ "$(printf '%s\n' "$K3S_CONFIG" | jq --exit-status 'any(.; ."cluster-init" == true)')" = true ] || WARN "Cluster initialization K3s configuration 'cluster-init' not found or set to 'false'"
+
+    # Admin password
+    printf '%s\n' "$ADMIN_PASSWORD" | grep -q -E "$_password_regex" || FATAL "Admin password '$ADMIN_PASSWORD' does not match regex '$_password_regex'"
+
+    # Autoscaler password
+    printf '%s\n' "$AUTOSCALER_PASSWORD" | grep -q -E "$_password_regex" || FATAL "Autoscaler password '$AUTOSCALER_PASSWORD' does not match regex '$_password_regex'"
+    # Autoscaler version
+    if [ "$AUTOSCALER_VERSION" = latest ]; then
+      INFO "Finding Autoscaler latest release"
+      AUTOSCALER_VERSION=$(download_print 'https://api.github.com/repos/carlocorradini/autoscaler/releases/latest' | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+      INFO "Autoscaler latest release is '$AUTOSCALER_VERSION'"
+    fi
+    AUTOSCALER_DIR="$DIRNAME/dependencies/autoscaler/$AUTOSCALER_VERSION"
+    [ -d "$AUTOSCALER_DIR" ] || FATAL "Autoscaler directory '$AUTOSCALER_DIR' does not exists"
   fi
 
   # Airgap
@@ -1427,15 +1615,6 @@ EOF
     [ "$K3S_VERSION" != latest ] || FATAL "K3s version '$K3S_VERSION' not available in Air-Gap environment"
     [ "$NODE_EXPORTER_VERSION" != latest ] || FATAL "Node exporter version '$NODE_EXPORTER_VERSION' not available in Air-Gap environment"
   fi
-
-  # Autoscaler
-  if [ "$AUTOSCALER_VERSION" = latest ]; then
-    INFO "Finding Autoscaler latest release"
-    AUTOSCALER_VERSION=$(download_print 'https://api.github.com/repos/carlocorradini/autoscaler/releases/latest' | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-    INFO "Autoscaler latest release is '$AUTOSCALER_VERSION'"
-  fi
-  AUTOSCALER_DIR="$DIRNAME/dependencies/autoscaler/$AUTOSCALER_VERSION"
-  [ -d "$AUTOSCALER_DIR" ] || FATAL "Autoscaler directory '$AUTOSCALER_DIR' does not exists"
 
   # Sudo
   if [ "$(id -u)" -eq 0 ]; then
@@ -2103,6 +2282,22 @@ EOF
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
+
+  # Admin user
+  INFO "Creating admin user '$ADMIN_USERNAME'"
+  create_server_user "$ADMIN_USERNAME" "$ADMIN_PASSWORD"
+  _admin_id=$(printf '%s\n' "$RETVAL" | jq --raw-output '.id')
+  DEBUG "Updating admin user '$ADMIN_USERNAME' roles"
+  $SUDO su postgres -c 'PGPASSWORD=password psql -d recluster -U recluster --no-password -c "UPDATE \"user\" SET roles = array_append(roles, '\''ADMIN'\'') WHERE id = '\'"$_admin_id"\'';"'
+
+  # Autoscaler user
+  INFO "Creating autoscaler user '$AUTOSCALER_USERNAME'"
+  create_server_user "$AUTOSCALER_USERNAME" "$AUTOSCALER_PASSWORD"
+  _autoscaler_id=$(printf '%s\n' "$RETVAL" | jq --raw-output '.id')
+  DEBUG "Updating autoscaler user '$AUTOSCALER_USERNAME' roles"
+  $SUDO su postgres -c 'PGPASSWORD=password psql -d recluster -U recluster --no-password -c "UPDATE \"user\" SET roles = array_append(roles, '\''ADMIN'\'') WHERE id = '\'"$_autoscaler_id"\'';"'
+  sign_in_server_user "$AUTOSCALER_USERNAME" "$AUTOSCALER_PASSWORD"
+  AUTOSCALER_TOKEN=$(printf '%s\n' "$RETVAL" | jq --raw-output '.token')
 }
 
 # Install reCluster
@@ -2562,6 +2757,8 @@ start_recluster() {
 # Configure K8s
 configure_k8s() {
   [ "$INIT_CLUSTER" = true ] || return 0
+  spinner_start "Configuring K8s"
+
   _k8s_timeout="2m"
   _etc_hosts="/etc/hosts"
   _loadbalancer_dir="$DIRNAME/configs/k8s/loadbalancer"
@@ -2572,6 +2769,7 @@ configure_k8s() {
   _registry_k3s="$DIRNAME/configs/k3s/registries.yaml"
   _autoscaler_ca_dir="$DIRNAME/configs/k8s/autoscaler/ca"
   _autoscaler_ca_deployment="$_autoscaler_ca_dir/deployment.yaml"
+  _autoscaler_ca_deployment_tmp="$TMP_DIR/autoscaler.ca.deployment.yaml"
   _autoscaler_ca_archive="$AUTOSCALER_DIR/cluster-autoscaler.$ARCH.tar.gz"
 
   assert_cmd kubectl
@@ -2590,7 +2788,9 @@ configure_k8s() {
   _autoscaler_ca_tag_version="$_autoscaler_ca_tag:$AUTOSCALER_VERSION"
   _autoscaler_ca_tag_latest="$_autoscaler_ca_tag:latest"
 
-  spinner_start "Configuring K8s"
+  DEBUG "Copying Autoscaler CA deployment file '$_autoscaler_ca_deployment' to '$_autoscaler_ca_deployment_tmp'"
+  cp --force "$_autoscaler_ca_deployment" "$_autoscaler_ca_deployment_tmp"
+  _autoscaler_ca_deployment="$_autoscaler_ca_deployment_tmp"
 
   # Hosts add
   DEBUG "Adding host entry '$_registry_etc_host' to '$_etc_hosts'"
@@ -2622,6 +2822,8 @@ configure_k8s() {
     "--timeout=$_k8s_timeout"
 
   # Autoscaler CA
+  INFO "Replacing Autoscaler CA token"
+  sed -i "s^\${{ token }}^$AUTOSCALER_TOKEN^" "$_autoscaler_ca_deployment"
   # TODO Do for all images
   INFO "Loading Autoscaler CA image '$_autoscaler_ca_archive'"
   $SUDO docker load --input "$_autoscaler_ca_archive"

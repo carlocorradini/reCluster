@@ -24,7 +24,12 @@
 
 import { Directive } from 'type-graphql';
 import type { AuthData } from '~/types';
-import type { UserRoleEnum, NodeRoleEnum } from '~/db';
+import type {
+  UserRoleEnum,
+  NodeRoleEnum,
+  UserPermissionEnum,
+  NodePermissionEnum
+} from '~/db';
 import { TokenTypes } from '~/services/TokenService';
 
 type AuthArgs<T extends TokenTypes> = {
@@ -33,6 +38,11 @@ type AuthArgs<T extends TokenTypes> = {
     ? UserRoleEnum | UserRoleEnum[]
     : T extends TokenTypes.NODE
     ? NodeRoleEnum | NodeRoleEnum[]
+    : never;
+  permissions?: T extends TokenTypes.USER
+    ? UserPermissionEnum | UserPermissionEnum[]
+    : T extends TokenTypes.NODE
+    ? NodePermissionEnum | NodePermissionEnum[]
     : never;
 };
 
@@ -51,7 +61,12 @@ export function Auth<T extends TokenTypes = TokenTypes.USER>(
         : Array.isArray(args.roles)
         ? args.roles
         : [args.roles],
-      permissions: []
+      // eslint-disable-next-line no-nested-ternary
+      permissions: !args?.permissions
+        ? []
+        : Array.isArray(args.permissions)
+        ? args.permissions
+        : [args.permissions]
     };
 
     // Directive sdl

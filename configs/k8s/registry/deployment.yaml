@@ -49,7 +49,7 @@ spec:
   storageClassName: local-path
   resources:
     requests:
-      storage: ${{ k8s.registry.storage }}
+      storage: 32Gi
 
 ---
 apiVersion: apps/v1

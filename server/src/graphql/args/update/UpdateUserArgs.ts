@@ -22,7 +22,16 @@
  * SOFTWARE.
  */
 
-export * from './UpdateNodeInput';
-export * from './UpdateNodePoolInput';
-export * from './UpdateStatusInput';
-export * from './UpdateUserInput';
+import type { Prisma } from '@prisma/client';
+import { ArgsType, Field } from 'type-graphql';
+import { ValidateNested } from 'class-validator';
+import { UpdateUserInput } from '../../inputs';
+
+type IUpdateUserArgs = Required<Pick<Prisma.UserUpdateArgs, 'data'>>;
+
+@ArgsType()
+export class UpdateUserArgs implements IUpdateUserArgs {
+  @Field({ description: 'User data' })
+  @ValidateNested()
+  data!: UpdateUserInput;
+}

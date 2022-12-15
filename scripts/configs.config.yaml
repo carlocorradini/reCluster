@@ -38,7 +38,6 @@ k8s:
     endpoint:
       host: '192.168.0.202'
       port: 5000
-    storage: '32Gi'
     tls:
       crt:
         __:

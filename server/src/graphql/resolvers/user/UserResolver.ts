@@ -25,13 +25,16 @@
 import { Args, Mutation, Query, Resolver } from 'type-graphql';
 import { inject, injectable } from 'tsyringe';
 import { GraphQLJWT } from 'graphql-scalars';
+import type { TokenPayload } from '~/types';
 import { UserService } from '~/services';
+import { Applicant, Auth } from '~/helpers';
 import { User } from '../../entities';
 import {
   FindUniqueUserArgs,
   FindManyUserArgs,
   CreateUserArgs,
-  SignInArgs
+  SignInArgs,
+  UpdateUserArgs
 } from '../../args';
 
 // FIXME implements ResolverInterface<User>
@@ -58,12 +61,28 @@ export class UserResolver {
     });
   }
 
-  @Mutation(() => User, { description: 'Create a new user' })
+  @Mutation(() => User, { description: 'Create a new User' })
   public createUser(@Args() args: CreateUserArgs) {
     return this.userService.create(args);
   }
 
-  @Mutation(() => GraphQLJWT, { description: 'Sign in user' })
+  @Mutation(() => User, { description: 'Update User' })
+  @Auth()
+  public updateUser(
+    @Args() args: UpdateUserArgs,
+    @Applicant() applicant: TokenPayload
+  ) {
+    const id = args.data.id ?? applicant.id;
+    // eslint-disable-next-line no-param-reassign
+    delete args.data.id;
+
+    return this.userService.update({
+      ...args,
+      where: { id }
+    });
+  }
+
+  @Mutation(() => GraphQLJWT, { description: 'Sign in User' })
   public signIn(@Args() args: SignInArgs) {
     return this.userService.signIn(args);
   }

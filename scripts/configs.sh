@@ -285,13 +285,21 @@ configs() {
         _config=$(printf '%s\n' "$_line" | sed -n -r "s/$_regex/\1\2\3/p")
         _config_key=$(printf '%s\n' "$_line" | sed -n -r "s/$_regex/\2/p" | sed -r 's/\s+//g')
 
-        [ "$(printf '%s\n' "$_configs" | jq --raw-output --arg key "$_config_key" 'any(.[]; .key == $key)')" = true ] || FATAL "No corresponding value for '$_config' of '$_file'"
+        [ "$(printf '%s\n' "$_configs" | jq --raw-output --arg key "$_config_key" 'any(.[]; .key == $key)')" = true ] || {
+          WARN "No corresponding value for '$_config' of '$_file'"
+          continue
+        }
 
         _config_value=$(printf '%s\n' "$_configs" | jq --raw-output --arg key "$_config_key" '.[] | select(.key == $key) | .value')
         _line=$(printf '%s\n' "$_line" | sed "s^$_config^$_config_value^")
 
         DEBUG "Configuration to '$_line'"
       done
+
+      [ "$_line_original" -ne "$_line" ] || {
+        WARN "Line '$_line' of '$_file' is unchanged"
+        continue
+      }
 
       # Replace line file
       DEBUG "Replacing '$_line_original' with '$_line'"

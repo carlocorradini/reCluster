@@ -14,7 +14,11 @@ Installation script.
 
 | **Name**                             | **Description**                                                                            | **Default**                                     | **Values**                |
 | ------------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------------------------- |
+| `--admin-username <USERNAME>`        | Admin username                                                                             | `admin`                                         | Any valid username        |
+| `--admin-password <PASSWORD>`        | Admin password                                                                             | `Password$0`                                    | Any valid password        |
 | `--airgap`                           | Perform installation in Air-Gap environment                                                | `false`                                         |
+| `--autoscaler-username <USERNAME>`   | Autoscaler username                                                                        | `autoscaler`                                    | Any valid username        |
+| `--autoscaler-password <PASSWORD>`   | Autoscaler password                                                                        | `Password$0`                                    | Any valid password        |
 | `--autoscaler-version <VERSION>`     | Autoscaler version                                                                         | `latest`                                        | Any Autoscaler version    |
 | `--bench-time <TIME>`                | Benchmark execution time in seconds                                                        | `30`                                            | Any positive number       |
 | `--certs-dir <DIR>`                  | Certificates directory                                                                     | `configs/certs`                                 | Any valid directory       |

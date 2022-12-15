@@ -22,7 +22,11 @@
  * SOFTWARE.
  */
 
-export * from './UpdateNodeInput';
-export * from './UpdateNodePoolInput';
-export * from './UpdateStatusInput';
-export * from './UpdateUserInput';
+import type { Prisma } from '@prisma/client';
+import type { UpdateInput } from '../../helpers';
+
+export type UpdateUserInput = UpdateInput<
+  Omit<Prisma.UserUpdateInput, 'username' | 'password'> & {
+    password?: string;
+  }
+>;

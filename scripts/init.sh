@@ -74,6 +74,19 @@ server_env() {
   cp --force "$_env_example_file" "$_env_file"
 }
 
+# Server certificates
+server_certs() {
+  _certs_script="$DIRNAME/certs.sh"
+  _certs_dir="$ROOT_DIR/server/certs"
+
+  [ ! -d "$_certs_dir" ] || {
+    DEBUG "Removing old certificates directory '$_certs_dir'"
+    rm -rf "$_certs_dir"
+  }
+  INFO "Generating server certificates"
+  $_certs_script --out-dir "$_certs_dir"
+}
+
 # Install dependencies
 install_dependencies() {
   INFO "Installing dependencies"
@@ -124,6 +137,7 @@ verify_system() {
 init() {
   download_inline_script
   server_env
+  server_certs
   install_dependencies
 }
 
