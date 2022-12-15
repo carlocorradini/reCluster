@@ -132,6 +132,7 @@
     "pebibyte",
     "petabit",
     "pg_isready",
+    "pgpassword",
     "pgtz",
     "pino",
     "pkey",
