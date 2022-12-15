@@ -288,26 +288,28 @@ create_uninstall() {
 [ \$(id -u) -eq 0 ] || exec sudo \$0 \$@
 
 if command -v rc-service; then
-  rc-service postgresql stop
-  rc-service recluster.server stop
-  rc-service node_exporter stop
   rc-service k3s-recluster stop
+  rc-service node_exporter stop
+  rc-service recluster.server stop
+  rc-service postgresql stop
+  rc-service recluster stop
 fi
 if command -v systemctl; then
-  systemctl stop postgresql
-  systemctl stop recluster.server
-  systemctl stop node_exporter
-  systemctl stop k3s-recluster
+  systemctl stop k3s-recluster.service
+  systemctl stop node_exporter.service
+  systemctl stop recluster.server.service
+  systemctl stop postgresql.service
+  systemctl stop recluster.service
 fi
 
 [ -x '/usr/local/bin/k3s-recluster-uninstall.sh' ] && /usr/local/bin/k3s-recluster-uninstall.sh
 [ -x '/usr/local/bin/node_exporter.uninstall.sh' ] && /usr/local/bin/node_exporter.uninstall.sh
 
 if command -v systemctl; then
-  systemctl disable recluster.server
-  systemctl disable recluster
-  systemctl reset-failed recluster.server
-  systemctl reset-failed recluster
+  systemctl disable recluster.server.service
+  systemctl disable recluster.service
+  systemctl reset-failed recluster.server.service
+  systemctl reset-failed recluster.service
   systemctl daemon-reload
 fi
 if command -v rc-update; then
@@ -2393,18 +2395,18 @@ EOF
       if [ "$INIT_CLUSTER" = true ]; then
         $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
   INFO "systemd: \$_op_message Database"
-  systemctl \$_op postgresql
+  systemctl \$_op postgresql.service
   { [ "\$_op" = start ] || [ "\$_op" = restart ]; } && wait_database_reachability
   INFO "systemd: \$_op_message Server"
-  systemctl \$_op recluster.server
+  systemctl \$_op recluster.server.service
   { [ "\$_op" = start ] || [ "\$_op" = restart ]; } && wait_server_reachability
 EOF
       fi
       $SUDO tee -a "$_commons_script_file" > /dev/null << EOF
   INFO "systemd: \$_op_message Node exporter"
-  systemctl \$_op node_exporter
+  systemctl \$_op node_exporter.service
   INFO "systemd: \$_op_message K3s"
-  systemctl \$_op k3s-recluster
+  systemctl \$_op k3s-recluster.service
 EOF
       ;;
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
