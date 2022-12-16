@@ -152,7 +152,7 @@ stringData:
   cloud-config: |-
     {
       "url": "http://${{ recluster.server.host }}:${{ recluster.server.port }}/${{ recluster.server.path }}",
-      "token": "${{ token }}"
+      "token": "${{ __.token }}"
     }
 
 ---

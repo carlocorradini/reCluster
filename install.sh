@@ -2833,7 +2833,7 @@ configure_k8s() {
 
   # Autoscaler CA
   INFO "Replacing Autoscaler CA token"
-  sed -i "s^\${{ token }}^$AUTOSCALER_TOKEN^" "$_autoscaler_ca_deployment"
+  sed -i "s^\${{ __.token }}^$AUTOSCALER_TOKEN^" "$_autoscaler_ca_deployment"
   # TODO Do for all images
   INFO "Loading Autoscaler CA image '$_autoscaler_ca_archive'"
   $SUDO docker load --input "$_autoscaler_ca_archive"

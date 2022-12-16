@@ -287,7 +287,7 @@ configs() {
 
         [ "$(printf '%s\n' "$_configs" | jq --raw-output --arg key "$_config_key" 'any(.[]; .key == $key)')" = true ] || {
           WARN "No corresponding value for '$_config' of '$_file'"
-          continue
+          break
         }
 
         _config_value=$(printf '%s\n' "$_configs" | jq --raw-output --arg key "$_config_key" '.[] | select(.key == $key) | .value')
@@ -296,7 +296,7 @@ configs() {
         DEBUG "Configuration to '$_line'"
       done
 
-      [ "$_line_original" -ne "$_line" ] || {
+      [ "$_line_original" != "$_line" ] || {
         WARN "Line '$_line' of '$_file' is unchanged"
         continue
       }
