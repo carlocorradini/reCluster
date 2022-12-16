@@ -1475,6 +1475,7 @@ verify_system() {
   # Commands
   assert_cmd bc
   assert_cmd cp
+  assert_cmd cut
   assert_cmd date
   assert_cmd ethtool
   assert_cmd grep
@@ -2124,6 +2125,15 @@ EOF
 
   # Setup database
   INFO "Setting up database"
+  DEBUG "Reading database URL from '$_server_env_file'"
+  _database_url=$(grep 'DATABASE_URL=' "$_server_env_file" | sed -e 's/DATABASE_URL=//g' -e 's/[[:space:]]*//g' -e 's/*[[:space:]]//g' -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
+  DEBUG "Parsing database URL '$_database_url'"
+  parse_url "$_database_url"
+  DEBUG "Database URL:" "$RETVAL"
+  _database_user=$(printf '%s\n' "$RETVAL" | jq --raw-output '.user')
+  _database_password=$(printf '%s\n' "$RETVAL" | jq --raw-output '.password')
+  _database_db=$(printf '%s\n' "$RETVAL" | jq --raw-output '.path' | cut -d\? -f1)
+
   DEBUG "Stopping database"
   case $INIT_SYSTEM in
     openrc) $SUDO rc-service postgresql stop > /dev/null 2>&1 || $SUDO rc-service postgresql zap > /dev/null 2>&1 || : ;;
@@ -2155,19 +2165,19 @@ EOF
     *) FATAL "Unknown init system '$INIT_SYSTEM'" ;;
   esac
 
-  DEBUG "Removing database 'recluster'"
-  $SUDO su postgres -c 'psql -c "DROP DATABASE IF EXISTS recluster;"'
-  DEBUG "Removing user 'recluster'"
-  $SUDO su postgres -c 'psql -c "DROP USER IF EXISTS recluster;"'
-  DEBUG "Creating database 'recluster'"
-  $SUDO su postgres -c 'psql -c "CREATE DATABASE recluster;"'
-  DEBUG "Creating user 'recluster'"
-  $SUDO su postgres -c 'psql -c "CREATE USER recluster WITH PASSWORD '\''password'\'';"'
-  DEBUG "Defining access privileges for 'recluster'"
-  $SUDO su postgres -c 'psql -c "GRANT ALL PRIVILEGES ON DATABASE recluster TO recluster;"'
-  $SUDO su postgres -c 'psql -c "GRANT ALL PRIVILEGES ON SCHEMA public TO recluster;"'
-  $SUDO su postgres -c 'psql -c "ALTER USER recluster SUPERUSER;"'
-  $SUDO su postgres -c 'psql -c "ALTER USER recluster CREATEDB"'
+  DEBUG "Removing database '$_database_db'"
+  $SUDO su postgres -c 'psql -c "DROP DATABASE IF EXISTS '"$_database_db"';"'
+  DEBUG "Removing user '$_database_user'"
+  $SUDO su postgres -c 'psql -c "DROP USER IF EXISTS '"$_database_user"';"'
+  DEBUG "Creating database '$_database_db'"
+  $SUDO su postgres -c 'psql -c "CREATE DATABASE '"$_database_db"';"'
+  DEBUG "Creating user '$_database_user'"
+  $SUDO su postgres -c 'psql -c "CREATE USER '"$_database_user"' WITH PASSWORD '\'"$_database_password"\'';"'
+  DEBUG "Defining access privileges for user '$_database_user'"
+  $SUDO su postgres -c 'psql -c "GRANT ALL PRIVILEGES ON DATABASE '"$_database_db"' TO '"$_database_user"';"'
+  $SUDO su postgres -c 'psql -c "GRANT ALL PRIVILEGES ON SCHEMA public TO '"$_database_user"';"'
+  $SUDO su postgres -c 'psql -c "ALTER USER '"$_database_user"' SUPERUSER;"'
+  $SUDO su postgres -c 'psql -c "ALTER USER '"$_database_user"' CREATEDB"'
 
   # Copy server
   INFO "Copying server from '$DIRNAME/server' to '$_server_dir'"

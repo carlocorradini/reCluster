@@ -451,6 +451,53 @@ check_cmd() {
   command -v "$1" > /dev/null 2>&1
 }
 
+# Parse URL address
+# @param $1 URL address
+parse_url() {
+  assert_cmd cut
+  assert_cmd grep
+  assert_cmd sed
+
+  # Protocol
+  _url_proto=$(printf '%s\n' "$1" | sed 's,^\(.*://\).*,\1,')
+  # Remove protocol
+  _url=$(printf '%s\n' "$1" | sed "s,$_url_proto,,")
+  # User
+  _url_user=$(printf '%s\n' "$_url" | cut -d@ -f1 | cut -d: -f1)
+  # Password
+  _url_password=$(printf '%s\n' "$_url" | cut -d@ -f1 | cut -d: -f2)
+  # Host
+  _url_host=$(printf '%s\n' "$_url" | sed "s,$_url_user@,," | cut -d/ -f1 | sed 's,:.*,,')
+  # Port
+  _url_port=$(printf '%s\n' "$_url" | sed "s,$_url_user@,," | cut -d/ -f1 | sed -e 's,^.*:,:,' -e 's,.*:\([0-9]*\).*,\1,' -e 's,[^0-9],,')
+  # Path
+  _url_path=$(printf '%s\n' "$_url" | cut -d/ -f2-)
+
+  # Return
+  RETVAL=$(
+    jq \
+      --null-input \
+      --arg url "$_url" \
+      --arg proto "$_url_proto" \
+      --arg user "$_url_user" \
+      --arg password "$_url_password" \
+      --arg host "$_url_host" \
+      --arg port "$_url_port" \
+      --arg path "$_url_path" \
+      '
+        {
+          "url": $url,
+          "proto": $proto,
+          "user": $user,
+          "password": $password,
+          "host": $host,
+          "port": $port,
+          "path": $path
+        }
+      '
+  )
+}
+
 # Download a file
 # @param $1 Output location
 # @param $2 Download URL
