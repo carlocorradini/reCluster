@@ -47,7 +47,7 @@
     "@fastify/rate-limit": "^7.6.0",
     "@graphql-tools/schema": "^9.0.12",
     "@graphql-tools/utils": "^9.0.1",
-    "@kubernetes/client-node": "^0.17.1",
+    "@kubernetes/client-node": "^0.18.0",
     "@prisma/client": "^4.7.1",
     "bcryptjs": "^2.4.3",
     "class-validator": "^0.14.0",
