@@ -29,6 +29,8 @@ set -o noglob
 # ================
 # GLOBALS
 # ================
+# Downloader
+DOWNLOADER=
 # Return value
 RETVAL=
 
