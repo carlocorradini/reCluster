@@ -2298,14 +2298,14 @@ EOF
   create_server_user "$ADMIN_USERNAME" "$ADMIN_PASSWORD"
   _admin_id=$(printf '%s\n' "$RETVAL" | jq --raw-output '.id')
   DEBUG "Updating admin user '$ADMIN_USERNAME' roles"
-  $SUDO su postgres -c 'PGPASSWORD=password psql -d recluster -U recluster --no-password -c "UPDATE \"user\" SET roles = array_append(roles, '\''ADMIN'\'') WHERE id = '\'"$_admin_id"\'';"'
+  $SUDO su postgres -c 'PGPASSWORD='"$_database_password"' psql -d '"$_database_db"' -U '"$_database_user"' --no-password -c "UPDATE \"user\" SET roles = array_append(roles, '\''ADMIN'\'') WHERE id = '\'"$_admin_id"\'';"'
 
   # Autoscaler user
   INFO "Creating autoscaler user '$AUTOSCALER_USERNAME'"
   create_server_user "$AUTOSCALER_USERNAME" "$AUTOSCALER_PASSWORD"
   _autoscaler_id=$(printf '%s\n' "$RETVAL" | jq --raw-output '.id')
   DEBUG "Updating autoscaler user '$AUTOSCALER_USERNAME' roles"
-  $SUDO su postgres -c 'PGPASSWORD=password psql -d recluster -U recluster --no-password -c "UPDATE \"user\" SET roles = array_append(roles, '\''ADMIN'\'') WHERE id = '\'"$_autoscaler_id"\'';"'
+  $SUDO su postgres -c 'PGPASSWORD='"$_database_password"' psql -d '"$_database_db"' -U '"$_database_user"' --no-password -c "UPDATE \"user\" SET roles = array_append(roles, '\''ADMIN'\'') WHERE id = '\'"$_autoscaler_id"\'';"'
   sign_in_server_user "$AUTOSCALER_USERNAME" "$AUTOSCALER_PASSWORD"
   AUTOSCALER_TOKEN=$(printf '%s\n' "$RETVAL" | jq --raw-output '.token')
 }
