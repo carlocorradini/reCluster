@@ -2125,8 +2125,8 @@ EOF
 
   # Setup database
   INFO "Setting up database"
-  DEBUG "Reading database URL from '$_server_env_file'"
-  _database_url=$(grep 'DATABASE_URL=' "$_server_env_file" | sed -e 's/DATABASE_URL=//g' -e 's/[[:space:]]*//g' -e 's/*[[:space:]]//g' -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
+  DEBUG "Reading database URL from '$RECLUSTER_SERVER_ENV_FILE'"
+  _database_url=$(grep 'DATABASE_URL=' "$RECLUSTER_SERVER_ENV_FILE" | sed -e 's/DATABASE_URL=//g' -e 's/[[:space:]]*//g' -e 's/*[[:space:]]//g' -e "s/^'//" -e "s/'$//" -e 's/^"//' -e 's/"$//')
   DEBUG "Parsing database URL '$_database_url'"
   parse_url "$_database_url"
   DEBUG "Database URL:" "$RETVAL"
