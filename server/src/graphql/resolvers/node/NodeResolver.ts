@@ -81,7 +81,7 @@ export class NodeResolver implements ResolverInterface<Node> {
   @Mutation(() => Node, { description: 'Unassign node from node pool' })
   @Auth({ roles: UserRoleEnum.ADMIN })
   public unassignNode(@Args() args: UnassignNodeArgs) {
-    return this.nodeService.unassign({ where: { id: args.id } });
+    return this.nodeService.unassign({ ...args, where: { id: args.id } });
   }
 
   @FieldResolver(() => GraphQLBigInt)
