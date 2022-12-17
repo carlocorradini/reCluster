@@ -23,8 +23,8 @@
  */
 
 import { GraphQLSchema } from 'graphql';
-import { buildTypeDefsAndResolversSync } from 'type-graphql';
-import { makeExecutableSchema } from '@graphql-tools/schema';
+import { buildSchemaSync } from 'type-graphql';
+import { mergeSchemas } from '@graphql-tools/schema';
 import { container } from 'tsyringe';
 import {
   CpuNodeResolver,
@@ -50,7 +50,7 @@ import { authDirective } from './directives';
 // Directives
 const directives = [authDirective] as const;
 
-const { typeDefs, resolvers } = buildTypeDefsAndResolversSync({
+const schemaSimple = buildSchemaSync({
   resolvers: [
     CpuResolver,
     CpuNodeResolver,
@@ -75,12 +75,12 @@ const { typeDefs, resolvers } = buildTypeDefsAndResolversSync({
   validate: { forbidUnknownValues: false }
 });
 
-const executableSchema = makeExecutableSchema({
-  typeDefs: [...directives.map((directive) => directive.typeDefs), typeDefs],
-  resolvers
+const schemaMerged = mergeSchemas({
+  schemas: [schemaSimple],
+  typeDefs: directives.map((directive) => directive.typeDefs)
 });
 
 export const schema: GraphQLSchema = directives.reduce(
   (newSchema, directive) => directive.transformer(newSchema),
-  executableSchema
+  schemaMerged
 );
