@@ -55,6 +55,7 @@ type AuthDirectiveArgs<TContext = Record<string, unknown>> = {
   authMode?: AuthMode;
 };
 
+// FIXME INPUT_FIELD_DEFINITION resolve function
 function buildAuthDirective<TContext = Record<string, unknown>>({
   name,
   auth,
@@ -72,7 +73,7 @@ function buildAuthDirective<TContext = Record<string, unknown>>({
         roles: [String!]! = [],
         """Allowed permissions to access the resource."""
         permissions: [String!]! = [],
-      ) on OBJECT | FIELD | FIELD_DEFINITION`,
+      ) on OBJECT | FIELD | FIELD_DEFINITION | INPUT_FIELD_DEFINITION`,
     transformer: (schema: GraphQLSchema) =>
       mapSchema(schema, {
         [MapperKind.TYPE]: (type) => {
