@@ -199,6 +199,8 @@ spec:
             - --stderrthreshold=info
             - --cloud-provider=recluster
             - --cloud-config=/config/cloud-config
+            - --cluster-name=recluster
+            - --scale-down-unneeded-time=5m
             - --skip-nodes-with-local-storage=false
             - --skip-nodes-with-system-pods=false
           volumeMounts:
