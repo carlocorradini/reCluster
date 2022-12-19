@@ -534,7 +534,7 @@ read_power_consumption() {
   # Terminate benchmark process
   if [ -n "$_pid" ]; then
     DEBUG "Terminating benchmark process PID $_pid"
-    kill -s HUP "$_pid"
+    kill -s KILL "$_pid"
     # Wait may fail
     wait "$_pid" || :
   fi
