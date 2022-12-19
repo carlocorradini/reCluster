@@ -1,4 +1,4 @@
 {
   "*.{json,md,sh}": "prettier --write",
-  "*.md": "markdownlint"
+  "*.md": "markdownlint --fix"
 }
