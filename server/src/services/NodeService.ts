@@ -327,7 +327,6 @@ export class NodeService {
           select: {
             nodePoolId: true,
             nodePoolAssigned: true,
-            address: true,
             interfaces: {
               where: { wol: { isEmpty: false } },
               select: { address: true }
@@ -346,10 +345,7 @@ export class NodeService {
       // Bootstrap
       await Promise.any(
         node.interfaces.map((intf) =>
-          this.wolService.wake({
-            mac: intf.address,
-            address: node.address
-          })
+          this.wolService.wake({ mac: intf.address })
         )
       );
 
