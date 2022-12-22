@@ -327,6 +327,7 @@ export class NodeService {
           select: {
             nodePoolId: true,
             nodePoolAssigned: true,
+            address: process.platform === 'win32',
             interfaces: {
               where: { wol: { isEmpty: false } },
               select: { address: true }
@@ -345,7 +346,12 @@ export class NodeService {
       // Bootstrap
       await Promise.any(
         node.interfaces.map((intf) =>
-          this.wolService.wake({ mac: intf.address })
+          this.wolService.wake({
+            mac: intf.address,
+            opts: {
+              ...(process.platform === 'win32' && { address: node.address })
+            }
+          })
         )
       );
 
