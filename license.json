@@ -4,6 +4,9 @@
   "trailingWhitespace": "TRIM",
   "defaultFormat": {
     "prepend": "/*",
+    "eachLine": {
+      "prepend": " * "
+    },
     "append": "*/\n"
   },
   "licenseFormats": {
@@ -11,7 +14,7 @@
       "eachLine": {
         "prepend": "# "
       },
-      "append": "\n"
+      "append": ""
     },
     "html|xml|svg": {
       "prepend": "<!--",
@@ -28,7 +31,7 @@
       "eachLine": {
         "prepend": "// "
       },
-      "append": "\n"
+      "append": ""
     },
     "txt": {}
   },
