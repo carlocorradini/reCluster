@@ -65,6 +65,7 @@
     "**/.prettierrc",
     "**/.shellcheckrc",
     "**/cspell.json",
+    "./scripts/inline.sh",
     "./server/prisma/migrations",
     "./configs/ssh/authorized_keys",
     "./configs/ssh/ssh_config",
