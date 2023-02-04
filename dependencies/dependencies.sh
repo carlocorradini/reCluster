@@ -53,7 +53,7 @@ CONFIG=
 # Show help message
 show_help() {
   cat << EOF
-Usage: $(basename "$0") [--help] [--list] [--release <DEP> <VERSION>] [--update]
+Usage: $(basename "$0") [--config-file <FILE>] [--help] [--sync] [--sync-force]
 
 $HELP_COMMONS_USAGE
 
