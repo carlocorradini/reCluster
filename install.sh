@@ -187,7 +187,7 @@ Options:
   --help                              Show this help message and exit
 
   --init-cluster                      Initialize cluster components and logic
-                                        Enable only when bootstrapping for the first time
+                                      Enable only when bootstrapping for the first time
 
   --k3s-config-file <FILE>            K3s configuration file
                                       Default: $K3S_CONFIG_FILE
