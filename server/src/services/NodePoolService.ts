@@ -322,7 +322,7 @@ export class NodePoolService {
 
       await Promise.all(
         nodes.map((node) =>
-          this.nodeService.shutdown({ where: { id: node.id } }, prisma)
+          this.nodeService.unassign({ where: { id: node.id } }, prisma)
         )
       );
     };
