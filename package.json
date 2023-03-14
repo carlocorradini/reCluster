@@ -38,7 +38,7 @@
     "@cspell/dict-shell": "^1.0.1",
     "@cspell/dict-typescript": "^3.1.0",
     "@cspell/eslint-plugin": "^6.26.3",
-    "cspell": "^6.26.1",
+    "cspell": "^6.29.2",
     "husky": "^8.0.3",
     "license-check-and-add": "^4.0.5",
     "lint-staged": "^13.1.0",
