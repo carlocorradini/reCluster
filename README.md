@@ -22,6 +22,10 @@ reCluster is an architecture for a data center that actively reduces its impact 
   [Eighth Workshop on Computing within Limits 2022](https://computingwithinlimits.org/2022) \
   `doi:10.21428/bf6fb269.8b989f2c`
 
+- [_reCluster: A resource-aware Kubernetes architecture for heterogeneous clusters_](https://github.com/carlocorradini/thesis/releases/download/v1.0.0/corradini_carlo_computer_science_2021_2022.pdf) \
+  Carlo Corradini \
+  Master's Thesis in Computer Science at the [University of Trento](https://www.unitn.it)
+
 ## :books: Documentation
 
 See [docs](./docs/) directory for more information.
