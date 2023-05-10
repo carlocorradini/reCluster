@@ -45,7 +45,7 @@
     "@fastify/cors": "^8.2.0",
     "@fastify/helmet": "^10.1.0",
     "@fastify/rate-limit": "^7.6.0",
-    "@graphql-tools/schema": "^9.0.15",
+    "@graphql-tools/schema": "^9.0.18",
     "@graphql-tools/utils": "^9.2.0",
     "@kubernetes/client-node": "^0.18.1",
     "@prisma/client": "^4.10.0",
