@@ -93,6 +93,7 @@
     "iface",
     "inet",
     "initdb",
+    "iwctl",
     "keygen",
     "keyout",
     "kibibit",
