@@ -865,9 +865,21 @@ read_interfaces_info() {
     # Name
     _iname=$(printf '%s\n' "$_interface" | jq --raw-output '.name')
     # Speed
-    _speed=$($SUDO ethtool "$_iname" | grep Speed | sed -e 's/Speed://g' -e 's/[[:space:]]*//g' -e 's/b.*//' | numfmt --from=si)
+    _speed=
     # WoL
-    _wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed -e 's/Supports Wake-on://g' -e 's/[[:space:]]*//g')
+    _wol=""
+
+    if [ ! -f "/sys/class/net/$_iname/wireless" ]; then
+      # Wired interface
+      _speed=$($SUDO ethtool "$_iname" | grep 'Speed' | sed -e 's/Speed://g' -e 's/[[:space:]]*//g' -e 's/b.*//' | numfmt --from=si)
+      _wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed -e 's/Supports Wake-on://g' -e 's/[[:space:]]*//g')
+    else
+      # Wireless interface
+      _speed_tx=$($SUDO iwctl station "$_iname" show | grep 'TxBitrate' | sed -e 's/TxBitrate//g' -e 's/[[:space:]]*//g' -e 's/b.*//' | numfmt --from=si)
+      _speed_rx=$($SUDO iwctl station "$_iname" show | grep 'RxBitrate' | sed -e 's/RxBitrate//g' -e 's/[[:space:]]*//g' -e 's/b.*//' | numfmt --from=si)
+      _speed=$((_speed = _speed_tx + _speed_rx))
+      _speed=$((_speed = _speed / 2))
+    fi
 
     # Update interfaces
     _interfaces_info=$(
