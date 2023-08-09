@@ -869,7 +869,7 @@ read_interfaces_info() {
     # WoL
     _wol=""
 
-    if [ ! -f "/sys/class/net/$_iname/wireless" ]; then
+    if [ ! -d "/sys/class/net/$_iname/wireless" ]; then
       # Wired interface
       _speed=$($SUDO ethtool "$_iname" | grep 'Speed' | sed -e 's/Speed://g' -e 's/[[:space:]]*//g' -e 's/b.*//' | numfmt --from=si)
       _wol=$($SUDO ethtool "$_iname" | grep 'Supports Wake-on' | sed -e 's/Supports Wake-on://g' -e 's/[[:space:]]*//g')
